@@ -1,3 +1,20 @@
 <resources>
-    <string name="app_name">ShoppingListCharlie</string>
+    <string name="app_name">Shopping List</string>
+    <string name="buy_list">To Buy List</string>
+    <string name="catalogue">All items</string>
+    <string name="item_name">Item name</string>
+    <string name="brand_label">Brand</string>
+    <string name="use_price_type">Which price to use in shopping list?</string>
+    <string name="unit_price_txt">Unit price ($)</string>
+    <string name="bundle_price_txt">Bundle price ($)</string>
+    <string name="bundle_quantity_txt">Bundle quantity</string>
+    <string name="description_label">Description of item</string>
+    <string name="quantity_label">Quantity to buy</string>
+    <string name="cb_unit_price">Unit price</string>
+    <string name="cb_bundle_price">Bundle price</string>
+    <string name="new_buy_item_title">New item</string>
+    <string name="update_buy_item_title">Update item</string>
+    <string name="remove_item_from_list">Remove item from list</string>
+    <string name="empty_view_title_text">No items in your shopping list</string>
+    <string name="empty_view_subtitle_text">Add new item or star item in All Items</string>
 </resources>

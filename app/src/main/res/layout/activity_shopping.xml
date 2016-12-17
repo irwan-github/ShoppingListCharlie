@@ -1,18 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+This is the parent screen that pages the 2 child views:
+1. To-buy list view (managed by BuyListFragment
+2. Catalogue/History View (managed by HistoryFragment)
+-->
+
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_shopping"
+    android:id="@+id/shopping_list_container"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.mirzairwan.shopping.ShoppingActivity">
+    android:layout_height="match_parent">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"/>
+    <android.support.v4.view.ViewPager
+        android:id="@+id/pager_shopping"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+
+        <android.support.design.widget.TabLayout
+            android:id="@+id/tab_shopping"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_gravity="top"
+            android:background="@color/colorPrimary"
+            app:tabSelectedTextColor="@color/tabTextColor"
+            app:tabTextColor="@color/tabTextColor"
+            >
+        </android.support.design.widget.TabLayout>
+    </android.support.v4.view.ViewPager>
 </RelativeLayout>

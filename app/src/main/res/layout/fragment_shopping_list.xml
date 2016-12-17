@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+
+    >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:id="@+id/container_summary"
+            android:layout_width="match_parent"
+            android:layout_height="56dp">
+
+            <TextView
+                android:id="@+id/total_checked"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:textAppearance="?android:textAppearanceLarge"
+                android:textStyle="bold"
+
+                />
+
+            <TextView
+                android:id="@+id/total_buy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:textAppearance="?android:textAppearanceLarge"
+                android:textStyle="bold"
+
+                />
+
+            <View
+                android:id="@+id/border_to_buy_list"
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_alignParentBottom="true"
+                android:background="#bdbdbd" />
+        </RelativeLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            >
+
+            <ListView
+                android:id="@+id/lv_to_buy_items"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="24dp"
+                android:divider="@android:color/darker_gray"
+                android:dividerHeight="4px">
+
+            </ListView>
+
+            <!-- Empty view for the list -->
+            <RelativeLayout
+                android:id="@+id/empty_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal|center_vertical"
+                >
+
+                <ImageView
+                    android:id="@+id/empty_shelter_image"
+                    android:layout_width="200dp"
+                    android:layout_height="200dp"
+                    android:layout_centerHorizontal="true"
+                    android:src="@drawable/empty_shopping_list"/>
+
+                <TextView
+                    android:id="@+id/empty_title_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/empty_shelter_image"
+                    android:layout_centerHorizontal="true"
+                    android:fontFamily="sans-serif-medium"
+                    android:paddingTop="16dp"
+                    android:text="@string/empty_view_title_text"
+                    android:textAppearance="?android:textAppearanceMedium"/>
+
+                <TextView
+                    android:id="@+id/empty_subtitle_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/empty_title_text"
+                    android:layout_centerHorizontal="true"
+                    android:fontFamily="sans-serif"
+                    android:paddingTop="8dp"
+                    android:text="@string/empty_view_subtitle_text"
+                    android:textAppearance="?android:textAppearanceSmall"
+                    android:textColor="#A2AAB0"/>
+            </RelativeLayout>
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/btn_add_item"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="16dp"
+        android:src="@drawable/ic_add"
+        app:elevation="6dp"
+        app:fabSize="normal"
+        app:layout_anchor="@id/container_summary"
+        app:layout_anchorGravity="bottom|right|end"
+        app:pressedTranslationZ="24dp"
+        app:rippleColor="@android:color/holo_blue_light" />
+
+
+</android.support.design.widget.CoordinatorLayout>

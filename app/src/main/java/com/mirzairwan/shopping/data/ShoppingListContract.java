@@ -1,0 +1,168 @@
+package com.mirzairwan.shopping.data;
+
+import android.content.ContentResolver;
+import android.net.Uri;
+import android.provider.BaseColumns;
+
+/**
+ * Created by Mirza Irwan on 9/12/16.
+ */
+
+public final class ShoppingListContract
+{
+    /**
+     * The "Content authority" is a name for the entire content provider, similar to the
+     * relationship between a domain name and its website.  A convenient string to use for the
+     * content authority is the package name for the app, which is guaranteed to be unique on the
+     * device.
+     */
+    public static final String CONTENT_AUTHORITY = "com.mirzairwan.shoppinglist";
+
+    /**
+     * Use CONTENT_AUTHORITY to create the base of all URI's which activities will use to contact
+     * the content provider.
+     */
+    public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
+
+    /**
+     * Possible paths (Will be appended to base content URI for possible URI's)
+     */
+    public static final String PATH_ITEMS = "items";
+    public static final String PATH_BUY_ITEMS = "buy-items";
+    public static final String PATH_PRICES = "prices";
+
+
+    public static final class ItemsEntry implements BaseColumns
+    {
+        /**
+         * The MIME type of the {@link #CONTENT_URI} for a list of items.
+         */
+        public static final String CONTENT_LIST_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_ITEMS;
+
+        /**
+         * The MIME type of the {@link #CONTENT_URI} for a single item.
+         */
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_ITEMS;
+
+        /** The content URI to access the items data in the provider */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_ITEMS);
+
+        public static final String TABLE_NAME = "items";
+
+        //Table joins requires use of alias names for columns with identical names:
+        //Alias for _ID column
+        public static final String ALIAS_ID = "item_id";
+
+        /**
+         * TEXT
+         */
+        public static final String COLUMN_NAME = "name";
+
+        /**
+         * TEXT
+         */
+        public static final String COLUMN_BRAND = "brand";
+
+        /**
+         * TEXT
+         */
+        public static final String COLUMN_COUNTRY_ORIGIN = "country_origin";
+
+        /**
+         * TEXT
+         */
+        public static final String COLUMN_DESCRIPTION = "description";
+
+        /**
+         * INTEGER
+         */
+        public static final String COLUMN_LAST_UPDATED_ON = "last_updated_on";
+
+        public static final String ALIAS_COLUMN_LAST_UPDATED_ON = "item_last_updated_on";
+    }
+
+    public static final class PricesEntry implements BaseColumns
+    {
+        /** The content URI to access the item price data in the provider */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_PRICES);
+
+        public static final String TABLE_NAME = "prices";
+
+        /**
+         * INTEGER
+         */
+        public static final String COLUMN_PRICE_TYPE_ID = "price_type_id";
+
+        /**
+         * INTEGER
+         */
+        public static final String COLUMN_SHOP_ID = "shop_id";
+
+        /**
+         * INTEGER
+         */
+        public static final String COLUMN_PRICE = "price";
+
+        /**
+         * INTEGER
+         */
+        public static final String COLUMN_BUNDLE_QTY = "bundle_qty";
+
+        /**
+         * INTEGER
+         */
+        public static final String COLUMN_ITEM_ID = "item_id";
+
+        /**
+         * TEXT
+         * Store user's home currenct id
+         */
+        public static final String COLUMN_CURRENCY_CODE = "currency_code";
+
+        /**
+         * INTEGER
+         */
+        public static final String COLUMN_LAST_UPDATED_ON = "last_updated_on";
+    }
+
+    public static final class ToBuyItemsEntry implements BaseColumns
+    {
+        public static final String TABLE_NAME = "buy_items";
+
+        public static final String ALIAS_ID = "buy_item_id"; //Because all tables use _id as column name
+
+        /** The content URI to access the buy items data in the provider */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_BUY_ITEMS);
+
+        /**
+         * INTEGER
+         */
+        public static final String COLUMN_ITEM_ID = "item_id";
+
+
+        /**
+         * INTEGER
+         */
+        public static final String COLUMN_QUANTITY = "quantity";
+
+        /**
+         * INTEGER
+         */
+        public static final String COLUMN_SELECTED_PRICE_ID = "selected_price_id";
+
+        /**
+         * INTEGER Possible values: 1 for True or 0 for false
+         */
+        public static final String COLUMN_IS_CHECKED = "is_checked";
+
+        /**
+         * INTEGER
+         */
+        public static final String COLUMN_LAST_UPDATED_ON = "last_updated_on";
+
+        public static final String ALIAS_COLUMN_LAST_UPDATED_ON = "buy_item_last_updated_on";
+
+    }
+}
