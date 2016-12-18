@@ -48,7 +48,7 @@ public class BuyingActivity extends AppCompatActivity
         //if no bundle, then the request is for new creation
         if (uri != null) {
             setTitle(R.string.update_buy_item_title);
-            populateItemDetails();
+            populateItemDetails(uri);
         } else {
             setTitle(R.string.new_buy_item_title);
             actionMode = CREATE_BUY_ITEM_REQUEST_CODE; // This flag is used for menu creation
@@ -174,14 +174,13 @@ public class BuyingActivity extends AppCompatActivity
 //    }
 
 
-    private void populateItemDetails()
+    private void populateItemDetails(Uri uri)
     {
 
-//        Bundle buyItemBundle = getIntent().getBundleExtra(ARGUMENTS);
-//
-//        if (buyItemBundle == null)
-//            finish();
-//
+            if(uri == null)
+                throw new IllegalArgumentException("Uri cannot be null");
+
+           // getContentResolver().query(uri);
 //        EditText etItemName = (EditText) findViewById(R.id.et_item_name);
 //        etItemName.setText(buyItemBundle.getString(BuyItemBundle.ITEM_NAME));
 //

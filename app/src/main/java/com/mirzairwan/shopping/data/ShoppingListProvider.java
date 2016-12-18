@@ -71,6 +71,8 @@ public class ShoppingListProvider extends ContentProvider {
 
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
+    private static final Map<String, String> sAllItemsProjectionMap = new HashMap<>();
+
     private static final Map<String, String> sAllBuyItemsProjectionMap = new HashMap<>();
 
     private static final Map<String, String> sBuyItemsProjectionMap = new HashMap<>();
@@ -79,20 +81,19 @@ public class ShoppingListProvider extends ContentProvider {
 
 
     static {
-        //sBuyItemsProjectionMap.put(ToBuyItemsEntry._ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry._ID + " AS buy_item_id");
-        sBuyItemsProjectionMap.put(ToBuyItemsEntry.COLUMN_QUANTITY, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_QUANTITY);
-        sBuyItemsProjectionMap.put(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID);
-        sBuyItemsProjectionMap.put(ToBuyItemsEntry.COLUMN_IS_CHECKED, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_IS_CHECKED);
-        sBuyItemsProjectionMap.put(ToBuyItemsEntry.COLUMN_LAST_UPDATED_ON, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_LAST_UPDATED_ON);
 
-        //sAllBuyItemsProjectionMap.put(ItemsEntry.ALIAS_ID, ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID + " AS " + ItemsEntry.ALIAS_ID);
+        sAllItemsProjectionMap.put(ItemsEntry._ID, ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID);
+        sAllItemsProjectionMap.put(ItemsEntry.COLUMN_NAME, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_NAME);
+        sAllItemsProjectionMap.put(ItemsEntry.COLUMN_BRAND, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_BRAND);
+        sAllItemsProjectionMap.put(ItemsEntry.COLUMN_DESCRIPTION, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_DESCRIPTION);
+        sAllItemsProjectionMap.put(ItemsEntry.COLUMN_COUNTRY_ORIGIN, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_COUNTRY_ORIGIN);
+        sAllItemsProjectionMap.put(ToBuyItemsEntry.ALIAS_ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry._ID + " AS " + ToBuyItemsEntry.ALIAS_ID);
+
         sAllBuyItemsProjectionMap.put(ItemsEntry.COLUMN_NAME, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_NAME);
         sAllBuyItemsProjectionMap.put(ItemsEntry.COLUMN_BRAND, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_BRAND);
         sAllBuyItemsProjectionMap.put(ItemsEntry.COLUMN_DESCRIPTION, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_DESCRIPTION);
         sAllBuyItemsProjectionMap.put(ItemsEntry.COLUMN_COUNTRY_ORIGIN, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_COUNTRY_ORIGIN);
         sAllBuyItemsProjectionMap.put(ItemsEntry.ALIAS_COLUMN_LAST_UPDATED_ON, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_LAST_UPDATED_ON + " AS " + ItemsEntry.ALIAS_COLUMN_LAST_UPDATED_ON);
-//        sAllBuyItemsProjectionMap.put(ToBuyItemsEntry.ALIAS_ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry._ID + " AS " + ToBuyItemsEntry.ALIAS_ID);
-
         sAllBuyItemsProjectionMap.put(ToBuyItemsEntry._ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry._ID + " AS " + ToBuyItemsEntry._ID);
         sAllBuyItemsProjectionMap.put(ToBuyItemsEntry.COLUMN_ITEM_ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_ITEM_ID);
         sAllBuyItemsProjectionMap.put(ToBuyItemsEntry.COLUMN_QUANTITY, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_QUANTITY);
@@ -103,12 +104,6 @@ public class ShoppingListProvider extends ContentProvider {
         sAllBuyItemsProjectionMap.put(PricesEntry.COLUMN_PRICE, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_PRICE);
         sAllBuyItemsProjectionMap.put(PricesEntry.COLUMN_CURRENCY_CODE, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_CURRENCY_CODE);
 
-        sItemsProjectionMap.put(ItemsEntry._ID, ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID + " AS " + ItemsEntry.ALIAS_ID);
-        sItemsProjectionMap.put(ItemsEntry.COLUMN_NAME, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_NAME);
-        sItemsProjectionMap.put(ItemsEntry.COLUMN_BRAND, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_BRAND);
-        sItemsProjectionMap.put(ItemsEntry.COLUMN_DESCRIPTION, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_DESCRIPTION);
-        sItemsProjectionMap.put(ItemsEntry.COLUMN_COUNTRY_ORIGIN, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_COUNTRY_ORIGIN);
-        sItemsProjectionMap.put(ItemsEntry.COLUMN_LAST_UPDATED_ON, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_LAST_UPDATED_ON);
     }
 
 
@@ -175,8 +170,9 @@ public class ShoppingListProvider extends ContentProvider {
                 cursor = queryItems(uri, projection, selection, selectionArgs, sortOrder);
                 break;
             case ITEMS_JOIN_BUY_ITEMS:
-                //cursor = getAllItemsAndBuyItems(uri, projection, selection,
-                //    selectionArgs, sortOrder);
+                cursor = getCatalogueAndBuyStatus(uri, projection, selection,
+                    selectionArgs, sortOrder);
+                cursor.setNotificationUri(getContext().getContentResolver(), uri);
                 break;
             case PRICES:
                 SQLiteDatabase database = mShoppingListDbHelper.getReadableDatabase();
@@ -347,6 +343,47 @@ public class ShoppingListProvider extends ContentProvider {
         );
 
         queryBuilder.setProjectionMap(sAllBuyItemsProjectionMap);
+
+        // Get the database and run the query
+        SQLiteDatabase database = mShoppingListDbHelper.getReadableDatabase();
+        Cursor cursor = queryBuilder.query(database, projection, selection, selectionArgs, null, null, sortOrder);
+
+        // Tell the cursor what uri to watch, so it knows when its source data changes
+        //cursor.setNotificationUri(getContext().getContentResolver(), uri);
+        return cursor;
+    }
+
+    /**
+     * Get all items in the items table and its child record in buy items
+     * table
+     *
+     * @param uri
+     * @param projection
+     * @param selection
+     * @param selectionArgs
+     * @param sortOrder
+     * @return
+     */
+    private Cursor getCatalogueAndBuyStatus(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+
+//        *           "SELECT items._id AS itemId," +
+//        *           "items.name, items.brand, items.country_origin, " +
+//        *           "items.description, items.last_updated_on, " +
+//        *           "buy_items._id AS dbBuyItemId, buy_items.quantity, " +
+//        *           "buy_items.selected_price_id, buy_items.is_checked, buy_items.last_updated_on " +
+//        *           "FROM items " +
+//        *           "LEFT JOIN buy_items " +
+//        *           "ON items._id=buy_items.item_id " +
+//        *           "ORDER BY items.name";
+
+        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+
+        queryBuilder.setTables(ItemsEntry.TABLE_NAME + " LEFT JOIN " +
+                ToBuyItemsEntry.TABLE_NAME + " ON " +
+                ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID + "=" +
+                ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_ITEM_ID);
+
+        queryBuilder.setProjectionMap(sAllItemsProjectionMap);
 
         // Get the database and run the query
         SQLiteDatabase database = mShoppingListDbHelper.getReadableDatabase();

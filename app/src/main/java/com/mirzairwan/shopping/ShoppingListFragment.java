@@ -83,7 +83,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         lvBuyItems.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                //TODO
+                onFragmentInteractionListener.onViewBuyItem(id);
             }
         });
     }
@@ -145,6 +145,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         void onAdditem();
 
         void onCheckBuyItem(boolean isChecked, int mBuyItemPosition);
+
+        void onViewBuyItem(long rowId);
     }
 
 

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--<CheckBox-->
+<!--android:id="@+id/tv_all_item_check_item"-->
+<!--android:layout_width="@dimen/touch_target_width"-->
+<!--android:layout_height="@dimen/touch_target_width"-->
+<!--android:layout_alignParentRight="true"-->
+<!--android:layout_centerVertical="true"-->
+<!--android:background="?android:attr/listChoiceIndicatorMultiple"-->
+<!--android:button="@null"-->
+<!--/>-->
+
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/list_item_height"
+                android:paddingLeft="@dimen/keyline_1"
+                android:paddingRight="@dimen/keyline_1"
+    >
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:orientation="vertical"
+        >
+
+        <TextView
+            android:id="@+id/tv_all_item_name_row"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLength="@string/text_item_name_max_length"
+            android:maxLines="@string/text_max_line"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:focusable="false"
+            tools:text="Sardine">
+        </TextView>
+
+        <TextView
+            android:id="@+id/tv_all_item_brand_row"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLength="@string/text_item_brand_max_length"
+            android:maxLines="@string/text_max_line"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:focusable="false"
+            tools:text="Abcdefghijklmnopqrstuvwxyz"
+            >
+        </TextView>
+    </LinearLayout>
+
+    <ToggleButton
+        android:id="@+id/toggle_buy_list"
+        android:layout_width="@dimen/touch_target_width"
+        android:layout_height="@dimen/touch_target_height"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:background="@null"
+        android:textOn=""
+        android:textOff=""
+        android:button="@drawable/star"
+        android:focusable="false"
+        />
+
+</RelativeLayout>

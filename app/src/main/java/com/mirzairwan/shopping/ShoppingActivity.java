@@ -1,8 +1,10 @@
 package com.mirzairwan.shopping;
 
 import android.app.Activity;
+import android.content.ContentUris;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -10,6 +12,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.mirzairwan.shopping.data.AndroidDatabaseManager;
+import com.mirzairwan.shopping.data.ShoppingListContract;
+import com.mirzairwan.shopping.data.ShoppingListContract.ToBuyItemsEntry;
 
 public class ShoppingActivity extends AppCompatActivity implements ShoppingListFragment.OnFragmentInteractionListener
 {
@@ -59,7 +63,6 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
     public void onAdditem()
     {
         Intent intentToEditItem = new Intent();
-
         intentToEditItem.setClass(this, BuyingActivity.class);
         startActivityForResult(intentToEditItem, CREATE_BUY_ITEM_REQUEST_CODE);
     }
@@ -68,6 +71,17 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
     public void onCheckBuyItem(boolean isChecked, int mBuyItemPosition)
     {
 
+    }
+
+    @Override
+    public void onViewBuyItem(long rowId)
+    {
+        Intent intentToViewItem = new Intent();
+        intentToViewItem.setClass(this, BuyingActivity.class);
+        Uri uri = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI, ShoppingListContract.PATH_ITEMS);
+        uri = ContentUris.withAppendedId(uri, rowId);
+        intentToViewItem.setData(uri);
+        startActivity(intentToViewItem);
     }
 
     @Override
