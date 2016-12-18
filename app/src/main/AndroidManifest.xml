@@ -15,7 +15,12 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <activity android:name=".BuyingActivity" />
         <activity android:name=".data.AndroidDatabaseManager"/>
+        <provider
+            android:authorities="com.mirzairwan.shopping"
+            android:name=".data.ShoppingListProvider"
+            android:exported="false" />
     </application>
 
 </manifest>

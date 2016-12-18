@@ -17,4 +17,14 @@
     <string name="remove_item_from_list">Remove item from list</string>
     <string name="empty_view_title_text">No items in your shopping list</string>
     <string name="empty_view_subtitle_text">Add new item or star item in All Items</string>
+
+    <string name="text_item_brand_max_length">15</string>
+    <string name="text_item_name_max_length">26</string>
+    <string name="text_max_line">1</string>
+    <string name="text_item_buy_qty_max_length">2</string>
+    <string name="text_price_max_length">7</string>
+    <string name="text_bundle_qty_length">5</string>
+    <string name="text_item_description_max_length">30</string>
+    <string name="mandatory_name">Name is required</string>
+    <string name="mandatory_quantity">Quantity must be at least 1</string>
 </resources>

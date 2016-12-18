@@ -16,7 +16,7 @@ public final class ShoppingListContract
      * content authority is the package name for the app, which is guaranteed to be unique on the
      * device.
      */
-    public static final String CONTENT_AUTHORITY = "com.mirzairwan.shoppinglist";
+    public static final String CONTENT_AUTHORITY = "com.mirzairwan.shopping";
 
     /**
      * Use CONTENT_AUTHORITY to create the base of all URI's which activities will use to contact

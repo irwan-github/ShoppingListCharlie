@@ -1,4 +1,4 @@
-package com.mirzairwan.shopping.domain;
+package com.mirzairwan.shopping;
 
 import android.app.Fragment;
 import android.os.Bundle;
@@ -7,8 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
-
-import com.mirzairwan.shopping.R;
 
 /**
  * Created by Mirza Irwan on 22/11/16.

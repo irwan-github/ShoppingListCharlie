@@ -5,8 +5,6 @@ import android.app.FragmentManager;
 import android.content.Context;
 import android.support.v13.app.FragmentPagerAdapter;
 
-import com.mirzairwan.shopping.domain.CatalogFragment;
-
 /**
  * Created by Mirza Irwan on 22/11/16.
  */
