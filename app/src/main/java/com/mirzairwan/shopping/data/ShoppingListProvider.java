@@ -24,7 +24,8 @@ import static android.content.ContentUris.parseId;
  * Created by Mirza Irwan on 9/12/16.
  */
 
-public class ShoppingListProvider extends ContentProvider {
+public class ShoppingListProvider extends ContentProvider
+{
 
     /**
      * URI matcher code for the content URI for the items  in items table
@@ -68,14 +69,18 @@ public class ShoppingListProvider extends ContentProvider {
      */
     private static final int BUY_ITEMS_JOIN_ITEMS_JOIN_PRICES = 122;
 
+    /**
+     * URI matcher code for the content URI to get a specific buy item record and its parent record in
+     * items and records in prices table for the item.
+     */
+    private static final int BUY_ITEM_JOIN_ITEMS_JOIN_PRICES_ITEMID = 123;
+
 
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
     private static final Map<String, String> sAllItemsProjectionMap = new HashMap<>();
 
     private static final Map<String, String> sAllBuyItemsProjectionMap = new HashMap<>();
-
-    private static final Map<String, String> sBuyItemsProjectionMap = new HashMap<>();
 
     private static final Map<String, String> sItemsProjectionMap = new HashMap<>();
 
@@ -93,16 +98,16 @@ public class ShoppingListProvider extends ContentProvider {
         sAllBuyItemsProjectionMap.put(ItemsEntry.COLUMN_BRAND, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_BRAND);
         sAllBuyItemsProjectionMap.put(ItemsEntry.COLUMN_DESCRIPTION, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_DESCRIPTION);
         sAllBuyItemsProjectionMap.put(ItemsEntry.COLUMN_COUNTRY_ORIGIN, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_COUNTRY_ORIGIN);
-        sAllBuyItemsProjectionMap.put(ItemsEntry.ALIAS_COLUMN_LAST_UPDATED_ON, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_LAST_UPDATED_ON + " AS " + ItemsEntry.ALIAS_COLUMN_LAST_UPDATED_ON);
         sAllBuyItemsProjectionMap.put(ToBuyItemsEntry._ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry._ID + " AS " + ToBuyItemsEntry._ID);
         sAllBuyItemsProjectionMap.put(ToBuyItemsEntry.COLUMN_ITEM_ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_ITEM_ID);
         sAllBuyItemsProjectionMap.put(ToBuyItemsEntry.COLUMN_QUANTITY, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_QUANTITY);
         sAllBuyItemsProjectionMap.put(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID);
         sAllBuyItemsProjectionMap.put(ToBuyItemsEntry.COLUMN_IS_CHECKED, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_IS_CHECKED);
-        sAllBuyItemsProjectionMap.put(ToBuyItemsEntry.ALIAS_COLUMN_LAST_UPDATED_ON, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_LAST_UPDATED_ON + " AS " + ToBuyItemsEntry.ALIAS_COLUMN_LAST_UPDATED_ON);
+        sAllBuyItemsProjectionMap.put(PricesEntry.ALIAS_ID, PricesEntry.TABLE_NAME + "." + PricesEntry._ID + " AS " + PricesEntry.ALIAS_ID);
         sAllBuyItemsProjectionMap.put(PricesEntry.COLUMN_PRICE_TYPE_ID, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_PRICE_TYPE_ID);
         sAllBuyItemsProjectionMap.put(PricesEntry.COLUMN_PRICE, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_PRICE);
         sAllBuyItemsProjectionMap.put(PricesEntry.COLUMN_CURRENCY_CODE, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_CURRENCY_CODE);
+        sAllBuyItemsProjectionMap.put(PricesEntry.COLUMN_BUNDLE_QTY, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_BUNDLE_QTY);
 
     }
 
@@ -134,35 +139,48 @@ public class ShoppingListProvider extends ContentProvider {
                 ShoppingListContract.PATH_BUY_ITEMS + "/" +
                         ShoppingListContract.PATH_ITEMS, BUY_ITEMS_JOIN_ITEMS_JOIN_PRICES);
 
+        sUriMatcher.addURI(ShoppingListContract.CONTENT_AUTHORITY,
+                ShoppingListContract.PATH_BUY_ITEMS + "/" +
+                        ShoppingListContract.PATH_ITEMS + "/#", BUY_ITEM_JOIN_ITEMS_JOIN_PRICES_ITEMID);
+
     }
 
     private ShoppingListDbHelper mShoppingListDbHelper;
 
 
     @Override
-    public boolean onCreate() {
+    public boolean onCreate()
+    {
         mShoppingListDbHelper = new ShoppingListDbHelper(getContext());
         return true;
     }
 
     @Override
-    public Uri insert(@NonNull Uri uri, ContentValues values) {
+    public Uri insert(@NonNull Uri uri, ContentValues values)
+    {
         int matchCode = sUriMatcher.match(uri);
+        Uri resultUri;
         switch (matchCode) {
             case ITEMS:
-                return insertItem(uri, values, null);
+                resultUri = insertItem(uri, values, null);
+                break;
             case PRICES:
-                return insertPrice(uri, values, null);
+                resultUri = insertPrice(uri, values, null);
+                break;
             case BUY_ITEMS:
-                return insertBuyItem(uri, values, null);
+                resultUri = insertBuyItem(uri, values, null);
+                break;
             default:
                 throw new IllegalArgumentException("Insert of such type is NOT supported for URI" + uri + " >>> match code " + matchCode);
         }
+        notifyChange();
+        return resultUri;
     }
 
     @Override
     public Cursor query(@NonNull Uri uri, String[] projection, String selection,
-                        String[] selectionArgs, String sortOrder) {
+                        String[] selectionArgs, String sortOrder)
+    {
         int matchCode = sUriMatcher.match(uri);
         Cursor cursor = null;
         switch (matchCode) {
@@ -171,7 +189,7 @@ public class ShoppingListProvider extends ContentProvider {
                 break;
             case ITEMS_JOIN_BUY_ITEMS:
                 cursor = getCatalogueAndBuyStatus(uri, projection, selection,
-                    selectionArgs, sortOrder);
+                        selectionArgs, sortOrder);
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
                 break;
             case PRICES:
@@ -185,13 +203,18 @@ public class ShoppingListProvider extends ContentProvider {
                 cursor = getBuyItems(uri, projection, selection, selectionArgs, sortOrder);
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
                 break;
+            case BUY_ITEM_JOIN_ITEMS_JOIN_PRICES_ITEMID:
+                cursor = getBuyItem(uri, projection, selection, selectionArgs, sortOrder);
+                cursor.setNotificationUri(getContext().getContentResolver(), uri);
+                break;
             default:
                 throw new IllegalArgumentException("Query request is NOT supported for " + uri);
         }
         return cursor;
     }
 
-    private Cursor queryItems(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+    private Cursor queryItems(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder)
+    {
         SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
         builder.setTables(ItemsEntry.TABLE_NAME);
         builder.setProjectionMap(sItemsProjectionMap);
@@ -200,7 +223,8 @@ public class ShoppingListProvider extends ContentProvider {
     }
 
     @Override
-    public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+    public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs)
+    {
         int result = 0;
         int matchCode = sUriMatcher.match(uri);
         switch (matchCode) {
@@ -237,12 +261,14 @@ public class ShoppingListProvider extends ContentProvider {
     }
 
     private int updatePrices(Uri uri, ContentValues values, String selection,
-                             String[] selectionArgs) {
+                             String[] selectionArgs)
+    {
         return mShoppingListDbHelper.getWritableDatabase()
                 .update(PricesEntry.TABLE_NAME, values, selection, selectionArgs);
     }
 
-    private int queryPrices(ContentValues values, String selection, String[] selectionArgs) {
+    private int queryPrices(ContentValues values, String selection, String[] selectionArgs)
+    {
         int result;
         result = mShoppingListDbHelper.getWritableDatabase().
                 update(PricesEntry.TABLE_NAME, values,
@@ -250,7 +276,8 @@ public class ShoppingListProvider extends ContentProvider {
         return result;
     }
 
-    private int updateItems(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+    private int updateItems(Uri uri, ContentValues values, String selection, String[] selectionArgs)
+    {
         int result;
         result = mShoppingListDbHelper.getWritableDatabase().
                 update(ItemsEntry.TABLE_NAME, values,
@@ -260,10 +287,12 @@ public class ShoppingListProvider extends ContentProvider {
 
 
     @Override
-    public int delete(Uri uri, String selection, String[] selectionArgs) {
+    public int delete(Uri uri, String selection, String[] selectionArgs)
+    {
         int matchCode = sUriMatcher.match(uri);
         int deleted;
         long _id;
+
         switch (matchCode) {
             case ITEMS:
                 deleted = deleteItems(uri, selection, selectionArgs);
@@ -280,22 +309,51 @@ public class ShoppingListProvider extends ContentProvider {
                 selectionArgs = new String[]{String.valueOf(_id)};
                 deleted = mShoppingListDbHelper.getWritableDatabase()
                         .delete(ToBuyItemsEntry.TABLE_NAME, selection, selectionArgs);
+
                 break;
             default:
                 throw new IllegalArgumentException("Delete of this type is NOT supported for " + uri);
 
-
         }
+
+        notifyChange();
         return deleted;
     }
 
-    private int deleteItems(Uri uri, String selection, String[] selectionArgs) {
+    private void notifyChange()
+    {
+        Uri SHOPPING_LIST_URI2 = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI,
+            ShoppingListContract.PATH_ITEMS);
+
+        Uri CATALOGUE_URI2 = Uri.withAppendedPath(ItemsEntry.CONTENT_URI,
+            ShoppingListContract.PATH_BUY_ITEMS);
+
+        getContext().getContentResolver().notifyChange(SHOPPING_LIST_URI2, null);
+        getContext().getContentResolver().notifyChange(CATALOGUE_URI2, null);
+
+
+//    /**
+//     * Uri for shopping list
+//     */
+//    public static final Uri SHOPPING_LIST_URI = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI,
+//            ShoppingListContract.PATH_ITEMS);
+//
+//    /**
+//     * Uri for catalogue
+//     */
+//    public static final Uri CATALOGUE_URI = Uri.withAppendedPath(ItemsEntry.CONTENT_URI,
+//            ShoppingListContract.PATH_BUY_ITEMS);
+    }
+
+    private int deleteItems(Uri uri, String selection, String[] selectionArgs)
+    {
         SQLiteDatabase database = mShoppingListDbHelper.getWritableDatabase();
         return database.delete(ItemsEntry.TABLE_NAME, selection, selectionArgs);
     }
 
     private Cursor queryPrices(Uri uri, String[] projection, String selection,
-                               String[] selectionArgs, String sortOrder) {
+                               String[] selectionArgs, String sortOrder)
+    {
         Cursor cursor;
         SQLiteDatabase database = mShoppingListDbHelper.getReadableDatabase();
         cursor = database.query(PricesEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
@@ -313,7 +371,8 @@ public class ShoppingListProvider extends ContentProvider {
      * @param sortOrder
      * @return
      */
-    private Cursor getBuyItems(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+    private Cursor getBuyItems_bk(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder)
+    {
 
 //        *           "SELECT items._id AS itemId," +
 //        *           "items.name, items.brand, items.country_origin, " +
@@ -331,15 +390,15 @@ public class ShoppingListProvider extends ContentProvider {
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
 
         queryBuilder.setTables(ToBuyItemsEntry.TABLE_NAME +
-                                " LEFT JOIN " + ItemsEntry.TABLE_NAME +
-                                " ON " + ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_ITEM_ID +
-                                                "=" +
-                                    ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID +
-                                " LEFT JOIN " + PricesEntry.TABLE_NAME +
-                                " ON " + ToBuyItemsEntry.TABLE_NAME + "." +
-                                ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID +
-                                                "=" +
-                                PricesEntry.TABLE_NAME + "." + PricesEntry._ID
+                " LEFT JOIN " + ItemsEntry.TABLE_NAME +
+                " ON " + ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_ITEM_ID +
+                "=" +
+                ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID +
+                " LEFT JOIN " + PricesEntry.TABLE_NAME +
+                " ON " + ToBuyItemsEntry.TABLE_NAME + "." +
+                ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID +
+                "=" +
+                PricesEntry.TABLE_NAME + "." + PricesEntry._ID
         );
 
         queryBuilder.setProjectionMap(sAllBuyItemsProjectionMap);
@@ -354,6 +413,115 @@ public class ShoppingListProvider extends ContentProvider {
     }
 
     /**
+     * Get all to buy items in the buy_items table and its parent record in items and prices
+     * table
+     *
+     * @param uri
+     * @param projection
+     * @param selection
+     * @param selectionArgs
+     * @param sortOrder
+     * @return
+     */
+    private Cursor getBuyItems(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder)
+    {
+
+//        *           "SELECT items._id AS itemId," +
+//        *           "items.name, items.brand, items.country_origin, " +
+//        *           "items.description, items.last_updated_on, " +
+//        *           "buy_items._id AS dbBuyItemId, buy_items.quantity, " +
+//        *           "buy_items.selected_price_id, buy_items.is_checked, buy_items.last_updated_on, " +
+//                    "prices.price_type_id, prices.price, prices.currency_code
+//        *           "FROM buy_items " +
+//        *           "LEFT JOIN items " +
+//        *           "ON buy_items._id=items._id " +
+//                    "LEFT JOIN prices
+//                    "ON buy_items.selected_price_id=prices._id
+
+
+        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+
+        queryBuilder.setTables(ToBuyItemsEntry.TABLE_NAME +
+                " LEFT JOIN " + ItemsEntry.TABLE_NAME +
+                " ON " + ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_ITEM_ID +
+                "=" +
+                ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID +
+                " LEFT JOIN " + PricesEntry.TABLE_NAME +
+                " ON " + ToBuyItemsEntry.TABLE_NAME + "." +
+                ToBuyItemsEntry.COLUMN_ITEM_ID +
+                "=" +
+                PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_ITEM_ID
+        );
+
+        queryBuilder.setProjectionMap(sAllBuyItemsProjectionMap);
+
+        // Get the database and run the query
+        SQLiteDatabase database = mShoppingListDbHelper.getReadableDatabase();
+        Cursor cursor = queryBuilder.query(database, projection, selection, selectionArgs, null, null, sortOrder);
+
+        // Tell the cursor what uri to watch, so it knows when its source data changes
+        //cursor.setNotificationUri(getContext().getContentResolver(), uri);
+        return cursor;
+    }
+
+    /**
+     * Get a specific buy item in the buy_items table and its parent record in items and prices
+     * table. This query will return more than one record due to an item having more than 1 price.
+     *
+     * @param uri
+     * @param projection
+     * @param selection
+     * @param selectionArgs
+     * @param sortOrder
+     * @return
+     */
+    private Cursor getBuyItem(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder)
+    {
+
+//        *           "SELECT items._id AS itemId," +
+//        *           "items.name, items.brand, items.country_origin, " +
+//        *           "items.description, items.last_updated_on, " +
+//        *           "buy_items._id AS dbBuyItemId, buy_items.quantity, " +
+//        *           "buy_items.selected_price_id, buy_items.is_checked, buy_items.last_updated_on, " +
+//                    "prices.price_type_id, prices.price, prices.currency_code
+//        *           "FROM buy_items " +
+//        *           "LEFT JOIN items " +
+//        *           "ON buy_items._id=items._id " +
+//                    "LEFT JOIN prices
+//                    "ON buy_items.selected_price_id=prices._id
+
+
+        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+
+        queryBuilder.setTables(ToBuyItemsEntry.TABLE_NAME +
+                " LEFT JOIN " + ItemsEntry.TABLE_NAME +
+                " ON " + ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_ITEM_ID +
+                "=" +
+                ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID +
+                " LEFT JOIN " + PricesEntry.TABLE_NAME +
+                " ON " + ToBuyItemsEntry.TABLE_NAME + "." +
+                ToBuyItemsEntry.COLUMN_ITEM_ID +
+                "=" +
+                PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_ITEM_ID
+        );
+
+        queryBuilder.setProjectionMap(sAllBuyItemsProjectionMap);
+
+        long itemId = ContentUris.parseId(uri);
+        selection = PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_ITEM_ID + "=?";
+        selectionArgs = new String[]{String.valueOf(itemId)};
+
+        // Get the database and run the query
+        SQLiteDatabase database = mShoppingListDbHelper.getReadableDatabase();
+        Cursor cursor = queryBuilder.query(database, projection, selection, selectionArgs, null, null, sortOrder);
+
+        // Tell the cursor what uri to watch, so it knows when its source data changes
+        //cursor.setNotificationUri(getContext().getContentResolver(), uri);
+        return cursor;
+    }
+
+
+    /**
      * Get all items in the items table and its child record in buy items
      * table
      *
@@ -364,7 +532,8 @@ public class ShoppingListProvider extends ContentProvider {
      * @param sortOrder
      * @return
      */
-    private Cursor getCatalogueAndBuyStatus(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+    private Cursor getCatalogueAndBuyStatus(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder)
+    {
 
 //        *           "SELECT items._id AS itemId," +
 //        *           "items.name, items.brand, items.country_origin, " +
@@ -394,45 +563,49 @@ public class ShoppingListProvider extends ContentProvider {
         return cursor;
     }
 
-    private Uri insertBuyItem(Uri uri, ContentValues values, SQLiteDatabase database) {
+    private Uri insertBuyItem(Uri uri, ContentValues values, SQLiteDatabase database)
+    {
         if (database == null)
             database = mShoppingListDbHelper.getWritableDatabase();
         long _id = database.insert(ToBuyItemsEntry.TABLE_NAME, null, values);
         if (_id == -1)
             return null;
         else {
-            getContext().getContentResolver().notifyChange(uri, null);
+            //getContext().getContentResolver().notifyChange(uri, null);
             return ContentUris.withAppendedId(uri, _id);
         }
     }
 
-    private Uri insertPrice(Uri uri, ContentValues values, SQLiteDatabase database) {
+    private Uri insertPrice(Uri uri, ContentValues values, SQLiteDatabase database)
+    {
         if (database == null)
             database = mShoppingListDbHelper.getWritableDatabase();
         long _id = database.insert(PricesEntry.TABLE_NAME, null, values);
         if (_id == -1)
             return null;
         else {
-            getContext().getContentResolver().notifyChange(uri, null);
+            //getContext().getContentResolver().notifyChange(uri, null);
             return ContentUris.withAppendedId(uri, _id);
         }
     }
 
-    private Uri insertItem(Uri uri, ContentValues values, SQLiteDatabase database) {
+    private Uri insertItem(Uri uri, ContentValues values, SQLiteDatabase database)
+    {
         if (database == null)
             database = mShoppingListDbHelper.getWritableDatabase();
         long _id = database.insert(ItemsEntry.TABLE_NAME, null, values);
         if (_id == -1)
             return null;
         else {
-            getContext().getContentResolver().notifyChange(uri, null);
+            //getContext().getContentResolver().notifyChange(uri, null);
             return ContentUris.withAppendedId(uri, _id);
         }
     }
 
     @Nullable
     @Override
-    public String getType(Uri uri) {
+    public String getType(Uri uri)
+    {
         final int match = sUriMatcher.match(uri);
         switch (match) {
             case ITEMS:

@@ -27,4 +27,5 @@
     <string name="text_item_description_max_length">30</string>
     <string name="mandatory_name">Name is required</string>
     <string name="mandatory_quantity">Quantity must be at least 1</string>
+    <string name="view_buy_item_details">Item details</string>
 </resources>

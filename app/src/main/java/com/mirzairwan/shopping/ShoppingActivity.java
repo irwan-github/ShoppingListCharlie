@@ -74,12 +74,12 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
     }
 
     @Override
-    public void onViewBuyItem(long rowId)
+    public void onViewBuyItem(long itemId)
     {
         Intent intentToViewItem = new Intent();
         intentToViewItem.setClass(this, BuyingActivity.class);
         Uri uri = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI, ShoppingListContract.PATH_ITEMS);
-        uri = ContentUris.withAppendedId(uri, rowId);
+        uri = ContentUris.withAppendedId(uri, itemId);
         intentToViewItem.setData(uri);
         startActivity(intentToViewItem);
     }

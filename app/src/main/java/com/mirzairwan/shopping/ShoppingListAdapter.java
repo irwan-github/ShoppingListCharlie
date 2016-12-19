@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -84,7 +83,7 @@ public class ShoppingListAdapter extends CursorAdapter
                                         Activity.MODE_PRIVATE);
         String countryCode = prefs.getString(ShoppingActivity.HOME_COUNTRY_CODE,
                                                         Locale.getDefault().getCountry());
-        Log.d(LOG_TAG, ">>>Default Country " + Locale.getDefault().getCountry());
+        //Log.d(LOG_TAG, ">>>Default Country " + Locale.getDefault().getCountry());
         tagViews.tvSelectedPrice.setText(NumberFormatter.formatCountryCurrency(countryCode,
                                                                      currencyCode, priceTag/100));
 

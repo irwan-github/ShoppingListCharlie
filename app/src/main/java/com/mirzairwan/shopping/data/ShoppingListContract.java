@@ -31,6 +31,17 @@ public final class ShoppingListContract
     public static final String PATH_BUY_ITEMS = "buy-items";
     public static final String PATH_PRICES = "prices";
 
+    public static final class ShoppingList
+    {
+            public static final Uri URI = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI,
+                ShoppingListContract.PATH_ITEMS);
+    }
+
+    public static final class Catalogue
+    {
+        public static final Uri URI = Uri.withAppendedPath(ItemsEntry.CONTENT_URI,
+                ShoppingListContract.PATH_BUY_ITEMS);
+    }
 
     public static final class ItemsEntry implements BaseColumns
     {
@@ -90,6 +101,8 @@ public final class ShoppingListContract
 
         public static final String TABLE_NAME = "prices";
 
+        public static final String ALIAS_ID = "price_id";
+
         /**
          * INTEGER
          */
@@ -125,6 +138,7 @@ public final class ShoppingListContract
          * INTEGER
          */
         public static final String COLUMN_LAST_UPDATED_ON = "last_updated_on";
+
     }
 
     public static final class ToBuyItemsEntry implements BaseColumns
@@ -165,4 +179,6 @@ public final class ShoppingListContract
         public static final String ALIAS_COLUMN_LAST_UPDATED_ON = "buy_item_last_updated_on";
 
     }
+//
+
 }

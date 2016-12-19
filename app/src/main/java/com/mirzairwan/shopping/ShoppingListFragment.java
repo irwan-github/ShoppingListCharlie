@@ -83,7 +83,11 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         lvBuyItems.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                onFragmentInteractionListener.onViewBuyItem(id);
+                //The id parameter is a buy_item id. However, the requirement is item id
+                Cursor cursor = (Cursor)shoppingListAdapter.getItem(position);
+                int colItemIdIdx = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_ITEM_ID);
+                long itemId = cursor.getLong(colItemIdIdx);
+                onFragmentInteractionListener.onViewBuyItem(itemId);
             }
         });
     }
@@ -123,8 +127,9 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                                             PricesEntry.COLUMN_CURRENCY_CODE};
 
         Uri uri = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI, ShoppingListContract.PATH_ITEMS);
+        String selection = PricesEntry.TABLE_NAME + "." + PricesEntry._ID + "=" + ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID;
         String orderBy = ItemsEntry.COLUMN_NAME;
-        CursorLoader loader = new CursorLoader(getActivity(), uri, projection, null, null, null);
+        CursorLoader loader = new CursorLoader(getActivity(), uri, projection, selection, null, null);
         return loader;
     }
 
