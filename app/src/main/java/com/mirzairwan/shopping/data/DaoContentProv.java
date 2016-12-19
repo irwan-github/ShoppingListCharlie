@@ -112,24 +112,25 @@ public class DaoContentProv implements DaoManager
         ContentProviderResult[] result;
         Date updateTime = new Date();
 
-        ContentValues itemValues = new ContentValues();
-        itemValues = getItemContentValues(item, itemValues);
+        ContentValues itemValues = getItemContentValues(item, null);
 
         ArrayList<ContentProviderOperation> ops =
                 new ArrayList<ContentProviderOperation>();
 
+        Uri updateItemUri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
         ContentProviderOperation.Builder itemBuilder =
-                ContentProviderOperation.newUpdate(ItemsEntry.CONTENT_URI);
+                ContentProviderOperation.newUpdate(updateItemUri);
 
-        ContentProviderOperation itemInsertOp = itemBuilder.withValues(itemValues).build();
+        ContentProviderOperation itemUpdateOp = itemBuilder.withValues(itemValues).build();
 
-        ops.add(itemInsertOp);
+        ops.add(itemUpdateOp);
 
         for (int j = 0; j < itemPrices.size(); ++j)
         {
             Price price = itemPrices.get(j);
+            Uri updatePriceUri = ContentUris.withAppendedId(PricesEntry.CONTENT_URI, price.getId());
             ContentProviderOperation.Builder priceBuilder =
-                    ContentProviderOperation.newUpdate(PricesEntry.CONTENT_URI);
+                    ContentProviderOperation.newUpdate(updatePriceUri);
 
             ContentValues priceContentValues = getPriceContentValues(price, item.getId(), updateTime, null);
 
@@ -138,8 +139,9 @@ public class DaoContentProv implements DaoManager
             ops.add(priceBuilder.build());
         }
 
+        Uri updateBuyItemUri = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItem.getId());
         ContentProviderOperation.Builder buyItemBuilder =
-                ContentProviderOperation.newUpdate(ToBuyItemsEntry.CONTENT_URI);
+                ContentProviderOperation.newUpdate(updateBuyItemUri);
 
         buyItemBuilder = buyItemBuilder.withValues(getBuyItemContentValues(buyItem, updateTime));
 
@@ -203,7 +205,7 @@ public class DaoContentProv implements DaoManager
         } else {
             priceValues.put(PricesEntry.COLUMN_PRICE, (long) (price.getBundlePrice() * 100));
             priceValues.put(PricesEntry.COLUMN_BUNDLE_QTY,
-                    (long) (price.getBundleQuantity() * 100));
+                    (long) (price.getBundleQuantity()));
             priceValues.put(PricesEntry.COLUMN_PRICE_TYPE_ID, Price.Type.BUNDLE_PRICE.getType());
         }
 

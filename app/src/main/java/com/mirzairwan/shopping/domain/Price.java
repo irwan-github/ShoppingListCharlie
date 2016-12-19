@@ -55,7 +55,7 @@ public class Price implements Parcelable
      * @param shopId The identifier of the shop
      */
     public Price(double bundlePrice, double bundleQuantity,
-                 String currencyCode, int shopId)
+                 String currencyCode, long shopId)
     {
         mBundlePrice = bundlePrice;
         mBundleQuantity = bundleQuantity;
@@ -157,7 +157,7 @@ public class Price implements Parcelable
         return mUnitPrice;
     }
 
-    void setBundlePrice(double bundlePrice, double bundleQuantity)
+    public void setBundlePrice(double bundlePrice, double bundleQuantity)
     {
         mBundleQuantity = bundleQuantity;
         mBundlePrice = bundlePrice;

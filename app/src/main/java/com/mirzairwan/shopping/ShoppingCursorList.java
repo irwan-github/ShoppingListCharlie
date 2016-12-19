@@ -19,6 +19,7 @@ import java.util.Currency;
 public class ShoppingCursorList implements ShoppingList
 {
     private Cursor mCatalogueCursor;
+    private long defaultShopId = 1;
 
     public ShoppingCursorList()
     {
@@ -40,24 +41,29 @@ public class ShoppingCursorList implements ShoppingList
         item.setBrand(itemBrand);
         item.setDescription(itemDescription);
 
-        Currency currency = Currency.getInstance(currencyCode);
-        int shopId = 1;
+        Currency currency = null;
 
-        Price unitPriceFinal = new Price(unitPrice, currency.getCurrencyCode(), shopId);
-        item.addPrice(unitPriceFinal);
-
-        Price bundlePriceFinal = new Price(bundlePrice, bundleQty, currency.getCurrencyCode(), shopId);
-        item.addPrice(bundlePriceFinal);
-
-
-        Price selectedPrice;
+        Price selectedPrice = null;
         if(selectedPriceType == null)
             selectedPriceType = Price.Type.UNIT_PRICE;
 
-        if (selectedPriceType == Price.Type.UNIT_PRICE)
-            selectedPrice = unitPriceFinal;
-        else
-            selectedPrice = bundlePriceFinal;
+        if(currencyCode != null) {
+            currency = Currency.getInstance(currencyCode);
+
+
+            Price unitPriceFinal = new Price(unitPrice, currency.getCurrencyCode(), defaultShopId);
+            item.addPrice(unitPriceFinal);
+
+            Price bundlePriceFinal = new Price(bundlePrice, bundleQty, currency.getCurrencyCode(), defaultShopId);
+            item.addPrice(bundlePriceFinal);
+
+            if (selectedPriceType == Price.Type.UNIT_PRICE)
+                selectedPrice = unitPriceFinal;
+            else
+                selectedPrice = bundlePriceFinal;
+
+
+        }
 
         return buyItem(item, quantityToBuy, selectedPrice);
 

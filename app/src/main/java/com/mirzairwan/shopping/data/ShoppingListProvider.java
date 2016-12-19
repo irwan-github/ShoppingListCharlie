@@ -113,6 +113,9 @@ public class ShoppingListProvider extends ContentProvider
         sAllBuyItemsProjectionMap.put(PricesEntry.COLUMN_CURRENCY_CODE, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_CURRENCY_CODE);
         sAllBuyItemsProjectionMap.put(PricesEntry.COLUMN_BUNDLE_QTY, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_BUNDLE_QTY);
 
+        sAllBuyItemsProjectionMap.put(PricesEntry.COLUMN_SHOP_ID, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_SHOP_ID);
+
+
     }
 
 
@@ -261,6 +264,7 @@ public class ShoppingListProvider extends ContentProvider
             default:
                 throw new IllegalArgumentException("This type of update is NOT supported for " + uri);
         }
+        notifyChange();
         return result;
     }
 

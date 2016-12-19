@@ -32,7 +32,7 @@ public class Item implements Parcelable {
         mItemName = itemName;
     }
 
-    public Item(int id, String itemName, String brand, String country, String description, Date lastUpdatedOn) {
+    public Item(long id, String itemName, String brand, String country, String description, Date lastUpdatedOn) {
         if (itemName == null && itemName.trim().equals(""))
             throw new IllegalArgumentException("Item name cannot empty");
         mId = nextId.incrementAndGet();
@@ -99,7 +99,7 @@ public class Item implements Parcelable {
         return mPrices;
     }
 
-    void setName(String itemName) {
+    public void setName(String itemName) {
         mItemName = itemName;
     }
 
@@ -107,7 +107,7 @@ public class Item implements Parcelable {
         return mId;
     }
 
-    Price getItemPrice(int shopId, Price.Type selectedPriceType) {
+    Price getItemPrice(long shopId, Price.Type selectedPriceType) {
         for (Price price : mPrices) {
             if (price.getShopId() == shopId) {
 

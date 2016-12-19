@@ -75,7 +75,7 @@ public class ToBuyItem implements Parcelable
         return mQuantity;
     }
 
-    void setQuantity(int quantity)
+    public void setQuantity(int quantity)
     {
         this.mQuantity = quantity;
     }
@@ -85,7 +85,12 @@ public class ToBuyItem implements Parcelable
         return mItem;
     }
 
-    void selectPrice(int shopId, Price.Type selectedPriceType)
+    public void setItem(Item item)
+    {
+        mItem = item;
+    }
+
+    public void selectPrice(long shopId, Price.Type selectedPriceType)
     {
         mSelectedPrice = mItem.getItemPrice(shopId, selectedPriceType);
     }
