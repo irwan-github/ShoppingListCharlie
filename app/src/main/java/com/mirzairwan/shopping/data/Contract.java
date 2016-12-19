@@ -41,6 +41,9 @@ public final class Contract
     {
         public static final Uri URI = Uri.withAppendedPath(ItemsEntry.CONTENT_URI,
                 Contract.PATH_BUY_ITEMS);
+
+        public static final Uri ITEMS_PRICES_URI = Uri.withAppendedPath(ItemsEntry.CONTENT_URI,
+                Contract.PATH_PRICES);
     }
 
     public static final class ItemsEntry implements BaseColumns

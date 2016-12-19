@@ -28,4 +28,6 @@ public interface DaoManager
     int delete(ToBuyItem buyItem);
 
     String update(ToBuyItem toBuyItem, Item item, List<Price> prices);
+
+    int update(long buyItemId, boolean isChecked);
 }

@@ -14,8 +14,11 @@ import android.view.MenuItem;
 import com.mirzairwan.shopping.data.AndroidDatabaseManager;
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
+import com.mirzairwan.shopping.data.Contract.Catalogue;
 
-public class ShoppingActivity extends AppCompatActivity implements ShoppingListFragment.OnFragmentInteractionListener
+public class ShoppingActivity extends AppCompatActivity implements
+                        ShoppingListFragment.OnFragmentInteractionListener,
+                        CatalogFragment.OnFragmentInteractionListener
 {
     public static final int CREATE_BUY_ITEM_REQUEST_CODE = 1; //use for startActivityForResult
     public static final int EDIT_BUY_ITEM_REQUEST_CODE = 2; //use for startActivityForResult
@@ -68,12 +71,6 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
     }
 
     @Override
-    public void onCheckBuyItem(boolean isChecked, int mBuyItemPosition)
-    {
-
-    }
-
-    @Override
     public void onViewBuyItem(long itemId)
     {
         Intent intentToViewItem = new Intent();
@@ -88,5 +85,15 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
         //Do nothing for now
+    }
+
+    @Override
+    public void onViewItemDetails(long itemId)
+    {
+        Intent intentToViewItem = new Intent();
+        intentToViewItem.setClass(this, ItemEditingActivity.class);
+        Uri uri = ContentUris.withAppendedId(Catalogue.ITEMS_PRICES_URI, itemId);
+        intentToViewItem.setData(uri);
+        startActivity(intentToViewItem);
     }
 }

@@ -12,7 +12,6 @@ import android.widget.CompoundButton;
 import android.widget.CursorAdapter;
 import android.widget.TextView;
 
-import com.mirzairwan.shopping.ShoppingListFragment.OnFragmentInteractionListener;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
@@ -26,9 +25,9 @@ import java.util.Locale;
 public class ShoppingListAdapter extends CursorAdapter
 {
     private static final String LOG_TAG = ShoppingListAdapter.class.getSimpleName();
-    private OnFragmentInteractionListener mOnFragmentInteractionListener;
+    private OnCheckBuyItemListener mOnFragmentInteractionListener;
 
-    public ShoppingListAdapter(Context context, Cursor cursor, OnFragmentInteractionListener onFragmentInteractionListener)
+    public ShoppingListAdapter(Context context, Cursor cursor, OnCheckBuyItemListener onFragmentInteractionListener)
     {
         super(context, cursor, 0);
         mOnFragmentInteractionListener = onFragmentInteractionListener;
@@ -107,10 +106,10 @@ public class ShoppingListAdapter extends CursorAdapter
 
     private static class OnItemCheckedChangeListener implements CompoundButton.OnCheckedChangeListener
     {
-        private OnFragmentInteractionListener mOnFragmentInteractionListener;
+        private OnCheckBuyItemListener mOnFragmentInteractionListener;
         private int mBuyItemPosition;
 
-        public OnItemCheckedChangeListener(OnFragmentInteractionListener onFragmentInteractionListener)
+        public OnItemCheckedChangeListener(OnCheckBuyItemListener onFragmentInteractionListener)
         {
             mOnFragmentInteractionListener = onFragmentInteractionListener;
         }
@@ -125,5 +124,10 @@ public class ShoppingListAdapter extends CursorAdapter
         {
             mBuyItemPosition = position;
         }
+    }
+
+    public interface OnCheckBuyItemListener
+    {
+        void onCheckBuyItem(boolean isChecked, int mBuyItemPosition);
     }
 }

@@ -26,7 +26,10 @@ import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
  * Created by Mirza Irwan on 19/11/16.
  */
 
-public class ShoppingListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
+public class ShoppingListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
+        ShoppingListAdapter.OnCheckBuyItemListener
+
+{
     public static final String BUY_LIST = "BUY_LIST";
     private static final String LOG_TAG = ShoppingListFragment.class.getSimpleName();
     private static final int BUY_ITEM = 1;
@@ -95,7 +98,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
     private void setupListView(ListView lvBuyItems) {
         shoppingListAdapter = new ShoppingListAdapter(getActivity(), null,
-                onFragmentInteractionListener);
+                this);
         lvBuyItems.setAdapter(shoppingListAdapter);
 
 
@@ -145,14 +148,24 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         shoppingListAdapter.swapCursor(null);
     }
 
+    @Override
+    public void onCheckBuyItem(boolean isChecked, int mBuyItemPosition)
+    {
+        //Save buy item check status
+        Cursor cursor = (Cursor)shoppingListAdapter.getItem(mBuyItemPosition);
+        int buyItemIdColIdx = cursor.getColumnIndex(ToBuyItemsEntry._ID);
+        long buyItemId = cursor.getLong(buyItemIdColIdx);
+        Builder.getDaoManager(getActivity()).update(buyItemId, isChecked);
+    }
+
     public interface OnFragmentInteractionListener
     {
         void onAdditem();
 
-        void onCheckBuyItem(boolean isChecked, int mBuyItemPosition);
-
         void onViewBuyItem(long rowId);
     }
+
+
 
 
 }

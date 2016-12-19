@@ -18,6 +18,9 @@
         <activity android:name=".BuyingActivity"
                   android:windowSoftInputMode="stateHidden|stateAlwaysHidden"
             />
+        <activity android:name=".ItemEditingActivity"
+                  android:windowSoftInputMode="stateHidden|stateAlwaysHidden"
+            />
         <activity android:name=".data.AndroidDatabaseManager"/>
         <provider
             android:authorities="com.mirzairwan.shopping"

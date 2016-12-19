@@ -12,6 +12,7 @@ import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -31,12 +32,14 @@ import com.mirzairwan.shopping.domain.ToBuyItem;
  */
 
 public class CatalogFragment extends Fragment implements OnToggleCatalogItemListener,
-                                                            LoaderManager.LoaderCallbacks<Cursor>
+                                                            LoaderManager.LoaderCallbacks<Cursor>,
+        AdapterView.OnItemClickListener
 {
     private static final int CATALOG_ID = 2;
     private CatalogAdapter catalogAdapter;
     private ShoppingList shoppingList;
     private DaoManager daoManager;
+    private OnFragmentInteractionListener mOnFragmentInteractionListener;
 
     public static CatalogFragment newInstance()
     {
@@ -54,6 +57,7 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
     {
         super.onAttach(activity);
         daoManager = new DaoContentProv(activity);
+        mOnFragmentInteractionListener = (OnFragmentInteractionListener)activity;
     }
 
     @Nullable
@@ -81,6 +85,8 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
     {
         catalogAdapter = new CatalogAdapter(getActivity(), null, this);
         lvAllItems.setAdapter(catalogAdapter);
+
+        lvAllItems.setOnItemClickListener(this);
     }
 
     @Override
@@ -130,5 +136,17 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
     {
         catalogAdapter.swapCursor(null);
         shoppingList = null;
+    }
+
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+    {
+        mOnFragmentInteractionListener.onViewItemDetails(id);
+    }
+
+    public interface OnFragmentInteractionListener
+    {
+        void onViewItemDetails(long itemId);
     }
 }

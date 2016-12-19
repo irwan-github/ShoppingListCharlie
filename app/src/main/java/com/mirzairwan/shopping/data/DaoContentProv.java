@@ -38,6 +38,15 @@ public class DaoContentProv implements DaoManager
     }
 
     @Override
+    public int update(long buyItemId, boolean isChecked)
+    {
+        ContentValues values = new ContentValues();
+        values.put(ToBuyItemsEntry.COLUMN_IS_CHECKED, isChecked? 1 : 0);
+        Uri updateBuyItemUri = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItemId);
+        return mContext.getContentResolver().update(updateBuyItemUri, values, null, null);
+    }
+
+    @Override
     public String insert(ToBuyItem buyItem, Item item, List<Price> itemPrices)
     {
         Log.d(LOG_TAG, "Save domain object graph");
