@@ -19,5 +19,19 @@ public interface ShoppingList
      * @param selectedPriceType
      * @return ToBuyItem item to buy
      */
-    ToBuyItem addNewItem(String itemName, String itemBrand, String itemDescription, int quantityToBuy, String currencyCode, double unitPrice, double bundlePrice, double bundleQty, Price.Type selectedPriceType);
+    ToBuyItem createItem(String itemName, String itemBrand, String itemDescription, int quantityToBuy, String currencyCode, double unitPrice, double bundlePrice, double bundleQty, Price.Type selectedPriceType);
+
+    /**
+     * Add item from catalogue to "shopping list"
+     *
+     * @param itemId of item in all items list
+     */
+    ToBuyItem buyItem(int itemId);
+
+    /**
+     * Remove item from shopping list
+     * @param position
+     * @return
+     */
+    ToBuyItem removeItem(int position);
 }

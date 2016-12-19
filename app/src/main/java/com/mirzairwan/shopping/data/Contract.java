@@ -8,7 +8,7 @@ import android.provider.BaseColumns;
  * Created by Mirza Irwan on 9/12/16.
  */
 
-public final class ShoppingListContract
+public final class Contract
 {
     /**
      * The "Content authority" is a name for the entire content provider, similar to the
@@ -34,13 +34,13 @@ public final class ShoppingListContract
     public static final class ShoppingList
     {
             public static final Uri URI = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI,
-                ShoppingListContract.PATH_ITEMS);
+                Contract.PATH_ITEMS);
     }
 
     public static final class Catalogue
     {
         public static final Uri URI = Uri.withAppendedPath(ItemsEntry.CONTENT_URI,
-                ShoppingListContract.PATH_BUY_ITEMS);
+                Contract.PATH_BUY_ITEMS);
     }
 
     public static final class ItemsEntry implements BaseColumns

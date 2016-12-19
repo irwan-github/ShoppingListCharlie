@@ -10,8 +10,8 @@ import android.widget.CursorAdapter;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-import com.mirzairwan.shopping.data.ShoppingListContract;
-import com.mirzairwan.shopping.data.ShoppingListContract.ItemsEntry;
+import com.mirzairwan.shopping.data.Contract;
+import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 
 /**
  * Created by Mirza Irwan on 18/12/16.
@@ -65,7 +65,7 @@ public class CatalogAdapter extends CursorAdapter
         //Show full star when item is in buy list. Otherwise show border-only star
         //But before that, we must unset its listener to prevent unwanted check events
         tag.toggleItem.setOnCheckedChangeListener(null);
-        int colBuyIdx = cursor.getColumnIndex(ShoppingListContract.ToBuyItemsEntry.ALIAS_ID);
+        int colBuyIdx = cursor.getColumnIndex(Contract.ToBuyItemsEntry.ALIAS_ID);
         boolean isItemInShoppingList = !cursor.isNull(colBuyIdx);
         tag.toggleItem.setChecked(isItemInShoppingList);
 
@@ -98,9 +98,9 @@ public class CatalogAdapter extends CursorAdapter
             mOnToggleCatalogItemListener.onToggleItem(isChecked, mPosition);
         }
 
-        public void setPosition(int mPosition)
+        public void setPosition(int position)
         {
-            this.mPosition = mPosition;
+            mPosition = position;
         }
     }
 }

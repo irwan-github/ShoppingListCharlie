@@ -19,10 +19,10 @@ import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.mirzairwan.shopping.data.DaoManager;
-import com.mirzairwan.shopping.data.ShoppingListContract;
-import com.mirzairwan.shopping.data.ShoppingListContract.ItemsEntry;
-import com.mirzairwan.shopping.data.ShoppingListContract.PricesEntry;
-import com.mirzairwan.shopping.data.ShoppingListContract.ToBuyItemsEntry;
+import com.mirzairwan.shopping.data.Contract;
+import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+import com.mirzairwan.shopping.data.Contract.PricesEntry;
+import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ShoppingList;
 import com.mirzairwan.shopping.domain.ToBuyItem;
@@ -165,15 +165,24 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
 
         ShoppingList shoppingList = Builder.getShoppingList();
         String currencyCode = "SGD";
-        ToBuyItem toBuyItem = shoppingList.addNewItem(itemName, itemBrand, itemDescription,
+        ToBuyItem toBuyItem = shoppingList.createItem(itemName, itemBrand, itemDescription,
                 Integer.parseInt(itemQuantity), currencyCode,
                 Double.parseDouble(unitPrice),
                 Double.parseDouble(bundlePrice),
                 Double.parseDouble(bundleQty), priceType);
 
         DaoManager daoManager = Builder.getDaoManager(this);
-        String msg = daoManager.insert(toBuyItem, toBuyItem.getItem(),
-                toBuyItem.getItem().getPrices());
+
+        String msg;
+        if(actionMode == CREATE_BUY_ITEM_REQUEST_CODE) {
+            msg = daoManager.insert(toBuyItem, toBuyItem.getItem(),
+                    toBuyItem.getItem().getPrices());
+        }
+        else
+        {
+            msg = daoManager.update(toBuyItem, toBuyItem.getItem(),
+                    toBuyItem.getItem().getPrices());
+        }
 
         setResult(Activity.RESULT_OK);
 
@@ -266,7 +275,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args)
     {
-        String[] projection = new String[]{ShoppingListContract.ToBuyItemsEntry._ID,
+        String[] projection = new String[]{Contract.ToBuyItemsEntry._ID,
                 ToBuyItemsEntry.COLUMN_ITEM_ID,
                 ToBuyItemsEntry.COLUMN_QUANTITY,
                 ToBuyItemsEntry.COLUMN_IS_CHECKED,

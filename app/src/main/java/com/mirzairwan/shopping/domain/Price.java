@@ -42,6 +42,11 @@ public class Price implements Parcelable
     private long mShopId = 1;
     private Date mLastUpdatedOn;
 
+    public Price(long id)
+    {
+        _id = id;
+    }
+
     /**
      * Constructor for bundle price
      * @param bundlePrice Price of one bundle of items

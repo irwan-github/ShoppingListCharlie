@@ -1,6 +1,7 @@
 package com.mirzairwan.shopping;
 
 import android.content.Context;
+import android.database.Cursor;
 
 import com.mirzairwan.shopping.data.DaoContentProv;
 import com.mirzairwan.shopping.data.DaoManager;
@@ -15,6 +16,11 @@ public class Builder
     static DaoManager getDaoManager(Context context)
     {
         return new DaoContentProv(context);
+    }
+
+    public static ShoppingList getShoppingList(Cursor c)
+    {
+        return new ShoppingCursorList(c);
     }
 
     public static ShoppingList getShoppingList()

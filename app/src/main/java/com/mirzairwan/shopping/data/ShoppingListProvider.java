@@ -11,9 +11,12 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.mirzairwan.shopping.data.ShoppingListContract.ToBuyItemsEntry;
-import com.mirzairwan.shopping.data.ShoppingListContract.ItemsEntry;
-import com.mirzairwan.shopping.data.ShoppingListContract.PricesEntry;
+import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
+import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+import com.mirzairwan.shopping.data.Contract.PricesEntry;
+import com.mirzairwan.shopping.data.Contract.ShoppingList;
+import com.mirzairwan.shopping.data.Contract.Catalogue;
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -93,6 +96,7 @@ public class ShoppingListProvider extends ContentProvider
         sAllItemsProjectionMap.put(ItemsEntry.COLUMN_DESCRIPTION, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_DESCRIPTION);
         sAllItemsProjectionMap.put(ItemsEntry.COLUMN_COUNTRY_ORIGIN, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_COUNTRY_ORIGIN);
         sAllItemsProjectionMap.put(ToBuyItemsEntry.ALIAS_ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry._ID + " AS " + ToBuyItemsEntry.ALIAS_ID);
+        sAllItemsProjectionMap.put(PricesEntry.ALIAS_ID, PricesEntry.TABLE_NAME + "." + PricesEntry._ID + " AS " + PricesEntry.ALIAS_ID);
 
         sAllBuyItemsProjectionMap.put(ItemsEntry.COLUMN_NAME, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_NAME);
         sAllBuyItemsProjectionMap.put(ItemsEntry.COLUMN_BRAND, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_BRAND);
@@ -113,35 +117,35 @@ public class ShoppingListProvider extends ContentProvider
 
 
     static {
-        sUriMatcher.addURI(ShoppingListContract.CONTENT_AUTHORITY,
-                ShoppingListContract.PATH_ITEMS, ITEMS);
+        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY,
+                Contract.PATH_ITEMS, ITEMS);
 
-        sUriMatcher.addURI(ShoppingListContract.CONTENT_AUTHORITY,
-                ShoppingListContract.PATH_ITEMS + "/#", ITEM_ID);
+        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY,
+                Contract.PATH_ITEMS + "/#", ITEM_ID);
 
-        sUriMatcher.addURI(ShoppingListContract.CONTENT_AUTHORITY,
-                ShoppingListContract.PATH_ITEMS + "/" +
-                        ShoppingListContract.PATH_BUY_ITEMS, ITEMS_JOIN_BUY_ITEMS);
+        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY,
+                Contract.PATH_ITEMS + "/" +
+                        Contract.PATH_BUY_ITEMS, ITEMS_JOIN_BUY_ITEMS);
 
-        sUriMatcher.addURI(ShoppingListContract.CONTENT_AUTHORITY,
-                ShoppingListContract.PATH_PRICES, PRICES);
+        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY,
+                Contract.PATH_PRICES, PRICES);
 
-        sUriMatcher.addURI(ShoppingListContract.CONTENT_AUTHORITY,
-                ShoppingListContract.PATH_PRICES + "/#", PRICE_ID);
+        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY,
+                Contract.PATH_PRICES + "/#", PRICE_ID);
 
-        sUriMatcher.addURI(ShoppingListContract.CONTENT_AUTHORITY,
-                ShoppingListContract.PATH_BUY_ITEMS, BUY_ITEMS);
+        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY,
+                Contract.PATH_BUY_ITEMS, BUY_ITEMS);
 
-        sUriMatcher.addURI(ShoppingListContract.CONTENT_AUTHORITY,
-                ShoppingListContract.PATH_BUY_ITEMS + "/#", BUY_ITEM_ID);
+        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY,
+                Contract.PATH_BUY_ITEMS + "/#", BUY_ITEM_ID);
 
-        sUriMatcher.addURI(ShoppingListContract.CONTENT_AUTHORITY,
-                ShoppingListContract.PATH_BUY_ITEMS + "/" +
-                        ShoppingListContract.PATH_ITEMS, BUY_ITEMS_JOIN_ITEMS_JOIN_PRICES);
+        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY,
+                Contract.PATH_BUY_ITEMS + "/" +
+                        Contract.PATH_ITEMS, BUY_ITEMS_JOIN_ITEMS_JOIN_PRICES);
 
-        sUriMatcher.addURI(ShoppingListContract.CONTENT_AUTHORITY,
-                ShoppingListContract.PATH_BUY_ITEMS + "/" +
-                        ShoppingListContract.PATH_ITEMS + "/#", BUY_ITEM_JOIN_ITEMS_JOIN_PRICES_ITEMID);
+        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY,
+                Contract.PATH_BUY_ITEMS + "/" +
+                        Contract.PATH_ITEMS + "/#", BUY_ITEM_JOIN_ITEMS_JOIN_PRICES_ITEMID);
 
     }
 
@@ -322,27 +326,8 @@ public class ShoppingListProvider extends ContentProvider
 
     private void notifyChange()
     {
-        Uri SHOPPING_LIST_URI2 = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI,
-            ShoppingListContract.PATH_ITEMS);
-
-        Uri CATALOGUE_URI2 = Uri.withAppendedPath(ItemsEntry.CONTENT_URI,
-            ShoppingListContract.PATH_BUY_ITEMS);
-
-        getContext().getContentResolver().notifyChange(SHOPPING_LIST_URI2, null);
-        getContext().getContentResolver().notifyChange(CATALOGUE_URI2, null);
-
-
-//    /**
-//     * Uri for shopping list
-//     */
-//    public static final Uri SHOPPING_LIST_URI = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI,
-//            ShoppingListContract.PATH_ITEMS);
-//
-//    /**
-//     * Uri for catalogue
-//     */
-//    public static final Uri CATALOGUE_URI = Uri.withAppendedPath(ItemsEntry.CONTENT_URI,
-//            ShoppingListContract.PATH_BUY_ITEMS);
+        getContext().getContentResolver().notifyChange(ShoppingList.URI, null);
+        getContext().getContentResolver().notifyChange(Catalogue.URI, null);
     }
 
     private int deleteItems(Uri uri, String selection, String[] selectionArgs)
@@ -532,7 +517,7 @@ public class ShoppingListProvider extends ContentProvider
      * @param sortOrder
      * @return
      */
-    private Cursor getCatalogueAndBuyStatus(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder)
+    private Cursor getCatalogueAndBuyStatusbk(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder)
     {
 
 //        *           "SELECT items._id AS itemId," +
@@ -551,6 +536,43 @@ public class ShoppingListProvider extends ContentProvider
                 ToBuyItemsEntry.TABLE_NAME + " ON " +
                 ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID + "=" +
                 ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_ITEM_ID);
+
+        queryBuilder.setProjectionMap(sAllItemsProjectionMap);
+
+        // Get the database and run the query
+        SQLiteDatabase database = mShoppingListDbHelper.getReadableDatabase();
+        Cursor cursor = queryBuilder.query(database, projection, selection, selectionArgs, null, null, sortOrder);
+
+        // Tell the cursor what uri to watch, so it knows when its source data changes
+        //cursor.setNotificationUri(getContext().getContentResolver(), uri);
+        return cursor;
+    }
+
+    private Cursor getCatalogueAndBuyStatus(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder)
+    {
+
+//        *           "SELECT items._id AS itemId," +
+//        *           "items.name, items.brand, items.country_origin, " +
+//        *           "items.description, items.last_updated_on, " +
+//        *           "buy_items._id AS dbBuyItemId, buy_items.quantity, " +
+//        *           "buy_items.selected_price_id, buy_items.is_checked, buy_items.last_updated_on " +
+//        *           "FROM items " +
+//        *           "LEFT JOIN buy_items " +
+//        *           "ON items._id=buy_items.item_id " +
+//        *           "ORDER BY items.name";
+
+        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+
+        queryBuilder.setTables(ItemsEntry.TABLE_NAME +
+                        " LEFT JOIN " +
+                        ToBuyItemsEntry.TABLE_NAME + " ON " +
+                        ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID + "=" +
+                        ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_ITEM_ID +
+                        " LEFT JOIN " +
+                        PricesEntry.TABLE_NAME + " ON " +
+                        ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID + "=" +
+                        PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_ITEM_ID
+        );
 
         queryBuilder.setProjectionMap(sAllItemsProjectionMap);
 

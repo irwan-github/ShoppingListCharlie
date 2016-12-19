@@ -16,10 +16,10 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-import com.mirzairwan.shopping.data.ShoppingListContract;
-import com.mirzairwan.shopping.data.ShoppingListContract.ItemsEntry;
-import com.mirzairwan.shopping.data.ShoppingListContract.PricesEntry;
-import com.mirzairwan.shopping.data.ShoppingListContract.ToBuyItemsEntry;
+import com.mirzairwan.shopping.data.Contract;
+import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+import com.mirzairwan.shopping.data.Contract.PricesEntry;
+import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 
 /**
  * Display buy list
@@ -126,7 +126,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                                             PricesEntry.COLUMN_PRICE,
                                             PricesEntry.COLUMN_CURRENCY_CODE};
 
-        Uri uri = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI, ShoppingListContract.PATH_ITEMS);
+        Uri uri = Contract.ShoppingList.URI;
         String selection = PricesEntry.TABLE_NAME + "." + PricesEntry._ID + "=" + ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID;
         String orderBy = ItemsEntry.COLUMN_NAME;
         CursorLoader loader = new CursorLoader(getActivity(), uri, projection, selection, null, null);

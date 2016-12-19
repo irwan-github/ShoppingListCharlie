@@ -8,9 +8,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import com.mirzairwan.shopping.data.ShoppingListContract.ToBuyItemsEntry;
-import com.mirzairwan.shopping.data.ShoppingListContract.ItemsEntry;
-import com.mirzairwan.shopping.data.ShoppingListContract.PricesEntry;
+import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
+import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+import com.mirzairwan.shopping.data.Contract.PricesEntry;
 
 
 import java.util.ArrayList;

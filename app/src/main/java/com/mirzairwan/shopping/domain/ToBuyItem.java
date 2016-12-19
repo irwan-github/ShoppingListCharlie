@@ -50,6 +50,11 @@ public class ToBuyItem implements Parcelable
         mLastUpdatedOn = lastUpdatedOn;
     }
 
+    public ToBuyItem(long buyItemId)
+    {
+        _id = buyItemId;
+    }
+
     public long getId()
     {
         return _id;
@@ -192,7 +197,7 @@ public class ToBuyItem implements Parcelable
         }
     };
 
-    private ToBuyItem(Parcel in)
+    public ToBuyItem(Parcel in)
     {
         _id = in.readLong();
         mId = in.readInt();

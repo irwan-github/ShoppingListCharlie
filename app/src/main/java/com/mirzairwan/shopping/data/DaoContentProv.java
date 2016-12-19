@@ -3,15 +3,18 @@ package com.mirzairwan.shopping.data;
 
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.OperationApplicationException;
+import android.net.Uri;
 import android.os.RemoteException;
 import android.util.Log;
 
-import com.mirzairwan.shopping.data.ShoppingListContract.ItemsEntry;
-import com.mirzairwan.shopping.data.ShoppingListContract.PricesEntry;
-import com.mirzairwan.shopping.data.ShoppingListContract.ToBuyItemsEntry;
+import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+import com.mirzairwan.shopping.data.Contract.PricesEntry;
+import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ToBuyItem;
@@ -90,7 +93,7 @@ public class DaoContentProv implements DaoManager
 
         try {
             result = mContext.getContentResolver()
-                    .applyBatch(ShoppingListContract.CONTENT_AUTHORITY, ops);
+                    .applyBatch(Contract.CONTENT_AUTHORITY, ops);
             msg = result.toString();
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -99,6 +102,82 @@ public class DaoContentProv implements DaoManager
         }
 
         return msg;
+    }
+
+    @Override
+    public String update(ToBuyItem buyItem, Item item, List<Price> itemPrices)
+    {
+        Log.d(LOG_TAG, "Save domain object graph");
+        String msg = "";
+        ContentProviderResult[] result;
+        Date updateTime = new Date();
+
+        ContentValues itemValues = new ContentValues();
+        itemValues = getItemContentValues(item, itemValues);
+
+        ArrayList<ContentProviderOperation> ops =
+                new ArrayList<ContentProviderOperation>();
+
+        ContentProviderOperation.Builder itemBuilder =
+                ContentProviderOperation.newUpdate(ItemsEntry.CONTENT_URI);
+
+        ContentProviderOperation itemInsertOp = itemBuilder.withValues(itemValues).build();
+
+        ops.add(itemInsertOp);
+
+        for (int j = 0; j < itemPrices.size(); ++j)
+        {
+            Price price = itemPrices.get(j);
+            ContentProviderOperation.Builder priceBuilder =
+                    ContentProviderOperation.newUpdate(PricesEntry.CONTENT_URI);
+
+            ContentValues priceContentValues = getPriceContentValues(price, item.getId(), updateTime, null);
+
+            priceBuilder = priceBuilder.withValues(priceContentValues);
+
+            ops.add(priceBuilder.build());
+        }
+
+        ContentProviderOperation.Builder buyItemBuilder =
+                ContentProviderOperation.newUpdate(ToBuyItemsEntry.CONTENT_URI);
+
+        buyItemBuilder = buyItemBuilder.withValues(getBuyItemContentValues(buyItem, updateTime));
+
+        ContentProviderOperation opBuyItem = buyItemBuilder.build();
+        ops.add(opBuyItem);
+
+        try {
+            result = mContext.getContentResolver()
+                    .applyBatch(Contract.CONTENT_AUTHORITY, ops);
+            msg = result.toString();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+        }
+
+        return msg;
+    }
+
+
+
+    @Override
+    public String insert(ToBuyItem buyItem)
+    {
+        ContentValues values = getBuyItemContentValues(buyItem, new Date());
+        ContentResolver contentResolver = mContext.getContentResolver();
+        Uri result = contentResolver.insert(ToBuyItemsEntry.CONTENT_URI, values);
+        return result.toString();
+    }
+
+
+    @Override
+    public int delete(ToBuyItem buyItem)
+    {
+        Uri uriDeleteBuyItem = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI,
+                                                            buyItem.getId());
+        return mContext.getContentResolver().delete(uriDeleteBuyItem, null, null);
+
     }
 
     private ContentValues getItemContentValues(Item item, ContentValues values) {

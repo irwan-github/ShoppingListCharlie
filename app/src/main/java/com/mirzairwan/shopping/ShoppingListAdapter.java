@@ -13,9 +13,9 @@ import android.widget.CursorAdapter;
 import android.widget.TextView;
 
 import com.mirzairwan.shopping.ShoppingListFragment.OnFragmentInteractionListener;
-import com.mirzairwan.shopping.data.ShoppingListContract.ItemsEntry;
-import com.mirzairwan.shopping.data.ShoppingListContract.PricesEntry;
-import com.mirzairwan.shopping.data.ShoppingListContract.ToBuyItemsEntry;
+import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+import com.mirzairwan.shopping.data.Contract.PricesEntry;
+import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 
 import java.util.Locale;
 

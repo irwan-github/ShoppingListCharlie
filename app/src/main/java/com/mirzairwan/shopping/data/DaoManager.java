@@ -22,4 +22,10 @@ public interface DaoManager
      * @return message
      */
     String insert(ToBuyItem buyItem, Item item, List<Price> itemPrices);
+
+    String insert(ToBuyItem buyItem);
+
+    int delete(ToBuyItem buyItem);
+
+    String update(ToBuyItem toBuyItem, Item item, List<Price> prices);
 }

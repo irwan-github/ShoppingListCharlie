@@ -12,8 +12,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.mirzairwan.shopping.data.AndroidDatabaseManager;
-import com.mirzairwan.shopping.data.ShoppingListContract;
-import com.mirzairwan.shopping.data.ShoppingListContract.ToBuyItemsEntry;
+import com.mirzairwan.shopping.data.Contract;
+import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 
 public class ShoppingActivity extends AppCompatActivity implements ShoppingListFragment.OnFragmentInteractionListener
 {
@@ -78,7 +78,7 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
     {
         Intent intentToViewItem = new Intent();
         intentToViewItem.setClass(this, BuyingActivity.class);
-        Uri uri = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI, ShoppingListContract.PATH_ITEMS);
+        Uri uri = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI, Contract.PATH_ITEMS);
         uri = ContentUris.withAppendedId(uri, itemId);
         intentToViewItem.setData(uri);
         startActivity(intentToViewItem);
