@@ -15,17 +15,28 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".BuyingActivity"
-                  android:windowSoftInputMode="stateHidden|stateAlwaysHidden"
-            />
-        <activity android:name=".ItemEditingActivity"
-                  android:windowSoftInputMode="stateHidden|stateAlwaysHidden"
-            />
+        <activity
+            android:name=".BuyingActivity"
+            android:parentActivityName=".ShoppingActivity"
+            >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ShoppingActivity"/>
+        </activity>
+        <activity
+            android:name=".ItemEditingActivity"
+            android:parentActivityName=".ShoppingActivity"
+            >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ShoppingActivity"/>
+        </activity>
         <activity android:name=".data.AndroidDatabaseManager"/>
+
         <provider
-            android:authorities="com.mirzairwan.shopping"
             android:name=".data.ShoppingListProvider"
-            android:exported="false" />
+            android:authorities="com.mirzairwan.shopping"
+            android:exported="false"/>
     </application>
 
 </manifest>

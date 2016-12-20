@@ -20,8 +20,6 @@ public class ShoppingActivity extends AppCompatActivity implements
                         ShoppingListFragment.OnFragmentInteractionListener,
                         CatalogFragment.OnFragmentInteractionListener
 {
-    public static final int CREATE_BUY_ITEM_REQUEST_CODE = 1; //use for startActivityForResult
-    public static final int EDIT_BUY_ITEM_REQUEST_CODE = 2; //use for startActivityForResult
     public static final String HOME_COUNTRY_CODE = "HOME_COUNTRY_CODE";
     public static final String PERSONAL = "PERSONAL";
 
@@ -67,7 +65,7 @@ public class ShoppingActivity extends AppCompatActivity implements
     {
         Intent intentToEditItem = new Intent();
         intentToEditItem.setClass(this, BuyingActivity.class);
-        startActivityForResult(intentToEditItem, CREATE_BUY_ITEM_REQUEST_CODE);
+        startActivity(intentToEditItem);
     }
 
     @Override

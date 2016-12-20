@@ -4,17 +4,21 @@ import android.app.Activity;
 import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.CursorLoader;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.Toast;
@@ -31,7 +35,6 @@ import com.mirzairwan.shopping.domain.ToBuyItem;
 import java.util.Currency;
 import java.util.Locale;
 
-import static com.mirzairwan.shopping.ShoppingActivity.CREATE_BUY_ITEM_REQUEST_CODE;
 import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
@@ -46,15 +49,26 @@ import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
  */
 public class BuyingActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>
 {
+    private int actionMode = -1; //Informs the editor whether this activity is creation or updating
+    public static final int CREATE_BUY_ITEM_MODE = 1; //use for startActivityForResult
+    public static final int EDIT_BUY_ITEM_MODE = 2; //use for startActivityForResult
 
-    private static final String ITEM_ID = "ITEM_ID";
+    private static final String EDIT_ITEM_URI = "EDIT_ITEM_URI";
     private static final int LOADER_ID = 20;
 
-    private int actionMode = -1; //Informs the editor whether this activity is creation or updating
     private Cursor mCursor;
-
     private ToBuyItem toBuyItem;
     private long defaultShopId = 1;
+    private View.OnTouchListener mOnTouchListener;
+    private boolean mItemHaveChanged = false;
+    private EditText etName;
+    private EditText etBrand;
+    private EditText etDescription;
+    private EditText etQty;
+    private EditText etUnitPrice;
+    private EditText etBundlePrice;
+    private EditText etBundleQty;
+    private RadioGroup rgPriceTypeChoice;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -67,22 +81,55 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
         //if no bundle, then the request is for new creation
         if (uri != null) {
             setTitle(R.string.view_buy_item_details);
-            //populateItemDetails(uri);
             Bundle arg = new Bundle();
-            //arg.putLong(ITEM_ID, ContentUris.parseId(uri));
-            arg.putParcelable(ITEM_ID, uri);
+            arg.putParcelable(EDIT_ITEM_URI, uri);
             getLoaderManager().initLoader(LOADER_ID, arg, this);
+            actionMode = EDIT_BUY_ITEM_MODE; //This flag is used for database operation
         } else {
             setTitle(R.string.new_buy_item_title);
-            actionMode = CREATE_BUY_ITEM_REQUEST_CODE; // This flag is used for menu creation
+            actionMode = CREATE_BUY_ITEM_MODE; // This flag is used for menu creation and database operation
         }
 
     }
 
     @Override
+    protected void onStart()
+    {
+        mOnTouchListener = new View.OnTouchListener()
+        {
+            @Override
+            public boolean onTouch(View v, MotionEvent event)
+            {
+                mItemHaveChanged = true;
+                return false;
+            }
+        };
+
+        etName = (EditText) findViewById(R.id.et_item_name);
+        etBrand = (EditText) findViewById(R.id.et_item_brand);
+        etDescription = (EditText) findViewById(R.id.et_item_description);
+        etQty = (EditText) findViewById(R.id.et_item_quantity);
+        etUnitPrice = (EditText) findViewById(R.id.et_unit_price);
+        etBundlePrice = (EditText) findViewById(R.id.et_bundle_price);
+        etBundleQty = (EditText) findViewById(R.id.et_bundle_qty);
+        rgPriceTypeChoice = (RadioGroup) findViewById(R.id.price_type_choice);
+
+        etName.setOnTouchListener(mOnTouchListener);
+        etBrand.setOnTouchListener(mOnTouchListener);
+        etDescription.setOnTouchListener(mOnTouchListener);
+        etQty.setOnTouchListener(mOnTouchListener);
+        etUnitPrice.setOnTouchListener(mOnTouchListener);
+        etBundlePrice.setOnTouchListener(mOnTouchListener);
+        etBundleQty.setOnTouchListener(mOnTouchListener);
+        rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);
+
+        super.onStart();
+    }
+
+    @Override
     public boolean onPrepareOptionsMenu(Menu menu)
     {
-        if (actionMode == CREATE_BUY_ITEM_REQUEST_CODE) {
+        if (actionMode == CREATE_BUY_ITEM_MODE) {
             menu.removeItem(R.id.menu_remove_item_from_list);
         }
         return super.onPrepareOptionsMenu(menu);
@@ -104,13 +151,54 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
             case R.id.save_item_details:
                 save();
                 return true;
-            case R.id.menu_remove_item_from_list: //Do nothing. Let originator handle it
-                Loader<Object> loader = getLoaderManager().getLoader(LOADER_ID);
+            case R.id.menu_remove_item_from_list:
                 delete();
+                return true;
+            case android.R.id.home:
+                if(mItemHaveChanged)
+                {
+                    showUnsavedDialog(new DialogInterface.OnClickListener()
+                    {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which)
+                        {
+                            NavUtils.navigateUpFromSameTask(BuyingActivity.this);
+                        }
+                    });
+                }
+
+                else
+                    NavUtils.navigateUpFromSameTask(this);
+                return true;
             default:
                 return super.onOptionsItemSelected(menuItem);
         }
 
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        if(mItemHaveChanged)
+            showUnsavedDialog(new DialogInterface.OnClickListener()
+            {
+                @Override
+                public void onClick(DialogInterface dialog, int which)
+                {
+                    finish();
+                }
+            });
+        else
+            super.onBackPressed();
+    }
+
+    private void showUnsavedDialog(DialogInterface.OnClickListener onClickListener)
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.unsaved_changes);
+        builder.setPositiveButton(R.string.discard, onClickListener);
+        builder.setNegativeButton(R.string.keep_editing, null);
+        builder.show();
     }
 
     private void alertRequiredField(int messageId)
@@ -128,7 +216,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
      */
     private void delete()
     {
-        if(!mCursor.moveToNext())
+        if (!mCursor.moveToNext())
             mCursor.moveToFirst();
         long buyItemId = mCursor.getLong(mCursor.getColumnIndex(ToBuyItemsEntry._ID));
         Uri uriDeleteBuyItem = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItemId);
@@ -138,9 +226,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
 
     private void save()
     {
-        EditText etName = (EditText) findViewById(R.id.et_item_name);
         String itemName;
-
         if (TextUtils.isEmpty(etName.getText())) {
             alertRequiredField(R.string.mandatory_name);
             etName.requestFocus();
@@ -149,12 +235,10 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
             itemName = etName.getText().toString();
         }
 
+        String itemBrand = etBrand.getText().toString();
+        String itemDescription = etDescription.getText().toString();
 
-        String itemBrand = ((EditText) findViewById(R.id.et_item_brand)).getText().toString();
-        String itemDescription = ((EditText) findViewById(R.id.et_item_description)).getText().toString();
-        EditText etQty = (EditText) findViewById(R.id.et_item_quantity);
         String itemQuantity;
-
         if (TextUtils.isEmpty(etQty.getText()) || Integer.parseInt(etQty.getText().toString()) < 1) {
             alertRequiredField(R.string.mandatory_quantity);
             etQty.requestFocus();
@@ -163,24 +247,27 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
             itemQuantity = etQty.getText().toString();
         }
 
-        String unitPrice = ((EditText) findViewById(R.id.et_unit_price)).getText().toString();
-        String bundlePrice = ((EditText) findViewById(R.id.et_bundle_price)).getText().toString();
-        String bundleQty = ((EditText) findViewById(R.id.et_bundle_qty)).getText().toString();
-        int idSelected = ((RadioGroup) findViewById(R.id.price_type_choice)).getCheckedRadioButtonId();
+
+        String unitPrice = etUnitPrice.getText().toString();
+        String bundlePrice = etBundlePrice.getText().toString();
+        String bundleQty = etBundleQty.getText().toString();
+
+
+        int idSelected = rgPriceTypeChoice.getCheckedRadioButtonId();
         Price.Type selectedPriceType = (idSelected == R.id.rb_bundle_price) ?
                 Price.Type.BUNDLE_PRICE : UNIT_PRICE;
 
         ShoppingList shoppingList = Builder.getShoppingList();
 
         SharedPreferences prefs = getSharedPreferences(ShoppingActivity.PERSONAL, Activity.MODE_PRIVATE);
-        String homeCountryCode  = prefs.getString(ShoppingActivity.HOME_COUNTRY_CODE, Locale.getDefault().getCountry());
+        String homeCountryCode = prefs.getString(ShoppingActivity.HOME_COUNTRY_CODE, Locale.getDefault().getCountry());
         Locale homeLocale = new Locale(Locale.getDefault().getLanguage(), homeCountryCode);
         String currencyCode = Currency.getInstance(homeLocale).getCurrencyCode();
 
         DaoManager daoManager = Builder.getDaoManager(this);
 
         String msg;
-        if(actionMode == CREATE_BUY_ITEM_REQUEST_CODE) {
+        if (actionMode == CREATE_BUY_ITEM_MODE) {
             ToBuyItem newBuyItem = shoppingList.createItem(itemName, itemBrand, itemDescription,
                     Integer.parseInt(itemQuantity), currencyCode,
                     Double.parseDouble(unitPrice),
@@ -189,22 +276,17 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
 
             msg = daoManager.insert(newBuyItem, newBuyItem.getItem(),
                     newBuyItem.getItem().getPrices());
-        }
-        else //Existing buy item
+        } else //Existing buy item
         {
             toBuyItem.getItem().setName(itemName);
             toBuyItem.getItem().setBrand(itemBrand);
             toBuyItem.getItem().setCountryOrigin("SG");
             toBuyItem.getItem().setDescription(itemDescription);
 
-            for( Price price : toBuyItem.getItem().getPrices())
-            {
-                if(price.getPriceType() == BUNDLE_PRICE)
-                {
+            for (Price price : toBuyItem.getItem().getPrices()) {
+                if (price.getPriceType() == BUNDLE_PRICE) {
                     price.setBundlePrice(Double.parseDouble(bundlePrice), Double.parseDouble(bundleQty));
-                }
-                else
-                {
+                } else {
                     price.setUnitPrice(Double.parseDouble(unitPrice));
                 }
             }
@@ -216,14 +298,14 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
                     toBuyItem.getItem().getPrices());
         }
 
-        setResult(Activity.RESULT_OK);
-
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-
         finish();
     }
 
-
+    /**
+     * Populate ToBuyItem and Item object
+     * @param cursor
+     */
     private void populateItemDetails(Cursor cursor)
     {
 
@@ -232,15 +314,14 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
 
         long itemId = 0;
         long buyItemId = 0;
-        String itemName = "", itemBrand = "", itemDescription = "", currencyCode="";
+        String itemName = "", itemBrand = "", itemDescription = "", currencyCode = "";
         int buyQty = 0;
         double unitPrice = 0, bundlePrice = 0, bundleQty = 0;
         Price.Type priceType;
 
-
         boolean isItemDetailsPopulated = false; //Multiple identical item detail records will be retrieved due to item having more than one price
-                                                //So the first pass in the loop will populate item details. Skip the populating the item details in
-                                                //subsequent pass
+        //So the first pass in the loop will populate item details. Skip the populating the item details in
+        //subsequent pass
         while (cursor.moveToNext()) {
             if (!isItemDetailsPopulated) {
 
@@ -248,25 +329,16 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
                 buyItemId = cursor.getLong(cursor.getColumnIndex(ToBuyItemsEntry._ID));
 
                 int colNameIndex = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
-                EditText etItemName = (EditText) findViewById(R.id.et_item_name);
                 itemName = cursor.getString(colNameIndex);
-                etItemName.setText(itemName);
-
 
                 int colBrandIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_BRAND);
-                EditText etItemBrand = (EditText) findViewById(R.id.et_item_brand);
                 itemBrand = cursor.getString(colBrandIdx);
-                etItemBrand.setText(itemBrand);
 
                 int colQtyIdx = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);
-                EditText etQuantity = (EditText) findViewById(R.id.et_item_quantity);
                 buyQty = cursor.getInt(colQtyIdx);
-                etQuantity.setText(String.valueOf(buyQty));
 
                 int colDescriptionIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_DESCRIPTION);
-                EditText etItemDescription = (EditText) findViewById(R.id.et_item_description);
                 itemDescription = cursor.getString(colDescriptionIdx);
-                etItemDescription.setText(itemDescription);
 
                 Item item = new Item(itemId, itemName, itemBrand, "SG", itemDescription, null);
                 toBuyItem = new ToBuyItem(buyItemId);
@@ -281,7 +353,6 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
             int colPriceIdIdx = cursor.getColumnIndex(PricesEntry.ALIAS_ID);
             long priceId = cursor.getLong(colPriceIdIdx);
 
-
             int colSelectedPriceIdIdx = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID);
             long selectedPriceId = cursor.getLong(colSelectedPriceIdIdx);
 
@@ -294,47 +365,57 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
             int colPriceIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
 
             if (priceTypeVal == UNIT_PRICE.getType()) {
-
-                EditText etUnitPrice = (EditText) findViewById(R.id.et_unit_price);
-                unitPrice = cursor.getDouble(colPriceIdx)/100;
-                etUnitPrice.setText(NumberFormatter.formatToTwoDecimalPlaces(
-                        unitPrice));
-
+                unitPrice = cursor.getDouble(colPriceIdx) / 100;
                 Price price = new Price(priceId, unitPrice, currencyCode, shopId, null);
                 toBuyItem.getItem().addPrice(price);
 
             }
 
             if (priceTypeVal == BUNDLE_PRICE.getType()) {
-
-                EditText etBundlePrice = (EditText) findViewById(R.id.et_bundle_price);
-                bundlePrice = cursor.getDouble(colPriceIdx)/100;
-                etBundlePrice.setText(NumberFormatter.formatToTwoDecimalPlaces(bundlePrice));
-
+                bundlePrice = cursor.getDouble(colPriceIdx) / 100;
                 int colBundleQtyIdx = cursor.getColumnIndex(PricesEntry.COLUMN_BUNDLE_QTY);
                 bundleQty = cursor.getDouble(colBundleQtyIdx);
-                EditText etBundleQty = (EditText) findViewById(R.id.et_bundle_qty);
-                etBundleQty.setText(NumberFormatter.formatToTwoDecimalPlaces(bundleQty));
-
                 Price price = new Price(priceId, bundlePrice, bundleQty, currencyCode, shopId, null);
                 toBuyItem.getItem().addPrice(price);
             }
 
-            if(priceId == selectedPriceId)
-            {
-                RadioGroup priceTypeChoice = (RadioGroup) findViewById(R.id.price_type_choice);
-
+            if (priceId == selectedPriceId) {
                 priceType = priceTypeVal == BUNDLE_PRICE.getType() ? BUNDLE_PRICE : UNIT_PRICE;
-
-                priceTypeChoice.check(priceTypeVal == BUNDLE_PRICE.getType() ?
-                                        R.id.rb_bundle_price : R.id.rb_unit_price);
-
                 toBuyItem.selectPrice(shopId, priceType);
 
             }
 
             isItemDetailsPopulated = true;
         }
+    }
+
+    private void populateItemViews()
+    {
+        if (toBuyItem == null)
+            throw new IllegalArgumentException("ToBuyItem cannot be null");
+
+        etName.setText(toBuyItem.getItem().getName());
+        etBrand.setText(toBuyItem.getItem().getBrand());
+        etQty.setText(String.valueOf(toBuyItem.getQuantity()));
+        etDescription.setText(toBuyItem.getItem().getDescription());
+
+        for (Price price : toBuyItem.getItem().getPrices()) {
+            if (price.getPriceType() == UNIT_PRICE) {
+                etUnitPrice.setText(NumberFormatter.formatToTwoDecimalPlaces(
+                        price.getUnitPrice()));
+            }
+
+            if (price.getPriceType() == BUNDLE_PRICE) {
+                etBundlePrice.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundlePrice()));
+                etBundleQty.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundleQuantity()));
+            }
+
+        }
+
+
+        rgPriceTypeChoice.check(toBuyItem.getSelectedPriceType() == BUNDLE_PRICE ?
+                R.id.rb_bundle_price : R.id.rb_unit_price);
+
     }
 
     @Override
@@ -356,7 +437,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
                 PricesEntry.COLUMN_CURRENCY_CODE,
                 PricesEntry.COLUMN_SHOP_ID};
 
-        Uri uri = args.getParcelable(ITEM_ID);
+        Uri uri = args.getParcelable(EDIT_ITEM_URI);
         CursorLoader loader = new CursorLoader(this, uri, projection, null, null, null);
         return loader;
 
@@ -367,6 +448,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
     {
         mCursor = cursor;
         populateItemDetails(cursor);
+        populateItemViews();
     }
 
     @Override

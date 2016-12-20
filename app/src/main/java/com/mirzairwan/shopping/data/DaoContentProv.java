@@ -41,7 +41,7 @@ public class DaoContentProv implements DaoManager
     public int update(long buyItemId, boolean isChecked)
     {
         ContentValues values = new ContentValues();
-        values.put(ToBuyItemsEntry.COLUMN_IS_CHECKED, isChecked? 1 : 0);
+        values.put(ToBuyItemsEntry.COLUMN_IS_CHECKED, isChecked ? 1 : 0);
         Uri updateBuyItemUri = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItemId);
         return mContext.getContentResolver().update(updateBuyItemUri, values, null, null);
     }
@@ -67,8 +67,7 @@ public class DaoContentProv implements DaoManager
 
         ops.add(itemInsertOp);
 
-        for (int j = 0; j < itemPrices.size(); ++j)
-        {
+        for (int j = 0; j < itemPrices.size(); ++j) {
             Price price = itemPrices.get(j);
             ContentProviderOperation.Builder priceBuilder =
                     ContentProviderOperation.newInsert(PricesEntry.CONTENT_URI);
@@ -88,11 +87,10 @@ public class DaoContentProv implements DaoManager
         buyItemBuilder = buyItemBuilder.withValues(getBuyItemContentValues(buyItem, updateTime))
                 .withValueBackReference(ToBuyItemsEntry.COLUMN_ITEM_ID, 0);
 
-        for(int k = 0; k < itemPrices.size(); ++k)
-        {
+        for (int k = 0; k < itemPrices.size(); ++k) {
             Price price = itemPrices.get(k);
             Price.Type selectedPriceType = buyItem.getSelectedPriceType();
-            if(selectedPriceType == price.getPriceType())
+            if (selectedPriceType == price.getPriceType())
                 buyItemBuilder = buyItemBuilder
                         .withValueBackReference(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID, k + 1);
         }
@@ -110,6 +108,38 @@ public class DaoContentProv implements DaoManager
             e.printStackTrace();
         }
 
+        return msg;
+    }
+
+    @Override
+    public String update(Item item, List<Price> prices)
+    {
+        String msg = null;
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+        Date updateTime = new Date();
+
+        Uri updateItemUri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
+        ContentProviderOperation.Builder updateItemBuilder = ContentProviderOperation.newUpdate(updateItemUri);
+        updateItemBuilder.withValues(getItemContentValues(item, null))
+                            .withValue(PricesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
+        ops.add(updateItemBuilder.build());
+
+        for (Price price : prices) {
+            Uri updatePriceUri = ContentUris.withAppendedId(PricesEntry.CONTENT_URI, price.getId());
+            ContentProviderOperation.Builder updatePriceBuilder = ContentProviderOperation.newUpdate(updatePriceUri);
+            updatePriceBuilder.withValues(getPriceContentValues(price, item.getId(), updateTime, null));
+            ops.add(updatePriceBuilder.build());
+        }
+
+        ContentProviderResult[] results = null;
+        try {
+            results = mContext.getContentResolver().applyBatch(Contract.CONTENT_AUTHORITY, ops);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+        }
+        msg = String.valueOf(results.length + " updated");
         return msg;
     }
 
@@ -134,8 +164,7 @@ public class DaoContentProv implements DaoManager
 
         ops.add(itemUpdateOp);
 
-        for (int j = 0; j < itemPrices.size(); ++j)
-        {
+        for (int j = 0; j < itemPrices.size(); ++j) {
             Price price = itemPrices.get(j);
             Uri updatePriceUri = ContentUris.withAppendedId(PricesEntry.CONTENT_URI, price.getId());
             ContentProviderOperation.Builder priceBuilder =
@@ -171,7 +200,6 @@ public class DaoContentProv implements DaoManager
     }
 
 
-
     @Override
     public String insert(ToBuyItem buyItem)
     {
@@ -186,12 +214,13 @@ public class DaoContentProv implements DaoManager
     public int delete(ToBuyItem buyItem)
     {
         Uri uriDeleteBuyItem = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI,
-                                                            buyItem.getId());
+                buyItem.getId());
         return mContext.getContentResolver().delete(uriDeleteBuyItem, null, null);
 
     }
 
-    private ContentValues getItemContentValues(Item item, ContentValues values) {
+    private ContentValues getItemContentValues(Item item, ContentValues values)
+    {
         if (values == null)
             values = new ContentValues();
         values.put(ItemsEntry.COLUMN_NAME, item.getName());
@@ -202,7 +231,8 @@ public class DaoContentProv implements DaoManager
         return values;
     }
 
-    private ContentValues getPriceContentValues(Price price, long itemId, Date updateTime, ContentValues values) {
+    private ContentValues getPriceContentValues(Price price, long itemId, Date updateTime, ContentValues values)
+    {
         ContentValues priceValues = values;
         if (priceValues == null)
             priceValues = new ContentValues();
@@ -230,14 +260,15 @@ public class DaoContentProv implements DaoManager
         return priceValues;
     }
 
-    private ContentValues getBuyItemContentValues(ToBuyItem buyItem, Date updateTime) {
+    private ContentValues getBuyItemContentValues(ToBuyItem buyItem, Date updateTime)
+    {
         ContentValues buyItemValues = new ContentValues();
-        if(buyItem.getItem().getId() > 0)
+        if (buyItem.getItem().getId() > 0)
             buyItemValues.put(ToBuyItemsEntry.COLUMN_ITEM_ID, buyItem.getItem().getId());
         buyItemValues.put(ToBuyItemsEntry.COLUMN_QUANTITY, buyItem.getQuantity());
-        if(buyItem.getSelectedPrice().getId() > 0)
+        if (buyItem.getSelectedPrice().getId() > 0)
             buyItemValues.put(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID,
-                                    buyItem.getSelectedPrice().getId());
+                    buyItem.getSelectedPrice().getId());
         buyItemValues.put(ToBuyItemsEntry.COLUMN_IS_CHECKED, buyItem.isChecked());
         buyItemValues.put(ToBuyItemsEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
         return buyItemValues;

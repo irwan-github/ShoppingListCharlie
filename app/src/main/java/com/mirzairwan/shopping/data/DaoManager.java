@@ -30,4 +30,6 @@ public interface DaoManager
     String update(ToBuyItem toBuyItem, Item item, List<Price> prices);
 
     int update(long buyItemId, boolean isChecked);
+
+    String update(Item item, List<Price> prices);
 }

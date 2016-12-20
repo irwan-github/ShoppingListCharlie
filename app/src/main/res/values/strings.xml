@@ -28,4 +28,7 @@
     <string name="mandatory_name">Name is required</string>
     <string name="mandatory_quantity">Quantity must be at least 1</string>
     <string name="view_buy_item_details">Item details</string>
+    <string name="discard">Discard</string>
+    <string name="keep_editing">Stay</string>
+    <string name="unsaved_changes">You may have unsaved changes.</string>
 </resources>
