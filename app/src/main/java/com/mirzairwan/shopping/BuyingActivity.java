@@ -155,8 +155,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
                 delete();
                 return true;
             case android.R.id.home:
-                if(mItemHaveChanged)
-                {
+                if (mItemHaveChanged) {
                     showUnsavedDialog(new DialogInterface.OnClickListener()
                     {
                         @Override
@@ -165,9 +164,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
                             NavUtils.navigateUpFromSameTask(BuyingActivity.this);
                         }
                     });
-                }
-
-                else
+                } else
                     NavUtils.navigateUpFromSameTask(this);
                 return true;
             default:
@@ -179,7 +176,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
     @Override
     public void onBackPressed()
     {
-        if(mItemHaveChanged)
+        if (mItemHaveChanged)
             showUnsavedDialog(new DialogInterface.OnClickListener()
             {
                 @Override
@@ -238,7 +235,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
         String itemBrand = etBrand.getText().toString();
         String itemDescription = etDescription.getText().toString();
 
-        String itemQuantity;
+        String itemQuantity = "1";
         if (TextUtils.isEmpty(etQty.getText()) || Integer.parseInt(etQty.getText().toString()) < 1) {
             alertRequiredField(R.string.mandatory_quantity);
             etQty.requestFocus();
@@ -247,10 +244,17 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
             itemQuantity = etQty.getText().toString();
         }
 
+        String unitPrice = "0.00";
+        if (!TextUtils.isEmpty(etUnitPrice.getText()))
+            unitPrice = etUnitPrice.getText().toString();
 
-        String unitPrice = etUnitPrice.getText().toString();
-        String bundlePrice = etBundlePrice.getText().toString();
-        String bundleQty = etBundleQty.getText().toString();
+        String bundlePrice = "0.00";
+        if (!TextUtils.isEmpty(etBundlePrice.getText()))
+            bundlePrice = etBundlePrice.getText().toString();
+
+        String bundleQty = "0.00";
+        if(!TextUtils.isEmpty(etBundleQty.getText()))
+            bundleQty = etBundleQty.getText().toString();
 
 
         int idSelected = rgPriceTypeChoice.getCheckedRadioButtonId();
@@ -304,6 +308,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
 
     /**
      * Populate ToBuyItem and Item object
+     *
      * @param cursor
      */
     private void populateItemDetails(Cursor cursor)

@@ -85,7 +85,7 @@ public class Item implements Parcelable {
         return mIsInBuyList;
     }
 
-    void setInBuyList(boolean inBuyList) {
+    public void setInBuyList(boolean inBuyList) {
         mIsInBuyList = inBuyList;
     }
 

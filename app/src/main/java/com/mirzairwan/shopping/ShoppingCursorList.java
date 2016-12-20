@@ -100,8 +100,4 @@ public class ShoppingCursorList implements ShoppingList
         return buyItem;
     }
 
-//    public void setCatalogueCursor(Cursor catalogueCursor)
-//    {
-//        mCatalogueCursor = catalogueCursor;
-//    }
 }

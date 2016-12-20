@@ -1,8 +1,11 @@
 package com.mirzairwan.shopping.data;
 
 import android.content.ContentProvider;
+import android.content.ContentProviderOperation;
+import android.content.ContentProviderResult;
 import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.OperationApplicationException;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -11,13 +14,13 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
+import com.mirzairwan.shopping.data.Contract.Catalogue;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ShoppingList;
-import com.mirzairwan.shopping.data.Contract.Catalogue;
+import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 
-
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -95,7 +98,6 @@ public class ShoppingListProvider extends ContentProvider
     private static final Map<String, String> sItemsPricesProjectionMap = new HashMap<>();
 
 
-
     static {
 
         sAllItemsProjectionMap.put(ItemsEntry._ID, ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID);
@@ -133,7 +135,7 @@ public class ShoppingListProvider extends ContentProvider
         sItemsPricesProjectionMap.put(PricesEntry.COLUMN_CURRENCY_CODE, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_CURRENCY_CODE);
         sItemsPricesProjectionMap.put(PricesEntry.COLUMN_BUNDLE_QTY, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_BUNDLE_QTY);
         sItemsPricesProjectionMap.put(PricesEntry.COLUMN_SHOP_ID, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_SHOP_ID);
-
+        sItemsPricesProjectionMap.put(ToBuyItemsEntry.ALIAS_ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry._ID + " AS " + ToBuyItemsEntry.ALIAS_ID);
 
 
     }
@@ -348,6 +350,10 @@ public class ShoppingListProvider extends ContentProvider
                 deleted = mShoppingListDbHelper.getWritableDatabase()
                         .delete(ToBuyItemsEntry.TABLE_NAME, selection, selectionArgs);
 
+                break;
+            case PRICES:
+                SQLiteDatabase database = mShoppingListDbHelper.getWritableDatabase();
+                deleted = database.delete(PricesEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             default:
                 throw new IllegalArgumentException("Delete of this type is NOT supported for " + uri);
@@ -588,14 +594,14 @@ public class ShoppingListProvider extends ContentProvider
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
 
         queryBuilder.setTables(ItemsEntry.TABLE_NAME +
-                        " LEFT JOIN " +
-                        ToBuyItemsEntry.TABLE_NAME + " ON " +
-                        ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID + "=" +
-                        ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_ITEM_ID +
-                        " LEFT JOIN " +
-                        PricesEntry.TABLE_NAME + " ON " +
-                        ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID + "=" +
-                        PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_ITEM_ID
+                " LEFT JOIN " +
+                ToBuyItemsEntry.TABLE_NAME + " ON " +
+                ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID + "=" +
+                ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_ITEM_ID +
+                " LEFT JOIN " +
+                PricesEntry.TABLE_NAME + " ON " +
+                ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID + "=" +
+                PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_ITEM_ID
         );
 
         queryBuilder.setProjectionMap(sAllItemsProjectionMap);
@@ -611,6 +617,7 @@ public class ShoppingListProvider extends ContentProvider
 
     /**
      * Get catalogue item(s) and its prices
+     *
      * @param uri
      * @param projection
      * @param selection
@@ -624,6 +631,10 @@ public class ShoppingListProvider extends ContentProvider
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
 
         queryBuilder.setTables(ItemsEntry.TABLE_NAME +
+                " LEFT JOIN " +
+                ToBuyItemsEntry.TABLE_NAME + " ON " +
+                ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID + "=" +
+                ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_ITEM_ID +
                 " LEFT JOIN " +
                 PricesEntry.TABLE_NAME + " ON " +
                 ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID + "=" +
@@ -649,7 +660,6 @@ public class ShoppingListProvider extends ContentProvider
         if (_id == -1)
             return null;
         else {
-            //getContext().getContentResolver().notifyChange(uri, null);
             return ContentUris.withAppendedId(uri, _id);
         }
     }
@@ -662,7 +672,6 @@ public class ShoppingListProvider extends ContentProvider
         if (_id == -1)
             return null;
         else {
-            //getContext().getContentResolver().notifyChange(uri, null);
             return ContentUris.withAppendedId(uri, _id);
         }
     }
@@ -695,13 +704,22 @@ public class ShoppingListProvider extends ContentProvider
         }
     }
 
-//    private Uri insertItem(Uri uri, ContentValues values) {
-//        SQLiteDatabase database = mShoppingListDbHelper.getWritableDatabase();
-//        long _id = database.insert(ItemsEntry.TABLE_NAME, null, values);
-//        if (_id == -1)
-//            return null;
-//        else
-//            return ContentUris.withAppendedId(uri, _id);
-//    }
+    @NonNull
+    @Override
+    public ContentProviderResult[] applyBatch(ArrayList<ContentProviderOperation> operations) throws OperationApplicationException
+    {
+        ContentProviderResult[] results;
+        SQLiteDatabase database = mShoppingListDbHelper.getWritableDatabase();
+        database.beginTransaction();
+
+        try {
+            results = super.applyBatch(operations);
+            database.setTransactionSuccessful();
+
+        } finally {
+            database.endTransaction();//The end of the transaction
+        }
+        return results;
+    }
 
 }

@@ -17,10 +17,11 @@
         <RelativeLayout
             android:id="@+id/container_summary"
             android:layout_width="match_parent"
-            android:layout_height="56dp">
+            android:layout_height="56dp"
+            >
 
             <TextView
-                android:id="@+id/total_checked"
+                android:id="@+id/tv_total_checked"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
@@ -33,7 +34,7 @@
                 />
 
             <TextView
-                android:id="@+id/total_buy"
+                android:id="@+id/tv_total_buy"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
@@ -41,13 +42,14 @@
                 android:textStyle="bold"
 
                 />
-
             <View
                 android:id="@+id/border_to_buy_list"
                 android:layout_width="match_parent"
-                android:layout_height="2dp"
+                android:layout_height="4dp"
                 android:layout_alignParentBottom="true"
-                android:background="#bdbdbd" />
+                android:background="@color/colorPrimary"
+                />
+
         </RelativeLayout>
 
         <FrameLayout

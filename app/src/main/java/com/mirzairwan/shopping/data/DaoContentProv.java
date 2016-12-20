@@ -55,7 +55,7 @@ public class DaoContentProv implements DaoManager
         Date updateTime = new Date();
 
         ContentValues itemValues = new ContentValues();
-        itemValues = getItemContentValues(item, itemValues);
+        itemValues = getItemContentValues(item, updateTime, itemValues);
 
         ArrayList<ContentProviderOperation> ops =
                 new ArrayList<ContentProviderOperation>();
@@ -120,8 +120,7 @@ public class DaoContentProv implements DaoManager
 
         Uri updateItemUri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
         ContentProviderOperation.Builder updateItemBuilder = ContentProviderOperation.newUpdate(updateItemUri);
-        updateItemBuilder.withValues(getItemContentValues(item, null))
-                            .withValue(PricesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
+        updateItemBuilder.withValues(getItemContentValues(item, updateTime, null));
         ops.add(updateItemBuilder.build());
 
         for (Price price : prices) {
@@ -151,7 +150,7 @@ public class DaoContentProv implements DaoManager
         ContentProviderResult[] result;
         Date updateTime = new Date();
 
-        ContentValues itemValues = getItemContentValues(item, null);
+        ContentValues itemValues = getItemContentValues(item, updateTime, null);
 
         ArrayList<ContentProviderOperation> ops =
                 new ArrayList<ContentProviderOperation>();
@@ -219,7 +218,43 @@ public class DaoContentProv implements DaoManager
 
     }
 
-    private ContentValues getItemContentValues(Item item, ContentValues values)
+    @Override
+    public int delete(Item item)
+    {
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+
+        Uri uriDeleteItem = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
+        ContentProviderOperation.Builder itemDeleteBuilder = ContentProviderOperation.newDelete(uriDeleteItem);
+        //itemDeleteBuilder.withValues(getItemContentValues(item, null, null));
+        ops.add(itemDeleteBuilder.build());
+
+        Uri uriDeletePrice = PricesEntry.CONTENT_URI;
+        ContentProviderOperation.Builder deletePriceBuilder =
+                ContentProviderOperation.newDelete(uriDeletePrice);
+        deletePriceBuilder.withSelection(PricesEntry.COLUMN_ITEM_ID + "=?", new String[]{String.valueOf(item.getId())});
+        ops.add(deletePriceBuilder.build());
+
+//        for (Price price : item.getPrices()) {
+//            Uri uriDeletePrice = ContentUris.withAppendedId(PricesEntry.CONTENT_URI, price.getId());
+//            ContentProviderOperation.Builder deletePriceBuilder =
+//                    ContentProviderOperation.newDelete(uriDeletePrice);
+//            //deletePriceBuilder.withValues(getPriceContentValues(price, item.getId(),
+//            //        new Date(), null));
+//            ops.add(deletePriceBuilder.build());
+//        }
+        ContentProviderResult[] contentProviderResults = null;
+        try {
+            contentProviderResults = mContext.getContentResolver().applyBatch(Contract.CONTENT_AUTHORITY, ops);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+        }
+
+        return contentProviderResults.length;
+    }
+
+    private ContentValues getItemContentValues(Item item, Date updateTime, ContentValues values)
     {
         if (values == null)
             values = new ContentValues();
@@ -227,6 +262,9 @@ public class DaoContentProv implements DaoManager
         values.put(ItemsEntry.COLUMN_BRAND, item.getBrand());
         values.put(ItemsEntry.COLUMN_COUNTRY_ORIGIN, item.getCountryOrigin());
         values.put(ItemsEntry.COLUMN_DESCRIPTION, item.getDescription());
+
+        if (updateTime != null)
+            values.put(ItemsEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
 
         return values;
     }
@@ -254,7 +292,8 @@ public class DaoContentProv implements DaoManager
         if (itemId > 0)
             priceValues.put(PricesEntry.COLUMN_ITEM_ID, itemId);
 
-        priceValues.put(PricesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
+        if (updateTime != null)
+            priceValues.put(PricesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
 
         priceValues.put(PricesEntry.COLUMN_CURRENCY_CODE, price.getCurrencyCode());
         return priceValues;

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -64,7 +65,11 @@ public class ShoppingListAdapter extends CursorAdapter
         tagViews.tvItemName.setText(cursor.getString(colNameIdx));
 
         int colBrandIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_BRAND);
-        tagViews.tvItemBrand.setText(cursor.getString(colBrandIdx));
+        String brand = cursor.getString(colBrandIdx);
+        if(!TextUtils.isEmpty(brand))
+            tagViews.tvItemBrand.setText(brand);
+        else
+            tagViews.tvItemBrand.setText(R.string.default_brand_name);
 
         tagViews.checkItem.setOnCheckedChangeListener(null); //Disable checkbox listener to disable firing pre-existing checked items on the buy list
         int colIsChecked = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_IS_CHECKED);

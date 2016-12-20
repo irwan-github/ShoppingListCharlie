@@ -24,34 +24,37 @@
         android:maxLines="@string/text_max_line"
         android:maxWidth="@dimen/tv_item_name_max_width"
         android:textAppearance="?android:textAppearanceMedium"
+        android:textStyle="bold"
         tools:text="Sardine">
     </TextView>
 
 
     <TextView
         android:id="@+id/item_brand_row"
-        android:layout_width="wrap_content"
+        android:layout_width="@dimen/tv_item_brand_max_width"
         android:layout_height="wrap_content"
         android:layout_below="@id/item_name_row"
         android:focusable="false"
         android:maxLines="@string/text_max_line"
         android:maxWidth="@dimen/tv_item_brand_max_width"
-        android:textAppearance="?android:textAppearanceMedium"
+        android:textAppearance="?android:textAppearanceSmall"
         tools:text="Abcdefghijklmnopqrstuvwxyz"
         >
     </TextView>
 
     <TextView
         android:id="@+id/item_selected_price_row"
-        android:layout_width="wrap_content"
+        android:layout_width="@dimen/tv_item_brand_max_width"
         android:layout_height="wrap_content"
-        android:layout_toLeftOf="@+id/item_qty_row"
+        android:layout_below="@id/item_name_row"
+        android:layout_toRightOf="@id/item_brand_row"
         android:focusable="false"
         android:maxLength="@string/text_price_max_length"
         android:maxLines="@string/text_max_line"
+        android:maxWidth="@dimen/tv_item_brand_max_width"
         android:paddingLeft="@dimen/text_padding_left"
         android:paddingRight="@dimen/text_padding_right"
-        android:textAppearance="?android:textAppearanceMedium"
+        android:textAppearance="?android:textAppearanceSmall"
         tools:text="$19.55"
         >
     </TextView>
@@ -60,24 +63,25 @@
         android:id="@+id/item_qty_row"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-
-        android:layout_toLeftOf="@+id/check_item"
+        android:layout_toRightOf="@+id/item_selected_price_row"
+        android:layout_below="@id/item_name_row"
         android:focusable="false"
         android:maxLength="@string/text_item_buy_qty_max_length"
         android:maxLines="@string/text_max_line"
         android:paddingLeft="@dimen/text_padding_left"
         android:paddingRight="@dimen/text_padding_right"
-        android:textAppearance="?android:textAppearanceMedium"
+        android:textAppearance="?android:textAppearanceSmall"
         tools:text="1234"
         >
     </TextView>
 
     <CheckBox
-        android:id="@id/check_item"
+        android:id="@+id/check_item"
         android:layout_width="@dimen/touch_target_width"
         android:layout_height="@dimen/touch_target_width"
+        android:layout_margin="0dp"
+        android:padding="0dp"
         android:layout_alignParentRight="true"
-        android:layout_centerInParent="true"
         android:background="?android:attr/listChoiceIndicatorMultiple"
         android:button="@null"
         android:focusable="false"

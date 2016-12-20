@@ -1,7 +1,6 @@
 package com.mirzairwan.shopping;
 
 import android.app.LoaderManager;
-import android.content.ContentUris;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -58,6 +57,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     private RadioGroup rgPriceTypeChoice;
     private View.OnTouchListener mOnTouchListener;
     private boolean mItemHaveChanged = false;
+    private DaoManager daoManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -72,6 +72,8 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         Bundle arg = new Bundle();
         arg.putParcelable(ITEM_URL, uri);
         getLoaderManager().initLoader(LOADER_ID, arg, this);
+
+        daoManager = Builder.getDaoManager(this);
 
     }
 
@@ -93,6 +95,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                 return true;
             case R.id.menu_remove_item_from_list:
                 delete();
+                return true;
             case android.R.id.home:
                 if (mItemHaveChanged)
                     showUnsavedDialog(new DialogInterface.OnClickListener()
@@ -183,7 +186,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Mandatory field(s)");
         builder.setMessage(messageId);
-        builder.setPositiveButton("OK", null);
+        builder.setPositiveButton(R.string.ok, null);
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
     }
@@ -193,11 +196,25 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
      */
     private void delete()
     {
-        if (!mCursor.moveToNext())
-            mCursor.moveToFirst();
-        long buyItemId = mCursor.getLong(mCursor.getColumnIndex(ToBuyItemsEntry._ID));
-        Uri uriDeleteBuyItem = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItemId);
-        getContentResolver().delete(uriDeleteBuyItem, null, null);
+        //if item is in shopping list, do not delete
+        if(item.isInBuyList())
+        {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(R.string.item_is_in_shopping_list);
+            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
+            {
+                @Override
+                public void onClick(DialogInterface dialog, int which)
+                {
+                    dialog.dismiss();
+
+                }
+            });
+            builder.show();
+            return;
+        }
+
+        daoManager.delete(item);
         finish();
     }
 
@@ -214,13 +231,18 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
         String itemBrand = etBrand.getText().toString();
         String itemDescription = etDescription.getText().toString();
-        String unitPrice = etUnitPrice.getText().toString();
-        String bundlePrice = etBundlePrice.getText().toString();
-        String bundleQty = etBundleQty.getText().toString();
 
-        DaoManager daoManager = Builder.getDaoManager(this);
+        String unitPrice = "0.00";
+        if (!TextUtils.isEmpty(etUnitPrice.getText()))
+            unitPrice = etUnitPrice.getText().toString();
 
-        String msg;
+        String bundlePrice = "0.00";
+        if (!TextUtils.isEmpty(etBundlePrice.getText()))
+            bundlePrice = etBundlePrice.getText().toString();
+
+        String bundleQty = "0.00";
+        if(!TextUtils.isEmpty(etBundleQty.getText()))
+            bundleQty = etBundleQty.getText().toString();
 
         item.setName(itemName);
         item.setBrand(itemBrand);
@@ -235,6 +257,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             }
         }
 
+        String msg;
         msg = daoManager.update(item, item.getPrices());
 
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
@@ -272,6 +295,10 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                 itemDescription = cursor.getString(colDescriptionIdx);
 
                 item = new Item(itemId, itemName, itemBrand, "SG", itemDescription, null);
+
+                int colBuyItemIdIdx = cursor.getColumnIndex(ToBuyItemsEntry.ALIAS_ID);
+                if(!cursor.isNull(colBuyItemIdIdx))
+                    item.setInBuyList(true);
 
             }
 
@@ -333,7 +360,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
     }
 
-
     private void hideStuff()
     {
         findViewById(R.id.item_quantity_layout).setVisibility(View.GONE);
@@ -350,6 +376,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                 ItemsEntry.COLUMN_BRAND,
                 ItemsEntry.COLUMN_COUNTRY_ORIGIN,
                 ItemsEntry.COLUMN_DESCRIPTION,
+                ToBuyItemsEntry.ALIAS_ID,
                 PricesEntry.ALIAS_ID,
                 PricesEntry.COLUMN_PRICE_TYPE_ID,
                 PricesEntry.COLUMN_PRICE,

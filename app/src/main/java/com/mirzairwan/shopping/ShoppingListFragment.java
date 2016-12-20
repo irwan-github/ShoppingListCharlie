@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
@@ -110,6 +111,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
             @Override
             public void onClick(View v) {
                 onFragmentInteractionListener.onAdditem();
+                showCostOfItemsAdded();
             }
         });
     }
@@ -140,6 +142,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
     {
         shoppingListAdapter.swapCursor(cursor);
+        showCostOfItemsAdded();
+        showCostOfItemsChecked();
     }
 
     @Override
@@ -156,6 +160,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         int buyItemIdColIdx = cursor.getColumnIndex(ToBuyItemsEntry._ID);
         long buyItemId = cursor.getLong(buyItemIdColIdx);
         Builder.getDaoManager(getActivity()).update(buyItemId, isChecked);
+
     }
 
     public interface OnFragmentInteractionListener
@@ -163,6 +168,39 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         void onAdditem();
 
         void onViewBuyItem(long rowId);
+    }
+
+    public void showCostOfItemsAdded()
+    {
+        TextView tvTotalValueAdded = (TextView)getActivity().findViewById(R.id.tv_total_buy);
+        Double totalValueOfItemsAdded = 0.00d;
+        Cursor cursor = shoppingListAdapter.getCursor();
+        while(cursor.moveToNext())
+        {
+            int colSelectedPriceTag = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
+            totalValueOfItemsAdded += cursor.getDouble(colSelectedPriceTag)/100;
+        }
+
+        tvTotalValueAdded.setText(NumberFormatter.formatToTwoDecimalPlaces(totalValueOfItemsAdded));
+
+    }
+
+    public void showCostOfItemsChecked()
+    {
+        TextView tvTotalValueChecked = (TextView)getActivity().findViewById(R.id.tv_total_checked);
+        Double totalValueOfItemsChecked = 0.00d;
+        Cursor cursor = shoppingListAdapter.getCursor();
+        cursor.moveToPosition(-1);
+        while(cursor.moveToNext())
+        {
+            int colSelectedPriceTag = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
+            int colIsItemChecked = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_IS_CHECKED);
+            boolean isItemChecked = cursor.getInt(colIsItemChecked) > 0;
+            if(isItemChecked)
+                totalValueOfItemsChecked += cursor.getDouble(colSelectedPriceTag)/100;
+        }
+
+        tvTotalValueChecked.setText(NumberFormatter.formatToTwoDecimalPlaces(totalValueOfItemsChecked));
     }
 
 
