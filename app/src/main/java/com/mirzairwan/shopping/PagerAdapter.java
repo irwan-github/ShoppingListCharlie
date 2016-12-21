@@ -14,6 +14,8 @@ public class PagerAdapter extends FragmentPagerAdapter
     public static final int PAGE_COUNT = 2;
     public static final int BUY_LIST = 0;
     public static final int CATALOG = 1;
+    private String mCurrencyCode;
+    private String mCountryCode;
     private Context mContext;
 
 

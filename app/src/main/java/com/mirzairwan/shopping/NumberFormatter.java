@@ -12,6 +12,9 @@ import java.util.Locale;
 public class NumberFormatter
 {
 
+    public static final String COUNTRY_CODE = "COUNTRY_CODE";
+    public static final String CURRENCY_CODE = "CURRENCY_CODE";
+
     /**
      * Formats a value of type double
      *

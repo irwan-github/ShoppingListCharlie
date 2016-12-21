@@ -5,6 +5,7 @@ import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -22,6 +23,9 @@ import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 
+import java.util.Currency;
+import java.util.Locale;
+
 /**
  * Display buy list
  * Created by Mirza Irwan on 19/11/16.
@@ -36,16 +40,34 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     private static final int BUY_ITEM = 1;
     private OnFragmentInteractionListener onFragmentInteractionListener;
     private ShoppingListAdapter shoppingListAdapter;
+    private String countryCode;
+    private String currencyCode;
 
     public static ShoppingListFragment newInstance() {
 
         ShoppingListFragment buyListFragment = new ShoppingListFragment();
-
+        Bundle args = new Bundle();
+        buyListFragment.setArguments(args);
         return buyListFragment;
     }
 
 
     public ShoppingListFragment() {
+    }
+
+    @Override
+    public void onStart()
+    {
+        super.onStart();
+        setupUserLocale();
+    }
+
+    public void setupUserLocale()
+    {
+        SharedPreferences  sharedPreferences = getActivity().getSharedPreferences(ShoppingActivity.PERSONAL, Activity.MODE_PRIVATE);
+        countryCode = sharedPreferences.getString(ShoppingActivity.HOME_COUNTRY_CODE, Locale.getDefault().getCountry());
+        currencyCode = Currency.getInstance(new Locale(Locale.getDefault().getLanguage(), countryCode)).getCurrencyCode();
+
     }
 
     @Nullable
@@ -67,6 +89,11 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
         //Kick off the loader
         getLoaderManager().initLoader(BUY_ITEM, null, this);
+
+        //Get arguments
+        Bundle args = getArguments();
+        countryCode = args.getString(NumberFormatter.COUNTRY_CODE);
+        currencyCode = args.getString(NumberFormatter.CURRENCY_CODE);
         return rootView;
     }
 
@@ -101,8 +128,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         shoppingListAdapter = new ShoppingListAdapter(getActivity(), null,
                 this);
         lvBuyItems.setAdapter(shoppingListAdapter);
-
-
     }
 
     private void setupFloatingActionButton(View view) {
@@ -131,9 +156,13 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                                             PricesEntry.COLUMN_PRICE,
                                             PricesEntry.COLUMN_CURRENCY_CODE};
 
-        Uri uri = Contract.ShoppingList.URI;
+        Uri uri = Contract.ShoppingList.CONTENT_URI;
+
+        //Summary screen shows only selected price
         String selection = PricesEntry.TABLE_NAME + "." + PricesEntry._ID + "=" + ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID;
+
         String orderBy = ItemsEntry.COLUMN_NAME;
+
         CursorLoader loader = new CursorLoader(getActivity(), uri, projection, selection, null, null);
         return loader;
     }
@@ -175,13 +204,14 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         TextView tvTotalValueAdded = (TextView)getActivity().findViewById(R.id.tv_total_buy);
         Double totalValueOfItemsAdded = 0.00d;
         Cursor cursor = shoppingListAdapter.getCursor();
+        cursor.moveToPosition(-1);
         while(cursor.moveToNext())
         {
             int colSelectedPriceTag = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
             totalValueOfItemsAdded += cursor.getDouble(colSelectedPriceTag)/100;
         }
 
-        tvTotalValueAdded.setText(NumberFormatter.formatToTwoDecimalPlaces(totalValueOfItemsAdded));
+        tvTotalValueAdded.setText(NumberFormatter.formatCountryCurrency(countryCode, currencyCode, totalValueOfItemsAdded));
 
     }
 
@@ -200,7 +230,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 totalValueOfItemsChecked += cursor.getDouble(colSelectedPriceTag)/100;
         }
 
-        tvTotalValueChecked.setText(NumberFormatter.formatToTwoDecimalPlaces(totalValueOfItemsChecked));
+        tvTotalValueChecked.setText(NumberFormatter.formatCountryCurrency(countryCode, currencyCode, totalValueOfItemsChecked));
     }
 
 

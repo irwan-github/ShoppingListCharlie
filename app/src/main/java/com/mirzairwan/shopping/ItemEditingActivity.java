@@ -50,6 +50,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     private EditText etName;
     private EditText etBrand;
     private EditText etDescription;
+    private EditText etCountryOrigin;
     private EditText etQty;
     private EditText etUnitPrice;
     private EditText etBundlePrice;
@@ -131,6 +132,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         etName = (EditText) findViewById(R.id.et_item_name);
         etBrand = (EditText) findViewById(R.id.et_item_brand);
         etDescription = (EditText) findViewById(R.id.et_item_description);
+        etCountryOrigin = (EditText)findViewById(R.id.et_item_country_origin);
         etQty = (EditText) findViewById(R.id.et_item_quantity);
         etUnitPrice = (EditText) findViewById(R.id.et_unit_price);
         etBundlePrice = (EditText) findViewById(R.id.et_bundle_price);
@@ -230,6 +232,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         }
 
         String itemBrand = etBrand.getText().toString();
+        String countryOrigin = etCountryOrigin.getText().toString();
         String itemDescription = etDescription.getText().toString();
 
         String unitPrice = "0.00";
@@ -246,7 +249,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
         item.setName(itemName);
         item.setBrand(itemBrand);
-        item.setCountryOrigin("SG");
+        item.setCountryOrigin(countryOrigin);
         item.setDescription(itemDescription);
 
         for (Price price : item.getPrices()) {
@@ -275,7 +278,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             throw new IllegalArgumentException("Cursor cannot be null");
 
         long itemId = 0;
-        String itemName = "", itemBrand = "", itemDescription = "", currencyCode = "";
+        String itemName = "", itemBrand = "", itemDescription = "", currencyCode = "",  countryOrigin="";
         double unitPrice = 0, bundlePrice = 0, bundleQty = 0;
         boolean isItemDetailsPopulated = false; //Multiple identical item detail records will be retrieved due to item having more than one price
         //So the first pass in the loop will populate item details. Skip the populating the item details in
@@ -294,7 +297,10 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                 int colDescriptionIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_DESCRIPTION);
                 itemDescription = cursor.getString(colDescriptionIdx);
 
-                item = new Item(itemId, itemName, itemBrand, "SG", itemDescription, null);
+                int colCountryOriginIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_COUNTRY_ORIGIN);
+                countryOrigin = cursor.getString(colCountryOriginIdx);
+
+                item = new Item(itemId, itemName, itemBrand, countryOrigin, itemDescription, null);
 
                 int colBuyItemIdIdx = cursor.getColumnIndex(ToBuyItemsEntry.ALIAS_ID);
                 if(!cursor.isNull(colBuyItemIdIdx))
@@ -343,6 +349,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         hideStuff();
         etName.setText(item.getName());
         etBrand.setText(item.getBrand());
+        etCountryOrigin.setText(item.getCountryOrigin());
         etDescription.setText(item.getDescription());
 
         for (Price price : item.getPrices()) {

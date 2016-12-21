@@ -28,10 +28,11 @@
     <string name="mandatory_name">Name is required</string>
     <string name="mandatory_quantity">Quantity must be at least 1</string>
     <string name="view_buy_item_details">Item details</string>
-    <string name="discard">Discard</string>
+    <string name="discard">Leave</string>
     <string name="keep_editing">Stay</string>
     <string name="unsaved_changes">You may have unsaved changes.</string>
     <string name="item_is_in_shopping_list">Remove item from shopping list before deleting.</string>
     <string name="ok">OK</string>
     <string name="default_brand_name">Brand</string>
+    <string name="description_country_origin">Country of origin</string>
 </resources>

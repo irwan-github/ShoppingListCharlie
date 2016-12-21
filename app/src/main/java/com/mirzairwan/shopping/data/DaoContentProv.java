@@ -262,6 +262,7 @@ public class DaoContentProv implements DaoManager
         values.put(ItemsEntry.COLUMN_BRAND, item.getBrand());
         values.put(ItemsEntry.COLUMN_COUNTRY_ORIGIN, item.getCountryOrigin());
         values.put(ItemsEntry.COLUMN_DESCRIPTION, item.getDescription());
+        values.put(ItemsEntry.COLUMN_COUNTRY_ORIGIN, item.getCountryOrigin());
 
         if (updateTime != null)
             values.put(ItemsEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());

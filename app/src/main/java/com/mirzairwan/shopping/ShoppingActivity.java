@@ -13,8 +13,10 @@ import android.view.MenuItem;
 
 import com.mirzairwan.shopping.data.AndroidDatabaseManager;
 import com.mirzairwan.shopping.data.Contract;
-import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import com.mirzairwan.shopping.data.Contract.Catalogue;
+
+import java.util.Currency;
+import java.util.Locale;
 
 public class ShoppingActivity extends AppCompatActivity implements
                         ShoppingListFragment.OnFragmentInteractionListener,
@@ -28,6 +30,10 @@ public class ShoppingActivity extends AppCompatActivity implements
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_shopping);
+
+        Locale defaultLocale = Locale.getDefault();
+        String countryCode = defaultLocale.getCountry();
+        String currencyCode = Currency.getInstance(defaultLocale).getCurrencyCode();
 
         PagerAdapter pagerAdapter = new PagerAdapter(getFragmentManager(), this);
         ViewPager viewPager = (ViewPager)findViewById(R.id.pager_shopping);
@@ -73,7 +79,8 @@ public class ShoppingActivity extends AppCompatActivity implements
     {
         Intent intentToViewItem = new Intent();
         intentToViewItem.setClass(this, BuyingActivity.class);
-        Uri uri = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI, Contract.PATH_ITEMS);
+        //Uri uri = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI, Contract.PATH_ITEMS);
+        Uri uri = Contract.ShoppingList.CONTENT_URI;
         uri = ContentUris.withAppendedId(uri, itemId);
         intentToViewItem.setData(uri);
         startActivity(intentToViewItem);

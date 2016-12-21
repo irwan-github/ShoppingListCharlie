@@ -109,7 +109,7 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args)
     {
-        Uri uri = Contract.Catalogue.URI;
+        Uri uri = Contract.Catalogue.CONTENT_URI;
         String[] projection = new String[]{ItemsEntry._ID, ItemsEntry.COLUMN_NAME,
                                             ItemsEntry.COLUMN_BRAND, ToBuyItemsEntry.ALIAS_ID,
                                             PricesEntry.ALIAS_ID};

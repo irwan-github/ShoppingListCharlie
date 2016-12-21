@@ -63,12 +63,15 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
     private boolean mItemHaveChanged = false;
     private EditText etName;
     private EditText etBrand;
+    private EditText etCountryOrigin;
     private EditText etDescription;
     private EditText etQty;
     private EditText etUnitPrice;
     private EditText etBundlePrice;
     private EditText etBundleQty;
     private RadioGroup rgPriceTypeChoice;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -108,6 +111,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
         etName = (EditText) findViewById(R.id.et_item_name);
         etBrand = (EditText) findViewById(R.id.et_item_brand);
         etDescription = (EditText) findViewById(R.id.et_item_description);
+        etCountryOrigin = (EditText)findViewById(R.id.et_item_country_origin);
         etQty = (EditText) findViewById(R.id.et_item_quantity);
         etUnitPrice = (EditText) findViewById(R.id.et_unit_price);
         etBundlePrice = (EditText) findViewById(R.id.et_bundle_price);
@@ -233,6 +237,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
         }
 
         String itemBrand = etBrand.getText().toString();
+        String countryOrigin = etCountryOrigin.getText().toString();
         String itemDescription = etDescription.getText().toString();
 
         String itemQuantity = "1";
@@ -278,13 +283,15 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
                     Double.parseDouble(bundlePrice),
                     Double.parseDouble(bundleQty), selectedPriceType);
 
+            newBuyItem.getItem().setCountryOrigin(countryOrigin);
+
             msg = daoManager.insert(newBuyItem, newBuyItem.getItem(),
                     newBuyItem.getItem().getPrices());
         } else //Existing buy item
         {
             toBuyItem.getItem().setName(itemName);
             toBuyItem.getItem().setBrand(itemBrand);
-            toBuyItem.getItem().setCountryOrigin("SG");
+            toBuyItem.getItem().setCountryOrigin(countryOrigin);
             toBuyItem.getItem().setDescription(itemDescription);
 
             for (Price price : toBuyItem.getItem().getPrices()) {
@@ -319,7 +326,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
 
         long itemId = 0;
         long buyItemId = 0;
-        String itemName = "", itemBrand = "", itemDescription = "", currencyCode = "";
+        String itemName = "", itemBrand = "", itemDescription = "", currencyCode = "", countryOrigin="";
         int buyQty = 0;
         double unitPrice = 0, bundlePrice = 0, bundleQty = 0;
         Price.Type priceType;
@@ -345,7 +352,10 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
                 int colDescriptionIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_DESCRIPTION);
                 itemDescription = cursor.getString(colDescriptionIdx);
 
-                Item item = new Item(itemId, itemName, itemBrand, "SG", itemDescription, null);
+                int colCountryOriginIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_COUNTRY_ORIGIN);
+                countryOrigin = cursor.getString(colCountryOriginIdx);
+
+                Item item = new Item(itemId, itemName, itemBrand, countryOrigin, itemDescription, null);
                 toBuyItem = new ToBuyItem(buyItemId);
                 toBuyItem.setItem(item);
                 toBuyItem.setQuantity(buyQty);
@@ -402,6 +412,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
         etName.setText(toBuyItem.getItem().getName());
         etBrand.setText(toBuyItem.getItem().getBrand());
         etQty.setText(String.valueOf(toBuyItem.getQuantity()));
+        etCountryOrigin.setText(toBuyItem.getItem().getCountryOrigin());
         etDescription.setText(toBuyItem.getItem().getDescription());
 
         for (Price price : toBuyItem.getItem().getPrices()) {

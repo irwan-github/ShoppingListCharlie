@@ -19,29 +19,38 @@ public final class Contract
     public static final String CONTENT_AUTHORITY = "com.mirzairwan.shopping";
 
     /**
-     * Use CONTENT_AUTHORITY to create the base of all URI's which activities will use to contact
+     * Use CONTENT_AUTHORITY to create the base of all CONTENT_URI's which activities will use to contact
      * the content provider.
      */
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
 
     /**
-     * Possible paths (Will be appended to base content URI for possible URI's)
+     * Possible paths (Will be appended to base content CONTENT_URI for possible CONTENT_URI's)
      */
     public static final String PATH_ITEMS = "items";
     public static final String PATH_BUY_ITEMS = "buy-items";
     public static final String PATH_PRICES = "prices";
+    public static final String PATH_SHOPPING_LIST = PATH_BUY_ITEMS + "/" + PATH_ITEMS;
+    public static final String PATH_CATALOGUE = PATH_ITEMS + "/" + PATH_BUY_ITEMS;
 
     public static final class ShoppingList
     {
-            public static final Uri URI = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI,
-                Contract.PATH_ITEMS);
+        /**
+         * The content CONTENT_URI to access the shopping list in the provider
+         */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_SHOPPING_LIST);
     }
 
     public static final class Catalogue
     {
-        public static final Uri URI = Uri.withAppendedPath(ItemsEntry.CONTENT_URI,
-                Contract.PATH_BUY_ITEMS);
+        /**
+         * The CONTENT_URI to access the catalogue in the provider
+         */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_CATALOGUE);
 
+        /**
+         * What is this for???
+         */
         public static final Uri ITEMS_PRICES_URI = Uri.withAppendedPath(ItemsEntry.CONTENT_URI,
                 Contract.PATH_PRICES);
     }
@@ -60,7 +69,9 @@ public final class Contract
         public static final String CONTENT_ITEM_TYPE =
                 ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_ITEMS;
 
-        /** The content URI to access the items data in the provider */
+        /**
+         * The content CONTENT_URI to access the items data in the provider
+         */
         public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_ITEMS);
 
         public static final String TABLE_NAME = "items";
@@ -99,7 +110,9 @@ public final class Contract
 
     public static final class PricesEntry implements BaseColumns
     {
-        /** The content URI to access the item price data in the provider */
+        /**
+         * The content CONTENT_URI to access the item price data in the provider
+         */
         public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_PRICES);
 
         public static final String TABLE_NAME = "prices";
@@ -150,7 +163,9 @@ public final class Contract
 
         public static final String ALIAS_ID = "buy_item_id"; //Because all tables use _id as column name
 
-        /** The content URI to access the buy items data in the provider */
+        /**
+         * The content CONTENT_URI to access the buy items data in the provider
+         */
         public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_BUY_ITEMS);
 
         /**
