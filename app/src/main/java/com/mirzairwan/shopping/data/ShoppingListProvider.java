@@ -81,24 +81,13 @@ public class ShoppingListProvider extends ContentProvider
      */
     private static final int CATALOGUE = 102;
 
-    /**
-     * CONTENT_URI matcher code for the content CONTENT_URI for items left join prices table
-     */
-    private static final int CATALOGUE_ID = 103;
-
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-
-//    private static final Map<String, String> sAllItemsProjectionMap = new HashMap<>();
 
     private static final Map<String, String> sAllBuyItemsProjectionMap = new HashMap<>();
 
-    private static final Map<String, String> sItemsProjectionMap = new HashMap<>();
-
     private static final Map<String, String> sItemsPricesProjectionMap = new HashMap<>();
 
-
     static {
-
 
         sAllBuyItemsProjectionMap.put(ItemsEntry.COLUMN_NAME, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_NAME);
         sAllBuyItemsProjectionMap.put(ItemsEntry.COLUMN_BRAND, ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_BRAND);
@@ -128,7 +117,6 @@ public class ShoppingListProvider extends ContentProvider
         sItemsPricesProjectionMap.put(PricesEntry.COLUMN_BUNDLE_QTY, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_BUNDLE_QTY);
         sItemsPricesProjectionMap.put(PricesEntry.COLUMN_SHOP_ID, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_SHOP_ID);
         sItemsPricesProjectionMap.put(ToBuyItemsEntry.ALIAS_ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry._ID + " AS " + ToBuyItemsEntry.ALIAS_ID);
-
 
     }
 
@@ -166,12 +154,11 @@ public class ShoppingListProvider extends ContentProvider
                 Contract.PATH_SHOPPING_LIST + "/#", SHOPPING_LIST_ITEMID);
 
 
+        /**
+         * CONTENT_URI matcher for all items in the catalogue
+         */
         sUriMatcher.addURI(Contract.CONTENT_AUTHORITY,
                 Contract.PATH_CATALOGUE, CATALOGUE);
-
-        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY,
-                Contract.PATH_ITEMS + "/" +
-                        Contract.PATH_PRICES + "/#", CATALOGUE_ID);
 
     }
 
@@ -213,23 +200,26 @@ public class ShoppingListProvider extends ContentProvider
     {
         int matchCode = sUriMatcher.match(uri);
         Cursor cursor = null;
+        SQLiteDatabase database = null;
+        long id = -1;
         switch (matchCode) {
             case ITEMS:
                 cursor = queryItems(uri, projection, selection, selectionArgs, sortOrder);
                 break;
+            case ITEM_ID:
+                database = mShoppingListDbHelper.getReadableDatabase();
+                id = ContentUris.parseId(uri);
+                selection = ItemsEntry._ID + "=?";
+                selectionArgs = new String[]{String.valueOf(id)};
+                cursor = database.query(ItemsEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
+                break;
+            case PRICES:
+                database = mShoppingListDbHelper.getReadableDatabase();
+                cursor = database.query(PricesEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
+                break;
             case CATALOGUE:
                 cursor = getCatalogueAndPrice(uri, projection, selection, selectionArgs, sortOrder);
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
-                break;
-            case CATALOGUE_ID:
-                long id = ContentUris.parseId(uri);
-                selection = ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID + "=?";
-                selectionArgs = new String[]{String.valueOf(id)};
-                cursor = getCatalogueAndPrice(uri, projection, selection, selectionArgs, sortOrder);
-                break;
-            case PRICES:
-                SQLiteDatabase database = mShoppingListDbHelper.getReadableDatabase();
-                cursor = database.query(PricesEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
                 break;
             case SHOPPING_LIST:
                 cursor = getBuyItems(uri, projection, selection, selectionArgs, sortOrder);
@@ -336,7 +326,6 @@ public class ShoppingListProvider extends ContentProvider
     {
         SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
         builder.setTables(ItemsEntry.TABLE_NAME);
-        builder.setProjectionMap(sItemsProjectionMap);
         return builder.query(mShoppingListDbHelper.getReadableDatabase(), projection, selection, selectionArgs, null, null, sortOrder);
 
     }

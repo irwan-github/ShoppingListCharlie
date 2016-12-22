@@ -13,7 +13,6 @@ import android.view.MenuItem;
 
 import com.mirzairwan.shopping.data.AndroidDatabaseManager;
 import com.mirzairwan.shopping.data.Contract;
-import com.mirzairwan.shopping.data.Contract.Catalogue;
 
 import java.util.Currency;
 import java.util.Locale;
@@ -97,7 +96,9 @@ public class ShoppingActivity extends AppCompatActivity implements
     {
         Intent intentToViewItem = new Intent();
         intentToViewItem.setClass(this, ItemEditingActivity.class);
-        Uri uri = ContentUris.withAppendedId(Catalogue.ITEMS_PRICES_URI, itemId);
+//        Uri uri = ContentUris.withAppendedId(Catalogue.ITEMS_PRICES_URI, itemId);
+//        Uri uri = ContentUris.withAppendedId(Catalogue.CONTENT_URI, itemId);
+        Uri uri = ContentUris.withAppendedId(Contract.ItemsEntry.CONTENT_URI, itemId);
         intentToViewItem.setData(uri);
         startActivity(intentToViewItem);
     }

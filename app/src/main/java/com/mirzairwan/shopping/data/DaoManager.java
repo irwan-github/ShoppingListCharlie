@@ -34,4 +34,6 @@ public interface DaoManager
     String update(Item item, List<Price> prices);
 
     int delete(Item item);
+
+    List<Price> getItemPrice(long id);
 }

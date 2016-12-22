@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/unit_price_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/keyline_1"
+            android:layout_marginRight="@dimen/keyline_1"
+            android:paddingBottom="@dimen/edit_text_padding_bottom"
+            android:paddingTop="@dimen/edit_text_padding_top"
+            >
+
+            <android.support.design.widget.TextInputEditText
+                android:id="@+id/et_unit_price"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:focusableInTouchMode="true"
+                android:hint="@string/unit_price_txt"
+                android:inputType="numberDecimal"
+                android:maxLength="@string/text_price_max_length"
+                android:minWidth="@dimen/edit_text_price_min_width"
+                android:textAppearance="?android:textAppearanceMedium"
+                tools:text="4.25"/>
+
+        </android.support.design.widget.TextInputLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/bundle_price_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/unit_price_layout"
+        android:layout_marginLeft="@dimen/keyline_1"
+        android:layout_marginRight="8dp"
+        android:paddingBottom="@dimen/edit_text_padding_bottom"
+        android:paddingTop="@dimen/edit_text_padding_top"
+        >
+
+        <android.support.design.widget.TextInputEditText
+            android:id="@+id/et_bundle_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:focusableInTouchMode="true"
+            android:hint="@string/bundle_price_txt"
+            android:inputType="numberDecimal"
+            android:maxLength="@string/text_price_max_length"
+            android:minWidth="@dimen/edit_text_price_min_width"
+            android:textAppearance="?android:textAppearanceMedium"
+            />
+
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/bundle_qty_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/unit_price_layout"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="@dimen/keyline_1"
+        android:paddingBottom="@dimen/edit_text_padding_bottom"
+        android:paddingTop="@dimen/edit_text_padding_top"
+        >
+
+        <android.support.design.widget.TextInputEditText
+            android:id="@+id/et_bundle_qty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:focusableInTouchMode="true"
+            android:hint="@string/bundle_quantity_txt"
+            android:inputType="numberDecimal"
+            android:maxLength="@string/text_bundle_qty_length"
+            android:minWidth="@dimen/edit_text_bundle_qty_min_width"
+            android:textAppearance="?android:textAppearanceMedium"
+            />
+
+    </android.support.design.widget.TextInputLayout>
+</LinearLayout>
+    <TextView
+
+        android:id="@+id/price_type_query"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/bundle_qty_layout"
+        android:layout_marginLeft="@dimen/keyline_1"
+        android:layout_marginRight="@dimen/keyline_1"
+        android:paddingBottom="@dimen/text_view_padding_bottom"
+        android:paddingTop="@dimen/text_view_padding_top"
+        android:text="@string/use_price_type"
+        />
+
+    <RadioGroup
+        android:id="@+id/price_type_choice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/price_type_query"
+        android:layout_marginLeft="@dimen/keyline_1"
+        android:layout_marginRight="@dimen/keyline_1"
+        android:checkedButton="@+id/is_unit_price"
+        android:focusableInTouchMode="true"
+        android:orientation="horizontal"
+        android:paddingBottom="@dimen/radio_button_top_bottom_padding"
+        android:paddingTop="@dimen/radio_button_top_bottom_padding"
+        >
+
+        <RadioButton
+            android:id="@+id/rb_unit_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/cb_unit_price"
+            android:textAppearance="?android:textAppearanceMedium"/>
+
+        <RadioButton
+            android:id="@+id/rb_bundle_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/cb_bundle_price"
+            android:textAppearance="?android:textAppearanceMedium"/>
+
+    </RadioGroup>
+
+
+</LinearLayout>

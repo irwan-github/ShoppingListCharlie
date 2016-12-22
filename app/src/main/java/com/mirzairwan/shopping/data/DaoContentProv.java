@@ -8,6 +8,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.OperationApplicationException;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.RemoteException;
 import android.util.Log;
@@ -22,6 +23,9 @@ import com.mirzairwan.shopping.domain.ToBuyItem;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
+import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
 /**
  * Created by Mirza Irwan on 18/12/16.
@@ -252,6 +256,63 @@ public class DaoContentProv implements DaoManager
         }
 
         return contentProviderResults.length;
+    }
+
+    @Override
+    public List<Price> getItemPrice(long id)
+    {
+        String[] projection = new String[]{ PricesEntry._ID,
+                                            PricesEntry.COLUMN_PRICE_TYPE_ID,
+                                            PricesEntry.COLUMN_PRICE,
+                                            PricesEntry.COLUMN_BUNDLE_QTY,
+                                            PricesEntry.COLUMN_CURRENCY_CODE,
+                                            PricesEntry.COLUMN_SHOP_ID};
+
+        String selection = PricesEntry.COLUMN_ITEM_ID + "=?";
+
+        String[] selectionArgs = new String[]{String.valueOf(id)};
+
+        Cursor cursor = mContext.getContentResolver().query(PricesEntry.CONTENT_URI, projection,
+                                                            selection, selectionArgs, null);
+        List<Price> prices = new ArrayList<>();
+
+        while(cursor.moveToNext())
+        {
+            int colPriceTypeIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE_TYPE_ID);
+            int priceTypeVal = cursor.getInt(colPriceTypeIdx);
+
+            int colPriceIdIdx = cursor.getColumnIndex(PricesEntry._ID);
+            long priceId = cursor.getLong(colPriceIdIdx);
+
+            int colCurrencyCodeIdx = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
+            String currencyCode = cursor.getString(colCurrencyCodeIdx);
+
+            int colShopIdIdx = cursor.getColumnIndex(PricesEntry.COLUMN_SHOP_ID);
+            long shopId = cursor.getLong(colShopIdIdx);
+
+            int colPriceIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
+
+            Price price = null;
+
+            if (priceTypeVal == UNIT_PRICE.getType()) {
+                double unitPrice = cursor.getDouble(colPriceIdx) / 100;
+                price = new Price(priceId, unitPrice, currencyCode, shopId, null);
+            }
+
+            if (priceTypeVal == BUNDLE_PRICE.getType()) {
+                double bundlePrice = cursor.getDouble(colPriceIdx) / 100;
+                int colBundleQtyIdx = cursor.getColumnIndex(PricesEntry.COLUMN_BUNDLE_QTY);
+                double bundleQty = cursor.getDouble(colBundleQtyIdx);
+                price = new Price(priceId, bundlePrice, bundleQty, currencyCode, shopId, null);
+            }
+
+            prices.add(price);
+        }
+
+        if(cursor !=null)
+            cursor.close();
+
+        return prices;
     }
 
     private ContentValues getItemContentValues(Item item, Date updateTime, ContentValues values)

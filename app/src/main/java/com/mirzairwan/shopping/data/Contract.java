@@ -48,11 +48,6 @@ public final class Contract
          */
         public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_CATALOGUE);
 
-        /**
-         * What is this for???
-         */
-        public static final Uri ITEMS_PRICES_URI = Uri.withAppendedPath(ItemsEntry.CONTENT_URI,
-                Contract.PATH_PRICES);
     }
 
     public static final class ItemsEntry implements BaseColumns
