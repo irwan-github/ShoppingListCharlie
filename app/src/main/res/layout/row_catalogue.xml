@@ -33,6 +33,7 @@
             android:maxLength="@string/text_item_name_max_length"
             android:maxLines="@string/text_max_line"
             android:textAppearance="?android:textAppearanceMedium"
+            android:textStyle="bold"
             android:focusable="false"
             tools:text="Sardine">
         </TextView>
@@ -43,7 +44,7 @@
             android:layout_height="wrap_content"
             android:maxLength="@string/text_item_brand_max_length"
             android:maxLines="@string/text_max_line"
-            android:textAppearance="?android:textAppearanceMedium"
+            android:textAppearance="?android:textAppearanceSmall"
             android:focusable="false"
             tools:text="Abcdefghijklmnopqrstuvwxyz"
             >

@@ -222,14 +222,14 @@ public class ShoppingListProvider extends ContentProvider
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
                 break;
             case SHOPPING_LIST:
-                cursor = getBuyItems(uri, projection, selection, selectionArgs, sortOrder);
+                cursor = getShoppingList(uri, projection, selection, selectionArgs, sortOrder);
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
                 break;
             case SHOPPING_LIST_ITEMID:
                 long itemId = ContentUris.parseId(uri);
-                selection = PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_ITEM_ID + "=?";
+                selection = ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_ITEM_ID + "=?";
                 selectionArgs = new String[]{String.valueOf(itemId)};
-                cursor = getBuyItems(uri, projection, selection, selectionArgs, sortOrder);
+                cursor = getShoppingList(uri, projection, selection, selectionArgs, sortOrder);
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
                 break;
             default:
@@ -364,7 +364,7 @@ public class ShoppingListProvider extends ContentProvider
      * @param sortOrder
      * @return
      */
-    private Cursor getBuyItems(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder)
+    private Cursor getShoppingList(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder)
     {
 
 //        *           "SELECT items._id AS itemId," +
@@ -389,9 +389,9 @@ public class ShoppingListProvider extends ContentProvider
                 ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID +
                 " LEFT JOIN " + PricesEntry.TABLE_NAME +
                 " ON " + ToBuyItemsEntry.TABLE_NAME + "." +
-                ToBuyItemsEntry.COLUMN_ITEM_ID +
+                ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID +
                 "=" +
-                PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_ITEM_ID
+                PricesEntry.TABLE_NAME + "." + PricesEntry._ID
         );
 
         queryBuilder.setProjectionMap(sAllBuyItemsProjectionMap);

@@ -35,7 +35,8 @@
     <string name="ok">OK</string>
     <string name="default_brand_name">Brand</string>
     <string name="description_country_origin">Country of origin</string>
-    <string name="prices_header">Prices</string>
+    <string name="prices_header">Available Prices</string>
     <string name="country_origin_max_length">26</string>
     <string name="item_details_header">Item details</string>
+    <string name="purchase_details_header">Purchase details</string>
 </resources>

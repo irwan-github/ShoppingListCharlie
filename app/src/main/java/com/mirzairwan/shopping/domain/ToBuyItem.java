@@ -37,7 +37,7 @@ public class ToBuyItem implements Parcelable
 
     }
 
-    public ToBuyItem(int _idBuyItem, int quantity, Price selectedPrice, Item item, Date lastUpdatedOn)
+    public ToBuyItem(long _idBuyItem, int quantity, Price selectedPrice, Item item, Date lastUpdatedOn)
     {
         if(selectedPrice == null)
             throw new IllegalArgumentException("Price cannot be null");

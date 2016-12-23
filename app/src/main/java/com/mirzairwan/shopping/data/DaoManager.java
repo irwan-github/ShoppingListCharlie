@@ -35,6 +35,4 @@ public interface DaoManager
 
     int delete(Item item);
 
-    //
-    // List<Price> getItemPrice(long id);
 }

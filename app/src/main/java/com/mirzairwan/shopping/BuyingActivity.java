@@ -20,19 +20,23 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
+import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
-import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
+import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.DaoManager;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ShoppingList;
 import com.mirzairwan.shopping.domain.ToBuyItem;
 
+import java.util.ArrayList;
 import java.util.Currency;
+import java.util.List;
 import java.util.Locale;
 
 import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
@@ -49,12 +53,13 @@ import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
  */
 public class BuyingActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>
 {
+    private static final int ITEM_PRICE_LOADER_ID = 21;
     private int actionMode = -1; //Informs the editor whether this activity is creation or updating
     public static final int CREATE_BUY_ITEM_MODE = 1; //use for startActivityForResult
     public static final int EDIT_BUY_ITEM_MODE = 2; //use for startActivityForResult
 
     private static final String EDIT_ITEM_URI = "EDIT_ITEM_URI";
-    private static final int LOADER_ID = 20;
+    private static final int PURCHASE_ITEM_LOADER_ID = 20;
 
     private Cursor mCursor;
     private ToBuyItem toBuyItem;
@@ -70,14 +75,16 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
     private EditText etBundlePrice;
     private EditText etBundleQty;
     private RadioGroup rgPriceTypeChoice;
-
+    private Item item;
+    private List<Price> prices;
+    private long selectedPriceId;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_item_editing);
+        setContentView(R.layout.activity_buying_item);
 
         Intent intent = getIntent();
         Uri uri = intent.getData();
@@ -86,7 +93,8 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
             setTitle(R.string.view_buy_item_details);
             Bundle arg = new Bundle();
             arg.putParcelable(EDIT_ITEM_URI, uri);
-            getLoaderManager().initLoader(LOADER_ID, arg, this);
+            getLoaderManager().initLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
+            getLoaderManager().initLoader(ITEM_PRICE_LOADER_ID, arg, this);
             actionMode = EDIT_BUY_ITEM_MODE; //This flag is used for database operation
         } else {
             setTitle(R.string.new_buy_item_title);
@@ -111,7 +119,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
         etName = (EditText) findViewById(R.id.et_item_name);
         etBrand = (EditText) findViewById(R.id.et_item_brand);
         etDescription = (EditText) findViewById(R.id.et_item_description);
-        etCountryOrigin = (EditText)findViewById(R.id.et_item_country_origin);
+        etCountryOrigin = (EditText) findViewById(R.id.et_item_country_origin);
         etQty = (EditText) findViewById(R.id.et_item_quantity);
         etUnitPrice = (EditText) findViewById(R.id.et_unit_price);
         etBundlePrice = (EditText) findViewById(R.id.et_bundle_price);
@@ -258,7 +266,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
             bundlePrice = etBundlePrice.getText().toString();
 
         String bundleQty = "0.00";
-        if(!TextUtils.isEmpty(etBundleQty.getText()))
+        if (!TextUtils.isEmpty(etBundleQty.getText()))
             bundleQty = etBundleQty.getText().toString();
 
 
@@ -285,8 +293,7 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
 
             newBuyItem.getItem().setCountryOrigin(countryOrigin);
 
-            msg = daoManager.insert(newBuyItem, newBuyItem.getItem(),
-                    newBuyItem.getItem().getPrices());
+            msg = daoManager.insert(newBuyItem, newBuyItem.getItem(), newBuyItem.getItem().getPrices());
         } else //Existing buy item
         {
             toBuyItem.getItem().setName(itemName);
@@ -294,12 +301,16 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
             toBuyItem.getItem().setCountryOrigin(countryOrigin);
             toBuyItem.getItem().setDescription(itemDescription);
 
-            for (Price price : toBuyItem.getItem().getPrices()) {
+            for (Price price : prices)
+            {
                 if (price.getPriceType() == BUNDLE_PRICE) {
                     price.setBundlePrice(Double.parseDouble(bundlePrice), Double.parseDouble(bundleQty));
-                } else {
+                }
+                if(price.getPriceType() == UNIT_PRICE)
+                {
                     price.setUnitPrice(Double.parseDouble(unitPrice));
                 }
+                toBuyItem.getItem().addPrice(price);
             }
 
             toBuyItem.setQuantity(Integer.parseInt(itemQuantity));
@@ -320,88 +331,66 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
      */
     private void populateItemDetails(Cursor cursor)
     {
-
         if (cursor == null)
             throw new IllegalArgumentException("Cursor cannot be null");
 
         long itemId = 0;
-        long buyItemId = 0;
-        String itemName = "", itemBrand = "", itemDescription = "", currencyCode = "", countryOrigin="";
-        int buyQty = 0;
-        double unitPrice = 0, bundlePrice = 0, bundleQty = 0;
-        Price.Type priceType;
+        String itemName = "", itemBrand = "", itemDescription = "", countryOrigin = "";
 
-        boolean isItemDetailsPopulated = false; //Multiple identical item detail records will be retrieved due to item having more than one price
-        //So the first pass in the loop will populate item details. Skip the populating the item details in
-        //subsequent pass
-        while (cursor.moveToNext()) {
-            if (!isItemDetailsPopulated) {
+        itemId = cursor.getLong(cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_ITEM_ID));
 
-                itemId = cursor.getLong(cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_ITEM_ID));
-                buyItemId = cursor.getLong(cursor.getColumnIndex(ToBuyItemsEntry._ID));
+        int colNameIndex = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
+        itemName = cursor.getString(colNameIndex);
 
-                int colNameIndex = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
-                itemName = cursor.getString(colNameIndex);
+        int colBrandIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_BRAND);
+        itemBrand = cursor.getString(colBrandIdx);
 
-                int colBrandIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_BRAND);
-                itemBrand = cursor.getString(colBrandIdx);
+        int colDescriptionIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_DESCRIPTION);
+        itemDescription = cursor.getString(colDescriptionIdx);
 
-                int colQtyIdx = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);
-                buyQty = cursor.getInt(colQtyIdx);
+        int colCountryOriginIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_COUNTRY_ORIGIN);
+        countryOrigin = cursor.getString(colCountryOriginIdx);
 
-                int colDescriptionIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_DESCRIPTION);
-                itemDescription = cursor.getString(colDescriptionIdx);
+        item = new Item(itemId, itemName, itemBrand, countryOrigin, itemDescription, null);
+    }
 
-                int colCountryOriginIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_COUNTRY_ORIGIN);
-                countryOrigin = cursor.getString(colCountryOriginIdx);
+    private void populatePurchaseDetails(Cursor cursor)
+    {
+        long buyItemId = cursor.getLong(cursor.getColumnIndex(ToBuyItemsEntry._ID));
 
-                Item item = new Item(itemId, itemName, itemBrand, countryOrigin, itemDescription, null);
-                toBuyItem = new ToBuyItem(buyItemId);
-                toBuyItem.setItem(item);
-                toBuyItem.setQuantity(buyQty);
+        int colQtyIdx = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);
+        int buyQty = cursor.getInt(colQtyIdx);
 
-            }
+        int colSelectedPriceIdIdx = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID);
+        selectedPriceId = cursor.getLong(colSelectedPriceIdIdx);
 
-            int colPriceTypeIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE_TYPE_ID);
-            int priceTypeVal = cursor.getInt(colPriceTypeIdx);
+        int colPriceTypeIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE_TYPE_ID);
+        int priceTypeVal = cursor.getInt(colPriceTypeIdx);
 
-            int colPriceIdIdx = cursor.getColumnIndex(PricesEntry.ALIAS_ID);
-            long priceId = cursor.getLong(colPriceIdIdx);
+        int colPriceIdIdx = cursor.getColumnIndex(PricesEntry.ALIAS_ID);
+        long priceId = cursor.getLong(colPriceIdIdx);
 
-            int colSelectedPriceIdIdx = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID);
-            long selectedPriceId = cursor.getLong(colSelectedPriceIdIdx);
+        int colBundleQtyIdx = cursor.getColumnIndex(PricesEntry.COLUMN_BUNDLE_QTY);
+        long bundleQty = cursor.getLong(colBundleQtyIdx);
 
-            int colCurrencyCodeIdx = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
-            currencyCode = cursor.getString(colCurrencyCodeIdx);
+        int colCurrencyCodeIdx = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
+        String currencyCode = cursor.getString(colCurrencyCodeIdx);
 
-            int colShopIdIdx = cursor.getColumnIndex(PricesEntry.COLUMN_SHOP_ID);
-            long shopId = cursor.getLong(colShopIdIdx);
+        int colShopIdIdx = cursor.getColumnIndex(PricesEntry.COLUMN_SHOP_ID);
+        long shopId = cursor.getLong(colShopIdIdx);
 
-            int colPriceIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
+        Price price = null;
+        int colPriceIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
 
-            if (priceTypeVal == UNIT_PRICE.getType()) {
-                unitPrice = cursor.getDouble(colPriceIdx) / 100;
-                Price price = new Price(priceId, unitPrice, currencyCode, shopId, null);
-                toBuyItem.getItem().addPrice(price);
+        double priceDbl = cursor.getDouble(colPriceIdx) / 100;
 
-            }
+        if(priceTypeVal == Price.Type.UNIT_PRICE.getType())
+            price = new Price(priceId, priceDbl, currencyCode, shopId, null);
 
-            if (priceTypeVal == BUNDLE_PRICE.getType()) {
-                bundlePrice = cursor.getDouble(colPriceIdx) / 100;
-                int colBundleQtyIdx = cursor.getColumnIndex(PricesEntry.COLUMN_BUNDLE_QTY);
-                bundleQty = cursor.getDouble(colBundleQtyIdx);
-                Price price = new Price(priceId, bundlePrice, bundleQty, currencyCode, shopId, null);
-                toBuyItem.getItem().addPrice(price);
-            }
+        if(priceTypeVal == Price.Type.BUNDLE_PRICE.getType())
+            price = new Price(priceId, priceDbl, bundleQty, currencyCode, shopId, null);
 
-            if (priceId == selectedPriceId) {
-                priceType = priceTypeVal == BUNDLE_PRICE.getType() ? BUNDLE_PRICE : UNIT_PRICE;
-                toBuyItem.selectPrice(shopId, priceType);
-
-            }
-
-            isItemDetailsPopulated = true;
-        }
+        toBuyItem = new ToBuyItem(buyItemId, buyQty, price, item, null);
     }
 
     private void populateItemViews()
@@ -411,60 +400,150 @@ public class BuyingActivity extends AppCompatActivity implements LoaderManager.L
 
         etName.setText(toBuyItem.getItem().getName());
         etBrand.setText(toBuyItem.getItem().getBrand());
-        etQty.setText(String.valueOf(toBuyItem.getQuantity()));
         etCountryOrigin.setText(toBuyItem.getItem().getCountryOrigin());
         etDescription.setText(toBuyItem.getItem().getDescription());
+    }
 
-        for (Price price : toBuyItem.getItem().getPrices()) {
-            if (price.getPriceType() == UNIT_PRICE) {
-                etUnitPrice.setText(NumberFormatter.formatToTwoDecimalPlaces(
-                        price.getUnitPrice()));
+    private void populatePrices(Cursor cursor)
+    {
+        prices = new ArrayList<>();
+
+        while (cursor.moveToNext()) {
+            int colPriceTypeIdx = cursor.getColumnIndex(Contract.PricesEntry.COLUMN_PRICE_TYPE_ID);
+            int priceTypeVal = cursor.getInt(colPriceTypeIdx);
+
+            int colPriceIdIdx = cursor.getColumnIndex(Contract.PricesEntry._ID);
+            long priceId = cursor.getLong(colPriceIdIdx);
+
+            int colCurrencyCodeIdx = cursor.getColumnIndex(Contract.PricesEntry.COLUMN_CURRENCY_CODE);
+            String currencyCode = cursor.getString(colCurrencyCodeIdx);
+
+            int colShopIdIdx = cursor.getColumnIndex(Contract.PricesEntry.COLUMN_SHOP_ID);
+            long shopId = cursor.getLong(colShopIdIdx);
+
+            int colPriceIdx = cursor.getColumnIndex(Contract.PricesEntry.COLUMN_PRICE);
+
+            Price price = null;
+
+            if (priceTypeVal == UNIT_PRICE.getType()) {
+                double unitPrice = cursor.getDouble(colPriceIdx) / 100;
+                price = new Price(priceId, unitPrice, currencyCode, shopId, null);
             }
 
-            if (price.getPriceType() == BUNDLE_PRICE) {
-                etBundlePrice.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundlePrice()));
-                etBundleQty.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundleQuantity()));
+            if (priceTypeVal == BUNDLE_PRICE.getType()) {
+                double bundlePrice = cursor.getDouble(colPriceIdx) / 100;
+                int colBundleQtyIdx = cursor.getColumnIndex(Contract.PricesEntry.COLUMN_BUNDLE_QTY);
+                double bundleQty = cursor.getDouble(colBundleQtyIdx);
+                price = new Price(priceId, bundlePrice, bundleQty, currencyCode, shopId, null);
             }
-
+            prices.add(price);
         }
-
-
-        rgPriceTypeChoice.check(toBuyItem.getSelectedPriceType() == BUNDLE_PRICE ?
-                R.id.rb_bundle_price : R.id.rb_unit_price);
 
     }
 
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args)
+    private void populatePricesViews()
     {
-        String[] projection = new String[]{ToBuyItemsEntry._ID,
-                ToBuyItemsEntry.COLUMN_ITEM_ID,
-                ToBuyItemsEntry.COLUMN_QUANTITY,
-                ToBuyItemsEntry.COLUMN_IS_CHECKED,
-                ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID,
-                ItemsEntry.COLUMN_NAME,
-                ItemsEntry.COLUMN_BRAND,
-                ItemsEntry.COLUMN_COUNTRY_ORIGIN,
-                ItemsEntry.COLUMN_DESCRIPTION,
-                PricesEntry.ALIAS_ID,
-                PricesEntry.COLUMN_PRICE_TYPE_ID,
-                PricesEntry.COLUMN_PRICE,
-                PricesEntry.COLUMN_BUNDLE_QTY,
-                PricesEntry.COLUMN_CURRENCY_CODE,
-                PricesEntry.COLUMN_SHOP_ID};
+        FrameLayout priceContainer = (FrameLayout) findViewById(R.id.price_container);
+        etUnitPrice = (EditText) priceContainer.findViewById(R.id.et_unit_price);
+        etBundlePrice = (EditText) priceContainer.findViewById(R.id.et_bundle_price);
+        etBundleQty = (EditText) priceContainer.findViewById(R.id.et_bundle_qty);
 
-        Uri uri = args.getParcelable(EDIT_ITEM_URI);
-        CursorLoader loader = new CursorLoader(this, uri, projection, null, null, null);
+        etUnitPrice.setOnTouchListener(mOnTouchListener);
+        etBundlePrice.setOnTouchListener(mOnTouchListener);
+        etBundleQty.setOnTouchListener(mOnTouchListener);
+
+        for (Price price : prices) {
+            if (price.getPriceType() == Price.Type.UNIT_PRICE)
+                etUnitPrice.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getUnitPrice()));
+
+            if (price.getPriceType() == Price.Type.BUNDLE_PRICE) {
+                etBundlePrice.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundlePrice()));
+                etBundleQty.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundleQuantity()));
+            }
+        }
+    }
+
+    private void populatePurchaseView()
+    {
+        etQty.setText(String.valueOf(toBuyItem.getQuantity()));
+        rgPriceTypeChoice.check(toBuyItem.getSelectedPriceType() == BUNDLE_PRICE ?
+        R.id.rb_bundle_price : R.id.rb_unit_price);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int loaderId, Bundle args)
+    {
+        String[] projection = null;
+        Uri uri;
+        Loader<Cursor> loader = null;
+
+        switch (loaderId) {
+            case PURCHASE_ITEM_LOADER_ID:
+                projection = new String[]{ToBuyItemsEntry._ID,
+                        ToBuyItemsEntry.COLUMN_ITEM_ID,
+                        ToBuyItemsEntry.COLUMN_QUANTITY,
+                        ToBuyItemsEntry.COLUMN_IS_CHECKED,
+                        ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID,
+                        ItemsEntry.COLUMN_NAME,
+                        ItemsEntry.COLUMN_BRAND,
+                        ItemsEntry.COLUMN_COUNTRY_ORIGIN,
+                        ItemsEntry.COLUMN_DESCRIPTION,
+                        PricesEntry.ALIAS_ID,
+                        PricesEntry.COLUMN_PRICE_TYPE_ID,
+                        PricesEntry.COLUMN_PRICE,
+                        PricesEntry.COLUMN_BUNDLE_QTY,
+                        PricesEntry.COLUMN_CURRENCY_CODE,
+                        PricesEntry.COLUMN_SHOP_ID
+                };
+                uri = args.getParcelable(EDIT_ITEM_URI);
+                loader = new CursorLoader(this, uri, projection, null, null, null);
+                break;
+
+            case ITEM_PRICE_LOADER_ID:
+                projection = new String[]{Contract.PricesEntry._ID,
+                        Contract.PricesEntry.COLUMN_PRICE_TYPE_ID,
+                        Contract.PricesEntry.COLUMN_PRICE,
+                        Contract.PricesEntry.COLUMN_BUNDLE_QTY,
+                        Contract.PricesEntry.COLUMN_CURRENCY_CODE,
+                        Contract.PricesEntry.COLUMN_SHOP_ID};
+                uri = args.getParcelable(EDIT_ITEM_URI);
+                long itemId = ContentUris.parseId(uri);
+                String selection = Contract.PricesEntry.COLUMN_ITEM_ID + "=?";
+                String[] selectionArgs = new String[]{String.valueOf(itemId)};
+                loader = new CursorLoader(this, Contract.PricesEntry.CONTENT_URI, projection, selection,
+                        selectionArgs, null);
+                break;
+
+            default:
+                throw new IllegalArgumentException("Query not supported");
+
+        }
         return loader;
-
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
     {
-        mCursor = cursor;
-        populateItemDetails(cursor);
-        populateItemViews();
+        int loaderId = loader.getId();
+        switch (loaderId) {
+            case PURCHASE_ITEM_LOADER_ID:
+                mCursor = cursor;
+                cursor.moveToFirst();
+                populateItemDetails(cursor);
+                populatePurchaseDetails(cursor);
+                populateItemViews();
+                populatePurchaseView();
+                break;
+
+            case ITEM_PRICE_LOADER_ID:
+                populatePrices(cursor);
+                populatePricesViews();
+                break;
+
+            default:
+                throw new IllegalArgumentException("Loader not supported");
+        }
+
     }
 
     @Override

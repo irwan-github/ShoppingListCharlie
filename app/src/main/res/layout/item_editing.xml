@@ -93,7 +93,7 @@
             android:focusableInTouchMode="true"
             android:hint="@string/description_label"
             android:maxLength="@string/text_item_description_max_length"
-            android:minWidth="@dimen/edit_text_item_name_min_width"
+            android:minWidth="@dimen/edit_text_item_description_min_width"
             android:textAppearance="?android:textAppearanceMedium"
             />
 
