@@ -8,4 +8,15 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="HeaderFont" parent="@android:style/TextAppearance.Small">
+        <item name="android:textColor">@color/colorAccent</item>
+        <item name="android:fontFamily">sans-serif-black</item>
+        <item name="android:textAppearance">?android:textAppearanceSmall</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:paddingTop">@dimen/header_padding_top</item>
+        <item name="android:paddingBottom">@dimen/header_padding_bottom</item>
+    </style>
+
+    <dimen name="header_padding_top">8dp</dimen>
+    <dimen name="header_padding_bottom">16dp</dimen>
 </resources>

@@ -5,4 +5,5 @@
     <color name="colorSecondary">#607d8b</color>
     <color name="colorAccent">#304ffe</color>
     <color name="tabTextColor">#FFFFFF</color>
+    <color name="segment_divider">#80b3ff</color>
 </resources>

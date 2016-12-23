@@ -28,4 +28,5 @@
     <dimen name="edit_text_bundle_qty_min_width">150dp</dimen>
     <dimen name="tv_item_name_max_width">150dp</dimen>
     <dimen name="tv_item_brand_max_width">100dp</dimen>
+    <dimen name="edit_surface_margin">8dp</dimen>
 </resources>
