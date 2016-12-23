@@ -49,19 +49,22 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     private static final String ITEM_URL = "ITEM_URL";
     private static final int ITEM_LOADER_ID = 20;
     private static final int ITEM_PRICE_LOADER_ID = 21;
-    private Item item;
 
-    private EditText etName;
-    private EditText etBrand;
-    private EditText etDescription;
-    private EditText etCountryOrigin;
-    private EditText etUnitPrice;
-    private EditText etBundlePrice;
-    private EditText etBundleQty;
-    private View.OnTouchListener mOnTouchListener;
-    private boolean mItemHaveChanged = false;
+    protected EditText etName;
+    protected EditText etBrand;
+    protected EditText etDescription;
+    protected EditText etCountryOrigin;
+
+    protected EditText etUnitPrice;
+    protected EditText etBundlePrice;
+    protected EditText etBundleQty;
+
+    protected View.OnTouchListener mOnTouchListener;
+    protected boolean mItemHaveChanged = false;
     private DaoManager daoManager;
-    private List<Price> prices;
+
+    protected Item item;
+    protected List<Price> mPrices;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -69,20 +72,24 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_item_editing2);
 
-        Intent intent = getIntent();
-        Uri uri = intent.getData();
-
-        setTitle(R.string.view_buy_item_details);
-
+        initLoaders();
         daoManager = Builder.getDaoManager(this);
 
+    }
+
+    protected void initLoaders()
+    {
+        setTitle(R.string.view_buy_item_details);
+        Intent intent = getIntent();
+        Uri uri = intent.getData();
         Bundle arg = new Bundle();
         arg.putParcelable(ITEM_URL, uri);
         getLoaderManager().initLoader(ITEM_LOADER_ID, arg, this);
         getLoaderManager().initLoader(ITEM_PRICE_LOADER_ID, arg, this);
+
     }
 
-    private void populatePricesViews()
+    protected void populatePricesViews()
     {
         FrameLayout priceContainer = (FrameLayout) findViewById(R.id.price_container);
         etUnitPrice = (EditText) priceContainer.findViewById(R.id.et_unit_price);
@@ -93,7 +100,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         etBundlePrice.setOnTouchListener(mOnTouchListener);
         etBundleQty.setOnTouchListener(mOnTouchListener);
 
-        for (Price price : prices) {
+        for (Price price : mPrices) {
             if (price.getPriceType() == Price.Type.UNIT_PRICE)
                 etUnitPrice.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getUnitPrice()));
 
@@ -102,7 +109,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                 etBundleQty.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundleQuantity()));
             }
         }
-
     }
 
     @Override
@@ -166,6 +172,14 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         etDescription.setOnTouchListener(mOnTouchListener);
         etCountryOrigin.setOnTouchListener(mOnTouchListener);
 
+        etUnitPrice = (EditText) findViewById(R.id.et_unit_price);
+        etBundlePrice = (EditText) findViewById(R.id.et_bundle_price);
+        etBundleQty = (EditText) findViewById(R.id.et_bundle_qty);
+
+        etUnitPrice.setOnTouchListener(mOnTouchListener);
+        etBundlePrice.setOnTouchListener(mOnTouchListener);
+        etBundleQty.setOnTouchListener(mOnTouchListener);
+
         super.onStart();
     }
 
@@ -201,7 +215,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         builder.show();
     }
 
-    private void alertRequiredField(int messageId)
+    protected void alertRequiredField(int messageId)
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Mandatory field(s)");
@@ -214,13 +228,13 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     /**
      *
      */
-    private void delete()
+    protected void delete()
     {
         daoManager.delete(item);
         finish();
     }
 
-    private void save()
+    protected void getItemFromUserInput()
     {
         String itemName;
         if (TextUtils.isEmpty(etName.getText())) {
@@ -235,24 +249,47 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         String countryOrigin = etCountryOrigin.getText().toString();
         String itemDescription = etDescription.getText().toString();
 
-        String unitPrice = "0.00";
-        if (etUnitPrice != null && !TextUtils.isEmpty(etUnitPrice.getText()))
-            unitPrice = etUnitPrice.getText().toString();
+        if(item == null)
+            item = new Item(itemName);
+        else
+            item.setName(itemName);
 
-        String bundlePrice = "0.00";
-        if (etBundlePrice != null && !TextUtils.isEmpty(etBundlePrice.getText()))
-            bundlePrice = etBundlePrice.getText().toString();
-
-        String bundleQty = "0.00";
-        if (etBundleQty != null && !TextUtils.isEmpty(etBundleQty.getText()))
-            bundleQty = etBundleQty.getText().toString();
-
-        item.setName(itemName);
         item.setBrand(itemBrand);
         item.setCountryOrigin(countryOrigin);
         item.setDescription(itemDescription);
 
-        for (Price price : prices) {
+    }
+
+    protected String getBundleQtyFromUserInput()
+    {
+        String bundleQty;
+        bundleQty = "0.00";
+        if (etBundleQty != null && !TextUtils.isEmpty(etBundleQty.getText()))
+            bundleQty = etBundleQty.getText().toString();
+        return bundleQty;
+    }
+
+    protected String getBundlePriceFromUserInput()
+    {
+        String bundlePrice;
+        bundlePrice = "0.00";
+        if (etBundlePrice != null && !TextUtils.isEmpty(etBundlePrice.getText()))
+            bundlePrice = etBundlePrice.getText().toString();
+        return bundlePrice;
+    }
+
+    protected String getUnitPriceFromUserInput()
+    {
+        String unitPrice;
+        unitPrice = "0.00";
+        if (etUnitPrice != null && !TextUtils.isEmpty(etUnitPrice.getText()))
+            unitPrice = etUnitPrice.getText().toString();
+        return unitPrice;
+    }
+
+    protected void populatePricesForSaving(String unitPrice, String bundlePrice, String bundleQty)
+    {
+        for (Price price : mPrices) {
             if (price.getPriceType() == BUNDLE_PRICE) {
                 price.setBundlePrice(Double.parseDouble(bundlePrice), Double.parseDouble(bundleQty));
             } else {
@@ -260,7 +297,13 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             }
             item.addPrice(price);
         }
+    }
 
+    protected void save()
+    {
+        getItemFromUserInput();
+
+        populatePricesForSaving(getUnitPriceFromUserInput(), getBundlePriceFromUserInput(), getBundleQtyFromUserInput());
 
         String msg;
         msg = daoManager.update(item, item.getPrices());
@@ -280,9 +323,8 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             throw new IllegalArgumentException("Cursor cannot be null");
 
         long itemId = 0;
-        String itemName = "", itemBrand = "", itemDescription = "", currencyCode = "", countryOrigin = "";
+        String itemName = "", itemBrand = "", itemDescription = "", countryOrigin = "";
 
-        cursor.moveToFirst();
         itemId = cursor.getLong(cursor.getColumnIndex(ItemsEntry._ID));
 
         int colNameIndex = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
@@ -300,10 +342,10 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         item = new Item(itemId, itemName, itemBrand, countryOrigin, itemDescription, null);
     }
 
-    private void populateItemViews()
+    protected void populateItemViews()
     {
         if (item == null)
-            throw new IllegalArgumentException("ToBuyItem cannot be null");
+            throw new IllegalArgumentException("Item cannot be null");
 
         etName.setText(item.getName());
         etBrand.setText(item.getBrand());
@@ -311,7 +353,16 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         etDescription.setText(item.getDescription());
     }
 
-    private void clearInputFields()
+    protected void clearItemInputFields()
+    {
+        etName.setText("");
+        etBrand.setText("");
+        etCountryOrigin.setText("");
+        etDescription.setText("");
+
+    }
+
+    protected void clearPriceInputFields()
     {
         etName.setText("");
         etBrand.setText("");
@@ -371,6 +422,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         int loaderId = loader.getId();
         switch (loaderId) {
             case ITEM_LOADER_ID:
+                cursor.moveToFirst();
                 populateItem(cursor);
                 populateItemViews();
                 break;
@@ -385,12 +437,13 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     public void onLoaderReset(Loader<Cursor> loader)
     {
         // If the loader is invalidated, clear out all the data from the input fields.
-        clearInputFields();
+        clearItemInputFields();
+        clearPriceInputFields();
     }
 
-    private void populatePrices(Cursor cursor)
+    protected void populatePrices(Cursor cursor)
     {
-        prices = new ArrayList<>();
+        mPrices = new ArrayList<>();
 
         while (cursor.moveToNext()) {
             int colPriceTypeIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE_TYPE_ID);
@@ -417,10 +470,10 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             if (priceTypeVal == BUNDLE_PRICE.getType()) {
                 double bundlePrice = cursor.getDouble(colPriceIdx) / 100;
                 int colBundleQtyIdx = cursor.getColumnIndex(PricesEntry.COLUMN_BUNDLE_QTY);
-                double bundleQty = cursor.getDouble(colBundleQtyIdx);
+                double bundleQty = cursor.getDouble(colBundleQtyIdx) / 100;
                 price = new Price(priceId, bundlePrice, bundleQty, currencyCode, shopId, null);
             }
-            prices.add(price);
+            mPrices.add(price);
         }
 
     }
