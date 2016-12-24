@@ -1,9 +1,9 @@
 package com.mirzairwan.shopping;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,8 +17,6 @@ import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 
-import java.util.Locale;
-
 /**
  * Created by Mirza Irwan on 18/12/16.
  */
@@ -26,18 +24,22 @@ import java.util.Locale;
 public class ShoppingListAdapter extends CursorAdapter
 {
     private static final String LOG_TAG = ShoppingListAdapter.class.getSimpleName();
+    private final SharedPreferences userPreferences;
     private OnCheckBuyItemListener mOnFragmentInteractionListener;
 
     public ShoppingListAdapter(Context context, Cursor cursor, OnCheckBuyItemListener onFragmentInteractionListener)
     {
         super(context, cursor, 0);
         mOnFragmentInteractionListener = onFragmentInteractionListener;
+        userPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+
     }
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent)
     {
         return LayoutInflater.from(context).inflate(R.layout.row_buy_item, parent, false);
+
     }
 
     @Override
@@ -83,10 +85,15 @@ public class ShoppingListAdapter extends CursorAdapter
         int colSelectedPriceTagIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
         double priceTag = cursor.getDouble(colSelectedPriceTagIdx);
 
-        SharedPreferences prefs = context.getSharedPreferences(ShoppingActivity.PERSONAL,
-                                        Activity.MODE_PRIVATE);
-        String countryCode = prefs.getString(ShoppingActivity.HOME_COUNTRY_CODE,
-                                                        Locale.getDefault().getCountry());
+//        SharedPreferences prefs = context.getSharedPreferences(ShoppingActivity.PERSONAL,
+//                                        Activity.MODE_PRIVATE);
+
+        String countryCode = userPreferences.getString("home_country_preference", "");
+        //String countryCode = prefs.getString(ShoppingActivity.HOME_COUNTRY_CODE,
+        //                                                Locale.getDefault().getCountry());
+
+
+
         //Log.d(LOG_TAG, ">>>Default Country " + Locale.getDefault().getCountry());
         tagViews.tvSelectedPrice.setText(NumberFormatter.formatCountryCurrency(countryCode,
                                                                      currencyCode, priceTag/100));

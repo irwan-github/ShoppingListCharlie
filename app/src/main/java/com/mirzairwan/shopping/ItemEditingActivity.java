@@ -18,7 +18,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.mirzairwan.shopping.data.Contract;
@@ -35,13 +34,9 @@ import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
 /**
- * Display the buy item details in a screen
- * Create new buy item
- * Update and save buy item details
- * Delete existing buy items
- * <p>
- * Create new buy item uses the NEW_BUY_ITEM_MODE
- * Action modes
+ * Display the item details in a screen
+ * Update item details
+ * Delete existing items
  */
 public class ItemEditingActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>
 {
@@ -73,13 +68,13 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         setContentView(R.layout.activity_item_editing2);
 
         initLoaders();
+        setTitle(R.string.view_buy_item_details);
         daoManager = Builder.getDaoManager(this);
 
     }
 
     protected void initLoaders()
     {
-        setTitle(R.string.view_buy_item_details);
         Intent intent = getIntent();
         Uri uri = intent.getData();
         Bundle arg = new Bundle();
@@ -89,27 +84,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
     }
 
-    protected void populatePricesViews()
-    {
-        FrameLayout priceContainer = (FrameLayout) findViewById(R.id.price_container);
-        etUnitPrice = (EditText) priceContainer.findViewById(R.id.et_unit_price);
-        etBundlePrice = (EditText) priceContainer.findViewById(R.id.et_bundle_price);
-        etBundleQty = (EditText) priceContainer.findViewById(R.id.et_bundle_qty);
 
-        etUnitPrice.setOnTouchListener(mOnTouchListener);
-        etBundlePrice.setOnTouchListener(mOnTouchListener);
-        etBundleQty.setOnTouchListener(mOnTouchListener);
-
-        for (Price price : mPrices) {
-            if (price.getPriceType() == Price.Type.UNIT_PRICE)
-                etUnitPrice.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getUnitPrice()));
-
-            if (price.getPriceType() == Price.Type.BUNDLE_PRICE) {
-                etBundlePrice.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundlePrice()));
-                etBundleQty.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundleQuantity()));
-            }
-        }
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
@@ -234,13 +209,13 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         finish();
     }
 
-    protected void getItemFromUserInput()
+    protected Item getItemFromInputField()
     {
         String itemName;
         if (TextUtils.isEmpty(etName.getText())) {
             alertRequiredField(R.string.mandatory_name);
             etName.requestFocus();
-            return;
+            return null;
         } else {
             itemName = etName.getText().toString();
         }
@@ -257,10 +232,10 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         item.setBrand(itemBrand);
         item.setCountryOrigin(countryOrigin);
         item.setDescription(itemDescription);
-
+        return item;
     }
 
-    protected String getBundleQtyFromUserInput()
+    protected String getBundleQtyFromInputField()
     {
         String bundleQty;
         bundleQty = "0.00";
@@ -269,7 +244,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         return bundleQty;
     }
 
-    protected String getBundlePriceFromUserInput()
+    protected String getBundlePriceFromInputField()
     {
         String bundlePrice;
         bundlePrice = "0.00";
@@ -278,7 +253,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         return bundlePrice;
     }
 
-    protected String getUnitPriceFromUserInput()
+    protected String getUnitPriceFromInputField()
     {
         String unitPrice;
         unitPrice = "0.00";
@@ -287,7 +262,14 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         return unitPrice;
     }
 
-    protected void populatePricesForSaving(String unitPrice, String bundlePrice, String bundleQty)
+    /**
+     * Populate item prices
+     * @param item
+     * @param unitPrice
+     * @param bundlePrice
+     * @param bundleQty
+     */
+    protected void populatePricesForSaving(Item item, String unitPrice, String bundlePrice, String bundleQty)
     {
         for (Price price : mPrices) {
             if (price.getPriceType() == BUNDLE_PRICE) {
@@ -301,9 +283,9 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
     protected void save()
     {
-        getItemFromUserInput();
+        Item item = getItemFromInputField();
 
-        populatePricesForSaving(getUnitPriceFromUserInput(), getBundlePriceFromUserInput(), getBundleQtyFromUserInput());
+        populatePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
 
         String msg;
         msg = daoManager.update(item, item.getPrices());
@@ -312,62 +294,94 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         finish();
     }
 
+//    /**
+//     * Populate Item object
+//     *
+//     * @param cursor
+//     */
+//    private void populateItem(Cursor cursor)
+//    {
+//        if (cursor == null)
+//            throw new IllegalArgumentException("Cursor cannot be null");
+//
+//        long itemId = 0;
+//        String itemName = "", itemBrand = "", itemDescription = "", countryOrigin = "";
+//
+//        itemId = cursor.getLong(cursor.getColumnIndex(ItemsEntry._ID));
+//
+//        int colNameIndex = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
+//        itemName = cursor.getString(colNameIndex);
+//
+//        int colBrandIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_BRAND);
+//        itemBrand = cursor.getString(colBrandIdx);
+//
+//        int colDescriptionIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_DESCRIPTION);
+//        itemDescription = cursor.getString(colDescriptionIdx);
+//
+//        int colCountryOriginIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_COUNTRY_ORIGIN);
+//        countryOrigin = cursor.getString(colCountryOriginIdx);
+//
+//        item = new Item(itemId, itemName, itemBrand, countryOrigin, itemDescription, null);
+//    }
+
     /**
      * Populate Item object
      *
      * @param cursor
      */
-    private void populateItem(Cursor cursor)
+    protected Item populateItem(String idColumnName, String nameColumnName, String brandColumnName,
+                                        String descriptionColumnName, String countryOriginColumnName,
+                                        Cursor cursor)
     {
         if (cursor == null)
             throw new IllegalArgumentException("Cursor cannot be null");
 
-        long itemId = 0;
-        String itemName = "", itemBrand = "", itemDescription = "", countryOrigin = "";
+        long itemId;
+        String itemName, itemBrand, itemDescription, countryOrigin;
 
-        itemId = cursor.getLong(cursor.getColumnIndex(ItemsEntry._ID));
+        itemId = cursor.getLong(cursor.getColumnIndex(idColumnName));
 
-        int colNameIndex = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
+        int colNameIndex = cursor.getColumnIndex(nameColumnName);
         itemName = cursor.getString(colNameIndex);
 
-        int colBrandIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_BRAND);
+        int colBrandIdx = cursor.getColumnIndex(brandColumnName);
         itemBrand = cursor.getString(colBrandIdx);
 
-        int colDescriptionIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_DESCRIPTION);
+        int colDescriptionIdx = cursor.getColumnIndex(descriptionColumnName);
         itemDescription = cursor.getString(colDescriptionIdx);
 
-        int colCountryOriginIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_COUNTRY_ORIGIN);
+        int colCountryOriginIdx = cursor.getColumnIndex(countryOriginColumnName);
         countryOrigin = cursor.getString(colCountryOriginIdx);
 
         item = new Item(itemId, itemName, itemBrand, countryOrigin, itemDescription, null);
+
+        return item;
     }
 
-    protected void populateItemViews()
+    protected void populateItemInputFields(Item item)
     {
-        if (item == null)
-            throw new IllegalArgumentException("Item cannot be null");
-
-        etName.setText(item.getName());
-        etBrand.setText(item.getBrand());
-        etCountryOrigin.setText(item.getCountryOrigin());
-        etDescription.setText(item.getDescription());
+        etName.setText(item != null? item.getName():"");
+        etBrand.setText(item != null? item.getBrand():"");
+        etCountryOrigin.setText(item != null? item.getCountryOrigin():"");
+        etDescription.setText(item != null? item.getDescription():"");
     }
 
-    protected void clearItemInputFields()
+    protected void populatePricesViews()
     {
-        etName.setText("");
-        etBrand.setText("");
-        etCountryOrigin.setText("");
-        etDescription.setText("");
+        for (Price price : mPrices) {
+            if (price.getPriceType() == Price.Type.UNIT_PRICE)
+                etUnitPrice.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getUnitPrice()));
 
+            if (price.getPriceType() == Price.Type.BUNDLE_PRICE) {
+                etBundlePrice.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundlePrice()));
+                etBundleQty.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundleQuantity()));
+            }
+        }
     }
+
 
     protected void clearPriceInputFields()
     {
-        etName.setText("");
-        etBrand.setText("");
-        etCountryOrigin.setText("");
-        etDescription.setText("");
         etUnitPrice.setText("");
         etBundlePrice.setText("");
         etBundleQty.setText("");
@@ -377,7 +391,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     public Loader<Cursor> onCreateLoader(int loaderId, Bundle args)
     {
         String[] projection = null;
-        Uri uri;
+        Uri uri = args.getParcelable(ITEM_URL);
         Loader<Cursor> loader = null;
         switch (loaderId) {
             case ITEM_LOADER_ID:
@@ -388,8 +402,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                         ItemsEntry.COLUMN_COUNTRY_ORIGIN,
                         ItemsEntry.COLUMN_DESCRIPTION,
                 };
-
-                uri = args.getParcelable(ITEM_URL);
                 loader = new CursorLoader(this, uri, projection, null, null, null);
                 break;
 
@@ -400,13 +412,11 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                         Contract.PricesEntry.COLUMN_BUNDLE_QTY,
                         Contract.PricesEntry.COLUMN_CURRENCY_CODE,
                         Contract.PricesEntry.COLUMN_SHOP_ID};
-                uri = args.getParcelable(ITEM_URL);
                 long itemId = ContentUris.parseId(uri);
                 String selection = Contract.PricesEntry.COLUMN_ITEM_ID + "=?";
                 String[] selectionArgs = new String[]{String.valueOf(itemId)};
                 loader = new CursorLoader(this, PricesEntry.CONTENT_URI, projection, selection,
                         selectionArgs, null);
-
                 break;
 
             default:
@@ -419,12 +429,17 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
     {
+        if(cursor == null || cursor.getCount() < 1)
+            return;
+
         int loaderId = loader.getId();
         switch (loaderId) {
             case ITEM_LOADER_ID:
                 cursor.moveToFirst();
-                populateItem(cursor);
-                populateItemViews();
+                Item item = populateItem(ItemsEntry._ID, ItemsEntry.COLUMN_NAME,
+                                            ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_DESCRIPTION,
+                                            ItemsEntry.COLUMN_COUNTRY_ORIGIN, cursor);
+                populateItemInputFields(item);
                 break;
             case ITEM_PRICE_LOADER_ID:
                 populatePrices(cursor);
@@ -437,7 +452,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     public void onLoaderReset(Loader<Cursor> loader)
     {
         // If the loader is invalidated, clear out all the data from the input fields.
-        clearItemInputFields();
+        populateItemInputFields(null);
         clearPriceInputFields();
     }
 

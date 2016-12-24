@@ -8,7 +8,9 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="com.mirzairwan.shopping.ShoppingActivity">
+        <activity
+            android:name=".ShoppingActivity"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -17,16 +19,14 @@
         </activity>
         <activity
             android:name=".BuyingActivity"
-            android:parentActivityName=".ShoppingActivity"
-            >
+            android:parentActivityName=".ShoppingActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ShoppingActivity"/>
         </activity>
         <activity
             android:name=".ItemEditingActivity"
-            android:parentActivityName=".ShoppingActivity"
-            >
+            android:parentActivityName=".ShoppingActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ShoppingActivity"/>
@@ -37,6 +37,14 @@
             android:name=".data.ShoppingListProvider"
             android:authorities="com.mirzairwan.shopping"
             android:exported="false"/>
+
+        <activity
+            android:name=".SettingsActivity"
+            android:parentActivityName=".ShoppingActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ShoppingActivity"/>>
+        </activity>
     </application>
 
 </manifest>

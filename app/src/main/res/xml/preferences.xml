@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="@string/country_based_preferences">
+
+    <EditTextPreference
+        android:key="home_country_preference"
+        android:title="@string/home_country_preference"
+        android:summary="@string/summary_home_country_preference"
+        android:dialogTitle="@string/dialog_title_home_country_preference"
+        android:defaultValue="GB"/>
+    </PreferenceCategory>
+</PreferenceScreen>

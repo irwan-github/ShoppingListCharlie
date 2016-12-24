@@ -62,18 +62,14 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     private long selectedPriceId;
     private long buyItemId;
 
-    private boolean isDeleting = false;
+    private boolean isDeleting = false; //the onLoaderFinished method will use this flag to decide whether to load prices
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_buying_item);
-        setPurchaseItemTitle();
-    }
 
-    private void setPurchaseItemTitle()
-    {
         Intent intent = getIntent();
         Uri uri = intent.getData();
         if (uri == null) {
@@ -108,8 +104,6 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
 
         rgPriceTypeChoice = (RadioGroup) findViewById(R.id.price_type_choice);
         rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);
-
-
     }
 
     @Override
@@ -125,7 +119,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     @Override
     protected void delete()
     {
-        isDeleting = true;
+        isDeleting = true; //the onLoaderFinished method will use this flag to decide whether to load prices
         Uri uriDeleteBuyItem = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItemId);
         getContentResolver().delete(uriDeleteBuyItem, null, null);
         finish();
@@ -154,9 +148,8 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
         return selectedPrice;
     }
 
-
     @Override
-    protected void populatePricesForSaving(String unitPriceDbl, String bundlePriceDbl, String bundleQtyDbl)
+    protected void populatePricesForSaving(Item item, String unitPriceDbl, String bundlePriceDbl, String bundleQtyDbl)
     {
         SharedPreferences prefs = getSharedPreferences(ShoppingActivity.PERSONAL, Activity.MODE_PRIVATE);
         String homeCountryCode = prefs.getString(ShoppingActivity.HOME_COUNTRY_CODE, Locale.getDefault().getCountry());
@@ -173,7 +166,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     @Override
     protected void save()
     {
-        getItemFromUserInput();
+        getItemFromInputField();
 
         String itemQuantity = "1";
         if (TextUtils.isEmpty(etQty.getText()) || Integer.parseInt(etQty.getText().toString()) < 1) {
@@ -189,57 +182,27 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
 
         if (actionMode == CREATE_BUY_ITEM_MODE) {
 
-            populatePricesForSaving(getUnitPriceFromUserInput(), getBundlePriceFromUserInput(), getBundleQtyFromUserInput());
+            populatePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
 
             Price selectedPrice = getSelectedPrice();
 
             toBuyItem = new ToBuyItem(item, Integer.parseInt(itemQuantity), selectedPrice);
 
             msg = daoManager.insert(toBuyItem, toBuyItem.getItem(), mPrices);
-        } else //Existing buy item
+        }
+        else //Existing buy item
         {
-            super.populatePricesForSaving(getUnitPriceFromUserInput(), getBundlePriceFromUserInput(), getBundleQtyFromUserInput());
+            super.populatePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
 
             toBuyItem.setQuantity(Integer.parseInt(itemQuantity));
 
             toBuyItem.selectPrice(defaultShopId, getSelectedPriceType());
 
-            msg = daoManager.update(toBuyItem, toBuyItem.getItem(),
-                    toBuyItem.getItem().getPrices());
+            msg = daoManager.update(toBuyItem, toBuyItem.getItem(), toBuyItem.getItem().getPrices());
         }
 
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         finish();
-    }
-
-    /**
-     * Populate ToBuyItem and Item object
-     *
-     * @param cursor
-     */
-    private void populateItemDetails(Cursor cursor)
-    {
-        if (cursor == null)
-            throw new IllegalArgumentException("Cursor cannot be null");
-
-        long itemId = 0;
-        String itemName = "", itemBrand = "", itemDescription = "", countryOrigin = "";
-
-        itemId = cursor.getLong(cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_ITEM_ID));
-
-        int colNameIndex = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
-        itemName = cursor.getString(colNameIndex);
-
-        int colBrandIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_BRAND);
-        itemBrand = cursor.getString(colBrandIdx);
-
-        int colDescriptionIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_DESCRIPTION);
-        itemDescription = cursor.getString(colDescriptionIdx);
-
-        int colCountryOriginIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_COUNTRY_ORIGIN);
-        countryOrigin = cursor.getString(colCountryOriginIdx);
-
-        item = new Item(itemId, itemName, itemBrand, countryOrigin, itemDescription, null);
     }
 
     private void populatePurchaseDetails(Cursor cursor)
@@ -343,6 +306,9 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
     {
+        if(cursor == null || cursor.getCount() < 1)
+            return;
+
         int loaderId = loader.getId();
         switch (loaderId) {
 
@@ -350,14 +316,18 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
                 // Proceed with moving to the first row of the cursor for purchase item and reading data from it
                 // (This should be the only purchase item row in the cursor)
                 if (cursor.moveToFirst()) {
-                    populateItemDetails(cursor);
+                    //populateItemDetails(cursor);
+                    Item item = populateItem(ToBuyItemsEntry.COLUMN_ITEM_ID, ItemsEntry.COLUMN_NAME,
+                                            ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_DESCRIPTION,
+                                            ItemsEntry.COLUMN_COUNTRY_ORIGIN, cursor);
                     populatePurchaseDetails(cursor);
-                    populateItemViews();
+                    populateItemInputFields(item);
                     populatePurchaseView();
                 }
                 break;
 
             case ITEM_PRICE_LOADER_ID:
+                //If deleting item, price is not required
                 if (!isDeleting) {
                     populatePrices(cursor);
                     populatePricesViews();
@@ -375,7 +345,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     public void onLoaderReset(Loader<Cursor> loader)
     {
         // If the loader is invalidated, clear out all the data from the input fields.
-        clearItemInputFields();
+        populateItemInputFields(null);
         clearPriceInputFields();
         clearPurchaseInputFields();
     }

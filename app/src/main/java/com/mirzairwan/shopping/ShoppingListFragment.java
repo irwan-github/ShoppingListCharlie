@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.view.LayoutInflater;
@@ -26,13 +27,15 @@ import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import java.util.Currency;
 import java.util.Locale;
 
+import static com.mirzairwan.shopping.R.xml.preferences;
+
 /**
  * Display buy list
  * Created by Mirza Irwan on 19/11/16.
  */
 
 public class ShoppingListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
-        ShoppingListAdapter.OnCheckBuyItemListener
+        ShoppingListAdapter.OnCheckBuyItemListener, SharedPreferences.OnSharedPreferenceChangeListener
 
 {
     public static final String BUY_LIST = "BUY_LIST";
@@ -48,6 +51,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         ShoppingListFragment buyListFragment = new ShoppingListFragment();
         Bundle args = new Bundle();
         buyListFragment.setArguments(args);
+
         return buyListFragment;
     }
 
@@ -64,8 +68,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
     public void setupUserLocale()
     {
-        SharedPreferences  sharedPreferences = getActivity().getSharedPreferences(ShoppingActivity.PERSONAL, Activity.MODE_PRIVATE);
-        countryCode = sharedPreferences.getString(ShoppingActivity.HOME_COUNTRY_CODE, Locale.getDefault().getCountry());
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        countryCode = sharedPreferences.getString("home_country_preference", null);
         currencyCode = Currency.getInstance(new Locale(Locale.getDefault().getLanguage(), countryCode)).getCurrencyCode();
 
     }
@@ -87,6 +91,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         setupListItemListener(lvBuyItems);
         setupEmptyView(rootView, lvBuyItems);
 
+        PreferenceManager.setDefaultValues(getActivity(), preferences, false);
         //Kick off the loader
         getLoaderManager().initLoader(BUY_ITEM, null, this);
 
@@ -108,6 +113,14 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         onFragmentInteractionListener = (OnFragmentInteractionListener) activity;
+        PreferenceManager.getDefaultSharedPreferences(activity).registerOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+        setupUserLocale();
     }
 
     private void setupListItemListener(ListView lvBuyItems) {
@@ -189,6 +202,15 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         int buyItemIdColIdx = cursor.getColumnIndex(ToBuyItemsEntry._ID);
         long buyItemId = cursor.getLong(buyItemIdColIdx);
         Builder.getDaoManager(getActivity()).update(buyItemId, isChecked);
+
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
+    {
+        setupUserLocale();
+        showCostOfItemsAdded();
+        showCostOfItemsChecked();
 
     }
 

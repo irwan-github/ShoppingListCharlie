@@ -1,11 +1,10 @@
 package com.mirzairwan.shopping;
 
-import android.app.Activity;
 import android.content.ContentUris;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -14,8 +13,7 @@ import android.view.MenuItem;
 import com.mirzairwan.shopping.data.AndroidDatabaseManager;
 import com.mirzairwan.shopping.data.Contract;
 
-import java.util.Currency;
-import java.util.Locale;
+import static com.mirzairwan.shopping.R.id.menu_database_shopping_list;
 
 public class ShoppingActivity extends AppCompatActivity implements
                         ShoppingListFragment.OnFragmentInteractionListener,
@@ -30,9 +28,7 @@ public class ShoppingActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_shopping);
 
-        Locale defaultLocale = Locale.getDefault();
-        String countryCode = defaultLocale.getCountry();
-        String currencyCode = Currency.getInstance(defaultLocale).getCurrencyCode();
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         PagerAdapter pagerAdapter = new PagerAdapter(getFragmentManager(), this);
         ViewPager viewPager = (ViewPager)findViewById(R.id.pager_shopping);
@@ -47,22 +43,24 @@ public class ShoppingActivity extends AppCompatActivity implements
     }
 
     @Override
-    protected void onStart()
-    {
-        super.onStart();
-        SharedPreferences.Editor editor = getSharedPreferences(PERSONAL, Activity.MODE_PRIVATE).edit();
-        editor.putString(HOME_COUNTRY_CODE, "SG");
-        editor.apply();
-    }
-
-    @Override
     public boolean onOptionsItemSelected(MenuItem menuItem)
     {
-        if (menuItem.getItemId() == R.id.menu_database_shopping_list) {
-            Intent intentDb = new Intent(this, AndroidDatabaseManager.class);
-            startActivity(intentDb);
+        int menuItemId = menuItem.getItemId();
+        switch(menuItemId)
+        {
+            case menu_database_shopping_list:
+                Intent intentDb = new Intent(this, AndroidDatabaseManager.class);
+                startActivity(intentDb);
+                return true;
+            case R.id.menu_user_settings:
+                Intent intentSettings = new Intent(this, SettingsActivity.class);
+                startActivity(intentSettings);
+                return true;
+            default:
+                return super.onOptionsItemSelected(menuItem);
         }
-        return super.onOptionsItemSelected(menuItem);
+
+
     }
 
     @Override
@@ -78,7 +76,6 @@ public class ShoppingActivity extends AppCompatActivity implements
     {
         Intent intentToViewItem = new Intent();
         intentToViewItem.setClass(this, BuyingActivity.class);
-        //Uri uri = Uri.withAppendedPath(ToBuyItemsEntry.CONTENT_URI, Contract.PATH_ITEMS);
         Uri uri = Contract.ShoppingList.CONTENT_URI;
         uri = ContentUris.withAppendedId(uri, itemId);
         intentToViewItem.setData(uri);
@@ -102,4 +99,6 @@ public class ShoppingActivity extends AppCompatActivity implements
         intentToViewItem.setData(uri);
         startActivity(intentToViewItem);
     }
+
+
 }

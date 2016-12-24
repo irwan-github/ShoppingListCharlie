@@ -33,7 +33,7 @@ public class Item implements Parcelable {
     }
 
     public Item(long id, String itemName, String brand, String country, String description, Date lastUpdatedOn) {
-        if (itemName == null && itemName.trim().equals(""))
+        if (itemName == null || itemName.trim().equals(""))
             throw new IllegalArgumentException("Item name cannot empty");
         mId = nextId.incrementAndGet();
         _id = id;
