@@ -24,9 +24,6 @@ import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 
-import java.util.Currency;
-import java.util.Locale;
-
 import static com.mirzairwan.shopping.R.xml.preferences;
 
 /**
@@ -69,9 +66,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     public void setupUserLocale()
     {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        countryCode = sharedPreferences.getString("home_country_preference", null);
-        currencyCode = Currency.getInstance(new Locale(Locale.getDefault().getLanguage(), countryCode)).getCurrencyCode();
-
+        countryCode = sharedPreferences.getString(getString(R.string.user_country_pref), null);
     }
 
     @Nullable
@@ -113,14 +108,23 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         onFragmentInteractionListener = (OnFragmentInteractionListener) activity;
-        PreferenceManager.getDefaultSharedPreferences(activity).registerOnSharedPreferenceChangeListener(this);
+
+
     }
 
     @Override
     public void onResume()
     {
         super.onResume();
-        setupUserLocale();
+        PreferenceManager.getDefaultSharedPreferences(getActivity()).
+                registerOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    public void onDestroyView()
+    {
+        PreferenceManager.getDefaultSharedPreferences(getActivity()).unregisterOnSharedPreferenceChangeListener(this);
+        super.onDestroyView();
     }
 
     private void setupListItemListener(ListView lvBuyItems) {
@@ -223,6 +227,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
     public void showCostOfItemsAdded()
     {
+        String currencyCode = NumberFormatter.getCurrencyCode(countryCode);
         TextView tvTotalValueAdded = (TextView)getActivity().findViewById(R.id.tv_total_buy);
         Double totalValueOfItemsAdded = 0.00d;
         Cursor cursor = shoppingListAdapter.getCursor();
@@ -239,6 +244,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
     public void showCostOfItemsChecked()
     {
+        String currencyCode = NumberFormatter.getCurrencyCode(countryCode);
         TextView tvTotalValueChecked = (TextView)getActivity().findViewById(R.id.tv_total_checked);
         Double totalValueOfItemsChecked = 0.00d;
         Cursor cursor = shoppingListAdapter.getCursor();
@@ -247,6 +253,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         {
             int colSelectedPriceTag = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
             int colIsItemChecked = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_IS_CHECKED);
+            int colCurrencyCode = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
+            currencyCode = cursor.getString(colCurrencyCode);
             boolean isItemChecked = cursor.getInt(colIsItemChecked) > 0;
             if(isItemChecked)
                 totalValueOfItemsChecked += cursor.getDouble(colSelectedPriceTag)/100;

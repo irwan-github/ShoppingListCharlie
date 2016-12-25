@@ -6,9 +6,12 @@ import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -17,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewParent;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -69,8 +73,21 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
         initLoaders();
         setTitle(R.string.view_buy_item_details);
+
         daoManager = Builder.getDaoManager(this);
 
+    }
+
+    protected void setCurrencySymbol(EditText et)
+    {
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String countryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
+        String currencySymbol = NumberFormatter.getCurrencySymbol(countryCode);
+
+        ViewParent viewParent = et.getParent();
+        TextInputLayout etLayout = (TextInputLayout)(viewParent.getParent());
+        String hint = etLayout.getHint().toString();
+        etLayout.setHint(hint + " (" + currencySymbol + ")");
     }
 
     protected void initLoaders()
@@ -154,6 +171,9 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         etUnitPrice.setOnTouchListener(mOnTouchListener);
         etBundlePrice.setOnTouchListener(mOnTouchListener);
         etBundleQty.setOnTouchListener(mOnTouchListener);
+
+        setCurrencySymbol(etUnitPrice);
+        setCurrencySymbol(etBundlePrice);
 
         super.onStart();
     }
@@ -263,13 +283,13 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     }
 
     /**
-     * Populate item prices
+     * Update prices of existing item. Existing item have existing prices.
      * @param item
      * @param unitPrice
      * @param bundlePrice
      * @param bundleQty
      */
-    protected void populatePricesForSaving(Item item, String unitPrice, String bundlePrice, String bundleQty)
+    protected void preparePricesForSaving(Item item, String unitPrice, String bundlePrice, String bundleQty)
     {
         for (Price price : mPrices) {
             if (price.getPriceType() == BUNDLE_PRICE) {
@@ -285,7 +305,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     {
         Item item = getItemFromInputField();
 
-        populatePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
+        preparePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
 
         String msg;
         msg = daoManager.update(item, item.getPrices());
@@ -294,44 +314,14 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         finish();
     }
 
-//    /**
-//     * Populate Item object
-//     *
-//     * @param cursor
-//     */
-//    private void populateItem(Cursor cursor)
-//    {
-//        if (cursor == null)
-//            throw new IllegalArgumentException("Cursor cannot be null");
-//
-//        long itemId = 0;
-//        String itemName = "", itemBrand = "", itemDescription = "", countryOrigin = "";
-//
-//        itemId = cursor.getLong(cursor.getColumnIndex(ItemsEntry._ID));
-//
-//        int colNameIndex = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
-//        itemName = cursor.getString(colNameIndex);
-//
-//        int colBrandIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_BRAND);
-//        itemBrand = cursor.getString(colBrandIdx);
-//
-//        int colDescriptionIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_DESCRIPTION);
-//        itemDescription = cursor.getString(colDescriptionIdx);
-//
-//        int colCountryOriginIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_COUNTRY_ORIGIN);
-//        countryOrigin = cursor.getString(colCountryOriginIdx);
-//
-//        item = new Item(itemId, itemName, itemBrand, countryOrigin, itemDescription, null);
-//    }
-
     /**
      * Populate Item object
      *
      * @param cursor
      */
-    protected Item populateItem(String idColumnName, String nameColumnName, String brandColumnName,
-                                        String descriptionColumnName, String countryOriginColumnName,
-                                        Cursor cursor)
+    protected Item createItem(String idColumnName, String nameColumnName, String brandColumnName,
+                              String descriptionColumnName, String countryOriginColumnName,
+                              Cursor cursor)
     {
         if (cursor == null)
             throw new IllegalArgumentException("Cursor cannot be null");
@@ -366,7 +356,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         etDescription.setText(item != null? item.getDescription():"");
     }
 
-    protected void populatePricesViews()
+    protected void populatePricesInputFields()
     {
         for (Price price : mPrices) {
             if (price.getPriceType() == Price.Type.UNIT_PRICE)
@@ -436,14 +426,14 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         switch (loaderId) {
             case ITEM_LOADER_ID:
                 cursor.moveToFirst();
-                Item item = populateItem(ItemsEntry._ID, ItemsEntry.COLUMN_NAME,
+                Item item = createItem(ItemsEntry._ID, ItemsEntry.COLUMN_NAME,
                                             ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_DESCRIPTION,
                                             ItemsEntry.COLUMN_COUNTRY_ORIGIN, cursor);
                 populateItemInputFields(item);
                 break;
             case ITEM_PRICE_LOADER_ID:
-                populatePrices(cursor);
-                populatePricesViews();
+                createPrices(cursor);
+                populatePricesInputFields();
                 break;
         }
     }
@@ -456,7 +446,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         clearPriceInputFields();
     }
 
-    protected void populatePrices(Cursor cursor)
+    protected void createPrices(Cursor cursor)
     {
         mPrices = new ArrayList<>();
 

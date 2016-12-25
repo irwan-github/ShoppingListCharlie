@@ -1,6 +1,5 @@
 package com.mirzairwan.shopping;
 
-import android.app.Activity;
 import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.CursorLoader;
@@ -10,6 +9,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.widget.EditText;
@@ -26,8 +26,6 @@ import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ToBuyItem;
 
 import java.util.ArrayList;
-import java.util.Currency;
-import java.util.Locale;
 
 import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
@@ -149,12 +147,16 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     }
 
     @Override
-    protected void populatePricesForSaving(Item item, String unitPriceDbl, String bundlePriceDbl, String bundleQtyDbl)
+    /**
+     * Create new price records.
+     */
+    protected void preparePricesForSaving(Item item, String unitPriceDbl, String bundlePriceDbl, String bundleQtyDbl)
     {
-        SharedPreferences prefs = getSharedPreferences(ShoppingActivity.PERSONAL, Activity.MODE_PRIVATE);
-        String homeCountryCode = prefs.getString(ShoppingActivity.HOME_COUNTRY_CODE, Locale.getDefault().getCountry());
-        Locale homeLocale = new Locale(Locale.getDefault().getLanguage(), homeCountryCode);
-        String currencyCode = Currency.getInstance(homeLocale).getCurrencyCode();
+        //SharedPreferences prefs = getSharedPreferences(ShoppingActivity.PERSONAL, Activity.MODE_PRIVATE);
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String homeCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
+        //Locale homeLocale = new Locale(Locale.getDefault().getLanguage(), homeCountryCode);
+        String currencyCode = NumberFormatter.getCurrencyCode(homeCountryCode);
 
         mPrices = new ArrayList<>();
         Price unitPrice = new Price(Double.parseDouble(unitPriceDbl), currencyCode, defaultShopId);
@@ -182,7 +184,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
 
         if (actionMode == CREATE_BUY_ITEM_MODE) {
 
-            populatePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
+            preparePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
 
             Price selectedPrice = getSelectedPrice();
 
@@ -192,7 +194,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
         }
         else //Existing buy item
         {
-            super.populatePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
+            super.preparePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
 
             toBuyItem.setQuantity(Integer.parseInt(itemQuantity));
 
@@ -317,7 +319,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
                 // (This should be the only purchase item row in the cursor)
                 if (cursor.moveToFirst()) {
                     //populateItemDetails(cursor);
-                    Item item = populateItem(ToBuyItemsEntry.COLUMN_ITEM_ID, ItemsEntry.COLUMN_NAME,
+                    Item item = createItem(ToBuyItemsEntry.COLUMN_ITEM_ID, ItemsEntry.COLUMN_NAME,
                                             ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_DESCRIPTION,
                                             ItemsEntry.COLUMN_COUNTRY_ORIGIN, cursor);
                     populatePurchaseDetails(cursor);
@@ -329,8 +331,8 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
             case ITEM_PRICE_LOADER_ID:
                 //If deleting item, price is not required
                 if (!isDeleting) {
-                    populatePrices(cursor);
-                    populatePricesViews();
+                    createPrices(cursor);
+                    populatePricesInputFields();
                 }
                 break;
 

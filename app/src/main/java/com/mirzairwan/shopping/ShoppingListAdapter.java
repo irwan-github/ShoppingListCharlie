@@ -17,6 +17,8 @@ import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 
+import static android.preference.PreferenceManager.getDefaultSharedPreferences;
+
 /**
  * Created by Mirza Irwan on 18/12/16.
  */
@@ -31,7 +33,7 @@ public class ShoppingListAdapter extends CursorAdapter
     {
         super(context, cursor, 0);
         mOnFragmentInteractionListener = onFragmentInteractionListener;
-        userPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        userPreferences = getDefaultSharedPreferences(context);
 
     }
 
@@ -88,7 +90,8 @@ public class ShoppingListAdapter extends CursorAdapter
 //        SharedPreferences prefs = context.getSharedPreferences(ShoppingActivity.PERSONAL,
 //                                        Activity.MODE_PRIVATE);
 
-        String countryCode = userPreferences.getString("home_country_preference", "");
+        String countryCode = PreferenceManager.getDefaultSharedPreferences(context).getString("home_country_preference", null);
+        //String countryCode = userPreferences.getString("home_country_preference", "");
         //String countryCode = prefs.getString(ShoppingActivity.HOME_COUNTRY_CODE,
         //                                                Locale.getDefault().getCountry());
 

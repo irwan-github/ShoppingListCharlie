@@ -60,4 +60,35 @@ public class NumberFormatterTest
         System.out.println(">> " + output);
         System.out.println(">> " + output2);
     }
+
+    @Test
+    public void testCurrencySymbol() throws Exception
+    {
+//        String symbol = getCurrencySymbol("SG");
+//        System.out.println(">> " + symbol);
+
+//        symbol = getCurrencySymbol("GB");
+//        System.out.println(">> " + symbol);
+//
+//        symbol = getCurrencySymbol("US");
+//        System.out.println(">> " + symbol);
+
+//        String symbol = NumberFormatter.getCurrencySymbol("SG", "SGD");
+//        System.out.println(">> " + symbol);
+//
+//        symbol = NumberFormatter.getCurrencySymbol("GB", "GBP");
+//        System.out.println(">> " + symbol);
+
+        String symbol = NumberFormatter.getCurrencySymbol("SG");
+        System.out.println(">> " + symbol);
+
+        symbol = NumberFormatter.getCurrencySymbol("GB");
+        System.out.println(">> " + symbol);
+    }
+
+    @Test
+    public void testCurrencyCode() throws Exception{
+        String symbol = NumberFormatter.getCurrencyCode("SG");
+        System.out.println(">> " + symbol);
+    }
 }

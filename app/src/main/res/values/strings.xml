@@ -5,8 +5,8 @@
     <string name="item_name">Name</string>
     <string name="brand_label">Brand</string>
     <string name="use_price_type">Which price to use in shopping list?</string>
-    <string name="unit_price_txt">Unit price ($)</string>
-    <string name="bundle_price_txt">Bundle price ($)</string>
+    <string name="unit_price_txt">Unit price</string>
+    <string name="bundle_price_txt">Bundle price</string>
     <string name="bundle_quantity_txt">Bundle quantity</string>
     <string name="description_label">Description of item</string>
     <string name="quantity_label">Quantity to buy</string>
@@ -44,4 +44,5 @@
     <string name="dialog_title_home_country_preference">Default country</string>
     <string name="country_based_preferences">Country</string>
     <string name="user_settings">Settings</string>
+    <string name="user_country_pref">home_country_preference</string>
 </resources>
