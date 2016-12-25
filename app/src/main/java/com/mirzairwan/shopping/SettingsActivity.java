@@ -3,9 +3,9 @@ package com.mirzairwan.shopping;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
-import android.preference.PreferenceActivity;
+import android.support.v7.app.AppCompatActivity;
 
-public class SettingsActivity extends PreferenceActivity
+public class SettingsActivity extends AppCompatActivity
 {
 
     @Override
@@ -15,7 +15,7 @@ public class SettingsActivity extends PreferenceActivity
         FragmentManager fm = getFragmentManager();
         FragmentTransaction txn = fm.beginTransaction();
         SettingsFragment settingsFragment = new SettingsFragment();
-        txn.add(android.R.id.content, settingsFragment);
+        txn.replace(android.R.id.content, settingsFragment);
         txn.commit();
     }
 

@@ -27,6 +27,7 @@ import com.mirzairwan.shopping.domain.ToBuyItem;
 
 import java.util.ArrayList;
 
+import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
@@ -102,6 +103,13 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
 
         rgPriceTypeChoice = (RadioGroup) findViewById(R.id.price_type_choice);
         rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);
+
+        if(actionMode == CREATE_BUY_ITEM_MODE) {
+            String countryCode = PreferenceManager.getDefaultSharedPreferences(this).
+                    getString(getString(R.string.user_country_pref), null);
+            setCurrencySymbol(etUnitPrice, NumberFormatter.getCurrencyCode(countryCode));
+            setCurrencySymbol(etBundlePrice, NumberFormatter.getCurrencyCode(countryCode));
+        }
     }
 
     @Override
@@ -153,7 +161,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     protected void preparePricesForSaving(Item item, String unitPriceDbl, String bundlePriceDbl, String bundleQtyDbl)
     {
         //SharedPreferences prefs = getSharedPreferences(ShoppingActivity.PERSONAL, Activity.MODE_PRIVATE);
-        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences sharedPrefs = getDefaultSharedPreferences(this);
         String homeCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
         //Locale homeLocale = new Locale(Locale.getDefault().getLanguage(), homeCountryCode);
         String currencyCode = NumberFormatter.getCurrencyCode(homeCountryCode);

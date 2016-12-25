@@ -32,30 +32,28 @@ public class CatalogAdapter extends CursorAdapter
     {
         View convertView = LayoutInflater.from(context).inflate(R.layout.row_catalogue, parent,
                                                                         false);
+
+        TextView tvItemName = (TextView)convertView.findViewById(R.id.tv_all_item_name_row);
+        TextView tvItemBrand = (TextView)convertView.findViewById(R.id.tv_all_item_brand_row);
+        ToggleButton toggleItem = (ToggleButton)convertView.findViewById(R.id.toggle_buy_list);
+
+        //Create a listener for toggle button events
+        OnItemCheckedChangeListener onItemCheckedChangeListener =
+                new OnItemCheckedChangeListener(mOnToggleCatalogItemListener);
+
+        Tag tag = new Tag();
+        tag.itemName = tvItemName;
+        tag.itemBrand = tvItemBrand;
+        tag.toggleItem = toggleItem;
+        tag.onItemCheckedChangeListener = onItemCheckedChangeListener;
+        convertView.setTag(tag);
+
         return convertView;
     }
 
     @Override
     public void bindView(View convertView, Context context, Cursor cursor)
     {
-        if(convertView.getTag() == null)
-        {
-            TextView tvItemName = (TextView)convertView.findViewById(R.id.tv_all_item_name_row);
-            TextView tvItemBrand = (TextView)convertView.findViewById(R.id.tv_all_item_brand_row);
-            ToggleButton toggleItem = (ToggleButton)convertView.findViewById(R.id.toggle_buy_list);
-
-            //Create a listener for toggle button events
-            OnItemCheckedChangeListener onItemCheckedChangeListener =
-                    new OnItemCheckedChangeListener(mOnToggleCatalogItemListener);
-
-            Tag tag = new Tag();
-            tag.itemName = tvItemName;
-            tag.itemBrand = tvItemBrand;
-            tag.toggleItem = toggleItem;
-            tag.onItemCheckedChangeListener = onItemCheckedChangeListener;
-            convertView.setTag(tag);
-        }
-
         Tag tag = (Tag) convertView.getTag();
         int nameColIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
         tag.itemName.setText(cursor.getString(nameColIdx));
@@ -70,7 +68,7 @@ public class CatalogAdapter extends CursorAdapter
         tag.toggleItem.setChecked(isItemInShoppingList);
 
         //Now give back the listener to toggle button
-        tag.onItemCheckedChangeListener.setPosition(cursor.getPosition());
+        tag.onItemCheckedChangeListener.setCursorPosition(cursor.getPosition());
         tag.toggleItem.setOnCheckedChangeListener(tag.onItemCheckedChangeListener);
     }
 
@@ -82,9 +80,15 @@ public class CatalogAdapter extends CursorAdapter
         public OnItemCheckedChangeListener onItemCheckedChangeListener;
     }
 
+    /**
+     * The function of this listener class is to fire
+     * a custom event OnItemCheckedChangeListener.onToggleItem
+     */
     private static class OnItemCheckedChangeListener implements CompoundButton.OnCheckedChangeListener
     {
         private int mPosition;
+
+        //Interested listener to the onCheckedChanged event.
         private OnToggleCatalogItemListener mOnToggleCatalogItemListener;
 
         public OnItemCheckedChangeListener(OnToggleCatalogItemListener onToggleCatalogItemListener)
@@ -98,7 +102,7 @@ public class CatalogAdapter extends CursorAdapter
             mOnToggleCatalogItemListener.onToggleItem(isChecked, mPosition);
         }
 
-        public void setPosition(int position)
+        public void setCursorPosition(int position)
         {
             mPosition = position;
         }

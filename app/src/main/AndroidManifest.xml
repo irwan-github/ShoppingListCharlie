@@ -32,19 +32,18 @@
                 android:value=".ShoppingActivity"/>
         </activity>
         <activity android:name=".data.AndroidDatabaseManager"/>
-
-        <provider
-            android:name=".data.ShoppingListProvider"
-            android:authorities="com.mirzairwan.shopping"
-            android:exported="false"/>
-
         <activity
             android:name=".SettingsActivity"
             android:parentActivityName=".ShoppingActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ShoppingActivity"/>>
+                android:value=".ShoppingActivity"/>
+
         </activity>
+        <provider
+            android:name=".data.ShoppingListProvider"
+            android:authorities="com.mirzairwan.shopping"
+            android:exported="false"/>
     </application>
 
 </manifest>

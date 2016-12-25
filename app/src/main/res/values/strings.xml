@@ -39,8 +39,8 @@
     <string name="country_origin_max_length">26</string>
     <string name="item_details_header">Item details</string>
     <string name="purchase_details_header">Purchase details</string>
-    <string name="home_country_preference">What is your country code?</string>
-    <string name="summary_home_country_preference">Example: SG for Singapore</string>
+    <string name="home_country_preference">2-letter country code?</string>
+    <string name="example_home_country_preference">Example: SG for Singapore</string>
     <string name="dialog_title_home_country_preference">Default country</string>
     <string name="country_based_preferences">Country</string>
     <string name="user_settings">Settings</string>

@@ -78,11 +78,12 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
     }
 
-    protected void setCurrencySymbol(EditText et)
+    protected void setCurrencySymbol(EditText et, String currencyCode)
     {
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         String countryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
-        String currencySymbol = NumberFormatter.getCurrencySymbol(countryCode);
+        String currencySymbol = NumberFormatter.getCurrencySymbolFromCurrencyCode(countryCode, currencyCode);
+        //String currencySymbol = NumberFormatter.getCurrencySymbol(countryCode);
 
         ViewParent viewParent = et.getParent();
         TextInputLayout etLayout = (TextInputLayout)(viewParent.getParent());
@@ -172,8 +173,8 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         etBundlePrice.setOnTouchListener(mOnTouchListener);
         etBundleQty.setOnTouchListener(mOnTouchListener);
 
-        setCurrencySymbol(etUnitPrice);
-        setCurrencySymbol(etBundlePrice);
+//        setCurrencySymbol(etUnitPrice);
+//        setCurrencySymbol(etBundlePrice);
 
         super.onStart();
     }
@@ -359,11 +360,14 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     protected void populatePricesInputFields()
     {
         for (Price price : mPrices) {
-            if (price.getPriceType() == Price.Type.UNIT_PRICE)
+            if (price.getPriceType() == Price.Type.UNIT_PRICE) {
                 etUnitPrice.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getUnitPrice()));
+                setCurrencySymbol(etUnitPrice, price.getCurrencyCode());
+            }
 
             if (price.getPriceType() == Price.Type.BUNDLE_PRICE) {
                 etBundlePrice.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundlePrice()));
+                setCurrencySymbol(etBundlePrice, price.getCurrencyCode());
                 etBundleQty.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundleQuantity()));
             }
         }

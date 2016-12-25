@@ -27,7 +27,7 @@ import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import static com.mirzairwan.shopping.R.xml.preferences;
 
 /**
- * Display buy list
+ * Display shopping list
  * Created by Mirza Irwan on 19/11/16.
  */
 
@@ -41,14 +41,10 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     private OnFragmentInteractionListener onFragmentInteractionListener;
     private ShoppingListAdapter shoppingListAdapter;
     private String countryCode;
-    private String currencyCode;
 
     public static ShoppingListFragment newInstance() {
 
         ShoppingListFragment buyListFragment = new ShoppingListFragment();
-        Bundle args = new Bundle();
-        buyListFragment.setArguments(args);
-
         return buyListFragment;
     }
 
@@ -87,13 +83,10 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         setupEmptyView(rootView, lvBuyItems);
 
         PreferenceManager.setDefaultValues(getActivity(), preferences, false);
+
         //Kick off the loader
         getLoaderManager().initLoader(BUY_ITEM, null, this);
 
-        //Get arguments
-        Bundle args = getArguments();
-        countryCode = args.getString(NumberFormatter.COUNTRY_CODE);
-        currencyCode = args.getString(NumberFormatter.CURRENCY_CODE);
         return rootView;
     }
 
@@ -108,8 +101,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         onFragmentInteractionListener = (OnFragmentInteractionListener) activity;
-
-
     }
 
     @Override
@@ -212,10 +203,13 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
     {
-        setupUserLocale();
-        showCostOfItemsAdded();
-        showCostOfItemsChecked();
-
+        if(key.equals(getString(R.string.user_country_pref)))
+        {
+            countryCode = sharedPreferences.getString(key, null);
+            showCostOfItemsAdded();
+            showCostOfItemsChecked();
+            shoppingListAdapter.notifyDataSetChanged();
+        }
     }
 
     public interface OnFragmentInteractionListener
@@ -235,7 +229,13 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         while(cursor.moveToNext())
         {
             int colSelectedPriceTag = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
-            totalValueOfItemsAdded += cursor.getDouble(colSelectedPriceTag)/100;
+
+            int colCurrencyCode = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
+            String lCurrencyCode = cursor.getString(colCurrencyCode);
+
+            //Only add item with same currency code as user home currency code
+            if(lCurrencyCode.trim().equalsIgnoreCase(currencyCode))
+                totalValueOfItemsAdded += cursor.getDouble(colSelectedPriceTag)/100;
         }
 
         tvTotalValueAdded.setText(NumberFormatter.formatCountryCurrency(countryCode, currencyCode, totalValueOfItemsAdded));
@@ -254,9 +254,11 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
             int colSelectedPriceTag = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
             int colIsItemChecked = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_IS_CHECKED);
             int colCurrencyCode = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
-            currencyCode = cursor.getString(colCurrencyCode);
+            String lCurrencyCode = cursor.getString(colCurrencyCode);
             boolean isItemChecked = cursor.getInt(colIsItemChecked) > 0;
-            if(isItemChecked)
+
+            //Only add item with same currency code as user home currency code
+            if(isItemChecked && lCurrencyCode.trim().equalsIgnoreCase(currencyCode))
                 totalValueOfItemsChecked += cursor.getDouble(colSelectedPriceTag)/100;
         }
 

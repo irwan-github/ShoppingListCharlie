@@ -225,7 +225,6 @@ public class DaoContentProv implements DaoManager
 
         Uri uriDeleteItem = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
         ContentProviderOperation.Builder itemDeleteBuilder = ContentProviderOperation.newDelete(uriDeleteItem);
-        //itemDeleteBuilder.withValues(getItemContentValues(item, null, null));
         ops.add(itemDeleteBuilder.build());
 
         Uri uriDeletePrice = PricesEntry.CONTENT_URI;
@@ -234,14 +233,6 @@ public class DaoContentProv implements DaoManager
         deletePriceBuilder.withSelection(PricesEntry.COLUMN_ITEM_ID + "=?", new String[]{String.valueOf(item.getId())});
         ops.add(deletePriceBuilder.build());
 
-//        for (Price price : item.getPrices()) {
-//            Uri uriDeletePrice = ContentUris.withAppendedId(PricesEntry.CONTENT_URI, price.getId());
-//            ContentProviderOperation.Builder deletePriceBuilder =
-//                    ContentProviderOperation.newDelete(uriDeletePrice);
-//            //deletePriceBuilder.withValues(getPriceContentValues(price, item.getId(),
-//            //        new Date(), null));
-//            ops.add(deletePriceBuilder.build());
-//        }
         ContentProviderResult[] contentProviderResults = null;
         try {
             contentProviderResults = mContext.getContentResolver().applyBatch(Contract.CONTENT_AUTHORITY, ops);
@@ -253,63 +244,6 @@ public class DaoContentProv implements DaoManager
 
         return contentProviderResults.length;
     }
-
-//    @Override
-//    public List<Price> getItemPrice(long id)
-//    {
-//        String[] projection = new String[]{ PricesEntry._ID,
-//                                            PricesEntry.COLUMN_PRICE_TYPE_ID,
-//                                            PricesEntry.COLUMN_PRICE,
-//                                            PricesEntry.COLUMN_BUNDLE_QTY,
-//                                            PricesEntry.COLUMN_CURRENCY_CODE,
-//                                            PricesEntry.COLUMN_SHOP_ID};
-//
-//        String selection = PricesEntry.COLUMN_ITEM_ID + "=?";
-//
-//        String[] selectionArgs = new String[]{String.valueOf(id)};
-//
-//        Cursor cursor = mContext.getContentResolver().query(PricesEntry.CONTENT_URI, projection,
-//                                                            selection, selectionArgs, null);
-//        List<Price> mPrices = new ArrayList<>();
-//
-//        while(cursor.moveToNext())
-//        {
-//            int colPriceTypeIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE_TYPE_ID);
-//            int priceTypeVal = cursor.getInt(colPriceTypeIdx);
-//
-//            int colPriceIdIdx = cursor.getColumnIndex(PricesEntry._ID);
-//            long priceId = cursor.getLong(colPriceIdIdx);
-//
-//            int colCurrencyCodeIdx = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
-//            String currencyCode = cursor.getString(colCurrencyCodeIdx);
-//
-//            int colShopIdIdx = cursor.getColumnIndex(PricesEntry.COLUMN_SHOP_ID);
-//            long shopId = cursor.getLong(colShopIdIdx);
-//
-//            int colPriceIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
-//
-//            Price price = null;
-//
-//            if (priceTypeVal == UNIT_PRICE.getType()) {
-//                double unitPrice = cursor.getDouble(colPriceIdx) / 100;
-//                price = new Price(priceId, unitPrice, currencyCode, shopId, null);
-//            }
-//
-//            if (priceTypeVal == BUNDLE_PRICE.getType()) {
-//                double bundlePrice = cursor.getDouble(colPriceIdx) / 100;
-//                int colBundleQtyIdx = cursor.getColumnIndex(PricesEntry.COLUMN_BUNDLE_QTY);
-//                double bundleQty = cursor.getDouble(colBundleQtyIdx);
-//                price = new Price(priceId, bundlePrice, bundleQty, currencyCode, shopId, null);
-//            }
-//
-//            mPrices.add(price);
-//        }
-//
-//        if(cursor !=null)
-//            cursor.close();
-//
-//        return mPrices;
-//    }
 
     private ContentValues getItemContentValues(Item item, Date updateTime, ContentValues values)
     {

@@ -58,17 +58,29 @@ public class NumberFormatter
         return getCurrencySymbol(userLocale, currency.getCurrencyCode());
     }
 
+    public static String getCurrencySymbol3(String countryCode)
+    {
+        Locale userLocale = new Locale(Locale.getDefault().getLanguage(), countryCode);
+        Currency currency = Currency.getInstance(userLocale);
+        return getCurrencySymbol(userLocale, currency.getCurrencyCode());
+    }
+
 
     public static String getCurrencySymbol(Locale locale, String currencyCode)
     {
         return Currency.getInstance(currencyCode).getSymbol(locale);
     }
 
-
     public static String getCurrencyCode(String countryCode)
     {
         Locale userLocale = new Locale(Locale.getDefault().getLanguage(), countryCode);
         Currency currency = Currency.getInstance(userLocale);
         return currency.getCurrencyCode();
+    }
+
+    public static String getCurrencySymbolFromCurrencyCode(String countryCode, String currencyCode)
+    {
+        Locale userLocale = new Locale(Locale.getDefault().getLanguage(), countryCode);
+        return getCurrencySymbol(userLocale, currencyCode);
     }
 }

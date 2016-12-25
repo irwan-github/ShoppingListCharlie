@@ -6,7 +6,6 @@
     <EditTextPreference
         android:key="@string/user_country_pref"
         android:title="@string/home_country_preference"
-        android:summary="@string/summary_home_country_preference"
         android:dialogTitle="@string/dialog_title_home_country_preference"
         android:defaultValue="GB"/>
     </PreferenceCategory>

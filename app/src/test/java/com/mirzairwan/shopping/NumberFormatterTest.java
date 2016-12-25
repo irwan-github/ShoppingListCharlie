@@ -6,11 +6,21 @@ import java.text.NumberFormat;
 import java.util.Currency;
 import java.util.Locale;
 
+import static com.mirzairwan.shopping.NumberFormatter.getCurrencyCode;
+
 /**
  * Created by Mirza Irwan on 18/12/16.
  */
 public class NumberFormatterTest
 {
+    @Test
+    public void formatCountryCurrency() throws Exception
+    {
+        String formattedValue = NumberFormatter.formatCountryCurrency("SG", "SGD", 4.55);
+        System.out.println(formattedValue);
+        formattedValue = NumberFormatter.formatCountryCurrency("GB", "SGD", 4.55);
+        System.out.println(formattedValue);
+    }
 
     @Test
     public void formatCurrency2() throws Exception
@@ -84,11 +94,18 @@ public class NumberFormatterTest
 
         symbol = NumberFormatter.getCurrencySymbol("GB");
         System.out.println(">> " + symbol);
+
+        symbol = NumberFormatter.getCurrencySymbol("MY");
+        System.out.println(">> " + symbol);
+
+        symbol = NumberFormatter.getCurrencySymbol("JP");
+        System.out.println(">> " + symbol);
     }
 
     @Test
     public void testCurrencyCode() throws Exception{
-        String symbol = NumberFormatter.getCurrencyCode("SG");
+        String symbol = getCurrencyCode("SG");
         System.out.println(">> " + symbol);
     }
+
 }

@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,8 +34,9 @@ import com.mirzairwan.shopping.domain.ToBuyItem;
 
 public class CatalogFragment extends Fragment implements OnToggleCatalogItemListener,
                                                             LoaderManager.LoaderCallbacks<Cursor>,
-        AdapterView.OnItemClickListener
+                                                            AdapterView.OnItemClickListener
 {
+    private static final String LOG_TAG = CatalogFragment.class.getSimpleName();
     private static final int CATALOG_ID = 2;
     private CatalogAdapter catalogAdapter;
     private ShoppingList shoppingList;
@@ -142,6 +144,7 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id)
     {
+        Log.d(LOG_TAG, ">>> " + view.getClass().getSimpleName());
         mOnFragmentInteractionListener.onViewItemDetails(id);
     }
 
