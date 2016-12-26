@@ -11,10 +11,6 @@ import java.util.Locale;
 
 public class NumberFormatter
 {
-
-    public static final String COUNTRY_CODE = "COUNTRY_CODE";
-    public static final String CURRENCY_CODE = "CURRENCY_CODE";
-
     /**
      * Formats a value of type double
      *
@@ -58,14 +54,6 @@ public class NumberFormatter
         return getCurrencySymbol(userLocale, currency.getCurrencyCode());
     }
 
-    public static String getCurrencySymbol3(String countryCode)
-    {
-        Locale userLocale = new Locale(Locale.getDefault().getLanguage(), countryCode);
-        Currency currency = Currency.getInstance(userLocale);
-        return getCurrencySymbol(userLocale, currency.getCurrencyCode());
-    }
-
-
     public static String getCurrencySymbol(Locale locale, String currencyCode)
     {
         return Currency.getInstance(currencyCode).getSymbol(locale);
@@ -78,7 +66,7 @@ public class NumberFormatter
         return currency.getCurrencyCode();
     }
 
-    public static String getCurrencySymbolFromCurrencyCode(String countryCode, String currencyCode)
+    public static String getCurrencySymbol(String countryCode, String currencyCode)
     {
         Locale userLocale = new Locale(Locale.getDefault().getLanguage(), countryCode);
         return getCurrencySymbol(userLocale, currencyCode);

@@ -82,8 +82,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     {
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         String countryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
-        String currencySymbol = NumberFormatter.getCurrencySymbolFromCurrencyCode(countryCode, currencyCode);
-        //String currencySymbol = NumberFormatter.getCurrencySymbol(countryCode);
+        String currencySymbol = NumberFormatter.getCurrencySymbol(countryCode, currencyCode);
 
         ViewParent viewParent = et.getParent();
         TextInputLayout etLayout = (TextInputLayout)(viewParent.getParent());
@@ -99,7 +98,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         arg.putParcelable(ITEM_URL, uri);
         getLoaderManager().initLoader(ITEM_LOADER_ID, arg, this);
         getLoaderManager().initLoader(ITEM_PRICE_LOADER_ID, arg, this);
-
     }
 
 
@@ -108,7 +106,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     public boolean onCreateOptionsMenu(Menu menu)
     {
         getMenuInflater().inflate(R.menu.item_details, menu);
-
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -172,10 +169,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         etUnitPrice.setOnTouchListener(mOnTouchListener);
         etBundlePrice.setOnTouchListener(mOnTouchListener);
         etBundleQty.setOnTouchListener(mOnTouchListener);
-
-//        setCurrencySymbol(etUnitPrice);
-//        setCurrencySymbol(etBundlePrice);
-
         super.onStart();
     }
 
@@ -284,7 +277,8 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     }
 
     /**
-     * Update prices of existing item. Existing item have existing prices.
+     * Update prices of existing item. Existing item have existing prices. The currency code will
+     * not be changed
      * @param item
      * @param unitPrice
      * @param bundlePrice
@@ -372,7 +366,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             }
         }
     }
-
 
     protected void clearPriceInputFields()
     {
@@ -484,8 +477,5 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             }
             mPrices.add(price);
         }
-
     }
-
-
 }

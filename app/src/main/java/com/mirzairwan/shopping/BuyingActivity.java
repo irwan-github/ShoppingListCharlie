@@ -32,13 +32,17 @@ import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
 /**
- * Display the buy item details in a screen
- * Create new buy item
- * Update and save buy item details
+ * Display the buy item details:
+ *  *
+ * Create new buy item:
+ * Currency code is set according to user country preference. Once the currency is set, only the price can
+ * be updated. The currency code cannot be changed.
+ *
+ * Update buy item details:
+ * For price of item, only the value can be updated. The currency code cannot be changed.
+ *
  * Delete existing buy items
- * <p>
- * Create new buy item uses the NEW_BUY_ITEM_MODE
- * Action modes
+ *
  */
 public class BuyingActivity extends ItemEditingActivity implements LoaderManager.LoaderCallbacks<Cursor>
 {
@@ -156,14 +160,13 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
 
     @Override
     /**
-     * Create new price records.
+     * Create new price objects.
+     * Currency code depends on user country preference.
      */
     protected void preparePricesForSaving(Item item, String unitPriceDbl, String bundlePriceDbl, String bundleQtyDbl)
     {
-        //SharedPreferences prefs = getSharedPreferences(ShoppingActivity.PERSONAL, Activity.MODE_PRIVATE);
         SharedPreferences sharedPrefs = getDefaultSharedPreferences(this);
         String homeCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
-        //Locale homeLocale = new Locale(Locale.getDefault().getLanguage(), homeCountryCode);
         String currencyCode = NumberFormatter.getCurrencyCode(homeCountryCode);
 
         mPrices = new ArrayList<>();

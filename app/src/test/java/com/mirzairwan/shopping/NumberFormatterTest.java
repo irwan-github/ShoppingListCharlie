@@ -106,6 +106,11 @@ public class NumberFormatterTest
     public void testCurrencyCode() throws Exception{
         String symbol = getCurrencyCode("SG");
         System.out.println(">> " + symbol);
+        symbol = getCurrencyCode("US");
+        System.out.println(">> " + symbol);
+
+        symbol = getCurrencyCode("ZX");
+        System.out.println(">> " + symbol);
     }
 
 }
