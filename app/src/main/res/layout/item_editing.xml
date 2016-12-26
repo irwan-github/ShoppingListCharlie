@@ -3,12 +3,14 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:tools="http://schemas.android.com/tools"
                 android:id="@+id/activity_item_editing"
-                tools:context="com.mirzairwan.shopping.ItemEditingActivity"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="#fff"
                 android:elevation="4dp"
-                android:focusableInTouchMode="true">
+                android:focusableInTouchMode="true"
+                tools:context="com.mirzairwan.shopping.ItemEditingActivity">
+
+
 
     <TextView
         android:id="@+id/item_details_header"
@@ -21,11 +23,22 @@
         >
     </TextView>
 
+    <ImageView
+        android:id="@+id/img_item"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/item_details_header"
+        android:maxHeight="200dp"
+        android:scaleType="centerCrop"
+        android:paddingBottom="@dimen/edit_text_padding_bottom"
+        android:paddingTop="@dimen/edit_text_padding_top"
+        />
+
     <android.support.design.widget.TextInputLayout
         android:id="@+id/item_name_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/item_details_header"
+        android:layout_below="@id/img_item"
         android:layout_marginLeft="@dimen/keyline_1"
         android:layout_marginRight="@dimen/keyline_1"
         android:paddingBottom="@dimen/edit_text_padding_bottom"
@@ -35,7 +48,6 @@
 
         <android.support.design.widget.TextInputEditText
             android:id="@+id/et_item_name"
-            tools:text="Milk"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:focusableInTouchMode="true"
@@ -43,6 +55,7 @@
             android:maxLength="@string/text_item_name_max_length"
             android:minWidth="@dimen/edit_text_item_name_min_width"
             android:textAppearance="?android:textAppearanceMedium"
+            tools:text="Milk"
             >
 
         </android.support.design.widget.TextInputEditText>
@@ -62,7 +75,6 @@
 
         <android.support.design.widget.TextInputEditText
             android:id="@+id/et_item_brand"
-            tools:text="Magnolia"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:focusableInTouchMode="true"
@@ -70,6 +82,7 @@
             android:maxLength="@string/text_item_brand_max_length"
             android:minWidth="@dimen/edit_text_item_brand_min_width"
             android:textAppearance="?android:textAppearanceMedium"
+            tools:text="Magnolia"
             />
 
     </android.support.design.widget.TextInputLayout>
@@ -87,7 +100,6 @@
 
         <android.support.design.widget.TextInputEditText
             android:id="@+id/et_item_description"
-            tools:text="500ml"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:focusableInTouchMode="true"
@@ -95,6 +107,7 @@
             android:maxLength="@string/text_item_description_max_length"
             android:minWidth="@dimen/edit_text_item_description_min_width"
             android:textAppearance="?android:textAppearanceMedium"
+            tools:text="500ml"
             />
 
     </android.support.design.widget.TextInputLayout>
@@ -112,7 +125,6 @@
 
         <android.support.design.widget.TextInputEditText
             android:id="@+id/et_item_country_origin"
-            tools:text="USA"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:focusableInTouchMode="true"
@@ -120,6 +132,7 @@
             android:maxLength="@string/country_origin_max_length"
             android:minWidth="@dimen/edit_text_item_name_min_width"
             android:textAppearance="?android:textAppearanceMedium"
+            tools:text="USA"
             />
 
     </android.support.design.widget.TextInputLayout>

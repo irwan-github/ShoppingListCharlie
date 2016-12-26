@@ -1,5 +1,6 @@
 package com.mirzairwan.shopping;
 
+import android.app.Activity;
 import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.CursorLoader;
@@ -8,11 +9,16 @@ import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.provider.MediaStore;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.NavUtils;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -22,6 +28,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewParent;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.mirzairwan.shopping.data.Contract;
@@ -31,7 +38,10 @@ import com.mirzairwan.shopping.data.DaoManager;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Price;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
@@ -48,6 +58,9 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     private static final String ITEM_URL = "ITEM_URL";
     private static final int ITEM_LOADER_ID = 20;
     private static final int ITEM_PRICE_LOADER_ID = 21;
+    private static final int CAMERA_MENU_ITEM_ID = 99;
+    private static final String SHOPPING_LIST_PICS = "ShoppingList_";
+    private static final int REQUEST_SNAP_PICTURE = 15;
 
     protected EditText etName;
     protected EditText etBrand;
@@ -64,6 +77,9 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
     protected Item item;
     protected List<Price> mPrices;
+    private ImageView imgItemPic;
+    private String mCurrentPicPath;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -85,7 +101,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         String currencySymbol = NumberFormatter.getCurrencySymbol(countryCode, currencyCode);
 
         ViewParent viewParent = et.getParent();
-        TextInputLayout etLayout = (TextInputLayout)(viewParent.getParent());
+        TextInputLayout etLayout = (TextInputLayout) (viewParent.getParent());
         String hint = etLayout.getHint().toString();
         etLayout.setHint(hint + " (" + currencySymbol + ")");
     }
@@ -101,12 +117,13 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     }
 
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
+        super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.item_details, menu);
-        return super.onCreateOptionsMenu(menu);
+
+        return true;
     }
 
     @Override
@@ -116,6 +133,9 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         switch (menuItem.getItemId()) {
             case R.id.save_item_details:
                 save();
+                return true;
+            case R.id.menu_camera:
+                startSnapShotActivity();
                 return true;
             case R.id.menu_remove_item_from_list:
                 delete();
@@ -139,6 +159,95 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
     }
 
+    protected void startSnapShotActivity()
+    {
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        if (cameraIntent.resolveActivity(getPackageManager()) != null) {
+            File itemPicFile = null;
+            try {
+                itemPicFile = createFileHandle();
+            } catch (IOException e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Photo file cannot be created. Aborting camera operation", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if(itemPicFile != null)
+            {
+                Uri itemPicUri = FileProvider.getUriForFile(this, "com.mirzairwan.shopping.fileprovider", itemPicFile);
+                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, itemPicUri);
+                startActivityForResult(cameraIntent, REQUEST_SNAP_PICTURE);
+            }
+        }
+    }
+
+    protected File createFileHandle() throws IOException
+    {
+        //Get directory handle where picture is stored
+        File dirPictures = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+
+        //Get file handle
+        File filePic = File.createTempFile(SHOPPING_LIST_PICS + (new Date()).getTime(), ".jpg", dirPictures);
+
+        mCurrentPicPath = filePic.getAbsolutePath();
+        return filePic;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        switch (resultCode) {
+            case Activity.RESULT_OK:
+
+                switch (requestCode) {
+                    case REQUEST_SNAP_PICTURE:
+                        setPic();
+                        //Bundle extras = data.getExtras();
+                        //Bitmap bmpItemPic = (Bitmap)extras.get("data");
+                        //imgItemPic.setImageBitmap(bmpItemPic);
+//                        BitmapFactory.Options options = new BitmapFactory.Options();
+//                        options.inSampleSize = 4;
+//
+//                        if (filePic != null) {
+//                            bmpItemPic = BitmapFactory.decodeFile(filePic.getPath(), options);
+//                            if (bmpItemPic != null) {
+//                                imgItemPic.setImageBitmap(bmpItemPic);
+//                                mItemHaveChanged = true;
+//                            }
+//                        }
+                        break;
+                }
+
+                break;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+
+    }
+
+    private void setPic() {
+        // Get the dimensions of the View
+        int targetW = imgItemPic.getWidth();
+        int targetH = imgItemPic.getHeight();
+
+        // Get the dimensions of the bitmap
+        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+        bmOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(mCurrentPicPath, bmOptions);
+        int photoW = bmOptions.outWidth;
+        int photoH = bmOptions.outHeight;
+
+        // Determine how much to scale down the image
+        int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+
+        // Decode the image file into a Bitmap sized to fill the View
+        bmOptions.inJustDecodeBounds = false;
+        bmOptions.inSampleSize = scaleFactor;
+        bmOptions.inPurgeable = true;
+
+        Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPicPath, bmOptions);
+        imgItemPic.setImageBitmap(bitmap);
+    }
+
     @Override
     protected void onStart()
     {
@@ -156,11 +265,13 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         etBrand = (EditText) findViewById(R.id.et_item_brand);
         etDescription = (EditText) findViewById(R.id.et_item_description);
         etCountryOrigin = (EditText) findViewById(R.id.et_item_country_origin);
+        imgItemPic = (ImageView) findViewById(R.id.img_item);
 
         etName.setOnTouchListener(mOnTouchListener);
         etBrand.setOnTouchListener(mOnTouchListener);
         etDescription.setOnTouchListener(mOnTouchListener);
         etCountryOrigin.setOnTouchListener(mOnTouchListener);
+        ;
 
         etUnitPrice = (EditText) findViewById(R.id.et_unit_price);
         etBundlePrice = (EditText) findViewById(R.id.et_bundle_price);
@@ -238,7 +349,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         String countryOrigin = etCountryOrigin.getText().toString();
         String itemDescription = etDescription.getText().toString();
 
-        if(item == null)
+        if (item == null)
             item = new Item(itemName);
         else
             item.setName(itemName);
@@ -279,6 +390,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     /**
      * Update prices of existing item. Existing item have existing prices. The currency code will
      * not be changed
+     *
      * @param item
      * @param unitPrice
      * @param bundlePrice
@@ -345,10 +457,10 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
     protected void populateItemInputFields(Item item)
     {
-        etName.setText(item != null? item.getName():"");
-        etBrand.setText(item != null? item.getBrand():"");
-        etCountryOrigin.setText(item != null? item.getCountryOrigin():"");
-        etDescription.setText(item != null? item.getDescription():"");
+        etName.setText(item != null ? item.getName() : "");
+        etBrand.setText(item != null ? item.getBrand() : "");
+        etCountryOrigin.setText(item != null ? item.getCountryOrigin() : "");
+        etDescription.setText(item != null ? item.getDescription() : "");
     }
 
     protected void populatePricesInputFields()
@@ -416,7 +528,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
     {
-        if(cursor == null || cursor.getCount() < 1)
+        if (cursor == null || cursor.getCount() < 1)
             return;
 
         int loaderId = loader.getId();
@@ -424,8 +536,8 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             case ITEM_LOADER_ID:
                 cursor.moveToFirst();
                 Item item = createItem(ItemsEntry._ID, ItemsEntry.COLUMN_NAME,
-                                            ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_DESCRIPTION,
-                                            ItemsEntry.COLUMN_COUNTRY_ORIGIN, cursor);
+                        ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_DESCRIPTION,
+                        ItemsEntry.COLUMN_COUNTRY_ORIGIN, cursor);
                 populateItemInputFields(item);
                 break;
             case ITEM_PRICE_LOADER_ID:

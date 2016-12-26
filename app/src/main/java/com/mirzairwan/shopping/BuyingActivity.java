@@ -102,12 +102,15 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     {
         super.onStart();
 
+        //set touchListener for EditText
         etQty = (EditText) findViewById(R.id.et_item_quantity);
         etQty.setOnTouchListener(mOnTouchListener);
 
+        //set touchListener for Radio Group
         rgPriceTypeChoice = (RadioGroup) findViewById(R.id.price_type_choice);
         rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);
 
+        //Set currency symbol for Price-related EditText
         if(actionMode == CREATE_BUY_ITEM_MODE) {
             String countryCode = PreferenceManager.getDefaultSharedPreferences(this).
                     getString(getString(R.string.user_country_pref), null);
@@ -124,7 +127,6 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
         }
         return super.onPrepareOptionsMenu(menu);
     }
-
 
     @Override
     protected void delete()

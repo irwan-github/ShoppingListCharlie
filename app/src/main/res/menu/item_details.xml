@@ -5,7 +5,7 @@
         android:id="@+id/save_item_details"
         android:icon="@drawable/ic_done"
         android:title="Save Item"
-        app:showAsAction="ifRoom">
+        app:showAsAction="always">
     </item>
     <item
         android:id="@+id/menu_remove_item_from_list"
@@ -13,5 +13,12 @@
         android:title="@string/remove_item_from_list"
         app:showAsAction="ifRoom">
     </item>
+    <item
+        android:id="@+id/menu_camera"
+        android:icon="@drawable/ic_camera_enhance"
+        android:title="@string/remove_item_from_list"
+        app:showAsAction="always">
+    </item>
 
+    <group android:id="@+id/menu_grp_photo" />
 </menu>
