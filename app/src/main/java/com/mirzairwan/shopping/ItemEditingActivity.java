@@ -2,6 +2,7 @@ package com.mirzairwan.shopping;
 
 import android.app.Activity;
 import android.app.LoaderManager;
+import android.content.ContentProviderResult;
 import android.content.ContentUris;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
@@ -22,6 +23,7 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -41,6 +43,7 @@ import com.mirzairwan.shopping.domain.Price;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -63,6 +66,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     private static final int CAMERA_MENU_ITEM_ID = 99;
     private static final String SHOPPING_LIST_PICS = "Item_";
     private static final int REQUEST_SNAP_PICTURE = 15;
+    private static final String LOG_TAG = ItemEditingActivity.class.getSimpleName();
 
 
     protected EditText etName;
@@ -81,8 +85,10 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     protected Item item;
     protected List<Price> mPrices;
     private ImageView mImgItemPic;
-    private String mCurrentPicturePath;
+    //private String mCurrentPicturePath;
     protected List<Picture> mPictures = new ArrayList<>();
+    protected List<File> mPictureFilesTemp = new ArrayList<>();
+    protected Picture pictureInProcessToBeDeleted;
 
 
     @Override
@@ -163,6 +169,10 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
     }
 
+    /**
+     * Current implemetation supports only 1 picture. Therefore when user make subsequent snapshots,
+     * the previous photos must be deleted from filesystem. The original photo is deleted when acamera activity returns status OK
+     */
     protected void startSnapShotActivity()
     {
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -171,6 +181,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             File itemPicFile = null;
             try {
                 itemPicFile = createFileHandle();
+                mPictureFilesTemp.add(itemPicFile); //At this point, maximum temp files is 2
             } catch (IOException e) {
                 e.printStackTrace();
                 Toast.makeText(this, "Photo file cannot be created. Aborting camera operation", Toast.LENGTH_SHORT).show();
@@ -188,46 +199,116 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     {
         //Get directory handle where picture is stored
         File dirPictures = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-
+        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
+        String picFilename = SHOPPING_LIST_PICS + "_" + timeStamp + "_";
         //Get file handle
-        File filePicture = File.createTempFile(SHOPPING_LIST_PICS + (new Date()).getTime(), ".jpg", dirPictures);
+        File filePicture = File.createTempFile(picFilename, ".jpg", dirPictures);
 
-        mCurrentPicturePath = filePicture.getAbsolutePath();
+        //mCurrentPicturePath = filePicture.getAbsolutePath();
         return filePicture;
     }
 
     @Override
+    /**
+     * Current implemetation supports only 1 picture. Therefore when user make subsequent snapshots,
+     * the previous photos MUST be deleted from filesystem. The original photo is deleted when
+     * camera activity returns status OK
+     */
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
         switch (resultCode) {
             case Activity.RESULT_OK:
-
                 switch (requestCode) {
                     case REQUEST_SNAP_PICTURE:
-                        preparePicturePathForSaving(mCurrentPicturePath);
-                        setPictureView();
-                        //Bundle extras = data.getExtras();
-                        //Bitmap bmpItemPic = (Bitmap)extras.get("data");
-                        //mImgItemPic.setImageBitmap(bmpItemPic);
-//                        BitmapFactory.Options options = new BitmapFactory.Options();
-//                        options.inSampleSize = 4;
+//                        int result = 0;
+//                        boolean existPreviousPicture = mPictureFilesTemp.size() == 1;
+//                        if(existPreviousPicture)
+//                            result = deletePictureFromFilesystem(mPicturesTemp.get(0)); //Delete previous picture
+//                        boolean isDeleteSuccess = result == 1;
+                        //preparePicturePathForSaving(mPictureFilesTemp.get(0));
+                        removePreviousTempFiles();
+                        setPictureView(mPictureFilesTemp.get(0));
                         break;
                 }
 
                 break;
+
+            default: //Assume the worst. No picture from camera. Delete the useless file.
+                removeCurrentTempFiles();
+                ;
+
         }
         super.onActivityResult(requestCode, resultCode, data);
 
     }
 
-    protected void preparePicturePathForSaving(String picturePath)
+    /**
+     * Called when camera activity failed. Delete the file cereated for the failed attempt.
+     */
+    private void removeCurrentTempFiles()
     {
-        //Currenctly, only 1 picture is supported
-        if (mPictures != null && mPictures.size() == 1)
-            mPictures.clear();
-
-        //mPictures.add();
+        File fileToBeDeleted = mPictureFilesTemp.remove(mPictureFilesTemp.size() - 1); //First picture
+        deleteFileFromFilesystem(fileToBeDeleted);
     }
+
+    /**
+     * Called when camera activity succeed. Delete the file cereated for the previous successful attempt.
+     */
+
+    private void removePreviousTempFiles()
+    {
+        if (mPictureFilesTemp.size() == 1) //No previous file
+            return;
+
+        File fileToBeDeleted = mPictureFilesTemp.remove(0); //First picture
+        deleteFileFromFilesystem(fileToBeDeleted);
+    }
+
+    protected int deleteFileFromFilesystem(File file)
+    {
+        String authority = getClass().getPackage().getName() + ".fileprovider";
+        Uri uri = FileProvider.getUriForFile(this, authority, file);
+        int result = getContentResolver().delete(uri, null, null);
+        Log.d(LOG_TAG, ">>>deletePicture " + result);
+        return result;
+
+    }
+
+//    /**
+//     * Update item's picture path
+//     *
+//     * @param picturePath
+//     */
+//    protected void preparePicturePathForSaving(String picturePath)
+//    {
+//        //Currenctly, only 1 picture is supported
+//        if (mPictures.size() == 1) {
+//            Picture picture = mPictures.get(0);
+//            picture.setPicturePath(picturePath);
+//        } else {
+//            Picture newPicture = new Picture(picturePath);
+//            mPictures.clear();
+//            mPictures.add(newPicture);
+//        }
+//
+//    }
+
+    protected void preparePictureForSaving()
+    {
+        //Currently, only 1 picture is supported
+        if (mPictureFilesTemp.size() == 1) {
+            pictureInProcessToBeDeleted = mPictures.get(0);
+            File pictureFile = mPictureFilesTemp.get(0);
+            mPictures.get(0).setFile(pictureFile);
+        }
+// else {
+//            Picture newPicture = new Picture(mPictureFilesTemp.get(0));
+//            mPictures.clear();
+//            mPictures.add(newPicture);
+//        }
+
+    }
+
 
     protected void setPictureView(List<Picture> pictures)
     {
@@ -237,31 +318,10 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
     protected void setPictureView(Picture picture)
     {
-        // Get the dimensions of the View
-        int targetW = mImgItemPic.getWidth();
-        int targetH = mImgItemPic.getHeight();
-
-        // Get the dimensions of the bitmap
-        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-        bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(mCurrentPicturePath, bmOptions);
-        int photoW = bmOptions.outWidth;
-        int photoH = bmOptions.outHeight;
-
-        // Determine how much to scale down the image
-        int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
-
-        // Decode the image file into a Bitmap sized to fill the View
-        bmOptions.inJustDecodeBounds = false;
-        bmOptions.inSampleSize = scaleFactor;
-        bmOptions.inPurgeable = true;
-
-        Bitmap bitmap = BitmapFactory.decodeFile(picture.getPicturePath(), bmOptions);
-        mImgItemPic.setImageBitmap(bitmap);
-
+        setPictureView(picture.getFile());
     }
 
-    protected void setPictureView()
+    protected void setPictureView(File pictureFile)
     {
         // Get the dimensions of the View
         int targetW = mImgItemPic.getWidth();
@@ -270,20 +330,24 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         // Get the dimensions of the bitmap
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(mCurrentPicturePath, bmOptions);
+        BitmapFactory.decodeFile(pictureFile.getPath(), bmOptions);
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
 
-        // Determine how much to scale down the image
-        int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
+		/* Figure out which way needs to be reduced less */
+        int scaleFactor = 1;
+        if ((targetW > 0) || (targetH > 0)) {
+            scaleFactor = Math.min(photoW / targetW, photoH / targetH);
+        }
 
         // Decode the image file into a Bitmap sized to fill the View
         bmOptions.inJustDecodeBounds = false;
         bmOptions.inSampleSize = scaleFactor;
         bmOptions.inPurgeable = true;
 
-        Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPicturePath, bmOptions);
+        Bitmap bitmap = BitmapFactory.decodeFile(pictureFile.getPath(), bmOptions);
         mImgItemPic.setImageBitmap(bitmap);
+
     }
 
     @Override
@@ -452,12 +516,29 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
         preparePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
 
-        String msg;
-        msg = daoManager.update(item, item.getPrices());
+        preparePictureForSaving();
 
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-        finish();
+        ContentProviderResult[] msg;
+        msg = daoManager.update(item, item.getPrices(), mPictures);
+
+        //Check that picture is updated. If updated, delete the previous saved file from file system
+        boolean isItemSaved = false;
+        boolean isPictureSaved = false;
+        isPictureSaved = msg[1].count == 1;
+        isItemSaved = msg[0].count == 1;
+
+        if (!isItemSaved)
+            Toast.makeText(this, "Update not successful", Toast.LENGTH_SHORT).show();
+        else {
+
+            if (isPictureSaved && pictureInProcessToBeDeleted != null) {
+                deleteFileFromFilesystem(pictureInProcessToBeDeleted.getFile());
+            }
+
+            finish();
+        }
     }
+
 
     /**
      * Populate Item object
@@ -598,15 +679,19 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             case ITEM_PICTURE_LOADER_ID:
                 List<Picture> pictures = createPictures(cursor);
                 setPictureView(pictures);
+                break;
         }
     }
 
     private List<Picture> createPictures(Cursor cursor)
     {
+        //Clear the list of pictures
+        mPictures.clear();
+
         int colRowId = cursor.getColumnIndex(PicturesEntry._ID);
         int colPicturePath = cursor.getColumnIndex(PicturesEntry.COLUMN_FILE_PATH);
         while (cursor.moveToNext()) {
-            mPictures.add(new Picture(cursor.getLong(colRowId), cursor.getString(colPicturePath)));
+            mPictures.add(new Picture(cursor.getLong(colRowId), new File(cursor.getString(colPicturePath))));
         }
         return mPictures;
     }

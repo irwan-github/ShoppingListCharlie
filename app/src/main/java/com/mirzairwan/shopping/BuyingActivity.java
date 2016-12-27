@@ -25,6 +25,7 @@ import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ToBuyItem;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -180,6 +181,25 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     }
 
     @Override
+    protected void preparePictureForSaving()
+    {
+        //Currently, only 1 picture is supported
+        if (mPictureFilesTemp.size() == 1 && mPictures.size() == 1) {
+
+            pictureInProcessToBeDeleted = mPictures.get(0);
+            File pictureFile = mPictureFilesTemp.get(0);
+            mPictures.get(0).setFile(pictureFile);
+
+        }
+
+        if(mPictures.size() == 0)//New buy item or existing item has no picture
+            mPictures.add(new Picture(mPictureFilesTemp.get(0)));
+
+
+    }
+
+
+    @Override
     protected void save()
     {
         getItemFromInputField();
@@ -196,6 +216,8 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
         DaoManager daoManager = Builder.getDaoManager(this);
         String msg;
 
+        preparePictureForSaving();
+
         if (actionMode == CREATE_BUY_ITEM_MODE) {
 
             preparePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
@@ -205,6 +227,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
             toBuyItem = new ToBuyItem(item, Integer.parseInt(itemQuantity), selectedPrice);
 
             msg = daoManager.insert(toBuyItem, toBuyItem.getItem(), mPrices, getPicturesForSaving());
+
         } else //Existing buy item
         {
             super.preparePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
@@ -220,20 +243,21 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
         finish();
     }
 
+
     protected List<Picture> getPicturesForSaving()
     {
         return mPictures;
     }
 
-    @Override
-    protected void preparePicturePathForSaving(String picturePath)
-    {
-        if (mPictures.size() == 1) {
-            mPictures.clear();
-            //super.deletePictureFromFilesystem(picturePath); TODO
-        }
-        mPictures.add(new Picture(picturePath));
-    }
+
+//    protected void preparePicturePathForSaving(String picturePath)
+//    {
+//        if (mPictures.size() == 1) {
+//            mPictures.clear();
+//            //super.deletePictureFromFilesystem(picturePath); TODO
+//        }
+//        mPictures.add(new Picture(picturePath));
+//    }
 
     private void populatePurchaseDetails(Cursor cursor)
     {

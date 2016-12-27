@@ -1,23 +1,26 @@
 package com.mirzairwan.shopping.domain;
 
+import java.io.File;
+
 /**
  * Created by Mirza Irwan on 27/12/16.
  */
 
 public class Picture
 {
-    private long _id;
-    private String mPicturePath;
+    private long _id = -1L;
+    private File mPictureFile;
 
-    public Picture(long _id, String picturePath)
+    public Picture(long id, File pictureFile)
     {
-        this._id = _id;
-        this.mPicturePath = picturePath;
+        _id = id;
+        mPictureFile = pictureFile;
     }
 
-    public Picture(String picturePath)
+
+    public Picture(File pictureFile)
     {
-        this.mPicturePath = picturePath;
+        mPictureFile = pictureFile;
     }
 
     public long getId()
@@ -32,11 +35,16 @@ public class Picture
 
     public String getPicturePath()
     {
-        return mPicturePath;
+        return mPictureFile.getPath();
     }
 
-    public void setPicturePath(String mPicturePath)
+    public void setFile(File pictureFile)
     {
-        this.mPicturePath = mPicturePath;
+        mPictureFile = pictureFile;
+    }
+
+    public File getFile()
+    {
+        return mPictureFile;
     }
 }

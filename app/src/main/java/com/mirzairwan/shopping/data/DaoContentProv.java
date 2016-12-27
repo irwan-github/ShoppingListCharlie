@@ -229,6 +229,60 @@ public class DaoContentProv implements DaoManager
     }
 
     @Override
+    public ContentProviderResult[] update(Item item, List<Price> prices, List<Picture> pictures)
+    {
+        String msg = null;
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+        Date updateTime = new Date();
+
+        Uri updateItemUri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
+        ContentProviderOperation.Builder updateItemBuilder = ContentProviderOperation.newUpdate(updateItemUri);
+        updateItemBuilder.withValues(getItemContentValues(item, updateTime, null));
+        ops.add(updateItemBuilder.build());
+
+        for(Picture itemPic : pictures)
+        {
+            if(itemPic.getId() > 0)
+            {
+                Uri updatePictureUri = ContentUris.withAppendedId(PicturesEntry.CONTENT_URI, itemPic.getId());
+                ContentProviderOperation.Builder updatePictureBuilder = ContentProviderOperation.newUpdate(updatePictureUri);
+                updatePictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, itemPic.getPicturePath());
+                updatePictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
+                ops.add(updatePictureBuilder.build());
+            }
+            else
+            {
+                Uri insertPictureUri = PicturesEntry.CONTENT_URI;
+                ContentProviderOperation.Builder insertPictureBuilder = ContentProviderOperation.newInsert(insertPictureUri);
+                insertPictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, itemPic.getPicturePath());
+                insertPictureBuilder.withValue(PicturesEntry.COLUMN_ITEM_ID, item.getId());
+                insertPictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
+                ops.add(insertPictureBuilder.build());
+
+            }
+
+        }
+
+        for (Price price : prices) {
+            Uri updatePriceUri = ContentUris.withAppendedId(PricesEntry.CONTENT_URI, price.getId());
+            ContentProviderOperation.Builder updatePriceBuilder = ContentProviderOperation.newUpdate(updatePriceUri);
+            updatePriceBuilder.withValues(getPriceContentValues(price, item.getId(), updateTime, null));
+            ops.add(updatePriceBuilder.build());
+        }
+
+        ContentProviderResult[] results = null;
+        try {
+            results = mContext.getContentResolver().applyBatch(Contract.CONTENT_AUTHORITY, ops);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+        }
+        msg = String.valueOf(results.length + " updated");
+        return results;
+    }
+
+    @Override
     public String update(ToBuyItem buyItem, Item item, List<Price> itemPrices)
     {
         Log.d(LOG_TAG, "Save domain object graph");

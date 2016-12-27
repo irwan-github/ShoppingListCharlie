@@ -16,10 +16,10 @@ import android.support.annotation.Nullable;
 
 import com.mirzairwan.shopping.data.Contract.Catalogue;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ShoppingList;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
-import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -128,6 +128,7 @@ public class ShoppingListProvider extends ContentProvider
         sPictureProjectionMap.put(PicturesEntry._ID, PicturesEntry._ID);
         sPictureProjectionMap.put(PicturesEntry.COLUMN_ITEM_ID, PicturesEntry.COLUMN_ITEM_ID);
         sPictureProjectionMap.put(PicturesEntry.COLUMN_FILE_PATH, PicturesEntry.COLUMN_FILE_PATH);
+        sPictureProjectionMap.put(PicturesEntry.COLUMN_LAST_UPDATED_ON, PicturesEntry.COLUMN_LAST_UPDATED_ON);
 
 
     }
@@ -155,12 +156,14 @@ public class ShoppingListProvider extends ContentProvider
         /**
          * Content Uri matcher for more than one pictures in the catalogue
          */
-        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY, Contract.PATH_PICTURES, PICTURES);
+        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY,
+                Contract.PATH_PICTURES, PICTURES);
 
         /**
          * Content Uri Matcher for a picture in the catalogue based on primary key
          */
-        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY, Contract.PATH_CATALOGUE + "/#", PICTURE_ID);
+        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY,
+                Contract.PATH_PICTURES + "/#", PICTURE_ID);
 
         /**
          * CONTENT_URI matcher for all items in the shopping list
@@ -287,6 +290,7 @@ public class ShoppingListProvider extends ContentProvider
     @Override
     public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs)
     {
+        long _id = -1;
         int result = 0;
         int matchCode = sUriMatcher.match(uri);
         switch (matchCode) {
@@ -295,7 +299,7 @@ public class ShoppingListProvider extends ContentProvider
                 break;
             case ITEM_ID:
                 selection = ItemsEntry._ID + "=?";
-                long _id = parseId(uri); //get the database id from CONTENT_URI
+                _id = parseId(uri); //get the database id from CONTENT_URI
                 selectionArgs = new String[]{String.valueOf(_id)};
                 result = updateItems(uri, values, selection, selectionArgs);
                 break;
@@ -307,6 +311,15 @@ public class ShoppingListProvider extends ContentProvider
                 long _idPrice = parseId(uri);
                 selectionArgs = new String[]{String.valueOf(_idPrice)};
                 result = updatePrices(uri, values, selection, selectionArgs);
+                break;
+            case PICTURES:
+                result = updatePictures(uri, values, selection, selectionArgs);
+                break;
+            case PICTURE_ID:
+                _id = ContentUris.parseId(uri);
+                selection = PicturesEntry._ID + "=?";
+                selectionArgs = new String[]{String.valueOf(_id)};
+                result = updatePictures(uri, values, selection, selectionArgs);
                 break;
             case BUY_ITEM_ID:
                 selection = ToBuyItemsEntry._ID + "=?";
@@ -322,6 +335,29 @@ public class ShoppingListProvider extends ContentProvider
         notifyChange();
         return result;
     }
+
+    private int updatePictures(Uri uri, ContentValues values, String selection, String[] selectionArgs)
+    {
+        SQLiteDatabase database = mShoppingListDbHelper.getWritableDatabase();
+        return database.update(PicturesEntry.TABLE_NAME, values, selection, selectionArgs);
+    }
+
+    private int updatePrices(Uri uri, ContentValues values, String selection,
+                             String[] selectionArgs)
+    {
+        return mShoppingListDbHelper.getWritableDatabase()
+                .update(PricesEntry.TABLE_NAME, values, selection, selectionArgs);
+    }
+
+    private int updateItems(Uri uri, ContentValues values, String selection, String[] selectionArgs)
+    {
+        int result;
+        result = mShoppingListDbHelper.getWritableDatabase().
+                update(ItemsEntry.TABLE_NAME, values,
+                        selection, selectionArgs);
+        return result;
+    }
+
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs)
@@ -376,21 +412,6 @@ public class ShoppingListProvider extends ContentProvider
 
     }
 
-    private int updatePrices(Uri uri, ContentValues values, String selection,
-                             String[] selectionArgs)
-    {
-        return mShoppingListDbHelper.getWritableDatabase()
-                .update(PricesEntry.TABLE_NAME, values, selection, selectionArgs);
-    }
-
-    private int updateItems(Uri uri, ContentValues values, String selection, String[] selectionArgs)
-    {
-        int result;
-        result = mShoppingListDbHelper.getWritableDatabase().
-                update(ItemsEntry.TABLE_NAME, values,
-                        selection, selectionArgs);
-        return result;
-    }
 
     private int deleteItems(Uri uri, String selection, String[] selectionArgs)
     {

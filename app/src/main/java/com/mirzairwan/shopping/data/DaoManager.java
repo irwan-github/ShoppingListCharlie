@@ -1,5 +1,7 @@
 package com.mirzairwan.shopping.data;
 
+import android.content.ContentProviderResult;
+
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.Price;
@@ -38,4 +40,5 @@ public interface DaoManager
 
     int delete(Item item);
 
+    ContentProviderResult[] update(Item item, List<Price> prices, List<Picture> mPictures);
 }
