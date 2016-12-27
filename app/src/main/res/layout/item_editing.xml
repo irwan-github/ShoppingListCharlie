@@ -10,8 +10,6 @@
                 android:focusableInTouchMode="true"
                 tools:context="com.mirzairwan.shopping.ItemEditingActivity">
 
-
-
     <TextView
         android:id="@+id/item_details_header"
         style="@style/HeaderFont"

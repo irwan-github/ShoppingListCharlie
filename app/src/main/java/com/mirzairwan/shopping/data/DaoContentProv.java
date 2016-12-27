@@ -13,9 +13,11 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import com.mirzairwan.shopping.domain.Item;
+import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ToBuyItem;
 
@@ -45,6 +47,90 @@ public class DaoContentProv implements DaoManager
         Uri updateBuyItemUri = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItemId);
         return mContext.getContentResolver().update(updateBuyItemUri, values, null, null);
     }
+
+    @Override
+    public String insert(ToBuyItem buyItem)
+    {
+        ContentValues values = getBuyItemContentValues(buyItem, new Date());
+        ContentResolver contentResolver = mContext.getContentResolver();
+        Uri result = contentResolver.insert(ToBuyItemsEntry.CONTENT_URI, values);
+        return result.toString();
+    }
+
+    @Override
+    public String insert(ToBuyItem buyItem, Item item, List<Price> itemPrices, List<Picture> picturesPath)
+    {
+        Log.d(LOG_TAG, "Save domain object graph");
+        String msg = "";
+        ContentProviderResult[] result;
+        Date updateTime = new Date();
+
+        ContentValues itemValues = new ContentValues();
+        itemValues = getItemContentValues(item, updateTime, itemValues);
+
+        ArrayList<ContentProviderOperation> ops =
+                new ArrayList<ContentProviderOperation>();
+
+        ContentProviderOperation.Builder itemBuilder =
+                ContentProviderOperation.newInsert(ItemsEntry.CONTENT_URI);
+
+        ContentProviderOperation itemInsertOp = itemBuilder.withValues(itemValues).build();
+
+        ops.add(itemInsertOp);
+
+        //insert picture paths
+        for(Picture path : picturesPath) {
+            ContentProviderOperation.Builder insertPicPathBuilder = ContentProviderOperation.newInsert(PicturesEntry.CONTENT_URI);
+            insertPicPathBuilder.withValueBackReference(PicturesEntry.COLUMN_ITEM_ID, 0);
+            insertPicPathBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, path.getPicturePath());
+            insertPicPathBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
+            ops.add(insertPicPathBuilder.build());
+        }
+
+        for (int j = 0; j < itemPrices.size(); ++j) {
+            Price price = itemPrices.get(j);
+            ContentProviderOperation.Builder priceBuilder =
+                    ContentProviderOperation.newInsert(PricesEntry.CONTENT_URI);
+
+            long itemId = -1; //The item id does not exist at this point.
+            ContentValues priceContentValues = getPriceContentValues(price, itemId, updateTime, null);
+
+            priceBuilder = priceBuilder.withValues(priceContentValues).
+                    withValueBackReference(PricesEntry.COLUMN_ITEM_ID, 0);
+
+            ops.add(priceBuilder.build());
+        }
+
+        ContentProviderOperation.Builder buyItemBuilder =
+                ContentProviderOperation.newInsert(ToBuyItemsEntry.CONTENT_URI);
+
+        buyItemBuilder = buyItemBuilder.withValues(getBuyItemContentValues(buyItem, updateTime))
+                .withValueBackReference(ToBuyItemsEntry.COLUMN_ITEM_ID, 0);
+
+        for (int k = 0; k < itemPrices.size(); ++k) {
+            Price price = itemPrices.get(k);
+            Price.Type selectedPriceType = buyItem.getSelectedPriceType();
+            if (selectedPriceType == price.getPriceType())
+                buyItemBuilder = buyItemBuilder
+                        .withValueBackReference(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID, k + 1);
+        }
+
+        ContentProviderOperation opBuyItem = buyItemBuilder.build();
+        ops.add(opBuyItem);
+
+        try {
+            result = mContext.getContentResolver()
+                    .applyBatch(Contract.CONTENT_AUTHORITY, ops);
+            msg = result.toString();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+        }
+
+        return msg;
+    }
+
 
     @Override
     public String insert(ToBuyItem buyItem, Item item, List<Price> itemPrices)
@@ -199,14 +285,6 @@ public class DaoContentProv implements DaoManager
     }
 
 
-    @Override
-    public String insert(ToBuyItem buyItem)
-    {
-        ContentValues values = getBuyItemContentValues(buyItem, new Date());
-        ContentResolver contentResolver = mContext.getContentResolver();
-        Uri result = contentResolver.insert(ToBuyItemsEntry.CONTENT_URI, values);
-        return result.toString();
-    }
 
 
     @Override

@@ -1,6 +1,7 @@
 package com.mirzairwan.shopping.data;
 
 import com.mirzairwan.shopping.domain.Item;
+import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ToBuyItem;
 
@@ -24,6 +25,8 @@ public interface DaoManager
     String insert(ToBuyItem buyItem, Item item, List<Price> itemPrices);
 
     String insert(ToBuyItem buyItem);
+
+    String insert(ToBuyItem buyItem, Item item, List<Price> mPrices, List<Picture> picturesPath);
 
     int delete(ToBuyItem buyItem);
 

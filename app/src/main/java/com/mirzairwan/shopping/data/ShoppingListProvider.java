@@ -19,6 +19,7 @@ import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ShoppingList;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
+import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,6 +77,10 @@ public class ShoppingListProvider extends ContentProvider
      */
     private static final int SHOPPING_LIST_ITEMID = 123;
 
+    private static final int PICTURES = 130;
+
+    private static final int PICTURE_ID = 131;
+
     /**
      * CONTENT_URI matcher code for the content CONTENT_URI for the items table left join buy_items table
      */
@@ -86,6 +91,8 @@ public class ShoppingListProvider extends ContentProvider
     private static final Map<String, String> sAllBuyItemsProjectionMap = new HashMap<>();
 
     private static final Map<String, String> sItemsPricesProjectionMap = new HashMap<>();
+
+    private static final Map<String, String> sPictureProjectionMap = new HashMap<>();
 
     static {
 
@@ -118,6 +125,11 @@ public class ShoppingListProvider extends ContentProvider
         sItemsPricesProjectionMap.put(PricesEntry.COLUMN_SHOP_ID, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_SHOP_ID);
         sItemsPricesProjectionMap.put(ToBuyItemsEntry.ALIAS_ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry._ID + " AS " + ToBuyItemsEntry.ALIAS_ID);
 
+        sPictureProjectionMap.put(PicturesEntry._ID, PicturesEntry._ID);
+        sPictureProjectionMap.put(PicturesEntry.COLUMN_ITEM_ID, PicturesEntry.COLUMN_ITEM_ID);
+        sPictureProjectionMap.put(PicturesEntry.COLUMN_FILE_PATH, PicturesEntry.COLUMN_FILE_PATH);
+
+
     }
 
 
@@ -139,6 +151,16 @@ public class ShoppingListProvider extends ContentProvider
 
         sUriMatcher.addURI(Contract.CONTENT_AUTHORITY,
                 Contract.PATH_BUY_ITEMS + "/#", BUY_ITEM_ID);
+
+        /**
+         * Content Uri matcher for more than one pictures in the catalogue
+         */
+        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY, Contract.PATH_PICTURES, PICTURES);
+
+        /**
+         * Content Uri Matcher for a picture in the catalogue based on primary key
+         */
+        sUriMatcher.addURI(Contract.CONTENT_AUTHORITY, Contract.PATH_CATALOGUE + "/#", PICTURE_ID);
 
         /**
          * CONTENT_URI matcher for all items in the shopping list
@@ -184,6 +206,9 @@ public class ShoppingListProvider extends ContentProvider
             case PRICES:
                 resultUri = insertPrice(uri, values, null);
                 break;
+            case PICTURES:
+                resultUri = insertPicture(uri, values);
+                break;
             case BUY_ITEMS:
                 resultUri = insertBuyItem(uri, values, null);
                 break;
@@ -193,6 +218,7 @@ public class ShoppingListProvider extends ContentProvider
         notifyChange();
         return resultUri;
     }
+
 
     @Override
     public Cursor query(@NonNull Uri uri, String[] projection, String selection,
@@ -217,6 +243,15 @@ public class ShoppingListProvider extends ContentProvider
                 database = mShoppingListDbHelper.getReadableDatabase();
                 cursor = database.query(PricesEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
                 break;
+            case PICTURES:
+                cursor = queryPictures(uri, projection, selection, selectionArgs, sortOrder);
+                break;
+            case PICTURE_ID:
+                id = ContentUris.parseId(uri);
+                selection = PicturesEntry._ID + "=?";
+                selectionArgs = new String[]{String.valueOf(id)};
+                cursor = queryPictures(uri, projection, selection, selectionArgs, sortOrder);
+                break;
             case CATALOGUE:
                 cursor = getCatalogueAndPrice(uri, projection, selection, selectionArgs, sortOrder);
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
@@ -238,6 +273,16 @@ public class ShoppingListProvider extends ContentProvider
         return cursor;
     }
 
+    private Cursor queryPictures(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder)
+    {
+        SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
+        builder.setTables(PicturesEntry.TABLE_NAME);
+        builder.setProjectionMap(sPictureProjectionMap);
+        Cursor cursor = builder.query(mShoppingListDbHelper.getReadableDatabase(), projection,
+                selection, selectionArgs, null, null, sortOrder);
+        cursor.setNotificationUri(getContext().getContentResolver(), uri);
+        return cursor;
+    }
 
     @Override
     public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs)
@@ -318,6 +363,7 @@ public class ShoppingListProvider extends ContentProvider
 
     private void notifyChange()
     {
+        getContext().getContentResolver().notifyChange(PicturesEntry.CONTENT_URI, null);
         getContext().getContentResolver().notifyChange(ShoppingList.CONTENT_URI, null);
         getContext().getContentResolver().notifyChange(Catalogue.CONTENT_URI, null);
     }
@@ -473,6 +519,16 @@ public class ShoppingListProvider extends ContentProvider
             //getContext().getContentResolver().notifyChange(uri, null);
             return ContentUris.withAppendedId(uri, _id);
         }
+    }
+
+    private Uri insertPicture(Uri uri, ContentValues values)
+    {
+        SQLiteDatabase database = mShoppingListDbHelper.getWritableDatabase();
+        long rowId = database.insert(PicturesEntry.TABLE_NAME, null, values);
+        if (rowId == -1)
+            return null;
+        else
+            return ContentUris.withAppendedId(uri, rowId);
     }
 
     @Nullable

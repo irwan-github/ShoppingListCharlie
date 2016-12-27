@@ -30,8 +30,10 @@ public final class Contract
     public static final String PATH_ITEMS = "items";
     public static final String PATH_BUY_ITEMS = "buy-items";
     public static final String PATH_PRICES = "prices";
+    public static final String PATH_PICTURES = "pictures";
     public static final String PATH_SHOPPING_LIST = PATH_BUY_ITEMS + "/" + PATH_ITEMS;
     public static final String PATH_CATALOGUE = PATH_ITEMS + "/" + PATH_BUY_ITEMS;
+
 
     public static final class ShoppingList
     {
@@ -101,6 +103,19 @@ public final class Contract
         public static final String COLUMN_LAST_UPDATED_ON = "last_updated_on";
 
         public static final String ALIAS_COLUMN_LAST_UPDATED_ON = "item_last_updated_on";
+    }
+
+    public static final class PicturesEntry implements BaseColumns
+    {
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_PICTURES);
+
+        public static final String TABLE_NAME = "pictures";
+
+        public static final String COLUMN_ITEM_ID = "item_id";
+
+        public static final String COLUMN_FILE_PATH = "file_path";
+
+        public static final String COLUMN_LAST_UPDATED_ON = "last_updated_on";
     }
 
     public static final class PricesEntry implements BaseColumns

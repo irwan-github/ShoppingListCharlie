@@ -8,10 +8,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
-
+import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 
 import java.util.ArrayList;
 
@@ -59,8 +59,17 @@ public class ShoppingListDbHelper extends SQLiteOpenHelper
                 "UNIQUE(" + PricesEntry.COLUMN_PRICE_TYPE_ID + "," +
                 PricesEntry.COLUMN_SHOP_ID + "," + PricesEntry.COLUMN_ITEM_ID + ")," +
                 "FOREIGN KEY (" + PricesEntry.COLUMN_ITEM_ID + " ) REFERENCES " +
-                ItemsEntry.TABLE_NAME + "(" +
-                ItemsEntry._ID + ")" + "" +
+                ItemsEntry.TABLE_NAME + "(" + ItemsEntry._ID + ")" +
+                ")";
+
+        String SQL_CREATE_PICTURES_TABLE = "CREATE TABLE " +
+                PicturesEntry.TABLE_NAME + " (" +
+                PicturesEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                PicturesEntry.COLUMN_ITEM_ID + " INTEGER NOT NULL, " +
+                PicturesEntry.COLUMN_FILE_PATH + " TEXT NOT NULL, " +
+                PicturesEntry.COLUMN_LAST_UPDATED_ON + " " + "INTEGER, " +
+                "FOREIGN KEY(" + PicturesEntry.COLUMN_ITEM_ID + ") REFERENCES " +
+                ItemsEntry.TABLE_NAME + "(" + ItemsEntry._ID + ")" +
                 ")";
 
         // SQL statement to create the buy items table
@@ -79,7 +88,9 @@ public class ShoppingListDbHelper extends SQLiteOpenHelper
                 ItemsEntry._ID + ")" + "" +
                 ")";
 
+
         db.execSQL(SQL_CREATE_ITEM_TABLE);
+        db.execSQL(SQL_CREATE_PICTURES_TABLE);
         db.execSQL(SQL_CREATE_PRICE_TABLE);
         db.execSQL(SQL_CREATE_BUY_ITEMS_TABLE);
 

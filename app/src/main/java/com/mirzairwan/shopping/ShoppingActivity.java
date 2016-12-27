@@ -12,6 +12,7 @@ import android.view.MenuItem;
 
 import com.mirzairwan.shopping.data.AndroidDatabaseManager;
 import com.mirzairwan.shopping.data.Contract;
+import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 
 import static com.mirzairwan.shopping.R.id.menu_database_shopping_list;
 
@@ -93,9 +94,7 @@ public class ShoppingActivity extends AppCompatActivity implements
     {
         Intent intentToViewItem = new Intent();
         intentToViewItem.setClass(this, ItemEditingActivity.class);
-//        Uri uri = ContentUris.withAppendedId(Catalogue.ITEMS_PRICES_URI, itemId);
-//        Uri uri = ContentUris.withAppendedId(Catalogue.CONTENT_URI, itemId);
-        Uri uri = ContentUris.withAppendedId(Contract.ItemsEntry.CONTENT_URI, itemId);
+        Uri uri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, itemId);
         intentToViewItem.setData(uri);
         startActivity(intentToViewItem);
     }

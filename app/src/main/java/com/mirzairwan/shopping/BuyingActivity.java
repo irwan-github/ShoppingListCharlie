@@ -16,16 +16,17 @@ import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
-import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import com.mirzairwan.shopping.data.DaoManager;
 import com.mirzairwan.shopping.domain.Item;
+import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ToBuyItem;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
@@ -33,26 +34,22 @@ import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
 /**
  * Display the buy item details:
- *  *
+ * *
  * Create new buy item:
  * Currency code is set according to user country preference. Once the currency is set, only the price can
  * be updated. The currency code cannot be changed.
- *
+ * <p>
  * Update buy item details:
  * For price of item, only the value can be updated. The currency code cannot be changed.
- *
+ * <p>
  * Delete existing buy items
- *
  */
 public class BuyingActivity extends ItemEditingActivity implements LoaderManager.LoaderCallbacks<Cursor>
 {
     private int actionMode = -1; //Informs the editor whether this activity is creation or updating
     public static final int CREATE_BUY_ITEM_MODE = 1; //use for startActivityForResult
     public static final int EDIT_BUY_ITEM_MODE = 2; //use for startActivityForResult
-
-    private static final String EDIT_ITEM_URI = "EDIT_ITEM_URI";
     private static final int PURCHASE_ITEM_LOADER_ID = 30;
-    private static final int ITEM_PRICE_LOADER_ID = 31;
 
     private Cursor mCursor;
     private ToBuyItem toBuyItem;
@@ -87,12 +84,16 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     {
         Intent intent = getIntent();
         Uri uri = intent.getData();
+
         //if no bundle, then the request is for new creation
         if (uri != null) {
             Bundle arg = new Bundle();
-            arg.putParcelable(EDIT_ITEM_URI, uri);
+            //arg.putParcelable(EDIT_ITEM_URI, uri);
+            arg.putParcelable(ITEM_URI, uri);
+
             getLoaderManager().initLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
             getLoaderManager().initLoader(ITEM_PRICE_LOADER_ID, arg, this);
+            getLoaderManager().initLoader(ITEM_PICTURE_LOADER_ID, arg, this);
             actionMode = EDIT_BUY_ITEM_MODE; //This flag is used for database operation
         }
     }
@@ -111,7 +112,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
         rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);
 
         //Set currency symbol for Price-related EditText
-        if(actionMode == CREATE_BUY_ITEM_MODE) {
+        if (actionMode == CREATE_BUY_ITEM_MODE) {
             String countryCode = PreferenceManager.getDefaultSharedPreferences(this).
                     getString(getString(R.string.user_country_pref), null);
             setCurrencySymbol(etUnitPrice, NumberFormatter.getCurrencyCode(countryCode));
@@ -203,9 +204,8 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
 
             toBuyItem = new ToBuyItem(item, Integer.parseInt(itemQuantity), selectedPrice);
 
-            msg = daoManager.insert(toBuyItem, toBuyItem.getItem(), mPrices);
-        }
-        else //Existing buy item
+            msg = daoManager.insert(toBuyItem, toBuyItem.getItem(), mPrices, getPicturesForSaving());
+        } else //Existing buy item
         {
             super.preparePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
 
@@ -218,6 +218,21 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
 
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         finish();
+    }
+
+    protected List<Picture> getPicturesForSaving()
+    {
+        return mPictures;
+    }
+
+    @Override
+    protected void preparePicturePathForSaving(String picturePath)
+    {
+        if (mPictures.size() == 1) {
+            mPictures.clear();
+            //super.deletePictureFromFilesystem(picturePath); TODO
+        }
+        mPictures.add(new Picture(picturePath));
     }
 
     private void populatePurchaseDetails(Cursor cursor)
@@ -292,27 +307,12 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
                         PricesEntry.COLUMN_CURRENCY_CODE,
                         PricesEntry.COLUMN_SHOP_ID
                 };
-                uri = args.getParcelable(EDIT_ITEM_URI);
+                uri = args.getParcelable(ITEM_URI);
                 loader = new CursorLoader(this, uri, projection, null, null, null);
                 break;
 
-            case ITEM_PRICE_LOADER_ID:
-                projection = new String[]{Contract.PricesEntry._ID,
-                        Contract.PricesEntry.COLUMN_PRICE_TYPE_ID,
-                        Contract.PricesEntry.COLUMN_PRICE,
-                        Contract.PricesEntry.COLUMN_BUNDLE_QTY,
-                        Contract.PricesEntry.COLUMN_CURRENCY_CODE,
-                        Contract.PricesEntry.COLUMN_SHOP_ID};
-                uri = args.getParcelable(EDIT_ITEM_URI);
-                long itemId = ContentUris.parseId(uri);
-                String selection = Contract.PricesEntry.COLUMN_ITEM_ID + "=?";
-                String[] selectionArgs = new String[]{String.valueOf(itemId)};
-                loader = new CursorLoader(this, Contract.PricesEntry.CONTENT_URI, projection, selection,
-                        selectionArgs, null);
-                break;
-
             default:
-                throw new IllegalArgumentException("Query not supported");
+                loader = super.onCreateLoader(loaderId, args);
 
         }
         return loader;
@@ -321,7 +321,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
     {
-        if(cursor == null || cursor.getCount() < 1)
+        if (cursor == null || cursor.getCount() < 1)
             return;
 
         int loaderId = loader.getId();
@@ -333,35 +333,26 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
                 if (cursor.moveToFirst()) {
                     //populateItemDetails(cursor);
                     Item item = createItem(ToBuyItemsEntry.COLUMN_ITEM_ID, ItemsEntry.COLUMN_NAME,
-                                            ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_DESCRIPTION,
-                                            ItemsEntry.COLUMN_COUNTRY_ORIGIN, cursor);
+                            ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_DESCRIPTION,
+                            ItemsEntry.COLUMN_COUNTRY_ORIGIN, cursor);
                     populatePurchaseDetails(cursor);
                     populateItemInputFields(item);
                     populatePurchaseView();
                 }
                 break;
 
-            case ITEM_PRICE_LOADER_ID:
-                //If deleting item, price is not required
-                if (!isDeleting) {
-                    createPrices(cursor);
-                    populatePricesInputFields();
-                }
-                break;
-
             default:
-                throw new IllegalArgumentException("Loader not supported");
+                if (isDeleting) //Don't populate prices and pictures
+                    return;
+                else
+                    super.onLoadFinished(loader, cursor);
         }
-
-
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader)
     {
-        // If the loader is invalidated, clear out all the data from the input fields.
-        populateItemInputFields(null);
-        clearPriceInputFields();
+        super.onLoaderReset(loader);
         clearPurchaseInputFields();
     }
 
