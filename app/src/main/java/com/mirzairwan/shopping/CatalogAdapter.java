@@ -69,6 +69,7 @@ public class CatalogAdapter extends CursorAdapter
 
         //Now give back the listener to toggle button
         tag.onItemCheckedChangeListener.setCursorPosition(cursor.getPosition());
+        tag.onItemCheckedChangeListener.setItemInShoppingList(isItemInShoppingList);
         tag.toggleItem.setOnCheckedChangeListener(tag.onItemCheckedChangeListener);
     }
 
@@ -87,6 +88,7 @@ public class CatalogAdapter extends CursorAdapter
     private static class OnItemCheckedChangeListener implements CompoundButton.OnCheckedChangeListener
     {
         private int mPosition;
+        private boolean isItemInShoppingList = false;
 
         //Interested listener to the onCheckedChanged event.
         private OnToggleCatalogItemListener mOnToggleCatalogItemListener;
@@ -105,6 +107,16 @@ public class CatalogAdapter extends CursorAdapter
         public void setCursorPosition(int position)
         {
             mPosition = position;
+        }
+
+        public boolean isItemInShoppingList()
+        {
+            return isItemInShoppingList;
+        }
+
+        public void setItemInShoppingList(boolean itemInShoppingList)
+        {
+            isItemInShoppingList = itemInShoppingList;
         }
     }
 }

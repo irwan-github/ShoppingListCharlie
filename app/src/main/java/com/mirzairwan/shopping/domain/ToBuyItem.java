@@ -34,7 +34,6 @@ public class ToBuyItem implements Parcelable
         mItem = item;
         mSelectedPrice = selectedPrice;
         mItem.setInBuyList(true);
-
     }
 
     public ToBuyItem(long _idBuyItem, int quantity, Price selectedPrice, Item item, Date lastUpdatedOn)

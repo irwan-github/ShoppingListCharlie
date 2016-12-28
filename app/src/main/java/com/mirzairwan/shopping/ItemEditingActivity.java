@@ -2,7 +2,6 @@ package com.mirzairwan.shopping;
 
 import android.app.Activity;
 import android.app.LoaderManager;
-import android.content.ContentProviderResult;
 import android.content.ContentUris;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
@@ -23,7 +22,6 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -58,7 +56,7 @@ import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
  */
 public class ItemEditingActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>
 {
-
+    public static final String ITEM_IS_IN_SHOPPING_LIST = "ITEM_IS_IN_SHOPPING_LIST";
     protected static final String ITEM_URI = "ITEM_URI";
     private static final int ITEM_LOADER_ID = 20;
     protected static final int ITEM_PRICE_LOADER_ID = 21;
@@ -88,7 +86,9 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     //private String mCurrentPicturePath;
     protected List<Picture> mPictures = new ArrayList<>();
     protected List<File> mPictureFilesTemp = new ArrayList<>();
-    protected Picture pictureInProcessToBeDeleted;
+    protected Picture mPictureInProcessToBeDeleted;
+
+    protected PictureMgr pictureMgr;
 
 
     @Override
@@ -171,7 +171,8 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
     /**
      * Current implemetation supports only 1 picture. Therefore when user make subsequent snapshots,
-     * the previous photos must be deleted from filesystem. The original photo is deleted when acamera activity returns status OK
+     * the previous photos must be deleted from filesystem. The original photo is deleted when
+     * camera activity returns status OK
      */
     protected void startSnapShotActivity()
     {
@@ -181,13 +182,14 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             File itemPicFile = null;
             try {
                 itemPicFile = createFileHandle();
-                mPictureFilesTemp.add(itemPicFile); //At this point, maximum temp files is 2
             } catch (IOException e) {
                 e.printStackTrace();
                 Toast.makeText(this, "Photo file cannot be created. Aborting camera operation", Toast.LENGTH_SHORT).show();
                 return;
             }
+
             if (itemPicFile != null) {
+                pictureMgr.setPictureForViewing(itemPicFile);
                 Uri itemPicUri = FileProvider.getUriForFile(this, "com.mirzairwan.shopping.fileprovider", itemPicFile);
                 cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, itemPicUri);
                 startActivityForResult(cameraIntent, REQUEST_SNAP_PICTURE);
@@ -201,10 +203,10 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         File dirPictures = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
         String picFilename = SHOPPING_LIST_PICS + "_" + timeStamp + "_";
+
         //Get file handle
         File filePicture = File.createTempFile(picFilename, ".jpg", dirPictures);
 
-        //mCurrentPicturePath = filePicture.getAbsolutePath();
         return filePicture;
     }
 
@@ -220,22 +222,13 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             case Activity.RESULT_OK:
                 switch (requestCode) {
                     case REQUEST_SNAP_PICTURE:
-//                        int result = 0;
-//                        boolean existPreviousPicture = mPictureFilesTemp.size() == 1;
-//                        if(existPreviousPicture)
-//                            result = deletePictureFromFilesystem(mPicturesTemp.get(0)); //Delete previous picture
-//                        boolean isDeleteSuccess = result == 1;
-                        //preparePicturePathForSaving(mPictureFilesTemp.get(0));
-                        removePreviousTempFiles();
-                        setPictureView(mPictureFilesTemp.get(0));
+                        setPictureView(pictureMgr.getPictureForViewing());
                         break;
                 }
-
                 break;
 
             default: //Assume the worst. No picture from camera. Delete the useless file.
-                removeCurrentTempFiles();
-                ;
+                pictureMgr.resetToOriginalPicture();
 
         }
         super.onActivityResult(requestCode, resultCode, data);
@@ -247,8 +240,8 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
      */
     private void removeCurrentTempFiles()
     {
-        File fileToBeDeleted = mPictureFilesTemp.remove(mPictureFilesTemp.size() - 1); //First picture
-        deleteFileFromFilesystem(fileToBeDeleted);
+        //File fileToBeDeleted = mPictureFilesTemp.remove(mPictureFilesTemp.size() - 1); //First picture
+        //deleteFileFromFilesystem(fileToBeDeleted);
     }
 
     /**
@@ -261,18 +254,18 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             return;
 
         File fileToBeDeleted = mPictureFilesTemp.remove(0); //First picture
-        deleteFileFromFilesystem(fileToBeDeleted);
+        //deleteFileFromFilesystem(fileToBeDeleted);
     }
 
-    protected int deleteFileFromFilesystem(File file)
-    {
-        String authority = getClass().getPackage().getName() + ".fileprovider";
-        Uri uri = FileProvider.getUriForFile(this, authority, file);
-        int result = getContentResolver().delete(uri, null, null);
-        Log.d(LOG_TAG, ">>>deletePicture " + result);
-        return result;
-
-    }
+//    protected int deleteFileFromFilesystem(File file)
+//    {
+//        String authority = getClass().getPackage().getName() + ".fileprovider";
+//        Uri uri = FileProvider.getUriForFile(this, authority, file);
+//        int result = getContentResolver().delete(uri, null, null);
+//        Log.d(LOG_TAG, ">>>deletePicture " + result);
+//        return result;
+//
+//    }
 
 //    /**
 //     * Update item's picture path
@@ -293,32 +286,37 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 //
 //    }
 
+    /**
+     * Only one picture will be saved currently.
+     */
     protected void preparePictureForSaving()
     {
+        boolean pictureExistInDb = mPictures.size() > 0;
+
         //Currently, only 1 picture is supported
-        if (mPictureFilesTemp.size() == 1) {
-            pictureInProcessToBeDeleted = mPictures.get(0);
-            File pictureFile = mPictureFilesTemp.get(0);
-            mPictures.get(0).setFile(pictureFile);
+
+        if (pictureExistInDb && mPictureFilesTemp.size() == 1) //User has taken a new snapshot
+        {
+            mPictureInProcessToBeDeleted = mPictures.get(0);
+            File newPictureFile = mPictureFilesTemp.get(0);
+            mPictures.get(0).setFile(newPictureFile);
+
         }
-// else {
-//            Picture newPicture = new Picture(mPictureFilesTemp.get(0));
-//            mPictures.clear();
-//            mPictures.add(newPicture);
-//        }
 
-    }
+        if (!pictureExistInDb && mPictureFilesTemp.size() == 1) {
+            Picture newPicture = new Picture(mPictureFilesTemp.get(0));
+            mPictures.clear();
+            mPictures.add(newPicture);
+        }
 
+        item.setPictures(mPictures);
 
-    protected void setPictureView(List<Picture> pictures)
-    {
-        //Currently only 1 picture is supported
-        setPictureView(pictures.get(0));
     }
 
     protected void setPictureView(Picture picture)
     {
-        setPictureView(picture.getFile());
+        if (picture != null)
+            setPictureView(picture.getFile());
     }
 
     protected void setPictureView(File pictureFile)
@@ -417,22 +415,42 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         builder.show();
     }
 
-    protected void alertRequiredField(int messageId)
+    protected void alertRequiredField(int titleId, int messageId)
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Mandatory field(s)");
+        builder.setTitle(titleId);
         builder.setMessage(messageId);
         builder.setPositiveButton(R.string.ok, null);
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
     }
 
+    protected void alertItemInShoppingList(int messageId)
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(messageId);
+        builder.setPositiveButton(R.string.ok, null);
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+
     /**
      *
      */
     protected void delete()
     {
-        daoManager.delete(item);
+        if (item.isInBuyList()) {
+            alertItemInShoppingList(R.string.item_is_in_shopping_list);
+            return;
+        }
+
+        preparePictureForSaving();
+
+        String results = daoManager.delete(item);
+
+        Toast.makeText(this, results, Toast.LENGTH_SHORT).show();
+
         finish();
     }
 
@@ -440,7 +458,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     {
         String itemName;
         if (TextUtils.isEmpty(etName.getText())) {
-            alertRequiredField(R.string.mandatory_name);
+            alertRequiredField(R.string.message_title, R.string.mandatory_name);
             etName.requestFocus();
             return null;
         } else {
@@ -516,27 +534,28 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
         preparePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
 
-        preparePictureForSaving();
+        //preparePictureForSaving();
 
-        ContentProviderResult[] msg;
-        msg = daoManager.update(item, item.getPrices(), mPictures);
+        String msg = daoManager.update(item, item.getPrices(), mPictures);
+
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
 
         //Check that picture is updated. If updated, delete the previous saved file from file system
-        boolean isItemSaved = false;
-        boolean isPictureSaved = false;
-        isPictureSaved = msg[1].count == 1;
-        isItemSaved = msg[0].count == 1;
+//        boolean isItemSaved = false;
+//        boolean isPictureSaved = false;
+//        isPictureSaved = msg[1].count == 1;
+//        isItemSaved = msg[0].count == 1;
 
-        if (!isItemSaved)
-            Toast.makeText(this, "Update not successful", Toast.LENGTH_SHORT).show();
-        else {
-
-            if (isPictureSaved && pictureInProcessToBeDeleted != null) {
-                deleteFileFromFilesystem(pictureInProcessToBeDeleted.getFile());
-            }
-
-            finish();
-        }
+//        if (!isItemSaved)
+//            Toast.makeText(this, "Update not successful", Toast.LENGTH_SHORT).show();
+//        else {
+//
+//            if (isPictureSaved && mPictureInProcessToBeDeleted != null) {
+//                deleteFileFromFilesystem(mPictureInProcessToBeDeleted.getFile());
+//            }
+//
+//            finish();
+//        }
     }
 
 
@@ -570,7 +589,8 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         countryOrigin = cursor.getString(colCountryOriginIdx);
 
         item = new Item(itemId, itemName, itemBrand, countryOrigin, itemDescription, null);
-
+        boolean itemIsInShoppingList = getIntent().getBooleanExtra(ITEM_IS_IN_SHOPPING_LIST, false);
+        item.setInBuyList(itemIsInShoppingList);
         return item;
     }
 
@@ -666,10 +686,13 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         switch (loaderId) {
             case ITEM_LOADER_ID:
                 cursor.moveToFirst();
+
                 Item item = createItem(ItemsEntry._ID, ItemsEntry.COLUMN_NAME,
                         ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_DESCRIPTION,
                         ItemsEntry.COLUMN_COUNTRY_ORIGIN, cursor);
+
                 populateItemInputFields(item);
+
                 break;
             case ITEM_PRICE_LOADER_ID:
                 createPrices(cursor);
@@ -677,23 +700,25 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                 break;
 
             case ITEM_PICTURE_LOADER_ID:
-                List<Picture> pictures = createPictures(cursor);
-                setPictureView(pictures);
+                createPictures(cursor);
+                setPictureView(pictureMgr.getPictureForViewing());
                 break;
         }
     }
 
-    private List<Picture> createPictures(Cursor cursor)
+    private void createPictures(Cursor cursor)
     {
-        //Clear the list of pictures
-        mPictures.clear();
-
         int colRowId = cursor.getColumnIndex(PicturesEntry._ID);
         int colPicturePath = cursor.getColumnIndex(PicturesEntry.COLUMN_FILE_PATH);
+        Picture pictureInDb = null;
         while (cursor.moveToNext()) {
-            mPictures.add(new Picture(cursor.getLong(colRowId), new File(cursor.getString(colPicturePath))));
+            pictureInDb = new Picture(cursor.getLong(colRowId), new File(cursor.getString(colPicturePath)));
         }
-        return mPictures;
+        if (pictureInDb != null) {
+            if (pictureMgr == null)
+                pictureMgr = new PictureMgr(pictureInDb);
+        } else
+            pictureMgr = new PictureMgr();
     }
 
     @Override

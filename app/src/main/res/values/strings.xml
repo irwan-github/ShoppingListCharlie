@@ -47,4 +47,5 @@
     <string name="user_country_pref">home_country_preference</string>
     <string name="invalid_country_code">Invalid country code. Google 2-letter country code for information</string>
     <string name="menu_item_camera">Snap photo</string>
+    <string name="message_title">Mandatory field(s)</string>
 </resources>

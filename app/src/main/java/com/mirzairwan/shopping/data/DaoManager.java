@@ -1,7 +1,6 @@
 package com.mirzairwan.shopping.data;
 
-import android.content.ContentProviderResult;
-
+import com.mirzairwan.shopping.PictureMgr;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.Price;
@@ -15,6 +14,10 @@ import java.util.List;
 
 public interface DaoManager
 {
+    static final String DATABASE_UPDATE_FAILED = "DATABASE_UPDATE_FAILED";
+    static final String FILE_DELETE_FAILED = "FILE_DELETE_FAILED";
+
+
     /**
      * Insert the state of the entire objects that is referenced
      * by the BuyItem object in the domain object graph into the database.
@@ -28,7 +31,7 @@ public interface DaoManager
 
     String insert(ToBuyItem buyItem);
 
-    String insert(ToBuyItem buyItem, Item item, List<Price> mPrices, List<Picture> picturesPath);
+    String insert(ToBuyItem buyItem, Item item, List<Price> mPrices, PictureMgr pictureMgr);
 
     int delete(ToBuyItem buyItem);
 
@@ -38,7 +41,7 @@ public interface DaoManager
 
     String update(Item item, List<Price> prices);
 
-    int delete(Item item);
+    String delete(Item item);
 
-    ContentProviderResult[] update(Item item, List<Price> prices, List<Picture> mPictures);
+    String update(Item item, List<Price> prices, List<Picture> mPictures);
 }

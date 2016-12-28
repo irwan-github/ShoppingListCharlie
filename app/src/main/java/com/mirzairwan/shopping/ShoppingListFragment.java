@@ -172,6 +172,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         String orderBy = ItemsEntry.COLUMN_NAME;
 
         CursorLoader loader = new CursorLoader(getActivity(), uri, projection, selection, null, null);
+
         return loader;
     }
 

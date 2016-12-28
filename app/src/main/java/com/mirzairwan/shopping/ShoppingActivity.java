@@ -14,6 +14,7 @@ import com.mirzairwan.shopping.data.AndroidDatabaseManager;
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 
+import static com.mirzairwan.shopping.ItemEditingActivity.ITEM_IS_IN_SHOPPING_LIST;
 import static com.mirzairwan.shopping.R.id.menu_database_shopping_list;
 
 public class ShoppingActivity extends AppCompatActivity implements
@@ -90,10 +91,11 @@ public class ShoppingActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onViewItemDetails(long itemId)
+    public void onViewItemDetails(long itemId, boolean isInShoppingList)
     {
         Intent intentToViewItem = new Intent();
         intentToViewItem.setClass(this, ItemEditingActivity.class);
+        intentToViewItem.putExtra(ITEM_IS_IN_SHOPPING_LIST, isInShoppingList);
         Uri uri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, itemId);
         intentToViewItem.setData(uri);
         startActivity(intentToViewItem);

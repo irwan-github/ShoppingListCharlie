@@ -24,6 +24,8 @@ public class Item implements Parcelable {
     private boolean mIsInBuyList = false;
     private Date mLastUpdatedOn;
     private List<Price> mPrices = new ArrayList<>();
+    private List<Picture> mPictures = new ArrayList<>();
+    private List<Picture> mToBeDeletedPicture = new ArrayList<>();
 
     public Item(String itemName) {
         if (itemName == null && itemName.trim().equals(""))
@@ -120,6 +122,29 @@ public class Item implements Parcelable {
 
         }
         return null;
+    }
+
+    public List<Picture> getPictures()
+    {
+        return mPictures;
+    }
+
+    public void setPictures(List<Picture> pictures)
+    {
+        mPictures = pictures;
+    }
+
+    public void replacePicture(int position, Picture newPicture)
+    {
+        if(mPictures.size() > 0) {
+            Picture removedPicture = mPictures.set(position, newPicture);
+            mToBeDeletedPicture.add(removedPicture);
+        }
+    }
+
+    public List<Picture> getDiscardedPictures()
+    {
+        return mToBeDeletedPicture;
     }
 
     public void setItemId(int id) {

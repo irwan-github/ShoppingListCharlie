@@ -25,7 +25,6 @@ import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ToBuyItem;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,6 +75,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
         if (uri == null) {
             setTitle(R.string.new_buy_item_title);
             actionMode = CREATE_BUY_ITEM_MODE; // This flag is used for menu creation and database operation
+            pictureMgr = new PictureMgr();
         } else
             setTitle(R.string.view_buy_item_details);
     }
@@ -183,18 +183,18 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     @Override
     protected void preparePictureForSaving()
     {
-        //Currently, only 1 picture is supported
-        if (mPictureFilesTemp.size() == 1 && mPictures.size() == 1) {
-
-            pictureInProcessToBeDeleted = mPictures.get(0);
-            File pictureFile = mPictureFilesTemp.get(0);
-            mPictures.get(0).setFile(pictureFile);
-
-        }
-
-        if(mPictures.size() == 0)//New buy item or existing item has no picture
-            mPictures.add(new Picture(mPictureFilesTemp.get(0)));
-
+//        //Currently, only 1 picture is supported
+//        if (mPictureFilesTemp.size() == 1 && mPictures.size() == 1) {
+//
+//            mPictureInProcessToBeDeleted = mPictures.get(0);
+//            File pictureFile = mPictureFilesTemp.get(0);
+//            mPictures.get(0).setFile(pictureFile);
+//
+//        }
+//
+//        if (mPictureFilesTemp.size() == 1 && mPictures.size() == 0)//New buy item or existing item has no picture
+//            mPictures.add(new Picture(mPictureFilesTemp.get(0)));
+//
 
     }
 
@@ -202,11 +202,11 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     @Override
     protected void save()
     {
-        getItemFromInputField();
+        Item item = getItemFromInputField();
 
         String itemQuantity = "1";
         if (TextUtils.isEmpty(etQty.getText()) || Integer.parseInt(etQty.getText().toString()) < 1) {
-            alertRequiredField(R.string.mandatory_quantity);
+            alertRequiredField(R.string.message_title, R.string.mandatory_quantity);
             etQty.requestFocus();
             return;
         } else {
@@ -226,7 +226,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
 
             toBuyItem = new ToBuyItem(item, Integer.parseInt(itemQuantity), selectedPrice);
 
-            msg = daoManager.insert(toBuyItem, toBuyItem.getItem(), mPrices, getPicturesForSaving());
+            msg = daoManager.insert(toBuyItem, toBuyItem.getItem(), mPrices, pictureMgr);
 
         } else //Existing buy item
         {
