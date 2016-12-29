@@ -30,7 +30,7 @@ public class PictureMgrTest2
 
         assertThat(pictureMgr.getOriginalPicture().getFile().getPath(), is("/home/irwan/original"));
 
-        List<Picture> discardedPictures = pictureMgr.getDiscardedPicture();
+        List<Picture> discardedPictures = pictureMgr.getDiscardedPictures();
 
         assertThat(discardedPictures.contains(pictureMgr.getOriginalPicture()), is(true));
         assertThat(discardedPictures.contains(targetPicture1), is(true));
@@ -55,7 +55,7 @@ public class PictureMgrTest2
 
         assertThat(pictureMgr.getOriginalPicture(), nullValue());
 
-        List<Picture> discardedPictures = pictureMgr.getDiscardedPicture();
+        List<Picture> discardedPictures = pictureMgr.getDiscardedPictures();
         assertThat(discardedPictures.contains(pictureMgr.getOriginalPicture()), is(false));
         assertThat(discardedPictures.contains(targetPicture1), is(false));
     }
@@ -68,7 +68,7 @@ public class PictureMgrTest2
 
         assertThat(pictureMgr.getOriginalPicture(), nullValue());
 
-        List<Picture> discardedPictures = pictureMgr.getDiscardedPicture();
+        List<Picture> discardedPictures = pictureMgr.getDiscardedPictures();
         assertThat(discardedPictures.contains(pictureMgr.getOriginalPicture()), is(false));
         assertThat(discardedPictures.contains(targetPicture1), is(false));
 
@@ -89,7 +89,7 @@ public class PictureMgrTest2
 
         assertThat(pictureMgr.getOriginalPicture(), nullValue());
 
-        List<Picture> discardedPictures = pictureMgr.getDiscardedPicture();
+        List<Picture> discardedPictures = pictureMgr.getDiscardedPictures();
         assertThat(discardedPictures.contains(pictureMgr.getOriginalPicture()), is(false));
         assertThat(discardedPictures.contains(targetPicture1), is(false));
 

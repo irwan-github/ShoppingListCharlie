@@ -12,9 +12,9 @@ import java.util.List;
 
 public class PictureMgr
 {
-    Picture mPictureInDb; //Currently stored in database
+    private Picture mPictureInDb; //Currently stored in database
     private List<Picture> mPictures = new ArrayList<>(); //Currently shown to the user. For this implementation, only one picture is allowed.
-    private List<Picture> mDiscardedPicture = new ArrayList<>(); //To be deleted from filesystem
+    private List<Picture> mDiscardedPictures = new ArrayList<>(); //To be deleted from filesystem
 
 
     public PictureMgr()
@@ -57,7 +57,7 @@ public class PictureMgr
             mPictures.add(targetPicture);
 
         if (discardedPic != null)
-            mDiscardedPicture.add(discardedPic);
+            mDiscardedPictures.add(discardedPic);
     }
 
 
@@ -72,9 +72,9 @@ public class PictureMgr
     }
 
 
-    public List<Picture> getDiscardedPicture()
+    public List<Picture> getDiscardedPictures()
     {
-        return mDiscardedPicture;
+        return mDiscardedPictures;
     }
 
     public Picture getOriginalPicture()
@@ -83,7 +83,7 @@ public class PictureMgr
     }
 
 
-    public void setPictureInDb(Picture pictureInDb)
+    public void setOriginalPicture(Picture pictureInDb)
     {
         mPictureInDb = pictureInDb;
     }
@@ -93,8 +93,10 @@ public class PictureMgr
      */
     public void resetToOriginalPicture()
     {
+        if(mPictureInDb == null)
+            return;
         setPictureForViewing(mPictureInDb);
-        mDiscardedPicture.remove(mPictureInDb);
+        mDiscardedPictures.remove(mPictureInDb);
     }
 
 }

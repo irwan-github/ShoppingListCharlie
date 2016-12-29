@@ -131,8 +131,7 @@ public class DaoContentProv implements DaoManager
             e.printStackTrace();
         }
 
-        for(Picture picture : pictureMgr.getDiscardedPicture())
-        {
+        for (Picture picture : pictureMgr.getDiscardedPictures()) {
             msg += "\n" + deleteFileFromFilesystem(picture.getFile());
         }
 
@@ -286,16 +285,14 @@ public class DaoContentProv implements DaoManager
 
         for (int idx = 0; idx < results.length; ++idx) {
             if (idx == 0)
-                msg = results[idx].count != null? "Updated : " + results[idx].count : results[idx].uri.toString();
+                msg = results[idx].count != null ? "Updated : " + results[idx].count : results[idx].uri.toString();
             else
-                msg += (results[idx].count != null)? "\nUpdated : " + results[idx].count : results[idx].uri.toString();
+                msg += (results[idx].count != null) ? "\nUpdated : " + results[idx].count : results[idx].uri.toString();
         }
 
         if (results[opSavePictureIdx].count == 1) {
             msg += "\n" + deleteFileFromFilesystem(item.getDiscardedPictures().get(0).getFile());
         }
-
-
 
 
         return msg;
@@ -381,7 +378,7 @@ public class DaoContentProv implements DaoManager
     {
         ArrayList<ContentProviderOperation> ops = new ArrayList<>();
 
-        //Delete picture(s)
+        //Delete picture(s) Make it the first so that it is easier to track for FileProvider
         int deletePictureOpIndex = 0;
         Uri uriDeletePicture = PicturesEntry.CONTENT_URI;
         ContentProviderOperation.Builder pictureDeleteBuilder = ContentProviderOperation
@@ -420,13 +417,85 @@ public class DaoContentProv implements DaoManager
 
         //Delete picture from filesystem
         if (contentProviderResults[deletePictureOpIndex].count == 1) {
-            if(item.getPictures().size() > 0)
+            if (item.getPictures().size() > 0)
                 msg += "\n" + deleteFileFromFilesystem(item.getPictures().get(0).getFile());
 
-            for(Picture discardedPicture : item.getDiscardedPictures())
-            {
+            for (Picture discardedPicture : item.getDiscardedPictures()) {
                 msg += "\n" + deleteFileFromFilesystem(discardedPicture.getFile());
             }
+        }
+
+        return msg;
+    }
+
+    /**
+     * Delete records in the following sequence:
+     * 1. The Item's picture
+     * 2. The Item's prices
+     * 3. The Item,
+     *
+     * @param item
+     * @return
+     */
+    @Override
+    public String delete(Item item, PictureMgr pictureMgr)
+    {
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+
+        //Delete picture(s) Make it the first so that it is easier to track for FileProvider
+        int deletePictureOpIndex = 0;
+        Uri uriDeletePicture = PicturesEntry.CONTENT_URI;
+        ContentProviderOperation.Builder pictureDeleteBuilder = ContentProviderOperation
+                .newDelete(uriDeletePicture);
+        pictureDeleteBuilder.withSelection(PicturesEntry.COLUMN_ITEM_ID + "=?",
+                new String[]{String.valueOf(item.getId())});
+        ops.add(pictureDeleteBuilder.build());
+
+        //Delete prices
+        Uri uriDeletePrice = PricesEntry.CONTENT_URI;
+        ContentProviderOperation.Builder deletePriceBuilder =
+                ContentProviderOperation.newDelete(uriDeletePrice);
+        deletePriceBuilder.withSelection(PricesEntry.COLUMN_ITEM_ID + "=?", new String[]{String.valueOf(item.getId())});
+        ops.add(deletePriceBuilder.build());
+
+
+        //Delete item
+        Uri uriDeleteItem = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
+        ContentProviderOperation.Builder itemDeleteBuilder = ContentProviderOperation.newDelete(uriDeleteItem);
+        ops.add(itemDeleteBuilder.build());
+
+        ContentProviderResult[] contentProviderResults = null;
+        try {
+            contentProviderResults = mContext.getContentResolver().applyBatch(Contract.CONTENT_AUTHORITY, ops);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+        }
+
+        String msg = null;
+
+        msg = "Picture deleted : " + contentProviderResults[deletePictureOpIndex].count;
+        msg += "\nPrices deleted : " + contentProviderResults[1].count;
+        msg += "\nItem deleted : " + contentProviderResults[2].count;
+
+        //Delete original picture from filesystem
+        if (contentProviderResults[deletePictureOpIndex].count == 1) {
+
+            //Delete original picture from device filesystem since record of picture in db has been deleted.
+            deleteFileFromFilesystem(pictureMgr.getOriginalPicture().getFile());
+
+        }
+
+        //Delete picture that was being viewed when user begin delete operation if not the same as original picture
+        Picture pictureViewed = pictureMgr.getPictureForViewing();
+        if (pictureViewed != null && pictureViewed != pictureMgr.getOriginalPicture())
+            msg += "\n" + deleteFileFromFilesystem(pictureViewed.getFile());
+
+        //Delete other unwanted pictures because user might have taken more than one snapshots before deleting the item
+        for (Picture discardedPicture : pictureMgr.getDiscardedPictures()) {
+            if (discardedPicture != null && discardedPicture != pictureMgr.getOriginalPicture())
+                msg += "\n" + deleteFileFromFilesystem(discardedPicture.getFile());
         }
 
         return msg;
@@ -438,10 +507,9 @@ public class DaoContentProv implements DaoManager
         String authority = mContext.getApplicationInfo().packageName + "." + FILE_PROVIDER;
         Uri uriFile = FileProvider.getUriForFile(mContext, authority, file);
         int deletePictureFile = mContext.getContentResolver().delete(uriFile, null, null);
-        msg = deletePictureFile > 0? "Deleted picture: " + uriFile.toString():msg;
-        Log.d(LOG_TAG, ">>>deletePicture " + deletePictureFile);
+        msg = deletePictureFile > 0 ? "Deleted picture: " + uriFile.toString() : msg;
+        Log.d(LOG_TAG, ">>>Delete picture " + uriFile.toString() + " : " + deletePictureFile);
         return msg;
-
     }
 
 

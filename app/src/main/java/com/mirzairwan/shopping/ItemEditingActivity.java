@@ -101,7 +101,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         setTitle(R.string.view_buy_item_details);
 
         daoManager = Builder.getDaoManager(this);
-
+        pictureMgr = new PictureMgr();
     }
 
     protected void setCurrencySymbol(EditText et, String currencyCode)
@@ -229,62 +229,10 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
             default: //Assume the worst. No picture from camera. Delete the useless file.
                 pictureMgr.resetToOriginalPicture();
-
         }
+
         super.onActivityResult(requestCode, resultCode, data);
-
     }
-
-    /**
-     * Called when camera activity failed. Delete the file cereated for the failed attempt.
-     */
-    private void removeCurrentTempFiles()
-    {
-        //File fileToBeDeleted = mPictureFilesTemp.remove(mPictureFilesTemp.size() - 1); //First picture
-        //deleteFileFromFilesystem(fileToBeDeleted);
-    }
-
-    /**
-     * Called when camera activity succeed. Delete the file cereated for the previous successful attempt.
-     */
-
-    private void removePreviousTempFiles()
-    {
-        if (mPictureFilesTemp.size() == 1) //No previous file
-            return;
-
-        File fileToBeDeleted = mPictureFilesTemp.remove(0); //First picture
-        //deleteFileFromFilesystem(fileToBeDeleted);
-    }
-
-//    protected int deleteFileFromFilesystem(File file)
-//    {
-//        String authority = getClass().getPackage().getName() + ".fileprovider";
-//        Uri uri = FileProvider.getUriForFile(this, authority, file);
-//        int result = getContentResolver().delete(uri, null, null);
-//        Log.d(LOG_TAG, ">>>deletePicture " + result);
-//        return result;
-//
-//    }
-
-//    /**
-//     * Update item's picture path
-//     *
-//     * @param picturePath
-//     */
-//    protected void preparePicturePathForSaving(String picturePath)
-//    {
-//        //Currenctly, only 1 picture is supported
-//        if (mPictures.size() == 1) {
-//            Picture picture = mPictures.get(0);
-//            picture.setPicturePath(picturePath);
-//        } else {
-//            Picture newPicture = new Picture(picturePath);
-//            mPictures.clear();
-//            mPictures.add(newPicture);
-//        }
-//
-//    }
 
     /**
      * Only one picture will be saved currently.
@@ -445,9 +393,9 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             return;
         }
 
-        preparePictureForSaving();
+        //preparePictureForSaving();
 
-        String results = daoManager.delete(item);
+        String results = daoManager.delete(item, pictureMgr);
 
         Toast.makeText(this, results, Toast.LENGTH_SHORT).show();
 
@@ -534,28 +482,9 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
         preparePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
 
-        //preparePictureForSaving();
-
         String msg = daoManager.update(item, item.getPrices(), mPictures);
 
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
-
-        //Check that picture is updated. If updated, delete the previous saved file from file system
-//        boolean isItemSaved = false;
-//        boolean isPictureSaved = false;
-//        isPictureSaved = msg[1].count == 1;
-//        isItemSaved = msg[0].count == 1;
-
-//        if (!isItemSaved)
-//            Toast.makeText(this, "Update not successful", Toast.LENGTH_SHORT).show();
-//        else {
-//
-//            if (isPictureSaved && mPictureInProcessToBeDeleted != null) {
-//                deleteFileFromFilesystem(mPictureInProcessToBeDeleted.getFile());
-//            }
-//
-//            finish();
-//        }
     }
 
 
@@ -715,10 +644,11 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             pictureInDb = new Picture(cursor.getLong(colRowId), new File(cursor.getString(colPicturePath)));
         }
         if (pictureInDb != null) {
-            if (pictureMgr == null)
+            if (pictureMgr != null)
                 pictureMgr = new PictureMgr(pictureInDb);
-        } else
-            pictureMgr = new PictureMgr();
+            else
+                pictureMgr.setOriginalPicture(pictureInDb );
+        }
     }
 
     @Override

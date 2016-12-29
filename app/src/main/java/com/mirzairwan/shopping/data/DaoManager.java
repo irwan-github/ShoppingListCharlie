@@ -43,5 +43,8 @@ public interface DaoManager
 
     String delete(Item item);
 
+    String delete(Item item, PictureMgr pictureMgr);
+
+
     String update(Item item, List<Price> prices, List<Picture> mPictures);
 }
