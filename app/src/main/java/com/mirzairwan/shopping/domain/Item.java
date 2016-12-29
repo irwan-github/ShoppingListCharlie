@@ -97,6 +97,11 @@ public class Item implements Parcelable {
         mPrices.add(price);
     }
 
+    public void clearPrices()
+    {
+        mPrices.clear();
+    }
+
     public List<Price> getPrices() {
         return mPrices;
     }

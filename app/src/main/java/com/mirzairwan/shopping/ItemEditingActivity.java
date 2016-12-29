@@ -42,12 +42,8 @@ import com.mirzairwan.shopping.domain.Price;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
-import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
 /**
  * Display the item details in a screen
@@ -61,7 +57,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     private static final int ITEM_LOADER_ID = 20;
     protected static final int ITEM_PRICE_LOADER_ID = 21;
     protected static final int ITEM_PICTURE_LOADER_ID = 22;
-    private static final int CAMERA_MENU_ITEM_ID = 99;
     private static final String SHOPPING_LIST_PICS = "Item_";
     private static final int REQUEST_SNAP_PICTURE = 15;
     private static final String LOG_TAG = ItemEditingActivity.class.getSimpleName();
@@ -83,12 +78,11 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     protected Item item;
     protected List<Price> mPrices;
     private ImageView mImgItemPic;
-    //private String mCurrentPicturePath;
-    protected List<Picture> mPictures = new ArrayList<>();
-    protected List<File> mPictureFilesTemp = new ArrayList<>();
-    protected Picture mPictureInProcessToBeDeleted;
 
     protected PictureMgr pictureMgr;
+    protected PriceMgr priceMgr;
+    private String mCountryCode;
+    private long itemId;
 
 
     @Override
@@ -102,13 +96,16 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
         daoManager = Builder.getDaoManager(this);
         pictureMgr = new PictureMgr();
+
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        mCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
+
+        priceMgr = new PriceMgr(mCountryCode);
     }
 
     protected void setCurrencySymbol(EditText et, String currencyCode)
     {
-        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String countryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
-        String currencySymbol = NumberFormatter.getCurrencySymbol(countryCode, currencyCode);
+        String currencySymbol = NumberFormatter.getCurrencySymbol(mCountryCode, currencyCode);
 
         ViewParent viewParent = et.getParent();
         TextInputLayout etLayout = (TextInputLayout) (viewParent.getParent());
@@ -143,6 +140,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         switch (menuItem.getItemId()) {
             case R.id.save_item_details:
                 save();
+                mItemHaveChanged = false;
                 return true;
             case R.id.menu_camera:
                 startSnapShotActivity();
@@ -168,6 +166,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         }
 
     }
+
 
     /**
      * Current implemetation supports only 1 picture. Therefore when user make subsequent snapshots,
@@ -232,33 +231,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         }
 
         super.onActivityResult(requestCode, resultCode, data);
-    }
-
-    /**
-     * Only one picture will be saved currently.
-     */
-    protected void preparePictureForSaving()
-    {
-        boolean pictureExistInDb = mPictures.size() > 0;
-
-        //Currently, only 1 picture is supported
-
-        if (pictureExistInDb && mPictureFilesTemp.size() == 1) //User has taken a new snapshot
-        {
-            mPictureInProcessToBeDeleted = mPictures.get(0);
-            File newPictureFile = mPictureFilesTemp.get(0);
-            mPictures.get(0).setFile(newPictureFile);
-
-        }
-
-        if (!pictureExistInDb && mPictureFilesTemp.size() == 1) {
-            Picture newPicture = new Picture(mPictureFilesTemp.get(0));
-            mPictures.clear();
-            mPictures.add(newPicture);
-        }
-
-        item.setPictures(mPictures);
-
     }
 
     protected void setPictureView(Picture picture)
@@ -393,8 +365,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             return;
         }
 
-        //preparePictureForSaving();
-
         String results = daoManager.delete(item, pictureMgr);
 
         Toast.makeText(this, results, Toast.LENGTH_SHORT).show();
@@ -455,34 +425,13 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         return unitPrice;
     }
 
-    /**
-     * Update prices of existing item. Existing item have existing prices. The currency code will
-     * not be changed
-     *
-     * @param item
-     * @param unitPrice
-     * @param bundlePrice
-     * @param bundleQty
-     */
-    protected void preparePricesForSaving(Item item, String unitPrice, String bundlePrice, String bundleQty)
-    {
-        for (Price price : mPrices) {
-            if (price.getPriceType() == BUNDLE_PRICE) {
-                price.setBundlePrice(Double.parseDouble(bundlePrice), Double.parseDouble(bundleQty));
-            } else {
-                price.setUnitPrice(Double.parseDouble(unitPrice));
-            }
-            item.addPrice(price);
-        }
-    }
-
     protected void save()
     {
         Item item = getItemFromInputField();
 
-        preparePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
+        priceMgr.setItemPricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
 
-        String msg = daoManager.update(item, item.getPrices(), mPictures);
+        String msg = daoManager.update(item, item.getPrices(), pictureMgr);
 
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
@@ -533,19 +482,14 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
     protected void populatePricesInputFields()
     {
-        for (Price price : mPrices) {
-            if (price.getPriceType() == Price.Type.UNIT_PRICE) {
-                etUnitPrice.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getUnitPrice()));
-                setCurrencySymbol(etUnitPrice, price.getCurrencyCode());
-            }
+        etUnitPrice.setText(priceMgr.getUnitPriceForDisplay());
+        setCurrencySymbol(etUnitPrice, priceMgr.getUnitPrice().getCurrencyCode());
 
-            if (price.getPriceType() == Price.Type.BUNDLE_PRICE) {
-                etBundlePrice.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundlePrice()));
-                setCurrencySymbol(etBundlePrice, price.getCurrencyCode());
-                etBundleQty.setText(NumberFormatter.formatToTwoDecimalPlaces(price.getBundleQuantity()));
-            }
-        }
+        etBundlePrice.setText(priceMgr.getBundlePriceForDisplay());
+        setCurrencySymbol(etBundlePrice, priceMgr.getBundlePrice().getCurrencyCode());
+        etBundleQty.setText(NumberFormatter.formatToTwoDecimalPlaces(priceMgr.getBundlePrice().getBundleQuantity()));
     }
+
 
     protected void clearPriceInputFields()
     {
@@ -554,13 +498,27 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         etBundleQty.setText("");
     }
 
+    protected void clearFocus()
+    {
+        etName.setFocusable(false);
+        etBrand.setFocusable(false);
+        etCountryOrigin.setFocusable(false);
+        etDescription.setFocusable(false);
+
+        etUnitPrice.setFocusable(false);
+        etBundlePrice.setFocusable(false);
+        etBundleQty.setFocusable(false);
+
+    }
+
+
     @Override
     public Loader<Cursor> onCreateLoader(int loaderId, Bundle args)
     {
         String[] projection = null;
         Uri uri = args.getParcelable(ITEM_URI);
         Loader<Cursor> loader = null;
-        long itemId = -1;
+        itemId = -1;
         String selection = null;
         String[] selectionArgs = null;
 
@@ -624,7 +582,8 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
                 break;
             case ITEM_PRICE_LOADER_ID:
-                createPrices(cursor);
+                priceMgr = new PriceMgr(itemId, mCountryCode);
+                priceMgr.createPrices(cursor);
                 populatePricesInputFields();
                 break;
 
@@ -644,10 +603,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             pictureInDb = new Picture(cursor.getLong(colRowId), new File(cursor.getString(colPicturePath)));
         }
         if (pictureInDb != null) {
-            if (pictureMgr != null)
-                pictureMgr = new PictureMgr(pictureInDb);
-            else
-                pictureMgr.setOriginalPicture(pictureInDb );
+            pictureMgr = new PictureMgr(pictureInDb);
         }
     }
 
@@ -665,39 +621,4 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         mImgItemPic.setImageBitmap(null);
     }
 
-    protected void createPrices(Cursor cursor)
-    {
-        mPrices = new ArrayList<>();
-
-        while (cursor.moveToNext()) {
-            int colPriceTypeIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE_TYPE_ID);
-            int priceTypeVal = cursor.getInt(colPriceTypeIdx);
-
-            int colPriceIdIdx = cursor.getColumnIndex(PricesEntry._ID);
-            long priceId = cursor.getLong(colPriceIdIdx);
-
-            int colCurrencyCodeIdx = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
-            String currencyCode = cursor.getString(colCurrencyCodeIdx);
-
-            int colShopIdIdx = cursor.getColumnIndex(PricesEntry.COLUMN_SHOP_ID);
-            long shopId = cursor.getLong(colShopIdIdx);
-
-            int colPriceIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
-
-            Price price = null;
-
-            if (priceTypeVal == UNIT_PRICE.getType()) {
-                double unitPrice = cursor.getDouble(colPriceIdx) / 100;
-                price = new Price(priceId, unitPrice, currencyCode, shopId, null);
-            }
-
-            if (priceTypeVal == BUNDLE_PRICE.getType()) {
-                double bundlePrice = cursor.getDouble(colPriceIdx) / 100;
-                int colBundleQtyIdx = cursor.getColumnIndex(PricesEntry.COLUMN_BUNDLE_QTY);
-                double bundleQty = cursor.getDouble(colBundleQtyIdx) / 100;
-                price = new Price(priceId, bundlePrice, bundleQty, currencyCode, shopId, null);
-            }
-            mPrices.add(price);
-        }
-    }
 }

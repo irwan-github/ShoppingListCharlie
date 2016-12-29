@@ -138,6 +138,102 @@ public class DaoContentProv implements DaoManager
         return msg;
     }
 
+    @Override
+    public String update(ToBuyItem buyItem, Item item, List<Price> itemPrices, PictureMgr pictureMgr)
+    {
+        Log.d(LOG_TAG, "Save domain object graph");
+        String msg = "";
+        ContentProviderResult[] results = null;
+        Date updateTime = new Date();
+
+        ContentValues itemValues = getItemContentValues(item, updateTime, null);
+
+        ArrayList<ContentProviderOperation> ops =
+                new ArrayList<>();
+
+        Uri updateItemUri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
+        ContentProviderOperation.Builder itemBuilder =
+                ContentProviderOperation.newUpdate(updateItemUri);
+
+        ContentProviderOperation itemUpdateOp = itemBuilder.withValues(itemValues).build();
+
+        ops.add(itemUpdateOp);
+
+        Picture pictureLastViewed = pictureMgr.getPictureForViewing();
+        Picture originalPicture = pictureMgr.getOriginalPicture();
+        int opSavePictureIdx = -1;
+        if (originalPicture != null && pictureLastViewed != originalPicture) { //Update item's picture operation
+            Uri updatePictureUri = ContentUris.withAppendedId(PicturesEntry.CONTENT_URI, originalPicture.getId());
+            ContentProviderOperation.Builder updatePictureBuilder = ContentProviderOperation.newUpdate(updatePictureUri);
+            updatePictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, pictureLastViewed.getPicturePath());
+            updatePictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
+            ops.add(updatePictureBuilder.build());
+            opSavePictureIdx = 1;
+        } else if (originalPicture == null && pictureLastViewed != null) { //Insert item's picture operation
+            Uri insertPictureUri = PicturesEntry.CONTENT_URI;
+            ContentProviderOperation.Builder insertPicPathBuilder = ContentProviderOperation.newInsert(insertPictureUri);
+            insertPicPathBuilder.withValue(PicturesEntry.COLUMN_ITEM_ID, item.getId());
+            insertPicPathBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, pictureLastViewed.getPicturePath());
+            insertPicPathBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
+            ops.add(insertPicPathBuilder.build());
+            opSavePictureIdx = 1;
+        }
+
+        for (int j = 0; j < itemPrices.size(); ++j) {
+            Price price = itemPrices.get(j);
+            Uri updatePriceUri = ContentUris.withAppendedId(PricesEntry.CONTENT_URI, price.getId());
+            ContentProviderOperation.Builder priceBuilder =
+                    ContentProviderOperation.newUpdate(updatePriceUri);
+
+            ContentValues priceContentValues = getPriceContentValues(price, item.getId(), updateTime, null);
+
+            priceBuilder = priceBuilder.withValues(priceContentValues);
+
+            ops.add(priceBuilder.build());
+        }
+
+        Uri updateBuyItemUri = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItem.getId());
+        ContentProviderOperation.Builder buyItemBuilder =
+                ContentProviderOperation.newUpdate(updateBuyItemUri);
+
+        buyItemBuilder = buyItemBuilder.withValues(getBuyItemContentValues(buyItem, updateTime));
+
+        ContentProviderOperation opBuyItem = buyItemBuilder.build();
+        ops.add(opBuyItem);
+
+        try {
+            results = mContext.getContentResolver()
+                    .applyBatch(Contract.CONTENT_AUTHORITY, ops);
+            msg = results.toString();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+        }
+
+
+        if (opSavePictureIdx >-1 && results[opSavePictureIdx].count == 1) {
+            // Successful updating of item's picture record mean the replaced picture file
+            // in filesystem must also be deleted
+            msg += "\n" + deleteFileFromFilesystem(pictureMgr.getOriginalPicture().getFile());
+        }
+
+        //Delete other unwanted pictures because user might have taken more than one snapshots before updating the item
+        for (Picture discardedPicture : pictureMgr.getDiscardedPictures()) {
+            if (discardedPicture != null && discardedPicture != pictureMgr.getOriginalPicture()) {
+                String msgFile = deleteFileFromFilesystem(discardedPicture.getFile());
+                if(!msgFile.equals(FILE_DELETE_FAILED)) {
+                    pictureMgr.getDiscardedPictures().clear();
+                    msg += "\n" + msg;
+                }
+            }
+        }
+
+        return msg;
+    }
+
+
+
 
     @Override
     public String insert(ToBuyItem buyItem, Item item, List<Price> itemPrices)
@@ -297,6 +393,93 @@ public class DaoContentProv implements DaoManager
 
         return msg;
     }
+
+
+    @Override
+    public String update(Item item, List<Price> prices, PictureMgr pictureMgr)
+    {
+        String msg = DATABASE_UPDATE_FAILED;
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+        Date updateTime = new Date();
+        int opSavePictureIdx = -1; //Start with picture to make it easier to do FileProvider operation
+
+        Picture pictureLastViewed = pictureMgr.getPictureForViewing();
+        Picture originalPicture = pictureMgr.getOriginalPicture();
+        if (originalPicture != null && pictureLastViewed != originalPicture) { //Update item's picture operation
+            Uri updatePictureUri = ContentUris.withAppendedId(PicturesEntry.CONTENT_URI, originalPicture.getId());
+            ContentProviderOperation.Builder updatePictureBuilder = ContentProviderOperation.newUpdate(updatePictureUri);
+            updatePictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, pictureLastViewed.getPicturePath());
+            updatePictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
+            ops.add(updatePictureBuilder.build());
+            opSavePictureIdx = 0;
+        } else if (originalPicture == null && pictureLastViewed != null) { //Insert item's picture operation
+            Uri insertPictureUri = PicturesEntry.CONTENT_URI;
+            ContentProviderOperation.Builder insertPictureBuilder = ContentProviderOperation.newInsert(insertPictureUri);
+            insertPictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, pictureLastViewed.getPicturePath());
+            insertPictureBuilder.withValue(PicturesEntry.COLUMN_ITEM_ID, item.getId());
+            insertPictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
+            ops.add(insertPictureBuilder.build());
+            opSavePictureIdx = 0;
+        }
+
+        Uri updateItemUri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
+        ContentProviderOperation.Builder updateItemBuilder = ContentProviderOperation.newUpdate(updateItemUri);
+        updateItemBuilder.withValues(getItemContentValues(item, updateTime, null));
+        ops.add(updateItemBuilder.build());
+
+        for (Price price : prices) {
+            Uri updatePriceUri = ContentUris.withAppendedId(PricesEntry.CONTENT_URI, price.getId());
+            ContentProviderOperation.Builder updatePriceBuilder = ContentProviderOperation.newUpdate(updatePriceUri);
+            updatePriceBuilder.withValues(getPriceContentValues(price, item.getId(), updateTime, null));
+            ops.add(updatePriceBuilder.build());
+        }
+
+        ContentProviderResult[] results = null;
+        try {
+            results = mContext.getContentResolver().applyBatch(Contract.CONTENT_AUTHORITY, ops);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+        }
+
+        for (int idx = 0; idx < results.length; ++idx) {
+            if (idx == 0)
+                msg = results[idx].count != null ? "Updated : " + results[idx].count : results[idx].uri.toString();
+            else
+                msg += (results[idx].count != null) ? "\nUpdated : " + results[idx].count : results[idx].uri.toString();
+        }
+
+        if (opSavePictureIdx >-1 && results[opSavePictureIdx].count == 1) {
+            // Successful updating of item's picture record mean the replaced picture file
+            // in filesystem must also be deleted
+            msg += "\n" + deleteFileFromFilesystem(pictureMgr.getOriginalPicture().getFile());
+        }
+
+//        //Delete other unwanted pictures because user might have taken more than one snapshots before updating the item
+//        for (Picture discardedPicture : pictureMgr.getDiscardedPictures()) {
+//            if (discardedPicture != null && discardedPicture != pictureMgr.getOriginalPicture())
+//                msg += "\n" + deleteFileFromFilesystem(discardedPicture.getFile());
+//        }
+
+        //Delete other unwanted pictures because user might have taken more than one snapshots before updating the item
+        for (Picture discardedPicture : pictureMgr.getDiscardedPictures()) {
+            if (discardedPicture != null && discardedPicture != pictureMgr.getOriginalPicture()) {
+                String msgFile = deleteFileFromFilesystem(discardedPicture.getFile());
+                if(!msgFile.equals(FILE_DELETE_FAILED)) {
+                    pictureMgr.getDiscardedPictures().clear();
+                    msg += "\n" + msg;
+                }
+            }
+        }
+
+
+        return msg;
+    }
+
+
+
+
 
     @Override
     public String update(ToBuyItem buyItem, Item item, List<Price> itemPrices)

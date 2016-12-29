@@ -5,7 +5,6 @@ import android.content.ContentUris;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -21,14 +20,9 @@ import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import com.mirzairwan.shopping.data.DaoManager;
 import com.mirzairwan.shopping.domain.Item;
-import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ToBuyItem;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
@@ -59,7 +53,6 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     private EditText etQty;
     private RadioGroup rgPriceTypeChoice;
 
-    private long selectedPriceId;
     private long buyItemId;
 
     private boolean isDeleting = false; //the onLoaderFinished method will use this flag to decide whether to load prices
@@ -75,9 +68,12 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
         if (uri == null) {
             setTitle(R.string.new_buy_item_title);
             actionMode = CREATE_BUY_ITEM_MODE; // This flag is used for menu creation and database operation
-            pictureMgr = new PictureMgr();
-        } else
+            //pictureMgr = new PictureMgr();
+        } else {
             setTitle(R.string.view_buy_item_details);
+            actionMode = EDIT_BUY_ITEM_MODE; //This flag is used for database operation
+
+        }
     }
 
     @Override
@@ -95,7 +91,6 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
             getLoaderManager().initLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
             getLoaderManager().initLoader(ITEM_PRICE_LOADER_ID, arg, this);
             getLoaderManager().initLoader(ITEM_PICTURE_LOADER_ID, arg, this);
-            actionMode = EDIT_BUY_ITEM_MODE; //This flag is used for database operation
         }
     }
 
@@ -149,56 +144,6 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
         return selectedPriceType;
     }
 
-    protected Price getSelectedPrice()
-    {
-        Price.Type selectedPriceType = getSelectedPriceType();
-        Price selectedPrice = null;
-
-        for (Price price : mPrices) {
-            if (selectedPriceType == price.getPriceType())
-                selectedPrice = price;
-        }
-
-        return selectedPrice;
-    }
-
-    @Override
-    /**
-     * Create new price objects.
-     * Currency code depends on user country preference.
-     */
-    protected void preparePricesForSaving(Item item, String unitPriceDbl, String bundlePriceDbl, String bundleQtyDbl)
-    {
-        SharedPreferences sharedPrefs = getDefaultSharedPreferences(this);
-        String homeCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
-        String currencyCode = NumberFormatter.getCurrencyCode(homeCountryCode);
-
-        mPrices = new ArrayList<>();
-        Price unitPrice = new Price(Double.parseDouble(unitPriceDbl), currencyCode, defaultShopId);
-        mPrices.add(unitPrice);
-        Price bundlePrice = new Price(Double.parseDouble(bundlePriceDbl), Double.parseDouble(bundleQtyDbl), currencyCode, defaultShopId);
-        mPrices.add(bundlePrice);
-    }
-
-    @Override
-    protected void preparePictureForSaving()
-    {
-//        //Currently, only 1 picture is supported
-//        if (mPictureFilesTemp.size() == 1 && mPictures.size() == 1) {
-//
-//            mPictureInProcessToBeDeleted = mPictures.get(0);
-//            File pictureFile = mPictureFilesTemp.get(0);
-//            mPictures.get(0).setFile(pictureFile);
-//
-//        }
-//
-//        if (mPictureFilesTemp.size() == 1 && mPictures.size() == 0)//New buy item or existing item has no picture
-//            mPictures.add(new Picture(mPictureFilesTemp.get(0)));
-//
-
-    }
-
-
     @Override
     protected void save()
     {
@@ -214,60 +159,42 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
         }
 
         DaoManager daoManager = Builder.getDaoManager(this);
-        String msg;
 
-        preparePictureForSaving();
+        priceMgr.setItemPricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
+
+        String msg;
 
         if (actionMode == CREATE_BUY_ITEM_MODE) {
 
-            preparePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
-
-            Price selectedPrice = getSelectedPrice();
+            Price selectedPrice = priceMgr.getSelectedPrice(getSelectedPriceType());
 
             toBuyItem = new ToBuyItem(item, Integer.parseInt(itemQuantity), selectedPrice);
 
-            msg = daoManager.insert(toBuyItem, toBuyItem.getItem(), mPrices, pictureMgr);
+            msg = daoManager.insert(toBuyItem, toBuyItem.getItem(), item.getPrices(), pictureMgr);
 
         } else //Existing buy item
         {
-            super.preparePricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
 
             toBuyItem.setQuantity(Integer.parseInt(itemQuantity));
 
             toBuyItem.selectPrice(defaultShopId, getSelectedPriceType());
 
-            msg = daoManager.update(toBuyItem, toBuyItem.getItem(), toBuyItem.getItem().getPrices());
+            msg = daoManager.update(toBuyItem, item, item.getPrices(), pictureMgr);
         }
 
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-        finish();
+//        finish();
     }
 
-
-    protected List<Picture> getPicturesForSaving()
-    {
-        return mPictures;
-    }
-
-
-//    protected void preparePicturePathForSaving(String picturePath)
-//    {
-//        if (mPictures.size() == 1) {
-//            mPictures.clear();
-//            //super.deletePictureFromFilesystem(picturePath); TODO
-//        }
-//        mPictures.add(new Picture(picturePath));
-//    }
-
-    private void populatePurchaseDetails(Cursor cursor)
+    private void createPurchase(Cursor cursor)
     {
         buyItemId = cursor.getLong(cursor.getColumnIndex(ToBuyItemsEntry._ID));
 
         int colQtyIdx = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);
         int buyQty = cursor.getInt(colQtyIdx);
 
-        int colSelectedPriceIdIdx = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID);
-        selectedPriceId = cursor.getLong(colSelectedPriceIdIdx);
+//        int colSelectedPriceIdIdx = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID);
+//        selectedPriceId = cursor.getLong(colSelectedPriceIdIdx);
 
         int colPriceTypeIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE_TYPE_ID);
         int priceTypeVal = cursor.getInt(colPriceTypeIdx);
@@ -359,7 +286,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
                     Item item = createItem(ToBuyItemsEntry.COLUMN_ITEM_ID, ItemsEntry.COLUMN_NAME,
                             ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_DESCRIPTION,
                             ItemsEntry.COLUMN_COUNTRY_ORIGIN, cursor);
-                    populatePurchaseDetails(cursor);
+                    createPurchase(cursor);
                     populateItemInputFields(item);
                     populatePurchaseView();
                 }

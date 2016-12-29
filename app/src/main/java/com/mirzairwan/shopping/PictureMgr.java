@@ -15,7 +15,7 @@ public class PictureMgr
     private Picture mPictureInDb; //Currently stored in database
     private List<Picture> mPictures = new ArrayList<>(); //Currently shown to the user. For this implementation, only one picture is allowed.
     private List<Picture> mDiscardedPictures = new ArrayList<>(); //To be deleted from filesystem
-
+    private long itemId = -1;
 
     public PictureMgr()
     {
@@ -24,11 +24,12 @@ public class PictureMgr
 
     public PictureMgr(Picture pictureInDb)
     {
-        mPictureInDb = pictureInDb;
-        if (mPictures.size() == 1)
-            mPictures.set(0, mPictureInDb);
-        else
-            mPictures.add(pictureInDb);
+//        mPictureInDb = pictureInDb;
+//        if (mPictures.size() == 1)
+//            mPictures.set(0, mPictureInDb);
+//        else
+//            mPictures.add(pictureInDb);
+        setOriginalPicture(pictureInDb);
     }
 
     /**
@@ -63,7 +64,10 @@ public class PictureMgr
 
     public Picture getPictureForViewing()
     {
-        return mPictures.get(0);
+        if (mPictures.size() > 0)
+            return mPictures.get(0);
+        else
+            return null;
     }
 
     public List<Picture> getPictureForSaving()
@@ -85,7 +89,14 @@ public class PictureMgr
 
     public void setOriginalPicture(Picture pictureInDb)
     {
+//        mPictureInDb = pictureInDb;
+
         mPictureInDb = pictureInDb;
+        if (mPictures.size() == 1)
+            mPictures.set(0, mPictureInDb);
+        else
+            mPictures.add(pictureInDb);
+
     }
 
     /**
@@ -93,7 +104,7 @@ public class PictureMgr
      */
     public void resetToOriginalPicture()
     {
-        if(mPictureInDb == null)
+        if (mPictureInDb == null)
             return;
         setPictureForViewing(mPictureInDb);
         mDiscardedPictures.remove(mPictureInDb);

@@ -12,8 +12,8 @@
     <string name="quantity_label">Quantity to buy</string>
     <string name="cb_unit_price">Unit price</string>
     <string name="cb_bundle_price">Bundle price</string>
-    <string name="new_buy_item_title">New item</string>
-    <string name="update_buy_item_title">Update item</string>
+    <string name="new_buy_item_title">New purchase</string>
+    <string name="update_buy_item_title">Update Purchase details</string>
     <string name="remove_item_from_list">Remove item from list</string>
     <string name="empty_view_title_text">No items in your shopping list</string>
     <string name="empty_view_subtitle_text">Add new item or star item in All Items</string>

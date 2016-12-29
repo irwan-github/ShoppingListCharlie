@@ -18,6 +18,8 @@ public interface DaoManager
     static final String FILE_DELETE_FAILED = "FILE_DELETE_FAILED";
 
 
+    String update(ToBuyItem buyItem, Item item, List<Price> itemPrices, PictureMgr pictureMgr);
+
     /**
      * Insert the state of the entire objects that is referenced
      * by the BuyItem object in the domain object graph into the database.
@@ -47,4 +49,7 @@ public interface DaoManager
 
 
     String update(Item item, List<Price> prices, List<Picture> mPictures);
+
+    String update(Item item, List<Price> prices, PictureMgr pictureMgr);
+
 }
