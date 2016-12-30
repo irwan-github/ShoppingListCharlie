@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * Created by Mirza Irwan on 29/12/16.
- *
+ * <p>
  * Helper class to track all the pictures taken.
  * Use the class to decide which pictures to delete and which one to save on the database
  * and the filesystem.
@@ -76,6 +76,7 @@ public class PictureMgr
 
     /**
      * Get picture for viewing
+     *
      * @return
      */
     public Picture getPictureForViewing()
@@ -105,6 +106,7 @@ public class PictureMgr
     /**
      * Sets the original picture. It does not replace the picture for viewing.
      * To replace the picture for viewng, call viewOriginalPicture after calling this method.
+     *
      * @param pictureInDb
      */
     public void setOriginalPicture(Picture pictureInDb)
@@ -138,5 +140,11 @@ public class PictureMgr
     public void setItemId(long id)
     {
         mItemId = id;
+    }
+
+    public void discardOriginalPicture()
+    {
+        if (mPictureInDb != null && !mDiscardedPictures.contains(mPictureInDb))
+            mDiscardedPictures.add(mPictureInDb);
     }
 }

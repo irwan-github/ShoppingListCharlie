@@ -44,4 +44,6 @@ public interface DaoManager
 
     String update(Item item, List<Price> prices, PictureMgr pictureMgr);
 
+    String cleanUpDiscardedPictures(PictureMgr pictureMgr);
+
 }

@@ -142,8 +142,7 @@ public class DaoContentProv implements DaoManager
         if (opSavePictureIdx > -1) {
             if (results[opSavePictureIdx].uri != null || results[opSavePictureIdx].count == 1) {
                 msg += "\n" + cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
-            }
-            else //Original picture failed to be removed
+            } else //Original picture failed to be removed
             {
                 pictureMgr.setViewOriginalPicture(); //Set PictureMgr to show original picture for viewing
             }
@@ -214,9 +213,10 @@ public class DaoContentProv implements DaoManager
 
         if (opSavePictureIdx > -1) {
             if (results[opSavePictureIdx].uri != null || results[opSavePictureIdx].count == 1) {
-                msg += "\n" + cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
-            }
-            else //Original picture failed to be removed
+                String discardFileMsg = cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
+                if(discardFileMsg != null)
+                    msg += "\n" + discardFileMsg;
+            } else //Original picture failed to be removed
             {
                 pictureMgr.setViewOriginalPicture(); //Set PictureMgr to show original picture for viewing
             }
@@ -243,29 +243,26 @@ public class DaoContentProv implements DaoManager
 
     }
 
-    protected String cleanUpDiscardedPictures(ContentProviderResult result, PictureMgr pictureMgr)
+    @Override
+    public String cleanUpDiscardedPictures(PictureMgr pictureMgr)
     {
-        String msg = "";
+        String msg = null;
         int deleteDiscardedFile = 0;
         int discardPicturesSize = pictureMgr.getDiscardedPictures().size();
 
-        if (result.uri == null && result.count == 0) {
-            pictureMgr.setViewOriginalPicture();
-        }
-
         Iterator<Picture> iteratorDiscardPics = pictureMgr.getDiscardedPictures().iterator();
         while (iteratorDiscardPics.hasNext()) {
+
             Picture discardedPicture = iteratorDiscardPics.next();
-            if (discardedPicture != null) {
-                deleteDiscardedFile += deleteFileFromFilesystem(discardedPicture.getFile());
 
-                if (deleteDiscardedFile == 1) {
-                    iteratorDiscardPics.remove(); //remove file from discarded list
-                }
+            deleteDiscardedFile += deleteFileFromFilesystem(discardedPicture.getFile());
 
-                logDeleteDiscardedFileFromFilesystem(deleteDiscardedFile, "Delete discarded file");
-
+            if (deleteDiscardedFile == 1) {
+                iteratorDiscardPics.remove(); //remove file from discarded list
             }
+
+            logDeleteDiscardedFileFromFilesystem(deleteDiscardedFile, "Delete discarded file");
+
         }
 
         if (discardPicturesSize > 0)
@@ -274,6 +271,16 @@ public class DaoContentProv implements DaoManager
                     mContext.getString(R.string.filesystem_delete_discarded_failed));
 
         return msg;
+
+    }
+
+    protected String cleanUpDiscardedPictures(ContentProviderResult result, PictureMgr pictureMgr)
+    {
+        if (result.uri == null && result.count == 0) {
+            pictureMgr.setViewOriginalPicture();
+        }
+
+        return cleanUpDiscardedPictures(pictureMgr);
     }
 
     /**
@@ -354,8 +361,7 @@ public class DaoContentProv implements DaoManager
         if (opSavePictureIdx > -1) {
             if (results[opSavePictureIdx].uri != null || results[opSavePictureIdx].count == 1) {
                 msg += "\n" + cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
-            }
-            else //Original picture failed to be removed
+            } else //Original picture failed to be removed
             {
                 pictureMgr.setViewOriginalPicture(); //Set PictureMgr to show original picture for viewing
             }
@@ -389,7 +395,6 @@ public class DaoContentProv implements DaoManager
         Uri uriDeleteBuyItem = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI,
                 buyItem.getId());
         return mContext.getContentResolver().delete(uriDeleteBuyItem, null, null);
-
     }
 
     /**
@@ -405,6 +410,7 @@ public class DaoContentProv implements DaoManager
     public String delete(Item item, PictureMgr pictureMgr)
     {
         ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+        String msg = null;
 
         //Delete picture(s) Make it the first so that it is easier to track for FileProvider
         int deletePictureOpIndex = 0;
@@ -431,36 +437,21 @@ public class DaoContentProv implements DaoManager
         ContentProviderResult[] contentProviderResults = null;
         try {
             contentProviderResults = mContext.getContentResolver().applyBatch(Contract.CONTENT_AUTHORITY, ops);
+            msg = mContext.getString(R.string.database_success);
         } catch (RemoteException e) {
+            msg = mContext.getString(R.string.database_failed);
             e.printStackTrace();
         } catch (OperationApplicationException e) {
+            msg = mContext.getString(R.string.database_failed);
             e.printStackTrace();
         }
 
-        String msg = null;
+        pictureMgr.discardOriginalPicture(); // Without this, the original file in the filesystem will NOT be deleted.
 
-        msg = "Picture deleted : " + contentProviderResults[deletePictureOpIndex].count;
-        msg += "\nPrices deleted : " + contentProviderResults[1].count;
-        msg += "\nItem deleted : " + contentProviderResults[2].count;
+        String msgCleanUp = cleanUpDiscardedPictures(contentProviderResults[deletePictureOpIndex], pictureMgr);
 
-        //Delete original picture from filesystem
-        if (contentProviderResults[deletePictureOpIndex].count == 1) {
-
-            //Delete original picture from device filesystem since record of picture in db has been deleted.
-            deleteFileFromFilesystem(pictureMgr.getOriginalPicture().getFile());
-
-        }
-
-        //Delete picture that was being viewed when user begin delete operation if not the same as original picture
-        Picture pictureViewed = pictureMgr.getPictureForViewing();
-        if (pictureViewed != null && pictureViewed != pictureMgr.getOriginalPicture())
-            msg += "\n" + deleteFileFromFilesystem(pictureViewed.getFile());
-
-        //Delete other unwanted pictures because user might have taken more than one snapshots before deleting the item
-        for (Picture discardedPicture : pictureMgr.getDiscardedPictures()) {
-            if (discardedPicture != null && discardedPicture != pictureMgr.getOriginalPicture())
-                msg += "\n" + deleteFileFromFilesystem(discardedPicture.getFile());
-        }
+        if(msgCleanUp != null)
+            msg += "\n" + msgCleanUp;
 
         return msg;
     }

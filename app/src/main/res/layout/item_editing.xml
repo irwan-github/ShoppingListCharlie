@@ -27,7 +27,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/item_details_header"
         android:maxHeight="200dp"
-        android:scaleType="centerCrop"
+        android:scaleType="center"
         android:paddingBottom="@dimen/edit_text_padding_bottom"
         android:paddingTop="@dimen/edit_text_padding_top"
         />

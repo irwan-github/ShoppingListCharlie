@@ -141,7 +141,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                 return true;
             case R.id.menu_remove_item_from_list:
                 delete();
-                finish();
                 return true;
             case android.R.id.home:
                 if (mItemHaveChanged)
@@ -153,9 +152,15 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                             NavUtils.navigateUpFromSameTask(ItemEditingActivity.this);
                         }
                     });
-                else
+                else {
                     NavUtils.navigateUpFromSameTask(ItemEditingActivity.this);
-                return true;
+                    if(pictureMgr.getDiscardedPictures().size() > 0) {
+                        pictureMgr.setViewOriginalPicture();
+                        String msg = daoManager.cleanUpDiscardedPictures(pictureMgr);
+                        Toast.makeText(ItemEditingActivity.this, msg, Toast.LENGTH_LONG).show();
+                    }
+                }
+                    return true;
             default:
                 return super.onOptionsItemSelected(menuItem);
         }
@@ -288,18 +293,29 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                 @Override
                 public void onClick(DialogInterface dialog, int which)
                 {
+                    if(pictureMgr.getDiscardedPictures().size() > 0) {
+                        pictureMgr.setViewOriginalPicture();
+                        String msg = daoManager.cleanUpDiscardedPictures(pictureMgr);
+                        Toast.makeText(ItemEditingActivity.this, msg, Toast.LENGTH_LONG).show();
+                    }
                     finish();
                 }
             });
-        else
+        else {
+            if(pictureMgr.getDiscardedPictures().size() > 0) {
+                pictureMgr.setViewOriginalPicture();
+                String msg = daoManager.cleanUpDiscardedPictures(pictureMgr);
+                Toast.makeText(ItemEditingActivity.this, msg, Toast.LENGTH_LONG).show();
+            }
             super.onBackPressed();
+        }
     }
 
-    private void showUnsavedDialog(DialogInterface.OnClickListener onClickListener)
+    private void showUnsavedDialog(DialogInterface.OnClickListener onLeaveClickListener)
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(R.string.unsaved_changes);
-        builder.setPositiveButton(R.string.discard, onClickListener);
+        builder.setPositiveButton(R.string.discard, onLeaveClickListener);
         builder.setNegativeButton(R.string.keep_editing, new DialogInterface.OnClickListener()
         {
             @Override
@@ -332,7 +348,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
 
     /**
-     *
+     * Delete item if only item is NOT in shoppinglist
      */
     protected void delete()
     {
@@ -344,6 +360,8 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         String results = daoManager.delete(item, pictureMgr);
 
         Toast.makeText(this, results, Toast.LENGTH_SHORT).show();
+
+        finish();
     }
 
     protected Item getItemFromInputField()
@@ -409,7 +427,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
-
 
     /**
      * Populate Item object
