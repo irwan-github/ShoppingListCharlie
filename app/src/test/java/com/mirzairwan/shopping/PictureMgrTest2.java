@@ -38,7 +38,7 @@ public class PictureMgrTest2
 
         assertThat(pictureMgr.getPictureForViewing().getFile().getPath(), is("/home/irwan/target3"));
 
-        pictureMgr.resetToOriginalPicture();
+        pictureMgr.setViewOriginalPicture();
         assertThat(pictureMgr.getPictureForViewing().getFile().getPath(), is("/home/irwan/original"));
         assertThat(discardedPictures.size(), is(3));
         assertThat(discardedPictures.contains(pictureMgr.getOriginalPicture()), is(false));

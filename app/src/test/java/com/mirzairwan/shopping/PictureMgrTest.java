@@ -37,7 +37,7 @@ public class PictureMgrTest
 
         assertThat(pictureMgr.getPictureForViewing().getFile().getPath(), is("/home/irwan/target3"));
 
-        pictureMgr.resetToOriginalPicture();
+        pictureMgr.setViewOriginalPicture();
         assertThat(pictureMgr.getPictureForViewing().getFile().getPath(), is("/home/irwan/original"));
         assertThat(discardedPictures.size(), is(3));
         assertThat(discardedPictures.contains(pictureMgr.getOriginalPicture()), is(false));
@@ -104,7 +104,7 @@ public class PictureMgrTest
     @Before
     public void setUp() throws Exception
     {
-        pictureMgr = new PictureMgr(new Picture(new File("/home/irwan/original")));
+        pictureMgr = new PictureMgr(new Picture(new File("/home/irwan/original")), -1);
 
     }
 

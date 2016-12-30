@@ -18,7 +18,6 @@ import android.widget.Toast;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
-import com.mirzairwan.shopping.data.DaoManager;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ToBuyItem;
@@ -41,11 +40,10 @@ import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 public class BuyingActivity extends ItemEditingActivity implements LoaderManager.LoaderCallbacks<Cursor>
 {
     private int actionMode = -1; //Informs the editor whether this activity is creation or updating
-    public static final int CREATE_BUY_ITEM_MODE = 1; //use for startActivityForResult
-    public static final int EDIT_BUY_ITEM_MODE = 2; //use for startActivityForResult
+    public static final int CREATE_BUY_ITEM_MODE = 1; //use for action mode
+    public static final int EDIT_BUY_ITEM_MODE = 2; //use for action mode
     private static final int PURCHASE_ITEM_LOADER_ID = 30;
 
-    private Cursor mCursor;
     private ToBuyItem toBuyItem;
 
     private long defaultShopId = 1;
@@ -158,8 +156,6 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
             itemQuantity = etQty.getText().toString();
         }
 
-        DaoManager daoManager = Builder.getDaoManager(this);
-
         priceMgr.setItemPricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
 
         String msg;
@@ -174,6 +170,8 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
 
         } else //Existing buy item
         {
+            if(pictureMgr.getItemId() == -1) //
+                pictureMgr.setItemId(item.getId());
 
             toBuyItem.setQuantity(Integer.parseInt(itemQuantity));
 
@@ -183,7 +181,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
         }
 
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-//        finish();
+
     }
 
     private void createPurchase(Cursor cursor)

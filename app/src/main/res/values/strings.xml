@@ -48,4 +48,8 @@
     <string name="invalid_country_code">Invalid country code. Google 2-letter country code for information</string>
     <string name="menu_item_camera">Snap photo</string>
     <string name="message_title">Mandatory field(s)</string>
+    <string name="database_success">Database update : OK.</string>
+    <string name="database_failed">Database save : Failed.</string>
+    <string name="filesystem_delete_discarded_ok">Delete discarded photo(s) : OK</string>
+    <string name="filesystem_delete_discarded_failed">Delete discarded photo(s) : Failed</string>
 </resources>

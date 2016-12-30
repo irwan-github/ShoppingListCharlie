@@ -14,6 +14,7 @@ import android.support.v4.content.FileProvider;
 import android.util.Log;
 
 import com.mirzairwan.shopping.PictureMgr;
+import com.mirzairwan.shopping.R;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
@@ -26,6 +27,7 @@ import com.mirzairwan.shopping.domain.ToBuyItem;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -67,7 +69,7 @@ public class DaoContentProv implements DaoManager
     {
         Log.d(LOG_TAG, "Save domain object graph");
         String msg = "";
-        ContentProviderResult[] result;
+        ContentProviderResult[] results = null;
         Date updateTime = new Date();
 
         ContentValues itemValues = new ContentValues();
@@ -84,12 +86,14 @@ public class DaoContentProv implements DaoManager
         ops.add(itemInsertOp);
 
         //insert picture paths
+        int opSavePictureIdx = -1;
         for (Picture path : pictureMgr.getPictureForSaving()) {
             ContentProviderOperation.Builder insertPicPathBuilder = ContentProviderOperation.newInsert(PicturesEntry.CONTENT_URI);
             insertPicPathBuilder.withValueBackReference(PicturesEntry.COLUMN_ITEM_ID, 0);
             insertPicPathBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, path.getPicturePath());
             insertPicPathBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
             ops.add(insertPicPathBuilder.build());
+            opSavePictureIdx = ops.size() - 1;
         }
 
         for (int j = 0; j < itemPrices.size(); ++j) {
@@ -122,17 +126,27 @@ public class DaoContentProv implements DaoManager
         }
 
         try {
-            result = mContext.getContentResolver()
+            results = mContext.getContentResolver()
                     .applyBatch(Contract.CONTENT_AUTHORITY, ops);
-            msg = result.toString();
+            msg = mContext.getString(R.string.database_success);
         } catch (RemoteException e) {
+            msg = mContext.getString(R.string.database_failed);
             e.printStackTrace();
         } catch (OperationApplicationException e) {
+            msg = mContext.getString(R.string.database_failed);
             e.printStackTrace();
         }
 
-        for (Picture picture : pictureMgr.getDiscardedPictures()) {
-            msg += "\n" + deleteFileFromFilesystem(picture.getFile());
+        logDbOperation(results);
+
+        if (opSavePictureIdx > -1) {
+            if (results[opSavePictureIdx].uri != null || results[opSavePictureIdx].count == 1) {
+                msg += "\n" + cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
+            }
+            else //Original picture failed to be removed
+            {
+                pictureMgr.setViewOriginalPicture(); //Set PictureMgr to show original picture for viewing
+            }
         }
 
         return msg;
@@ -159,25 +173,8 @@ public class DaoContentProv implements DaoManager
 
         ops.add(itemUpdateOp);
 
-        Picture pictureLastViewed = pictureMgr.getPictureForViewing();
-        Picture originalPicture = pictureMgr.getOriginalPicture();
         int opSavePictureIdx = -1;
-        if (originalPicture != null && pictureLastViewed != originalPicture) { //Update item's picture operation
-            Uri updatePictureUri = ContentUris.withAppendedId(PicturesEntry.CONTENT_URI, originalPicture.getId());
-            ContentProviderOperation.Builder updatePictureBuilder = ContentProviderOperation.newUpdate(updatePictureUri);
-            updatePictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, pictureLastViewed.getPicturePath());
-            updatePictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
-            ops.add(updatePictureBuilder.build());
-            opSavePictureIdx = 1;
-        } else if (originalPicture == null && pictureLastViewed != null) { //Insert item's picture operation
-            Uri insertPictureUri = PicturesEntry.CONTENT_URI;
-            ContentProviderOperation.Builder insertPicPathBuilder = ContentProviderOperation.newInsert(insertPictureUri);
-            insertPicPathBuilder.withValue(PicturesEntry.COLUMN_ITEM_ID, item.getId());
-            insertPicPathBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, pictureLastViewed.getPicturePath());
-            insertPicPathBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
-            ops.add(insertPicPathBuilder.build());
-            opSavePictureIdx = 1;
-        }
+        opSavePictureIdx = preparePictureForItemUpdateOps(pictureMgr, ops, updateTime);
 
         for (int j = 0; j < itemPrices.size(); ++j) {
             Price price = itemPrices.get(j);
@@ -204,203 +201,91 @@ public class DaoContentProv implements DaoManager
         try {
             results = mContext.getContentResolver()
                     .applyBatch(Contract.CONTENT_AUTHORITY, ops);
-            msg = results.toString();
+            msg = mContext.getString(R.string.database_success);
         } catch (RemoteException e) {
             e.printStackTrace();
+            msg = mContext.getString(R.string.database_failed);
         } catch (OperationApplicationException e) {
             e.printStackTrace();
+            msg = mContext.getString(R.string.database_failed);
         }
 
+        logDbOperation(results);
 
-        if (opSavePictureIdx >-1 && results[opSavePictureIdx].count == 1) {
-            // Successful updating of item's picture record mean the replaced picture file
-            // in filesystem must also be deleted
-            msg += "\n" + deleteFileFromFilesystem(pictureMgr.getOriginalPicture().getFile());
-        }
-
-        //Delete other unwanted pictures because user might have taken more than one snapshots before updating the item
-        for (Picture discardedPicture : pictureMgr.getDiscardedPictures()) {
-            if (discardedPicture != null && discardedPicture != pictureMgr.getOriginalPicture()) {
-                String msgFile = deleteFileFromFilesystem(discardedPicture.getFile());
-                if(!msgFile.equals(FILE_DELETE_FAILED)) {
-                    pictureMgr.getDiscardedPictures().clear();
-                    msg += "\n" + msg;
-                }
+        if (opSavePictureIdx > -1) {
+            if (results[opSavePictureIdx].uri != null || results[opSavePictureIdx].count == 1) {
+                msg += "\n" + cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
+            }
+            else //Original picture failed to be removed
+            {
+                pictureMgr.setViewOriginalPicture(); //Set PictureMgr to show original picture for viewing
             }
         }
 
         return msg;
     }
 
-
-
-
-    @Override
-    public String insert(ToBuyItem buyItem, Item item, List<Price> itemPrices)
+    public int deleteFileFromFilesystem(File file)
     {
-        Log.d(LOG_TAG, "Save domain object graph");
+        String msg = FILE_DELETE_FAILED;
+        String authority = mContext.getApplicationInfo().packageName + "." + FILE_PROVIDER;
+        Uri uriFile = FileProvider.getUriForFile(mContext, authority, file);
+        int deletePictureFile = mContext.getContentResolver().delete(uriFile, null, null);
+//        Log.d(LOG_TAG, "Delete picture " + uriFile.toString() + " : " +
+//                (deletePictureFile > 0 ? "ok" : "failed"));
+        return deletePictureFile;
+    }
+
+    public void logDeleteDiscardedFileFromFilesystem(int deletedFiles, String prefix)
+    {
+        String msg = prefix + " : " + (deletedFiles > 0 ? "OK" : "Failed");
+        Log.d(LOG_TAG, msg);
+
+    }
+
+    protected String cleanUpDiscardedPictures(ContentProviderResult result, PictureMgr pictureMgr)
+    {
         String msg = "";
-        ContentProviderResult[] result;
-        Date updateTime = new Date();
+        int deleteDiscardedFile = 0;
+        int discardPicturesSize = pictureMgr.getDiscardedPictures().size();
 
-        ContentValues itemValues = new ContentValues();
-        itemValues = getItemContentValues(item, updateTime, itemValues);
-
-        ArrayList<ContentProviderOperation> ops =
-                new ArrayList<ContentProviderOperation>();
-
-        ContentProviderOperation.Builder itemBuilder =
-                ContentProviderOperation.newInsert(ItemsEntry.CONTENT_URI);
-
-        ContentProviderOperation itemInsertOp = itemBuilder.withValues(itemValues).build();
-
-        ops.add(itemInsertOp);
-
-        for (int j = 0; j < itemPrices.size(); ++j) {
-            Price price = itemPrices.get(j);
-            ContentProviderOperation.Builder priceBuilder =
-                    ContentProviderOperation.newInsert(PricesEntry.CONTENT_URI);
-
-            long itemId = -1; //The item id does not exist at this point.
-            ContentValues priceContentValues = getPriceContentValues(price, itemId, updateTime, null);
-
-            priceBuilder = priceBuilder.withValues(priceContentValues).
-                    withValueBackReference(PricesEntry.COLUMN_ITEM_ID, 0);
-
-            ops.add(priceBuilder.build());
+        if (result.uri == null && result.count == 0) {
+            pictureMgr.setViewOriginalPicture();
         }
 
-        ContentProviderOperation.Builder buyItemBuilder =
-                ContentProviderOperation.newInsert(ToBuyItemsEntry.CONTENT_URI);
+        Iterator<Picture> iteratorDiscardPics = pictureMgr.getDiscardedPictures().iterator();
+        while (iteratorDiscardPics.hasNext()) {
+            Picture discardedPicture = iteratorDiscardPics.next();
+            if (discardedPicture != null) {
+                deleteDiscardedFile += deleteFileFromFilesystem(discardedPicture.getFile());
 
-        buyItemBuilder = buyItemBuilder.withValues(getBuyItemContentValues(buyItem, updateTime))
-                .withValueBackReference(ToBuyItemsEntry.COLUMN_ITEM_ID, 0);
+                if (deleteDiscardedFile == 1) {
+                    iteratorDiscardPics.remove(); //remove file from discarded list
+                }
 
-        for (int k = 0; k < itemPrices.size(); ++k) {
-            Price price = itemPrices.get(k);
-            Price.Type selectedPriceType = buyItem.getSelectedPriceType();
-            if (selectedPriceType == price.getPriceType())
-                buyItemBuilder = buyItemBuilder
-                        .withValueBackReference(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID, k + 1);
-        }
+                logDeleteDiscardedFileFromFilesystem(deleteDiscardedFile, "Delete discarded file");
 
-        ContentProviderOperation opBuyItem = buyItemBuilder.build();
-        ops.add(opBuyItem);
-
-        try {
-            result = mContext.getContentResolver()
-                    .applyBatch(Contract.CONTENT_AUTHORITY, ops);
-            msg = result.toString();
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (OperationApplicationException e) {
-            e.printStackTrace();
-        }
-
-        return msg;
-    }
-
-    @Override
-    public String update(Item item, List<Price> prices)
-    {
-        String msg = null;
-        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
-        Date updateTime = new Date();
-
-        Uri updateItemUri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
-        ContentProviderOperation.Builder updateItemBuilder = ContentProviderOperation.newUpdate(updateItemUri);
-        updateItemBuilder.withValues(getItemContentValues(item, updateTime, null));
-        ops.add(updateItemBuilder.build());
-
-        for (Price price : prices) {
-            Uri updatePriceUri = ContentUris.withAppendedId(PricesEntry.CONTENT_URI, price.getId());
-            ContentProviderOperation.Builder updatePriceBuilder = ContentProviderOperation.newUpdate(updatePriceUri);
-            updatePriceBuilder.withValues(getPriceContentValues(price, item.getId(), updateTime, null));
-            ops.add(updatePriceBuilder.build());
-        }
-
-        ContentProviderResult[] results = null;
-        try {
-            results = mContext.getContentResolver().applyBatch(Contract.CONTENT_AUTHORITY, ops);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (OperationApplicationException e) {
-            e.printStackTrace();
-        }
-        msg = String.valueOf(results.length + " updated");
-        return msg;
-    }
-
-    @Override
-    public String update(Item item, List<Price> prices, List<Picture> pictures)
-    {
-        String msg = DATABASE_UPDATE_FAILED;
-        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
-        Date updateTime = new Date();
-        int opSavePictureIdx = 0; //Start with picture to make it easier to do FileProvider operation
-
-        for (Picture itemPic : pictures) {
-            if (itemPic.getId() > 0) { //Update picture operation
-                Uri updatePictureUri = ContentUris.withAppendedId(PicturesEntry.CONTENT_URI, itemPic.getId());
-                ContentProviderOperation.Builder updatePictureBuilder = ContentProviderOperation.newUpdate(updatePictureUri);
-                updatePictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, itemPic.getPicturePath());
-                updatePictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
-                ops.add(updatePictureBuilder.build());
-            } else { //Insert picture operation
-                Uri insertPictureUri = PicturesEntry.CONTENT_URI;
-                ContentProviderOperation.Builder insertPictureBuilder = ContentProviderOperation.newInsert(insertPictureUri);
-                insertPictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, itemPic.getPicturePath());
-                insertPictureBuilder.withValue(PicturesEntry.COLUMN_ITEM_ID, item.getId());
-                insertPictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
-                ops.add(insertPictureBuilder.build());
             }
-
         }
 
-        Uri updateItemUri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
-        ContentProviderOperation.Builder updateItemBuilder = ContentProviderOperation.newUpdate(updateItemUri);
-        updateItemBuilder.withValues(getItemContentValues(item, updateTime, null));
-        ops.add(updateItemBuilder.build());
-
-
-        for (Price price : prices) {
-            Uri updatePriceUri = ContentUris.withAppendedId(PricesEntry.CONTENT_URI, price.getId());
-            ContentProviderOperation.Builder updatePriceBuilder = ContentProviderOperation.newUpdate(updatePriceUri);
-            updatePriceBuilder.withValues(getPriceContentValues(price, item.getId(), updateTime, null));
-            ops.add(updatePriceBuilder.build());
-        }
-
-        ContentProviderResult[] results = null;
-        try {
-            results = mContext.getContentResolver().applyBatch(Contract.CONTENT_AUTHORITY, ops);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (OperationApplicationException e) {
-            e.printStackTrace();
-        }
-
-        for (int idx = 0; idx < results.length; ++idx) {
-            if (idx == 0)
-                msg = results[idx].count != null ? "Updated : " + results[idx].count : results[idx].uri.toString();
-            else
-                msg += (results[idx].count != null) ? "\nUpdated : " + results[idx].count : results[idx].uri.toString();
-        }
-
-        if (results[opSavePictureIdx].count == 1) {
-            msg += "\n" + deleteFileFromFilesystem(item.getDiscardedPictures().get(0).getFile());
-        }
-
+        if (discardPicturesSize > 0)
+            msg = (deleteDiscardedFile == discardPicturesSize ?
+                    mContext.getString(R.string.filesystem_delete_discarded_ok) :
+                    mContext.getString(R.string.filesystem_delete_discarded_failed));
 
         return msg;
     }
 
-
-    @Override
-    public String update(Item item, List<Price> prices, PictureMgr pictureMgr)
+    /**
+     * It will not do database operation if picture last viewed is same as picture in database
+     *
+     * @param pictureMgr
+     * @param ops
+     * @param updateTime
+     * @return
+     */
+    protected int preparePictureForItemUpdateOps(PictureMgr pictureMgr, ArrayList<ContentProviderOperation> ops, Date updateTime)
     {
-        String msg = DATABASE_UPDATE_FAILED;
-        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
-        Date updateTime = new Date();
         int opSavePictureIdx = -1; //Start with picture to make it easier to do FileProvider operation
 
         Picture pictureLastViewed = pictureMgr.getPictureForViewing();
@@ -411,16 +296,34 @@ public class DaoContentProv implements DaoManager
             updatePictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, pictureLastViewed.getPicturePath());
             updatePictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
             ops.add(updatePictureBuilder.build());
-            opSavePictureIdx = 0;
+            opSavePictureIdx = ops.size() - 1;
         } else if (originalPicture == null && pictureLastViewed != null) { //Insert item's picture operation
             Uri insertPictureUri = PicturesEntry.CONTENT_URI;
             ContentProviderOperation.Builder insertPictureBuilder = ContentProviderOperation.newInsert(insertPictureUri);
             insertPictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, pictureLastViewed.getPicturePath());
-            insertPictureBuilder.withValue(PicturesEntry.COLUMN_ITEM_ID, item.getId());
+
+            if (pictureMgr.getItemId() < 1) {
+                throw new IllegalArgumentException("Picture with item id " + pictureMgr.getItemId());
+            }
+
+            insertPictureBuilder.withValue(PicturesEntry.COLUMN_ITEM_ID, pictureMgr.getItemId());
             insertPictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
             ops.add(insertPictureBuilder.build());
-            opSavePictureIdx = 0;
+            opSavePictureIdx = ops.size() - 1;
         }
+
+        return opSavePictureIdx;
+    }
+
+    @Override
+    public String update(Item item, List<Price> prices, PictureMgr pictureMgr)
+    {
+        String msg;
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+        Date updateTime = new Date();
+        int opSavePictureIdx = -1; //Start with picture to make it easier to do FileProvider operation
+
+        opSavePictureIdx = preparePictureForItemUpdateOps(pictureMgr, ops, updateTime);
 
         Uri updateItemUri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
         ContentProviderOperation.Builder updateItemBuilder = ContentProviderOperation.newUpdate(updateItemUri);
@@ -437,106 +340,48 @@ public class DaoContentProv implements DaoManager
         ContentProviderResult[] results = null;
         try {
             results = mContext.getContentResolver().applyBatch(Contract.CONTENT_AUTHORITY, ops);
+            msg = mContext.getString(R.string.database_success);
         } catch (RemoteException e) {
+            msg = mContext.getString(R.string.database_failed);
             e.printStackTrace();
         } catch (OperationApplicationException e) {
+            msg = mContext.getString(R.string.database_failed);
             e.printStackTrace();
         }
 
-        for (int idx = 0; idx < results.length; ++idx) {
-            if (idx == 0)
-                msg = results[idx].count != null ? "Updated : " + results[idx].count : results[idx].uri.toString();
-            else
-                msg += (results[idx].count != null) ? "\nUpdated : " + results[idx].count : results[idx].uri.toString();
-        }
+        logDbOperation(results);
 
-        if (opSavePictureIdx >-1 && results[opSavePictureIdx].count == 1) {
-            // Successful updating of item's picture record mean the replaced picture file
-            // in filesystem must also be deleted
-            msg += "\n" + deleteFileFromFilesystem(pictureMgr.getOriginalPicture().getFile());
-        }
-
-//        //Delete other unwanted pictures because user might have taken more than one snapshots before updating the item
-//        for (Picture discardedPicture : pictureMgr.getDiscardedPictures()) {
-//            if (discardedPicture != null && discardedPicture != pictureMgr.getOriginalPicture())
-//                msg += "\n" + deleteFileFromFilesystem(discardedPicture.getFile());
-//        }
-
-        //Delete other unwanted pictures because user might have taken more than one snapshots before updating the item
-        for (Picture discardedPicture : pictureMgr.getDiscardedPictures()) {
-            if (discardedPicture != null && discardedPicture != pictureMgr.getOriginalPicture()) {
-                String msgFile = deleteFileFromFilesystem(discardedPicture.getFile());
-                if(!msgFile.equals(FILE_DELETE_FAILED)) {
-                    pictureMgr.getDiscardedPictures().clear();
-                    msg += "\n" + msg;
-                }
+        if (opSavePictureIdx > -1) {
+            if (results[opSavePictureIdx].uri != null || results[opSavePictureIdx].count == 1) {
+                msg += "\n" + cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
+            }
+            else //Original picture failed to be removed
+            {
+                pictureMgr.setViewOriginalPicture(); //Set PictureMgr to show original picture for viewing
             }
         }
 
-
         return msg;
     }
 
-
-
-
-
-    @Override
-    public String update(ToBuyItem buyItem, Item item, List<Price> itemPrices)
+    protected void logDbOperation(ContentProviderResult[] results)
     {
-        Log.d(LOG_TAG, "Save domain object graph");
-        String msg = "";
-        ContentProviderResult[] result;
-        Date updateTime = new Date();
-
-        ContentValues itemValues = getItemContentValues(item, updateTime, null);
-
-        ArrayList<ContentProviderOperation> ops =
-                new ArrayList<ContentProviderOperation>();
-
-        Uri updateItemUri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
-        ContentProviderOperation.Builder itemBuilder =
-                ContentProviderOperation.newUpdate(updateItemUri);
-
-        ContentProviderOperation itemUpdateOp = itemBuilder.withValues(itemValues).build();
-
-        ops.add(itemUpdateOp);
-
-        for (int j = 0; j < itemPrices.size(); ++j) {
-            Price price = itemPrices.get(j);
-            Uri updatePriceUri = ContentUris.withAppendedId(PricesEntry.CONTENT_URI, price.getId());
-            ContentProviderOperation.Builder priceBuilder =
-                    ContentProviderOperation.newUpdate(updatePriceUri);
-
-            ContentValues priceContentValues = getPriceContentValues(price, item.getId(), updateTime, null);
-
-            priceBuilder = priceBuilder.withValues(priceContentValues);
-
-            ops.add(priceBuilder.build());
+        if (results == null) {
+            Log.d(LOG_TAG, "Database return results is NULL.");
+            return;
         }
 
-        Uri updateBuyItemUri = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItem.getId());
-        ContentProviderOperation.Builder buyItemBuilder =
-                ContentProviderOperation.newUpdate(updateBuyItemUri);
-
-        buyItemBuilder = buyItemBuilder.withValues(getBuyItemContentValues(buyItem, updateTime));
-
-        ContentProviderOperation opBuyItem = buyItemBuilder.build();
-        ops.add(opBuyItem);
-
-        try {
-            result = mContext.getContentResolver()
-                    .applyBatch(Contract.CONTENT_AUTHORITY, ops);
-            msg = result.toString();
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (OperationApplicationException e) {
-            e.printStackTrace();
+        String dbLog = "";
+        for (int idx = 0; idx < results.length; ++idx) {
+            if (idx == 0)
+                dbLog = "Saved : " + (results[idx].count != null ? results[idx].count : results[idx].uri.toString());
+            else
+                dbLog += "\nSaved : " + ((results[idx].count != null) ? results[idx].count : results[idx].uri.toString());
         }
 
-        return msg;
+        Log.d(LOG_TAG, dbLog);
+
     }
-
 
     @Override
     public int delete(ToBuyItem buyItem)
@@ -545,70 +390,6 @@ public class DaoContentProv implements DaoManager
                 buyItem.getId());
         return mContext.getContentResolver().delete(uriDeleteBuyItem, null, null);
 
-    }
-
-    /**
-     * Delete records in the following sequence:
-     * 1. The Item's picture
-     * 2. The Item's prices
-     * 3. The Item,
-     *
-     * @param item
-     * @return
-     */
-    @Override
-    public String delete(Item item)
-    {
-        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
-
-        //Delete picture(s) Make it the first so that it is easier to track for FileProvider
-        int deletePictureOpIndex = 0;
-        Uri uriDeletePicture = PicturesEntry.CONTENT_URI;
-        ContentProviderOperation.Builder pictureDeleteBuilder = ContentProviderOperation
-                .newDelete(uriDeletePicture);
-        pictureDeleteBuilder.withSelection(PicturesEntry.COLUMN_ITEM_ID + "=?",
-                new String[]{String.valueOf(item.getId())});
-        ops.add(pictureDeleteBuilder.build());
-
-        //Delete prices
-        Uri uriDeletePrice = PricesEntry.CONTENT_URI;
-        ContentProviderOperation.Builder deletePriceBuilder =
-                ContentProviderOperation.newDelete(uriDeletePrice);
-        deletePriceBuilder.withSelection(PricesEntry.COLUMN_ITEM_ID + "=?", new String[]{String.valueOf(item.getId())});
-        ops.add(deletePriceBuilder.build());
-
-
-        //Delete item
-        Uri uriDeleteItem = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
-        ContentProviderOperation.Builder itemDeleteBuilder = ContentProviderOperation.newDelete(uriDeleteItem);
-        ops.add(itemDeleteBuilder.build());
-
-        ContentProviderResult[] contentProviderResults = null;
-        try {
-            contentProviderResults = mContext.getContentResolver().applyBatch(Contract.CONTENT_AUTHORITY, ops);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (OperationApplicationException e) {
-            e.printStackTrace();
-        }
-
-        String msg = null;
-
-        msg = "Picture deleted : " + contentProviderResults[0].count;
-        msg += "\nPrices deleted : " + contentProviderResults[1].count;
-        msg += "\nItem deleted : " + contentProviderResults[2].count;
-
-        //Delete picture from filesystem
-        if (contentProviderResults[deletePictureOpIndex].count == 1) {
-            if (item.getPictures().size() > 0)
-                msg += "\n" + deleteFileFromFilesystem(item.getPictures().get(0).getFile());
-
-            for (Picture discardedPicture : item.getDiscardedPictures()) {
-                msg += "\n" + deleteFileFromFilesystem(discardedPicture.getFile());
-            }
-        }
-
-        return msg;
     }
 
     /**
@@ -681,17 +462,6 @@ public class DaoContentProv implements DaoManager
                 msg += "\n" + deleteFileFromFilesystem(discardedPicture.getFile());
         }
 
-        return msg;
-    }
-
-    public String deleteFileFromFilesystem(File file)
-    {
-        String msg = FILE_DELETE_FAILED;
-        String authority = mContext.getApplicationInfo().packageName + "." + FILE_PROVIDER;
-        Uri uriFile = FileProvider.getUriForFile(mContext, authority, file);
-        int deletePictureFile = mContext.getContentResolver().delete(uriFile, null, null);
-        msg = deletePictureFile > 0 ? "Deleted picture: " + uriFile.toString() : msg;
-        Log.d(LOG_TAG, ">>>Delete picture " + uriFile.toString() + " : " + deletePictureFile);
         return msg;
     }
 

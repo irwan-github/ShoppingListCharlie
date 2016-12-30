@@ -37,13 +37,9 @@ import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.DaoManager;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Picture;
-import com.mirzairwan.shopping.domain.Price;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
 
 /**
  * Display the item details in a screen
@@ -57,10 +53,8 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     private static final int ITEM_LOADER_ID = 20;
     protected static final int ITEM_PRICE_LOADER_ID = 21;
     protected static final int ITEM_PICTURE_LOADER_ID = 22;
-    private static final String SHOPPING_LIST_PICS = "Item_";
     private static final int REQUEST_SNAP_PICTURE = 15;
     private static final String LOG_TAG = ItemEditingActivity.class.getSimpleName();
-
 
     protected EditText etName;
     protected EditText etBrand;
@@ -71,17 +65,16 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     protected EditText etBundlePrice;
     protected EditText etBundleQty;
 
-    protected View.OnTouchListener mOnTouchListener;
-    protected boolean mItemHaveChanged = false;
-    private DaoManager daoManager;
-
-    protected Item item;
-    protected List<Price> mPrices;
     private ImageView mImgItemPic;
 
+    protected View.OnTouchListener mOnTouchListener;
+    protected boolean mItemHaveChanged = false;
+
+    protected Item item;
+    protected DaoManager daoManager;
     protected PictureMgr pictureMgr;
     protected PriceMgr priceMgr;
-    private String mCountryCode;
+    protected String mCountryCode;
     private long itemId;
 
 
@@ -141,12 +134,14 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             case R.id.save_item_details:
                 save();
                 mItemHaveChanged = false;
+                finish();
                 return true;
             case R.id.menu_camera:
                 startSnapShotActivity();
                 return true;
             case R.id.menu_remove_item_from_list:
                 delete();
+                finish();
                 return true;
             case android.R.id.home:
                 if (mItemHaveChanged)
@@ -180,7 +175,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         if (cameraIntent.resolveActivity(getPackageManager()) != null) {
             File itemPicFile = null;
             try {
-                itemPicFile = createFileHandle();
+                itemPicFile = pictureMgr.createFileHandle(getExternalFilesDir(Environment.DIRECTORY_PICTURES));
             } catch (IOException e) {
                 e.printStackTrace();
                 Toast.makeText(this, "Photo file cannot be created. Aborting camera operation", Toast.LENGTH_SHORT).show();
@@ -196,19 +191,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         }
     }
 
-    protected File createFileHandle() throws IOException
-    {
-        //Get directory handle where picture is stored
-        File dirPictures = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
-        String picFilename = SHOPPING_LIST_PICS + "_" + timeStamp + "_";
-
-        //Get file handle
-        File filePicture = File.createTempFile(picFilename, ".jpg", dirPictures);
-
-        return filePicture;
-    }
-
     @Override
     /**
      * Current implemetation supports only 1 picture. Therefore when user make subsequent snapshots,
@@ -221,22 +203,16 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             case Activity.RESULT_OK:
                 switch (requestCode) {
                     case REQUEST_SNAP_PICTURE:
-                        setPictureView(pictureMgr.getPictureForViewing());
+                        setPictureView(pictureMgr.getPictureForViewing().getFile());
                         break;
                 }
                 break;
 
             default: //Assume the worst. No picture from camera. Delete the useless file.
-                pictureMgr.resetToOriginalPicture();
+                pictureMgr.setViewOriginalPicture();
         }
 
         super.onActivityResult(requestCode, resultCode, data);
-    }
-
-    protected void setPictureView(Picture picture)
-    {
-        if (picture != null)
-            setPictureView(picture.getFile());
     }
 
     protected void setPictureView(File pictureFile)
@@ -368,8 +344,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         String results = daoManager.delete(item, pictureMgr);
 
         Toast.makeText(this, results, Toast.LENGTH_SHORT).show();
-
-        finish();
     }
 
     protected Item getItemFromInputField()
@@ -508,7 +482,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         etUnitPrice.setFocusable(false);
         etBundlePrice.setFocusable(false);
         etBundleQty.setFocusable(false);
-
     }
 
 
@@ -549,13 +522,15 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                 break;
 
             case ITEM_PICTURE_LOADER_ID:
-                projection = new String[]{PicturesEntry._ID, PicturesEntry.COLUMN_FILE_PATH};
+                projection = new String[]{PicturesEntry._ID, PicturesEntry.COLUMN_FILE_PATH,
+                                            PicturesEntry.COLUMN_ITEM_ID};
                 itemId = ContentUris.parseId(uri);
                 selection = PicturesEntry.COLUMN_ITEM_ID + "=?";
                 selectionArgs = new String[]{String.valueOf(itemId)};
                 loader = new CursorLoader(this, PicturesEntry.CONTENT_URI, projection, selection,
                         selectionArgs, null);
                 break;
+
             default:
                 throw new IllegalArgumentException("Unsupported query");
 
@@ -589,7 +564,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
             case ITEM_PICTURE_LOADER_ID:
                 createPictures(cursor);
-                setPictureView(pictureMgr.getPictureForViewing());
+                setPictureView(pictureMgr.getPictureForViewing().getFile());
                 break;
         }
     }
@@ -598,12 +573,16 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     {
         int colRowId = cursor.getColumnIndex(PicturesEntry._ID);
         int colPicturePath = cursor.getColumnIndex(PicturesEntry.COLUMN_FILE_PATH);
+        int colItemId = cursor.getColumnIndex(PicturesEntry.COLUMN_ITEM_ID);
         Picture pictureInDb = null;
-        while (cursor.moveToNext()) {
+        if(cursor.moveToFirst())
+        {
             pictureInDb = new Picture(cursor.getLong(colRowId), new File(cursor.getString(colPicturePath)));
-        }
-        if (pictureInDb != null) {
-            pictureMgr = new PictureMgr(pictureInDb);
+            if (pictureInDb != null) {
+                long itemId = cursor.getLong(colItemId);
+                pictureMgr = new PictureMgr(pictureInDb, itemId);
+            }
+
         }
     }
 
