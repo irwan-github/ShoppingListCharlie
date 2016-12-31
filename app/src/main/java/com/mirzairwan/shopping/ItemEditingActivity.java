@@ -154,15 +154,27 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                     });
                 else {
                     NavUtils.navigateUpFromSameTask(ItemEditingActivity.this);
-                    if(pictureMgr.getDiscardedPictures().size() > 0) {
-                        pictureMgr.setViewOriginalPicture();
-                        String msg = daoManager.cleanUpDiscardedPictures(pictureMgr);
-                        Toast.makeText(ItemEditingActivity.this, msg, Toast.LENGTH_LONG).show();
-                    }
+                    removeUnwantedPicturesFromApp();
                 }
-                    return true;
+                return true;
             default:
                 return super.onOptionsItemSelected(menuItem);
+        }
+
+    }
+
+    /**
+     * Call this method when user back or navigate up with no intention of saving any pictures
+     */
+    protected void removeUnwantedPicturesFromApp()
+    {
+        if (pictureMgr.getOriginalPicture() == null && pictureMgr.getPictureForViewing() != null)
+            pictureMgr.discardLastViewedPicture();
+
+        if (pictureMgr.getDiscardedPictures().size() > 0) {
+            pictureMgr.setViewOriginalPicture();
+            String msg = daoManager.cleanUpDiscardedPictures(pictureMgr);
+            Toast.makeText(ItemEditingActivity.this, msg, Toast.LENGTH_LONG).show();
         }
 
     }
@@ -170,8 +182,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
     /**
      * Current implemetation supports only 1 picture. Therefore when user make subsequent snapshots,
-     * the previous photos must be deleted from filesystem. The original photo is deleted when
-     * camera activity returns status OK
+     * the previous photos MUST be put in discarded pile.
      */
     protected void startSnapShotActivity()
     {
@@ -181,27 +192,21 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             File itemPicFile = null;
             try {
                 itemPicFile = pictureMgr.createFileHandle(getExternalFilesDir(Environment.DIRECTORY_PICTURES));
+                pictureMgr.setPictureForViewing(itemPicFile);
+                Uri itemPicUri = FileProvider.getUriForFile(this, "com.mirzairwan.shopping.fileprovider", itemPicFile);
+                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, itemPicUri);
+                startActivityForResult(cameraIntent, REQUEST_SNAP_PICTURE);
+
             } catch (IOException e) {
                 e.printStackTrace();
                 Toast.makeText(this, "Photo file cannot be created. Aborting camera operation", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            if (itemPicFile != null) {
-                pictureMgr.setPictureForViewing(itemPicFile);
-                Uri itemPicUri = FileProvider.getUriForFile(this, "com.mirzairwan.shopping.fileprovider", itemPicFile);
-                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, itemPicUri);
-                startActivityForResult(cameraIntent, REQUEST_SNAP_PICTURE);
-            }
         }
     }
 
     @Override
-    /**
-     * Current implemetation supports only 1 picture. Therefore when user make subsequent snapshots,
-     * the previous photos MUST be deleted from filesystem. The original photo is deleted when
-     * camera activity returns status OK
-     */
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
         switch (resultCode) {
@@ -293,20 +298,12 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                 @Override
                 public void onClick(DialogInterface dialog, int which)
                 {
-                    if(pictureMgr.getDiscardedPictures().size() > 0) {
-                        pictureMgr.setViewOriginalPicture();
-                        String msg = daoManager.cleanUpDiscardedPictures(pictureMgr);
-                        Toast.makeText(ItemEditingActivity.this, msg, Toast.LENGTH_LONG).show();
-                    }
+                    removeUnwantedPicturesFromApp();
                     finish();
                 }
             });
         else {
-            if(pictureMgr.getDiscardedPictures().size() > 0) {
-                pictureMgr.setViewOriginalPicture();
-                String msg = daoManager.cleanUpDiscardedPictures(pictureMgr);
-                Toast.makeText(ItemEditingActivity.this, msg, Toast.LENGTH_LONG).show();
-            }
+            removeUnwantedPicturesFromApp();
             super.onBackPressed();
         }
     }
@@ -521,6 +518,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                         ItemsEntry.COLUMN_COUNTRY_ORIGIN,
                         ItemsEntry.COLUMN_DESCRIPTION,
                 };
+                itemId = ContentUris.parseId(uri);
                 loader = new CursorLoader(this, uri, projection, null, null, null);
                 break;
 
@@ -540,7 +538,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
 
             case ITEM_PICTURE_LOADER_ID:
                 projection = new String[]{PicturesEntry._ID, PicturesEntry.COLUMN_FILE_PATH,
-                                            PicturesEntry.COLUMN_ITEM_ID};
+                        PicturesEntry.COLUMN_ITEM_ID};
                 itemId = ContentUris.parseId(uri);
                 selection = PicturesEntry.COLUMN_ITEM_ID + "=?";
                 selectionArgs = new String[]{String.valueOf(itemId)};
@@ -569,7 +567,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                 Item item = createItem(ItemsEntry._ID, ItemsEntry.COLUMN_NAME,
                         ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_DESCRIPTION,
                         ItemsEntry.COLUMN_COUNTRY_ORIGIN, cursor);
-
+                pictureMgr.setItemId(item.getId());
                 populateItemInputFields(item);
 
                 break;
@@ -580,27 +578,27 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                 break;
 
             case ITEM_PICTURE_LOADER_ID:
-                createPictures(cursor);
+                Picture pictureInDb = createPicture(cursor);
+                int colItemId = cursor.getColumnIndex(PicturesEntry.COLUMN_ITEM_ID);
+                long itemId = cursor.getLong(colItemId);
+                pictureMgr.setItemId(itemId);
+                pictureMgr.setOriginalPicture(pictureInDb);
+                pictureMgr.setViewOriginalPicture();
                 setPictureView(pictureMgr.getPictureForViewing().getFile());
                 break;
         }
     }
 
-    private void createPictures(Cursor cursor)
+    protected Picture createPicture(Cursor cursor)
     {
         int colRowId = cursor.getColumnIndex(PicturesEntry._ID);
         int colPicturePath = cursor.getColumnIndex(PicturesEntry.COLUMN_FILE_PATH);
-        int colItemId = cursor.getColumnIndex(PicturesEntry.COLUMN_ITEM_ID);
         Picture pictureInDb = null;
-        if(cursor.moveToFirst())
-        {
+        if (cursor.moveToFirst()) {
             pictureInDb = new Picture(cursor.getLong(colRowId), new File(cursor.getString(colPicturePath)));
-            if (pictureInDb != null) {
-                long itemId = cursor.getLong(colItemId);
-                pictureMgr = new PictureMgr(pictureInDb, itemId);
-            }
-
         }
+
+        return pictureInDb;
     }
 
     @Override

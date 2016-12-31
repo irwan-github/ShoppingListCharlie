@@ -40,6 +40,11 @@ public class PictureMgr
         setPictureForViewing(mPictureInDb);
     }
 
+    public PictureMgr(long itemId)
+    {
+        mItemId = itemId;
+    }
+
     public long getItemId()
     {
         return mItemId;
@@ -115,14 +120,15 @@ public class PictureMgr
     }
 
     /**
-     * Original file wll be the pictute target picture and removed from discarded pile
+     * Original picture, if exist,  wll be the pictute target picture and removed from discarded pile
      */
     public void setViewOriginalPicture()
     {
         if (mPictureInDb == null)
             return;
         setPictureForViewing(mPictureInDb);
-        mDiscardedPictures.remove(mPictureInDb);
+        if (mDiscardedPictures.contains(mPictureInDb))
+            mDiscardedPictures.remove(mPictureInDb);
     }
 
     protected File createFileHandle(File dirPictures) throws IOException
@@ -146,5 +152,11 @@ public class PictureMgr
     {
         if (mPictureInDb != null && !mDiscardedPictures.contains(mPictureInDb))
             mDiscardedPictures.add(mPictureInDb);
+    }
+
+    public void discardLastViewedPicture()
+    {
+        if (getPictureForViewing() != null)
+            mDiscardedPictures.add(getPictureForViewing());
     }
 }

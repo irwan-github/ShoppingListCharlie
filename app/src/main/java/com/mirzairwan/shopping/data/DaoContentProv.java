@@ -47,21 +47,25 @@ public class DaoContentProv implements DaoManager
     }
 
     @Override
-    public int update(long buyItemId, boolean isChecked)
+    public String update(long buyItemId, boolean isChecked)
     {
         ContentValues values = new ContentValues();
         values.put(ToBuyItemsEntry.COLUMN_IS_CHECKED, isChecked ? 1 : 0);
         Uri updateBuyItemUri = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItemId);
-        return mContext.getContentResolver().update(updateBuyItemUri, values, null, null);
+        int updated = mContext.getContentResolver().update(updateBuyItemUri, values, null, null);
+        if(updated == 1)
+            return mContext.getString(R.string.database_success);
+        else
+            return mContext.getString(R.string.database_failed);
     }
 
     @Override
-    public String insert(ToBuyItem buyItem)
+    public long insert(ToBuyItem buyItem)
     {
         ContentValues values = getBuyItemContentValues(buyItem, new Date());
         ContentResolver contentResolver = mContext.getContentResolver();
         Uri result = contentResolver.insert(ToBuyItemsEntry.CONTENT_URI, values);
-        return result.toString();
+        return ContentUris.parseId(result);
     }
 
     @Override
@@ -141,7 +145,9 @@ public class DaoContentProv implements DaoManager
 
         if (opSavePictureIdx > -1) {
             if (results[opSavePictureIdx].uri != null || results[opSavePictureIdx].count == 1) {
-                msg += "\n" + cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
+                String deletePicMsg = cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
+                if (deletePicMsg != null)
+                    msg += "\n" + deletePicMsg;
             } else //Original picture failed to be removed
             {
                 pictureMgr.setViewOriginalPicture(); //Set PictureMgr to show original picture for viewing
@@ -212,14 +218,11 @@ public class DaoContentProv implements DaoManager
         logDbOperation(results);
 
         if (opSavePictureIdx > -1) {
-            if (results[opSavePictureIdx].uri != null || results[opSavePictureIdx].count == 1) {
-                String discardFileMsg = cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
-                if(discardFileMsg != null)
-                    msg += "\n" + discardFileMsg;
-            } else //Original picture failed to be removed
-            {
-                pictureMgr.setViewOriginalPicture(); //Set PictureMgr to show original picture for viewing
-            }
+
+            String discardFileMsg = cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
+            if (discardFileMsg != null)
+                msg += "\n" + discardFileMsg;
+
         }
 
         return msg;
@@ -227,7 +230,6 @@ public class DaoContentProv implements DaoManager
 
     public int deleteFileFromFilesystem(File file)
     {
-        String msg = FILE_DELETE_FAILED;
         String authority = mContext.getApplicationInfo().packageName + "." + FILE_PROVIDER;
         Uri uriFile = FileProvider.getUriForFile(mContext, authority, file);
         int deletePictureFile = mContext.getContentResolver().delete(uriFile, null, null);
@@ -359,12 +361,9 @@ public class DaoContentProv implements DaoManager
         logDbOperation(results);
 
         if (opSavePictureIdx > -1) {
-            if (results[opSavePictureIdx].uri != null || results[opSavePictureIdx].count == 1) {
-                msg += "\n" + cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
-            } else //Original picture failed to be removed
-            {
-                pictureMgr.setViewOriginalPicture(); //Set PictureMgr to show original picture for viewing
-            }
+            String msgDiscardPics = cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
+            if(msgDiscardPics != null)
+                msg += "\n" + msgDiscardPics;
         }
 
         return msg;
@@ -450,7 +449,7 @@ public class DaoContentProv implements DaoManager
 
         String msgCleanUp = cleanUpDiscardedPictures(contentProviderResults[deletePictureOpIndex], pictureMgr);
 
-        if(msgCleanUp != null)
+        if (msgCleanUp != null)
             msg += "\n" + msgCleanUp;
 
         return msg;

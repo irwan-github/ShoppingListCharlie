@@ -29,6 +29,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        getActivity().setTitle(R.string.settings_screen);
         addPreferencesFromResource(R.xml.preferences);
         getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     }

@@ -10,13 +10,13 @@
     <item
         android:id="@+id/menu_remove_item_from_list"
         android:icon="@drawable/ic_delete"
-        android:title="@string/remove_item_from_list"
+        android:title="@string/remove_item_from_shopping_list_ok"
         app:showAsAction="ifRoom">
     </item>
     <item
         android:id="@+id/menu_camera"
         android:icon="@drawable/ic_camera_enhance"
-        android:title="@string/remove_item_from_list"
+        android:title="@string/menu_item_camera"
         app:showAsAction="always">
     </item>
 

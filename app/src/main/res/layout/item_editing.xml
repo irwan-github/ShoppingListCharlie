@@ -10,6 +10,14 @@
                 android:focusableInTouchMode="true"
                 tools:context="com.mirzairwan.shopping.ItemEditingActivity">
 
+
+    <ImageView
+        android:id="@+id/img_item"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        />
+
     <TextView
         android:id="@+id/item_details_header"
         style="@style/HeaderFont"
@@ -17,26 +25,18 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/keyline_1"
         android:layout_marginRight="@dimen/keyline_1"
+        android:layout_marginTop="16dp"
+        android:layout_below="@id/img_item"
         android:text="@string/item_details_header"
         >
     </TextView>
 
-    <ImageView
-        android:id="@+id/img_item"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/item_details_header"
-        android:maxHeight="200dp"
-        android:scaleType="center"
-        android:paddingBottom="@dimen/edit_text_padding_bottom"
-        android:paddingTop="@dimen/edit_text_padding_top"
-        />
 
     <android.support.design.widget.TextInputLayout
         android:id="@+id/item_name_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/img_item"
+        android:layout_below="@id/item_details_header"
         android:layout_marginLeft="@dimen/keyline_1"
         android:layout_marginRight="@dimen/keyline_1"
         android:paddingBottom="@dimen/edit_text_padding_bottom"

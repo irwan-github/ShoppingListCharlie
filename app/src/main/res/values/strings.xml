@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">Shopping List</string>
-    <string name="buy_list">To Buy List</string>
+    <string name="app_name">Shopping</string>
+    <string name="buy_list">Shopping List</string>
     <string name="catalogue">All items</string>
     <string name="item_name">Name</string>
     <string name="brand_label">Brand</string>
@@ -14,7 +14,7 @@
     <string name="cb_bundle_price">Bundle price</string>
     <string name="new_buy_item_title">New purchase</string>
     <string name="update_buy_item_title">Update Purchase details</string>
-    <string name="remove_item_from_list">Remove item from list</string>
+    <string name="remove_item_from_shopping_list_ok">Remove item from shopping list : OK</string>
     <string name="empty_view_title_text">No items in your shopping list</string>
     <string name="empty_view_subtitle_text">Add new item or star item in All Items</string>
 
@@ -35,7 +35,7 @@
     <string name="ok">OK</string>
     <string name="default_brand_name">Brand</string>
     <string name="description_country_origin">Country of origin</string>
-    <string name="prices_header">Available Prices</string>
+    <string name="prices_header">Pricing</string>
     <string name="country_origin_max_length">26</string>
     <string name="item_details_header">Item details</string>
     <string name="purchase_details_header">Purchase details</string>
@@ -48,8 +48,12 @@
     <string name="invalid_country_code">Invalid country code. Google 2-letter country code for information</string>
     <string name="menu_item_camera">Snap photo</string>
     <string name="message_title">Mandatory field(s)</string>
-    <string name="database_success">Database update : OK.</string>
-    <string name="database_failed">Database save : Failed.</string>
+    <string name="database_success">Save : OK</string>
+    <string name="database_failed">Save : Error</string>
     <string name="filesystem_delete_discarded_ok">Delete discarded photo(s) : OK</string>
     <string name="filesystem_delete_discarded_failed">Delete discarded photo(s) : Failed</string>
+    <string name="added_to_shopping_list_ok">Add to shopping list : OK</string>
+    <string name="added_to_shopping_list_error">Add to shopping list : Error</string>
+    <string name="remove_item_from_shopping_list_error">Remove item from shopping list : Error</string>
+    <string name="settings_screen">Settings</string>
 </resources>

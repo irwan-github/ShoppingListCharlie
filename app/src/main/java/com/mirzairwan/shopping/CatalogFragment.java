@@ -100,11 +100,12 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
         if (isItemChecked) {
 
             ToBuyItem buyItem = shoppingList.buyItem(position);
-            msg = daoManager.insert(buyItem);
+            msg = daoManager.insert(buyItem) > 0 ? getString(R.string.added_to_shopping_list_ok) :
+                    getString(R.string.added_to_shopping_list_error);
         } else {
             ToBuyItem buyItem = shoppingList.removeItem(position);
-            msg = daoManager.delete(buyItem) == 1 ? "Removed from shopping list" :
-                    "Failed to remove item";
+            msg = daoManager.delete(buyItem) > 0 ? getString(R.string.remove_item_from_shopping_list_ok) :
+                    getString(R.string.remove_item_from_shopping_list_error);
         }
         Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
     }
@@ -162,6 +163,5 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
     {
         void onViewItemDetails(long itemId, boolean isInShoppingList);
 
-//        void onViewItemDetails(long itemId, boolean isItemInShoppingList);
     }
 }

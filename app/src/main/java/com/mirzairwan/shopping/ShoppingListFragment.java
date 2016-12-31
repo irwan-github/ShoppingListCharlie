@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
@@ -197,7 +198,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         Cursor cursor = (Cursor)shoppingListAdapter.getItem(mBuyItemPosition);
         int buyItemIdColIdx = cursor.getColumnIndex(ToBuyItemsEntry._ID);
         long buyItemId = cursor.getLong(buyItemIdColIdx);
-        Builder.getDaoManager(getActivity()).update(buyItemId, isChecked);
+        String msg = Builder.getDaoManager(getActivity()).update(buyItemId, isChecked);
+        Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
 
     }
 
