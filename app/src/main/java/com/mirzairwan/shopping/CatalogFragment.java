@@ -5,11 +5,12 @@ import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +28,8 @@ import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ShoppingList;
 import com.mirzairwan.shopping.domain.ToBuyItem;
 
+import static com.mirzairwan.shopping.R.xml.preferences;
+
 
 /**
  * Created by Mirza Irwan on 22/11/16.
@@ -34,11 +37,12 @@ import com.mirzairwan.shopping.domain.ToBuyItem;
 
 public class CatalogFragment extends Fragment implements OnToggleCatalogItemListener,
         LoaderManager.LoaderCallbacks<Cursor>,
-        AdapterView.OnItemClickListener
+        AdapterView.OnItemClickListener, SharedPreferences.OnSharedPreferenceChangeListener
 {
     private static final String LOG_TAG = CatalogFragment.class.getSimpleName();
     private static final int LOADER_CATALOG_ID = 2;
     private static final int LOADER_PRICE_ID = 3;
+    private static final String SORT_COLUMN = "SORT_COLUMN";
     private CatalogAdapter catalogAdapter;
     private ShoppingList shoppingList;
     private DaoManager daoManager;
@@ -73,9 +77,22 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
         setupListView(allItemsListView);
         setEmptyView(rootView, allItemsListView);
 
+        PreferenceManager.setDefaultValues(getActivity(), preferences, false);
+        PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        Bundle args = new Bundle();
+        args.putString(SORT_COLUMN, sharedPrefs.getString(getString(R.string.user_sort_pref), null));
+
         //Kick start Loader manager
-        getLoaderManager().initLoader(LOADER_CATALOG_ID, null, this);
+        getLoaderManager().initLoader(LOADER_CATALOG_ID, args, this);
         return rootView;
+    }
+
+    @Override
+    public void onDestroy()
+    {
+        PreferenceManager.getDefaultSharedPreferences(getActivity()).unregisterOnSharedPreferenceChangeListener(this);
+        super.onDestroy();
     }
 
     private void setEmptyView(View rootView, ListView allItemsListView)
@@ -122,9 +139,18 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
                 String selection = PricesEntry.COLUMN_PRICE_TYPE_ID + "=?";
 
                 String[] selectionArgs = new String[]{String.valueOf(Price.Type.UNIT_PRICE.getType())};
+
+                String sortPref = args.getString(SORT_COLUMN);
+                String sortOrder = null;
+                if (sortPref != null) {
+                    sortOrder = sortPref.equalsIgnoreCase(ItemsEntry.COLUMN_NAME) ?
+                            ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_NAME :
+                            ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_BRAND;
+                }
+
                 cursorLoader = new CursorLoader(getActivity(), uriCatalogue, projection, selection,
                         selectionArgs,
-                        null);
+                        sortOrder);
                 break;
         }
 
@@ -151,12 +177,21 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id)
     {
-        Log.d(LOG_TAG, ">>> " + view.getClass().getSimpleName());
-
         //Check that item is in shopping list
         mCursor.moveToPosition(position);
         boolean isInShoppingList = !mCursor.isNull(mCursor.getColumnIndex(ToBuyItemsEntry.ALIAS_ID));
         mOnFragmentInteractionListener.onViewItemDetails(id, isInShoppingList);
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
+    {
+        String pref = sharedPreferences.getString(key, null);
+        if (key.equals(getString(R.string.user_sort_pref))) {
+            Bundle args = new Bundle();
+            args.putString(SORT_COLUMN, pref);
+            getLoaderManager().restartLoader(LOADER_CATALOG_ID, args, this);
+        }
     }
 
     public interface OnFragmentInteractionListener

@@ -81,8 +81,13 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
             }
         });
 
-        updateCountryPreference(PreferenceManager.getDefaultSharedPreferences(getActivity()),
+        updatePrefSummary(PreferenceManager.getDefaultSharedPreferences(getActivity()),
                                                         getString(R.string.user_country_pref));
+
+        updatePrefSummary(PreferenceManager.getDefaultSharedPreferences(getActivity()),
+                getString(R.string.user_sort_pref));
+
+
     }
 
     private void setAllCapsInputFilter(EditText et)
@@ -96,7 +101,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         et.setFilters(prefFilters);
     }
 
-    private void updateCountryPreference(SharedPreferences sharedPreferences, String key)
+    private void updatePrefSummary(SharedPreferences sharedPreferences, String key)
     {
         String prefSummary = sharedPreferences.getString(key, null);
         Preference pref = findPreference(key);
@@ -106,9 +111,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
     {
-        if(key.equalsIgnoreCase(getString(R.string.user_country_pref))) {
-            updateCountryPreference(sharedPreferences, key);
-        }
+            updatePrefSummary(sharedPreferences, key);
     }
 
     @Override

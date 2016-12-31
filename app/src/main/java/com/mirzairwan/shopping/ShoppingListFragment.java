@@ -38,10 +38,12 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 {
     public static final String BUY_LIST = "BUY_LIST";
     private static final String LOG_TAG = ShoppingListFragment.class.getSimpleName();
-    private static final int BUY_ITEM = 1;
+    private static final int LOADER_BUY_ITEM_ID = 1;
     private OnFragmentInteractionListener onFragmentInteractionListener;
     private ShoppingListAdapter shoppingListAdapter;
     private String countryCode;
+    private static final String SORT_COLUMN = "SORT_COLUMN";
+
 
     public static ShoppingListFragment newInstance() {
 
@@ -84,9 +86,14 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         setupEmptyView(rootView, lvBuyItems);
 
         PreferenceManager.setDefaultValues(getActivity(), preferences, false);
+        PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        Bundle args = new Bundle();
+        args.putString(SORT_COLUMN, sharedPrefs.getString(getString(R.string.user_sort_pref), null));
+
 
         //Kick off the loader
-        getLoaderManager().initLoader(BUY_ITEM, null, this);
+        getLoaderManager().initLoader(LOADER_BUY_ITEM_ID, args, this);
 
         return rootView;
     }
@@ -170,9 +177,15 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         //Summary screen shows only selected price
         String selection = PricesEntry.TABLE_NAME + "." + PricesEntry._ID + "=" + ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID;
 
-        String orderBy = ItemsEntry.COLUMN_NAME;
+        String sortPref = args.getString(SORT_COLUMN);
+        String sortOrder = null;
+        if (sortPref != null) {
+            sortOrder = sortPref.equalsIgnoreCase(ItemsEntry.COLUMN_NAME) ?
+                    ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_NAME :
+                    ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_BRAND;
+        }
 
-        CursorLoader loader = new CursorLoader(getActivity(), uri, projection, selection, null, null);
+        CursorLoader loader = new CursorLoader(getActivity(), uri, projection, selection, null, sortOrder);
 
         return loader;
     }
@@ -213,6 +226,13 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
             showCostOfItemsChecked();
             shoppingListAdapter.notifyDataSetChanged();
         }
+
+        if (key.equals(getString(R.string.user_sort_pref))) {
+            String prefSort = sharedPreferences.getString(key, null);
+            Bundle args = new Bundle();
+            args.putString(SORT_COLUMN, prefSort);
+            getLoaderManager().restartLoader(LOADER_BUY_ITEM_ID, args, this);
+        }
     }
 
     public interface OnFragmentInteractionListener
@@ -236,9 +256,12 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
             int colCurrencyCode = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
             String lCurrencyCode = cursor.getString(colCurrencyCode);
 
+            int colQtyPurchased = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);
+            int qtyPurchased = cursor.getInt(colQtyPurchased);
+
             //Only add item with same currency code as user home currency code
             if(lCurrencyCode.trim().equalsIgnoreCase(currencyCode))
-                totalValueOfItemsAdded += cursor.getDouble(colSelectedPriceTag)/100;
+                totalValueOfItemsAdded += ((cursor.getDouble(colSelectedPriceTag)/100) * qtyPurchased);
         }
 
         tvTotalValueAdded.setText(NumberFormatter.formatCountryCurrency(countryCode, currencyCode, totalValueOfItemsAdded));
@@ -257,12 +280,15 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
             int colSelectedPriceTag = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
             int colIsItemChecked = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_IS_CHECKED);
             int colCurrencyCode = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
+            int colQtyPurchased = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);
+            int qtyPurchased = cursor.getInt(colQtyPurchased);
+
             String lCurrencyCode = cursor.getString(colCurrencyCode);
             boolean isItemChecked = cursor.getInt(colIsItemChecked) > 0;
 
             //Only add item with same currency code as user home currency code
             if(isItemChecked && lCurrencyCode.trim().equalsIgnoreCase(currencyCode))
-                totalValueOfItemsChecked += cursor.getDouble(colSelectedPriceTag)/100;
+                totalValueOfItemsChecked += ((cursor.getDouble(colSelectedPriceTag)/100) * qtyPurchased);
         }
 
         tvTotalValueChecked.setText(NumberFormatter.formatCountryCurrency(countryCode, currencyCode, totalValueOfItemsChecked));

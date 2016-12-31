@@ -76,6 +76,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     protected PriceMgr priceMgr;
     protected String mCountryCode;
     private long itemId;
+    private String mSortPref;
 
 
     @Override

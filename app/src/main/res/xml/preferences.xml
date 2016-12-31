@@ -3,13 +3,23 @@
     <PreferenceCategory
         android:title="@string/country_based_preferences">
 
-    <EditTextPreference
-        android:key="@string/user_country_pref"
-        android:title="@string/home_country_preference"
-        android:dialogTitle="@string/dialog_title_home_country_preference"
-        android:lines="1"
-        android:maxLength="2"
-        android:defaultValue="GB"
-/>
+        <EditTextPreference
+            android:defaultValue="GB"
+            android:dialogTitle="@string/dialog_title_home_country_preference"
+            android:key="@string/user_country_pref"
+            android:lines="1"
+            android:maxLength="2"
+            android:title="@string/home_country_preference"
+            />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/settings_catalogue">
+        <ListPreference
+            android:key="user_sort_pref"
+            android:entries="@array/setting_sort_by_name"
+            android:entryValues="@array/setting_sort_by_values"
+            android:defaultValue="Name"
+            android:title="Sort item by"/>
     </PreferenceCategory>
 </PreferenceScreen>

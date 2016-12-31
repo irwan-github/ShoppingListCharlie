@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Shopping</string>
+    <string name="app_name">Shopping List</string>
     <string name="buy_list">Shopping List</string>
     <string name="catalogue">All items</string>
     <string name="item_name">Name</string>
@@ -56,4 +56,6 @@
     <string name="added_to_shopping_list_error">Add to shopping list : Error</string>
     <string name="remove_item_from_shopping_list_error">Remove item from shopping list : Error</string>
     <string name="settings_screen">Settings</string>
+    <string name="settings_catalogue">Catalogue</string>
+    <string name="user_sort_pref">user_sort_pref</string>
 </resources>
