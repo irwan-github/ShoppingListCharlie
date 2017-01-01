@@ -28,8 +28,8 @@ public class PriceMgr
     public PriceMgr(String countryCode)
     {
         mCountryCode = countryCode;
-        mUnitPrice = new Price(0.00d, NumberFormatter.getCurrencyCode(countryCode) , DEFAULT_SHOP_ID);
-        mBundlePrice = new Price(0.00d, 0.00d, NumberFormatter.getCurrencyCode(countryCode) , DEFAULT_SHOP_ID);
+        mUnitPrice = new Price(0.00d, NumberFormatter.getCurrencyCode(countryCode), DEFAULT_SHOP_ID);
+        mBundlePrice = new Price(0.00d, 0.00d, NumberFormatter.getCurrencyCode(countryCode), DEFAULT_SHOP_ID);
     }
 
     public PriceMgr(long itemId, String countryCode)
@@ -83,7 +83,7 @@ public class PriceMgr
 
     public Price getSelectedPrice(Price.Type selectedPriceType)
     {
-        return selectedPriceType == Price.Type.UNIT_PRICE? mUnitPrice : mBundlePrice;
+        return selectedPriceType == Price.Type.UNIT_PRICE ? mUnitPrice : mBundlePrice;
     }
 
     public String getUnitPriceForDisplay()
@@ -98,6 +98,9 @@ public class PriceMgr
 
     public void setItemPricesForSaving(Item item, String unitPriceFromInputField, String bundlePriceFromInputField, String bundleQtyFromInputField)
     {
+        if (item == null)
+            throw new IllegalArgumentException("Item cannot be null");
+
         //Clear the prices in the item object first before adding because it will accumulate identical prices types
         item.clearPrices();
 
@@ -105,29 +108,9 @@ public class PriceMgr
         mBundlePrice.setBundlePrice(Double.parseDouble(bundlePriceFromInputField),
                 Double.parseDouble(bundleQtyFromInputField));
 
+        item.addPrice(mUnitPrice);
+        item.addPrice(mBundlePrice);
 
-//        //Case 1: This is a new item. The country code will determine the currency code:
-//        if (mItemId == -1) {
-//            String currencyCode = NumberFormatter.getCurrencyCode(mCountryCode);
-//
-//            mUnitPrice = new Price(Double.parseDouble(unitPriceFromInputField), currencyCode, DEFAULT_SHOP_ID);
-//            mBundlePrice = new Price(Double.parseDouble(bundlePriceFromInputField),
-//                    Double.parseDouble(bundleQtyFromInputField),
-//                    currencyCode, DEFAULT_SHOP_ID);
-//
-//            item.addPrice(mUnitPrice);
-//            item.addPrice(mBundlePrice);
-//        } else {
-//            //Case 2: This is an existing item. The currency code already exist. Do not change the currency code. Change just the amount.
-//            mUnitPrice.setUnitPrice(Double.parseDouble(unitPriceFromInputField));
-//            mBundlePrice.setBundlePrice(Double.parseDouble(bundlePriceFromInputField),
-//                    Double.parseDouble(bundleQtyFromInputField));
-
-
-            item.addPrice(mUnitPrice);
-            item.addPrice(mBundlePrice);
-
-       // }
     }
 
     public Price getUnitPrice()

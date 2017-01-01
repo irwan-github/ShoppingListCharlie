@@ -21,6 +21,7 @@ import android.support.v4.app.NavUtils;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -77,13 +78,14 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     protected String mCountryCode;
     private long itemId;
     private String mSortPref;
+    private Toolbar toolbarPicture;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_item_editing2);
+        setContentView(R.layout.activity_item_editing);
 
         initLoaders();
         setTitle(R.string.view_buy_item_details);
@@ -95,6 +97,30 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         mCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
 
         priceMgr = new PriceMgr(mCountryCode);
+
+        setupPictureToolbar();
+    }
+
+    protected void setupPictureToolbar()
+    {
+        toolbarPicture = (Toolbar)findViewById(R.id.picture_toolbar);
+
+        toolbarPicture.inflateMenu(R.menu.picture_item);
+
+        //Add menu click handler
+        toolbarPicture.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener()
+        {
+            @Override
+            public boolean onMenuItemClick(MenuItem item)
+            {
+                if(item.getItemId() == R.id.menu_camera) {
+                    startSnapShotActivity();
+                    return true;
+                }
+                else
+                    return false;
+            }
+        });
     }
 
     protected void setCurrencySymbol(EditText et, String currencyCode)

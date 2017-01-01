@@ -11,13 +11,6 @@
                 tools:context="com.mirzairwan.shopping.ItemEditingActivity">
 
 
-    <ImageView
-        android:id="@+id/img_item"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        />
-
     <TextView
         android:id="@+id/item_details_header"
         style="@style/HeaderFont"
@@ -26,7 +19,6 @@
         android:layout_marginLeft="@dimen/keyline_1"
         android:layout_marginRight="@dimen/keyline_1"
         android:layout_marginTop="16dp"
-        android:layout_below="@id/img_item"
         android:text="@string/item_details_header"
         >
     </TextView>

@@ -60,6 +60,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_buying_item);
+        setupPictureToolbar();
 
         Intent intent = getIntent();
         Uri uri = intent.getData();
