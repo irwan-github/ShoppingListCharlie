@@ -110,16 +110,6 @@ public class ItemEditingActivity extends AppCompatActivity implements
 
     }
 
-    protected void setupPermitted(int requestPermissionCode, String manifestPermission)
-    {
-        int permissionCheck = ContextCompat.checkSelfPermission(this,
-                manifestPermission);
-
-        if (permissionCheck == PackageManager.PERMISSION_DENIED)
-            ActivityCompat.requestPermissions(this, new String[]{manifestPermission},
-                    requestPermissionCode);
-    }
-
     protected void setupPictureToolbar()
     {
 
@@ -163,7 +153,6 @@ public class ItemEditingActivity extends AppCompatActivity implements
         if (permissionPickPicture == PackageManager.PERMISSION_DENIED)
             permissionRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
 
-
         if (permissionRequest.size() > 0)
             ActivityCompat.requestPermissions(this, permissionRequest.toArray(new String[permissionRequest.size()]),
                     PERMISSION_GIVE_ITEM_PICTURE);
@@ -200,32 +189,8 @@ public class ItemEditingActivity extends AppCompatActivity implements
                             itemPicturePicker.setEnabled(true);
 
                     }
-
-
-
                 }
 
-//
-//                if (grantResults.length == 0 || grantResults[0] == PackageManager.PERMISSION_DENIED) {
-//                    if (itemCamera != null)
-//                        itemCamera.setEnabled(false);
-//                }
-//
-//                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                    if (itemCamera != null)
-//                        itemCamera.setEnabled(true);
-//                }
-//
-//                MenuItem itemPicturePicker = toolbarPicture.getMenu().findItem(R.id.choose_picture);
-//                if (grantResults.length == 0 || grantResults[0] == PackageManager.PERMISSION_DENIED) {
-//                    if (itemPicturePicker != null)
-//                        itemPicturePicker.setEnabled(false);
-//                }
-//
-//                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                    if (itemPicturePicker != null)
-//                        itemPicturePicker.setEnabled(true);
-//                }
                 break;
 
             default:
