@@ -42,6 +42,8 @@ import com.mirzairwan.shopping.domain.Picture;
 import java.io.File;
 import java.io.IOException;
 
+import static android.graphics.BitmapFactory.decodeFile;
+
 /**
  * Display the item details in a screen
  * Update item details
@@ -163,9 +165,6 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                 mItemHaveChanged = false;
                 finish();
                 return true;
-            case R.id.menu_camera:
-                startSnapShotActivity();
-                return true;
             case R.id.menu_remove_item_from_list:
                 delete();
                 return true;
@@ -261,7 +260,40 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         // Get the dimensions of the bitmap
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(pictureFile.getPath(), bmOptions);
+        Bitmap asIsBitMap = BitmapFactory.decodeFile(pictureFile.getPath(), bmOptions);
+        int photoW = bmOptions.outWidth;
+        int photoH = bmOptions.outHeight;
+
+
+		/* Figure out which way needs to be reduced less */
+        int scaleFactor = 1;
+        if ((targetW > 0) || (targetH > 0)) {
+            scaleFactor = Math.min(photoW / targetW, photoH / targetH);
+        }
+
+        // Decode the image file into a Bitmap sized to fill the View
+        bmOptions.inJustDecodeBounds = false;
+        bmOptions.inSampleSize = scaleFactor;
+        bmOptions.inPurgeable = true;
+
+        Bitmap bitmap = BitmapFactory.decodeFile(pictureFile.getPath(), bmOptions);
+
+        Bitmap toBeBitmap = PictureUtil.correctOrientation(bitmap, pictureFile.getPath());
+
+        mImgItemPic.setImageBitmap(toBeBitmap);
+
+    }
+
+    protected void setPictureView2(File pictureFile)
+    {
+        // Get the dimensions of the View
+        int targetW = mImgItemPic.getWidth();
+        int targetH = mImgItemPic.getHeight();
+
+        // Get the dimensions of the bitmap
+        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+        bmOptions.inJustDecodeBounds = true;
+        decodeFile(pictureFile.getPath(), bmOptions);
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
 
@@ -276,10 +308,11 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         bmOptions.inSampleSize = scaleFactor;
         bmOptions.inPurgeable = true;
 
-        Bitmap bitmap = BitmapFactory.decodeFile(pictureFile.getPath(), bmOptions);
+        Bitmap bitmap = decodeFile(pictureFile.getPath(), bmOptions);
         mImgItemPic.setImageBitmap(bitmap);
 
     }
+
 
     @Override
     protected void onStart()
