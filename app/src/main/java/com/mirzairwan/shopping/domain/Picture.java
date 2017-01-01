@@ -3,6 +3,7 @@ package com.mirzairwan.shopping.domain;
 import java.io.File;
 
 /**
+ * A picture must have a file path. The picture may or may not have a File object associated with it.
  * Created by Mirza Irwan on 27/12/16.
  */
 
@@ -10,18 +11,61 @@ public class Picture
 {
     private long _id = -1L;
     private File mPictureFile;
+    private String mPath;
 
     public Picture(long id, File pictureFile)
     {
         _id = id;
         mPictureFile = pictureFile;
+        mPath = pictureFile.getPath();
+        if(mPath == null)
+            throw new IllegalArgumentException("Picture cannot have empth path");
+
+    }
+
+    public Picture(long id, String pictureFilePath)
+    {
+        _id = id;
+        mPath = pictureFilePath;
+        if(mPath == null)
+            throw new IllegalArgumentException("Picture cannot have empth path");
+
     }
 
 
     public Picture(File pictureFile)
     {
         mPictureFile = pictureFile;
+        mPath = pictureFile.getPath();
+        if(mPath == null)
+            throw new IllegalArgumentException("Picture cannot have empth path");
+
     }
+
+    public Picture(String pictureFilePath)
+    {
+        mPath = pictureFilePath;
+        if(mPath == null)
+            throw new IllegalArgumentException("Picture cannot have empty path");
+
+    }
+
+
+    public String getPath()
+    {
+        if(mPath == null)
+            throw new IllegalArgumentException("Picture cannot have empth path");
+        return mPath;
+    }
+
+    public void setPath(String path)
+    {
+        this.mPath = path;
+        if(mPath == null)
+            throw new IllegalArgumentException("Picture cannot have empth path");
+
+    }
+
 
     public long getId()
     {
@@ -35,16 +79,24 @@ public class Picture
 
     public String getPicturePath()
     {
-        return mPictureFile.getPath();
+        if(mPath == null)
+            throw new IllegalArgumentException("Picture cannot have empth path");
+        return mPath;
     }
 
     public void setFile(File pictureFile)
     {
         mPictureFile = pictureFile;
+        mPath = pictureFile.getPath();
+        if(mPath == null)
+            throw new IllegalArgumentException("Picture cannot have empth path");
+
     }
 
     public File getFile()
     {
         return mPictureFile;
+
     }
+
 }

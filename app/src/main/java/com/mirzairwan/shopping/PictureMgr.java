@@ -24,23 +24,25 @@ public class PictureMgr
     private List<Picture> mDiscardedPictures = new ArrayList<>(); //To be deleted from filesystem
     private long mItemId = -1;
     private static final String SHOPPING_LIST_PICS = "Item_";
+    private String mAuthorityPackage = null;
 
-    public PictureMgr()
+    public PictureMgr(String authorityPackage)
     {
-
+        mAuthorityPackage = authorityPackage;
     }
 
     /**
      * @param pictureInDb will be the picture used for viewing initially.
      * @param itemId
      */
-    public PictureMgr(Picture pictureInDb, long itemId)
+    public PictureMgr(Picture pictureInDb, long itemId, String authorityPackage)
     {
         mPictureInDb = pictureInDb;
+        mItemId = itemId;
         setPictureForViewing(mPictureInDb);
     }
 
-    public PictureMgr(long itemId)
+    public PictureMgr(long itemId, String authorityPackage)
     {
         mItemId = itemId;
     }
@@ -158,5 +160,16 @@ public class PictureMgr
     {
         if (getPictureForViewing() != null)
             mDiscardedPictures.add(getPictureForViewing());
+    }
+
+    public void setExternalPictureForViewing(String filePath)
+    {
+        Picture externalPicture = new Picture(filePath);
+        setPictureForViewing(externalPicture);
+    }
+
+    public boolean isExternalFile(Picture picture)
+    {
+        return !picture.getPath().contains(mAuthorityPackage);
     }
 }

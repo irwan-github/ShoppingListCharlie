@@ -10,7 +10,6 @@ import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -42,8 +41,6 @@ import com.mirzairwan.shopping.domain.Picture;
 import java.io.File;
 import java.io.IOException;
 
-import static android.graphics.BitmapFactory.decodeFile;
-
 /**
  * Display the item details in a screen
  * Update item details
@@ -58,6 +55,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
     protected static final int ITEM_PICTURE_LOADER_ID = 22;
     private static final int REQUEST_SNAP_PICTURE = 15;
     private static final String LOG_TAG = ItemEditingActivity.class.getSimpleName();
+    private static final int REQUEST_PICK_PHOTO = 16;
 
     protected EditText etName;
     protected EditText etBrand;
@@ -93,7 +91,7 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         setTitle(R.string.view_buy_item_details);
 
         daoManager = Builder.getDaoManager(this);
-        pictureMgr = new PictureMgr();
+        pictureMgr = new PictureMgr(getApplicationInfo().packageName);
 
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         mCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
@@ -115,12 +113,21 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             @Override
             public boolean onMenuItemClick(MenuItem item)
             {
-                if(item.getItemId() == R.id.menu_camera) {
-                    startSnapShotActivity();
-                    return true;
+                switch (item.getItemId())
+                {
+                    case R.id.menu_camera:
+                        startSnapShotActivity();
+                        return true;
+
+                    case R.id.choose_picture:
+                        Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+                        photoPickerIntent.setType("image/*");
+                        startActivityForResult(photoPickerIntent, REQUEST_PICK_PHOTO);
+                        return true;
+                    default:
+                        return false;
                 }
-                else
-                    return false;
+
             }
         });
     }
@@ -239,7 +246,10 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
             case Activity.RESULT_OK:
                 switch (requestCode) {
                     case REQUEST_SNAP_PICTURE:
-                        setPictureView(pictureMgr.getPictureForViewing().getFile());
+                        setPictureView(pictureMgr.getPictureForViewing());
+                        break;
+                    case REQUEST_PICK_PHOTO:
+                        setPictureView(data);
                         break;
                 }
                 break;
@@ -251,65 +261,59 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    private void setPictureView(Intent data)
+    {
+        Uri photoUri = data.getData();
+        String[] filePathColumn = {MediaStore.Images.Media.DATA};
+        Cursor cursor = getContentResolver().query(photoUri, filePathColumn, null, null, null);
+        String filePath = null;
+        if(cursor.moveToFirst())
+        {
+            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+            filePath = cursor.getString(columnIndex);
+            cursor.close();
+        }
+
+        // Get the dimensions of the View
+        int targetW = mImgItemPic.getWidth();
+        int targetH = mImgItemPic.getHeight();
+        if(filePath == null)
+            return;
+
+        pictureMgr.setExternalPictureForViewing(filePath);
+
+        Bitmap bitmap = PictureUtil.sizeToView(targetW, targetH, filePath);
+        Bitmap toBeBitmap = PictureUtil.correctOrientation(bitmap, filePath);
+
+        mImgItemPic.setImageBitmap(toBeBitmap);
+
+
+    }
+
     protected void setPictureView(File pictureFile)
     {
         // Get the dimensions of the View
         int targetW = mImgItemPic.getWidth();
         int targetH = mImgItemPic.getHeight();
 
-        // Get the dimensions of the bitmap
-        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-        bmOptions.inJustDecodeBounds = true;
-        Bitmap asIsBitMap = BitmapFactory.decodeFile(pictureFile.getPath(), bmOptions);
-        int photoW = bmOptions.outWidth;
-        int photoH = bmOptions.outHeight;
-
-
-		/* Figure out which way needs to be reduced less */
-        int scaleFactor = 1;
-        if ((targetW > 0) || (targetH > 0)) {
-            scaleFactor = Math.min(photoW / targetW, photoH / targetH);
-        }
-
-        // Decode the image file into a Bitmap sized to fill the View
-        bmOptions.inJustDecodeBounds = false;
-        bmOptions.inSampleSize = scaleFactor;
-        bmOptions.inPurgeable = true;
-
-        Bitmap bitmap = BitmapFactory.decodeFile(pictureFile.getPath(), bmOptions);
-
+        Bitmap bitmap = PictureUtil.sizeToView(targetW, targetH, pictureFile);
         Bitmap toBeBitmap = PictureUtil.correctOrientation(bitmap, pictureFile.getPath());
 
         mImgItemPic.setImageBitmap(toBeBitmap);
 
     }
 
-    protected void setPictureView2(File pictureFile)
+
+    protected void setPictureView(Picture picture)
     {
         // Get the dimensions of the View
         int targetW = mImgItemPic.getWidth();
         int targetH = mImgItemPic.getHeight();
 
-        // Get the dimensions of the bitmap
-        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-        bmOptions.inJustDecodeBounds = true;
-        decodeFile(pictureFile.getPath(), bmOptions);
-        int photoW = bmOptions.outWidth;
-        int photoH = bmOptions.outHeight;
+        Bitmap bitmap = PictureUtil.sizeToView(targetW, targetH, picture.getPath());
+        Bitmap toBeBitmap = PictureUtil.correctOrientation(bitmap, picture.getPath());
 
-		/* Figure out which way needs to be reduced less */
-        int scaleFactor = 1;
-        if ((targetW > 0) || (targetH > 0)) {
-            scaleFactor = Math.min(photoW / targetW, photoH / targetH);
-        }
-
-        // Decode the image file into a Bitmap sized to fill the View
-        bmOptions.inJustDecodeBounds = false;
-        bmOptions.inSampleSize = scaleFactor;
-        bmOptions.inPurgeable = true;
-
-        Bitmap bitmap = decodeFile(pictureFile.getPath(), bmOptions);
-        mImgItemPic.setImageBitmap(bitmap);
+        mImgItemPic.setImageBitmap(toBeBitmap);
 
     }
 
@@ -644,7 +648,8 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
                 pictureMgr.setItemId(itemId);
                 pictureMgr.setOriginalPicture(pictureInDb);
                 pictureMgr.setViewOriginalPicture();
-                setPictureView(pictureMgr.getPictureForViewing().getFile());
+                //setPictureView(pictureMgr.getPictureForViewing().getFile());
+                setPictureView(pictureMgr.getPictureForViewing());
                 break;
         }
     }
@@ -655,7 +660,8 @@ public class ItemEditingActivity extends AppCompatActivity implements LoaderMana
         int colPicturePath = cursor.getColumnIndex(PicturesEntry.COLUMN_FILE_PATH);
         Picture pictureInDb = null;
         if (cursor.moveToFirst()) {
-            pictureInDb = new Picture(cursor.getLong(colRowId), new File(cursor.getString(colPicturePath)));
+            //pictureInDb = new Picture(cursor.getLong(colRowId), new File(cursor.getString(colPicturePath)));
+            pictureInDb = new Picture(cursor.getLong(colRowId), cursor.getString(colPicturePath));
         }
 
         return pictureInDb;

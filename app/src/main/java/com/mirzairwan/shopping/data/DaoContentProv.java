@@ -53,7 +53,7 @@ public class DaoContentProv implements DaoManager
         values.put(ToBuyItemsEntry.COLUMN_IS_CHECKED, isChecked ? 1 : 0);
         Uri updateBuyItemUri = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItemId);
         int updated = mContext.getContentResolver().update(updateBuyItemUri, values, null, null);
-        if(updated == 1)
+        if (updated == 1)
             return mContext.getString(R.string.database_success);
         else
             return mContext.getString(R.string.database_failed);
@@ -91,10 +91,10 @@ public class DaoContentProv implements DaoManager
 
         //insert picture paths
         int opSavePictureIdx = -1;
-        for (Picture path : pictureMgr.getPictureForSaving()) {
+        for (Picture picture : pictureMgr.getPictureForSaving()) {
             ContentProviderOperation.Builder insertPicPathBuilder = ContentProviderOperation.newInsert(PicturesEntry.CONTENT_URI);
             insertPicPathBuilder.withValueBackReference(PicturesEntry.COLUMN_ITEM_ID, 0);
-            insertPicPathBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, path.getPicturePath());
+            insertPicPathBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, picture.getPicturePath());
             insertPicPathBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
             ops.add(insertPicPathBuilder.build());
             opSavePictureIdx = ops.size() - 1;
@@ -253,22 +253,26 @@ public class DaoContentProv implements DaoManager
         int discardPicturesSize = pictureMgr.getDiscardedPictures().size();
 
         Iterator<Picture> iteratorDiscardPics = pictureMgr.getDiscardedPictures().iterator();
+        int externalFileCount = 0;
         while (iteratorDiscardPics.hasNext()) {
 
             Picture discardedPicture = iteratorDiscardPics.next();
 
-            deleteDiscardedFile += deleteFileFromFilesystem(discardedPicture.getFile());
+            if (!pictureMgr.isExternalFile(discardedPicture) && discardedPicture.getFile() != null) //Do not delete file NOT owned by app
+                deleteDiscardedFile += deleteFileFromFilesystem(discardedPicture.getFile());
+            else
+                ++externalFileCount; //Keep count of external file to give the correct deletion report
 
             if (deleteDiscardedFile == 1) {
-                iteratorDiscardPics.remove(); //remove file from discarded list
+                iteratorDiscardPics.remove(); //remove external and internal pictures from discarded list
             }
 
             logDeleteDiscardedFileFromFilesystem(deleteDiscardedFile, "Delete discarded file");
 
         }
 
-        if (discardPicturesSize > 0)
-            msg = (deleteDiscardedFile == discardPicturesSize ?
+        if (discardPicturesSize - externalFileCount > 0) //Do not count external file because they are not deleted
+            msg = (deleteDiscardedFile == discardPicturesSize - externalFileCount ?
                     mContext.getString(R.string.filesystem_delete_discarded_ok) :
                     mContext.getString(R.string.filesystem_delete_discarded_failed));
 
@@ -362,7 +366,7 @@ public class DaoContentProv implements DaoManager
 
         if (opSavePictureIdx > -1) {
             String msgDiscardPics = cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
-            if(msgDiscardPics != null)
+            if (msgDiscardPics != null)
                 msg += "\n" + msgDiscardPics;
         }
 

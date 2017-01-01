@@ -6,4 +6,8 @@
         android:icon="@drawable/ic_camera_enhance"
         app:showAsAction="always"
         />
+    <item android:id="@+id/choose_picture"
+          android:title="Insert a picture"
+          android:icon="@drawable/ic_insert_photo"
+          app:showAsAction="always" />
 </menu>
