@@ -146,6 +146,9 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
     @Override
     protected void save()
     {
+        if(!fieldsValidated())
+            return;
+
         Item item = getItemFromInputField();
 
         String itemQuantity = "1";
@@ -182,7 +185,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
         }
 
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-
+        finish();
     }
 
     private void createPurchase(Cursor cursor)
@@ -262,7 +265,7 @@ public class BuyingActivity extends ItemEditingActivity implements LoaderManager
                 break;
 
             default:
-                loader = super.onCreateLoader(loaderId, args);
+                loader = super.onCreateLoader(loaderId, args); //Reuse superclass
 
         }
         return loader;
