@@ -91,7 +91,11 @@ public class Item implements Parcelable {
         mIsInBuyList = inBuyList;
     }
 
-    public void addPrice(Price price) {
+    /**
+     * Make this package access so that only PriceMgr can access
+     * @param price
+     */
+    void addPrice(Price price) {
         if (price == null)
             throw new IllegalArgumentException("Price cannot be bull");
         mPrices.add(price);

@@ -116,16 +116,6 @@ public class ToBuyItem implements Parcelable
             return mSelectedPrice.getUnitPrice();
     }
 
-//    public void updateUnitPrice(double unitPrice)
-//    {
-//            mSelectedPrice.setUnitPrice(unitPrice);
-//    }
-//
-//    public void updateBundlePrice(double bundlePrice, double bundleQuantity)
-//    {
-//        mSelectedPrice.setBundlePrice(bundlePrice, bundleQuantity);
-//    }
-
     public double getUnitPrice()
     {
         return mItem.getItemPrice(1, Price.Type.UNIT_PRICE).getUnitPrice();

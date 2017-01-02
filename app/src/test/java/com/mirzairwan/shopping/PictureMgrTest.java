@@ -1,6 +1,7 @@
 package com.mirzairwan.shopping;
 
 import com.mirzairwan.shopping.domain.Picture;
+import com.mirzairwan.shopping.domain.PictureMgr;
 
 import org.junit.Before;
 import org.junit.Test;

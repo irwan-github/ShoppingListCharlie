@@ -36,28 +36,61 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.mirzairwan.shopping.data.Contract;
+import com.mirzairwan.shopping.data.Contract.PicturesEntry;
+import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.DaoManager;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Picture;
+import com.mirzairwan.shopping.domain.PictureMgr;
+import com.mirzairwan.shopping.domain.PriceMgr;
+import com.mirzairwan.shopping.domain.ShoppingList;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
-public abstract class ItemActivity extends AppCompatActivity
-        implements
+/**
+ * This is a base class for subclasses to leverage on the following:
+ * <p>
+ * Loader for Prices table. Subclass just need to call initLoader with the correct loader id.
+ * <p>
+ * Loader for Pictures table. Subclass just need to call initLoader with the correct loader id.
+ * <p>
+ * Create Item objects and populate screen.
+ * <p>
+ * Ask permission for camera use
+ * <p>
+ * Ask permission for file access
+ * <p>
+ * Provide picture toolbar to capture image and pick photos from device storage.
+ * <p>
+ * Provide app bar for save and delete operation
+ * <p>
+ * Validate fields of provided xml layouts.
+ * <p>
+ * Provide user preference for country code
+ * <p>
+ * Provide user preference for sort by criteria
+ * <p>
+ * Subclass must include in their screen the following xml layout provided:
+ * <p>
+ * item_image_editor.xml
+ * <p>
+ * item_editing.xml
+ * <p>
+ * price_editing.xml
+ */
+public abstract class ItemActivity extends AppCompatActivity implements
         LoaderManager.LoaderCallbacks<Cursor>
 {
     public static final String ITEM_IS_IN_SHOPPING_LIST = "ITEM_IS_IN_SHOPPING_LIST";
     protected static final String ITEM_URI = "ITEM_URI";
-    protected static final int ITEM_LOADER_ID = 20;
     protected static final int ITEM_PRICE_LOADER_ID = 21;
     protected static final int ITEM_PICTURE_LOADER_ID = 22;
     private static final int REQUEST_SNAP_PICTURE = 15;
-    private static final String LOG_TAG = ItemEditingActivity.class.getSimpleName();
+    private static final String LOG_TAG = ItemActivity.class.getSimpleName();
     private static final int REQUEST_PICK_PHOTO = 16;
-    private static final int PERMISSION_USER_CAMERA_REQUEST = 30;
-    private static final int PERMISSION_USER_READ_EXTERNAL_STORAGE = 31;
+    private static final int PERMISSION_GIVE_ITEM_PICTURE = 32;
 
     protected EditText etName;
     protected EditText etBrand;
@@ -73,43 +106,35 @@ public abstract class ItemActivity extends AppCompatActivity
     protected View.OnTouchListener mOnTouchListener;
     protected boolean mItemHaveChanged = false;
 
-    protected Item item;
+    protected Item mItem;
     protected DaoManager daoManager;
-    protected PictureMgr pictureMgr;
+    protected PictureMgr mPictureMgr;
     protected PriceMgr priceMgr;
     protected String mCountryCode;
-    protected long itemId;
-    private String mSortPref;
+    private long itemId;
+    //private String mSortPref;
     private Toolbar toolbarPicture;
+    protected ShoppingList shoppingList;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(getActivityLayout());
+        setContentView(getLayoutXml());
+        setupPictureToolbar();
 
         daoManager = Builder.getDaoManager(this);
-        pictureMgr = new PictureMgr(getApplicationInfo().packageName);
+        shoppingList = Builder.getShoppingList();
+        mPictureMgr = new PictureMgr(getApplicationInfo().packageName);
 
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         mCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
-
         priceMgr = new PriceMgr(mCountryCode);
 
     }
 
-    protected abstract int getActivityLayout();
-
-    protected void setupPermitted(int requestPermissionCode, String manifestPermission)
-    {
-        int permissionCheck = ContextCompat.checkSelfPermission(this,
-                manifestPermission);
-
-        if (permissionCheck == PackageManager.PERMISSION_DENIED)
-            ActivityCompat.requestPermissions(this, new String[]{manifestPermission},
-                    requestPermissionCode);
-    }
+    protected abstract int getLayoutXml();
 
     protected void setupPictureToolbar()
     {
@@ -134,60 +159,70 @@ public abstract class ItemActivity extends AppCompatActivity
                         photoPickerIntent.setType("image/*");
                         startActivityForResult(photoPickerIntent, REQUEST_PICK_PHOTO);
                         return true;
+
                     default:
                         return false;
                 }
 
             }
         });
+
+        ArrayList<String> permissionRequest = new ArrayList<>();
+
+        int permissionCamera = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.CAMERA);
+        if (permissionCamera == PackageManager.PERMISSION_DENIED)
+            permissionRequest.add(Manifest.permission.CAMERA);
+
+        int permissionPickPicture = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_EXTERNAL_STORAGE);
+        if (permissionPickPicture == PackageManager.PERMISSION_DENIED)
+            permissionRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+
+        if (permissionRequest.size() > 0)
+            ActivityCompat.requestPermissions(this, permissionRequest.toArray(new String[permissionRequest.size()]),
+                    PERMISSION_GIVE_ITEM_PICTURE);
+
     }
-
-    @Override
-    public void onResume()
-    {
-        super.onResume();  // Always call the superclass method first
-
-        setupPermitted(PERMISSION_USER_CAMERA_REQUEST, Manifest.permission.CAMERA);
-
-        setupPermitted(PERMISSION_USER_READ_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE);
-    }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
     {
         switch (requestCode) {
-            case PERMISSION_USER_CAMERA_REQUEST:
-                MenuItem itemCamera = toolbarPicture.getMenu().findItem(R.id.menu_camera);
+            case PERMISSION_GIVE_ITEM_PICTURE:
 
-                if (grantResults.length == 0 || grantResults[0] == PackageManager.PERMISSION_DENIED) {
-                    if (itemCamera != null)
-                        itemCamera.setEnabled(false);
+                for (int k = 0; k < permissions.length; ++k) {
+                    if (permissions[k].equalsIgnoreCase(Manifest.permission.CAMERA)) {
+
+                        MenuItem itemCamera = toolbarPicture.getMenu().findItem(R.id.menu_camera);
+
+                        if (grantResults[k] == PackageManager.PERMISSION_DENIED && itemCamera != null)
+                            itemCamera.setEnabled(false);
+
+                        if (grantResults[k] == PackageManager.PERMISSION_GRANTED && itemCamera != null)
+                            itemCamera.setEnabled(true);
+
+                    }
+
+                    if (permissions[k].equalsIgnoreCase(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+
+                        MenuItem itemPicturePicker = toolbarPicture.getMenu().findItem(R.id.choose_picture);
+
+                        if (grantResults[k] == PackageManager.PERMISSION_DENIED && itemPicturePicker != null)
+                            itemPicturePicker.setEnabled(false);
+
+                        if (grantResults[k] == PackageManager.PERMISSION_GRANTED && itemPicturePicker != null)
+                            itemPicturePicker.setEnabled(true);
+
+                    }
                 }
 
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (itemCamera != null)
-                        itemCamera.setEnabled(true);
-                }
                 break;
 
-            case PERMISSION_USER_READ_EXTERNAL_STORAGE:
-                MenuItem itemPicturePicker = toolbarPicture.getMenu().findItem(R.id.choose_picture);
-                if (grantResults.length == 0 || grantResults[0] == PackageManager.PERMISSION_DENIED) {
-                    if (itemPicturePicker != null)
-                        itemPicturePicker.setEnabled(false);
-                }
-
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (itemPicturePicker != null)
-                        itemPicturePicker.setEnabled(true);
-                }
-                break;
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         }
-
-
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     protected void setCurrencySymbol(EditText et, String currencyCode)
@@ -200,15 +235,25 @@ public abstract class ItemActivity extends AppCompatActivity
         etLayout.setHint(hint + " (" + currencySymbol + ")");
     }
 
-    protected void initLoaders(Uri uri)
+    protected void initPriceLoader(Uri uri, LoaderManager.LoaderCallbacks<Cursor> callback)
     {
+        if (ContentUris.parseId(uri) == -1)
+            throw new IllegalArgumentException("uri and item id cannot be empty or -1");
+
         Bundle arg = new Bundle();
         arg.putParcelable(ITEM_URI, uri);
-        getLoaderManager().initLoader(ITEM_PRICE_LOADER_ID, arg, this);
-        getLoaderManager().initLoader(ITEM_PICTURE_LOADER_ID, arg, this);
-
+        getLoaderManager().initLoader(ITEM_PRICE_LOADER_ID, arg, callback);
     }
 
+    protected void initPictureLoader(Uri uri, LoaderManager.LoaderCallbacks<Cursor> callback)
+    {
+        if (ContentUris.parseId(uri) == -1)
+            throw new IllegalArgumentException("uri and item id cannot be empty or -1");
+
+        Bundle arg = new Bundle();
+        arg.putParcelable(ITEM_URI, uri);
+        getLoaderManager().initLoader(ITEM_PICTURE_LOADER_ID, arg, callback);
+    }
 
 
     @Override
@@ -227,7 +272,6 @@ public abstract class ItemActivity extends AppCompatActivity
             case R.id.save_item_details:
                 save();
                 mItemHaveChanged = false;
-                finish();
                 return true;
             case R.id.menu_remove_item_from_list:
                 delete();
@@ -258,12 +302,12 @@ public abstract class ItemActivity extends AppCompatActivity
      */
     protected void removeUnwantedPicturesFromApp()
     {
-        if (pictureMgr.getOriginalPicture() == null && pictureMgr.getPictureForViewing() != null)
-            pictureMgr.discardLastViewedPicture();
+        if (mPictureMgr.getOriginalPicture() == null && mPictureMgr.getPictureForViewing() != null)
+            mPictureMgr.discardLastViewedPicture();
 
-        if (pictureMgr.getDiscardedPictures().size() > 0) {
-            pictureMgr.setViewOriginalPicture();
-            String msg = daoManager.cleanUpDiscardedPictures(pictureMgr);
+        if (mPictureMgr.getDiscardedPictures().size() > 0) {
+            mPictureMgr.setViewOriginalPicture();
+            String msg = daoManager.cleanUpDiscardedPictures(mPictureMgr);
             Toast.makeText(ItemActivity.this, msg, Toast.LENGTH_LONG).show();
         }
 
@@ -281,8 +325,8 @@ public abstract class ItemActivity extends AppCompatActivity
         if (cameraIntent.resolveActivity(getPackageManager()) != null) {
             File itemPicFile = null;
             try {
-                itemPicFile = pictureMgr.createFileHandle(getExternalFilesDir(Environment.DIRECTORY_PICTURES));
-                pictureMgr.setPictureForViewing(itemPicFile);
+                itemPicFile = mPictureMgr.createFileHandle(getExternalFilesDir(Environment.DIRECTORY_PICTURES));
+                mPictureMgr.setPictureForViewing(itemPicFile);
                 Uri itemPicUri = FileProvider.getUriForFile(this, "com.mirzairwan.shopping.fileprovider", itemPicFile);
                 cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, itemPicUri);
                 startActivityForResult(cameraIntent, REQUEST_SNAP_PICTURE);
@@ -303,7 +347,7 @@ public abstract class ItemActivity extends AppCompatActivity
             case Activity.RESULT_OK:
                 switch (requestCode) {
                     case REQUEST_SNAP_PICTURE:
-                        setPictureView(pictureMgr.getPictureForViewing());
+                        setPictureView(mPictureMgr.getPictureForViewing());
                         break;
                     case REQUEST_PICK_PHOTO:
                         setPictureView(data);
@@ -312,13 +356,13 @@ public abstract class ItemActivity extends AppCompatActivity
                 break;
 
             default: //Assume the worst. No picture from camera. Delete the useless file.
-                pictureMgr.setViewOriginalPicture();
+                mPictureMgr.setViewOriginalPicture();
         }
 
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    private void setPictureView(Intent data)
+    protected void setPictureView(Intent data)
     {
         Uri photoUri = data.getData();
         String[] filePathColumn = {MediaStore.Images.Media.DATA};
@@ -330,35 +374,22 @@ public abstract class ItemActivity extends AppCompatActivity
             cursor.close();
         }
 
+        if (filePath == null)
+            return;
+        Picture externalPicture = new Picture(filePath);
+        mPictureMgr.setPictureForViewing(externalPicture);
+
+
         // Get the dimensions of the View
         int targetW = mImgItemPic.getWidth();
         int targetH = mImgItemPic.getHeight();
-        if (filePath == null)
-            return;
-
-        pictureMgr.setExternalPictureForViewing(filePath);
 
         Bitmap bitmap = PictureUtil.sizeToView(targetW, targetH, filePath);
         Bitmap toBeBitmap = PictureUtil.correctOrientation(bitmap, filePath);
 
         mImgItemPic.setImageBitmap(toBeBitmap);
 
-
     }
-
-    protected void setPictureView(File pictureFile)
-    {
-        // Get the dimensions of the View
-        int targetW = mImgItemPic.getWidth();
-        int targetH = mImgItemPic.getHeight();
-
-        Bitmap bitmap = PictureUtil.sizeToView(targetW, targetH, pictureFile);
-        Bitmap toBeBitmap = PictureUtil.correctOrientation(bitmap, pictureFile.getPath());
-
-        mImgItemPic.setImageBitmap(toBeBitmap);
-
-    }
-
 
     protected void setPictureView(Picture picture)
     {
@@ -370,9 +401,7 @@ public abstract class ItemActivity extends AppCompatActivity
         Bitmap toBeBitmap = PictureUtil.correctOrientation(bitmap, picture.getPath());
 
         mImgItemPic.setImageBitmap(toBeBitmap);
-
     }
-
 
     @Override
     protected void onStart()
@@ -449,7 +478,14 @@ public abstract class ItemActivity extends AppCompatActivity
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(titleId);
         builder.setMessage(messageId);
-        builder.setPositiveButton(R.string.ok, null);
+        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+                dialog.dismiss();
+            }
+        });
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
     }
@@ -458,7 +494,14 @@ public abstract class ItemActivity extends AppCompatActivity
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(messageId);
-        builder.setPositiveButton(R.string.ok, null);
+        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+                dialog.dismiss();
+            }
+        });
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
     }
@@ -469,30 +512,42 @@ public abstract class ItemActivity extends AppCompatActivity
      */
     protected abstract void delete();
 
-    protected Item getItemFromInputField()
+    /**
+     * Validate item details
+     * @return
+     */
+    protected boolean fieldsValidated()
     {
-        String itemName;
         if (TextUtils.isEmpty(etName.getText())) {
             alertRequiredField(R.string.message_title, R.string.mandatory_name);
-            etName.requestFocus();
-            return null;
-        } else {
-            itemName = etName.getText().toString();
-        }
+            return false;
+        } else
+            return true;
+    }
 
+    /**
+     * Call fieldsValidated method before calling this method
+     * <p>
+     * Update an existing member item or if creation, create a new item
+     *
+     * @return
+     */
+    protected Item getItemFromInputField()
+    {
+        String itemName = etName.getText().toString();
         String itemBrand = etBrand.getText().toString();
         String countryOrigin = etCountryOrigin.getText().toString();
         String itemDescription = etDescription.getText().toString();
 
-        if (item == null)
-            item = new Item(itemName);
+        if (mItem == null)
+            mItem = new Item(itemName);
         else
-            item.setName(itemName);
+            mItem.setName(itemName);
 
-        item.setBrand(itemBrand);
-        item.setCountryOrigin(countryOrigin);
-        item.setDescription(itemDescription);
-        return item;
+        mItem.setBrand(itemBrand);
+        mItem.setCountryOrigin(countryOrigin);
+        mItem.setDescription(itemDescription);
+        return mItem;
     }
 
     protected String getBundleQtyFromInputField()
@@ -525,7 +580,7 @@ public abstract class ItemActivity extends AppCompatActivity
     protected abstract void save();
 
     /**
-     * Populate Item object
+     * Create Item object
      *
      * @param cursor
      */
@@ -553,10 +608,10 @@ public abstract class ItemActivity extends AppCompatActivity
         int colCountryOriginIdx = cursor.getColumnIndex(countryOriginColumnName);
         countryOrigin = cursor.getString(colCountryOriginIdx);
 
-        item = new Item(itemId, itemName, itemBrand, countryOrigin, itemDescription, null);
+        mItem = new Item(itemId, itemName, itemBrand, countryOrigin, itemDescription, null);
         boolean itemIsInShoppingList = getIntent().getBooleanExtra(ITEM_IS_IN_SHOPPING_LIST, false);
-        item.setInBuyList(itemIsInShoppingList);
-        return item;
+        mItem.setInBuyList(itemIsInShoppingList);
+        return mItem;
     }
 
     protected void populateItemInputFields(Item item)
@@ -567,6 +622,10 @@ public abstract class ItemActivity extends AppCompatActivity
         etDescription.setText(item != null ? item.getDescription() : "");
     }
 
+    /**
+     * When displaying existing item in shopping list, set currency symbol to the saved currency
+     * code irregardless of current country code preference
+     */
     protected void populatePricesInputFields()
     {
         etUnitPrice.setText(priceMgr.getUnitPriceForDisplay());
@@ -597,6 +656,7 @@ public abstract class ItemActivity extends AppCompatActivity
         etBundleQty.setFocusable(false);
     }
 
+
     @Override
     public Loader<Cursor> onCreateLoader(int loaderId, Bundle args)
     {
@@ -609,26 +669,32 @@ public abstract class ItemActivity extends AppCompatActivity
 
         switch (loaderId) {
             case ITEM_PRICE_LOADER_ID:
-                projection = new String[]{Contract.PricesEntry._ID,
-                        Contract.PricesEntry.COLUMN_PRICE_TYPE_ID,
-                        Contract.PricesEntry.COLUMN_PRICE,
-                        Contract.PricesEntry.COLUMN_BUNDLE_QTY,
-                        Contract.PricesEntry.COLUMN_CURRENCY_CODE,
-                        Contract.PricesEntry.COLUMN_SHOP_ID};
+                projection = new String[]{PricesEntry._ID,
+                        PricesEntry.COLUMN_PRICE_TYPE_ID,
+                        PricesEntry.COLUMN_PRICE,
+                        PricesEntry.COLUMN_BUNDLE_QTY,
+                        PricesEntry.COLUMN_CURRENCY_CODE,
+                        PricesEntry.COLUMN_SHOP_ID};
                 itemId = ContentUris.parseId(uri);
-                selection = Contract.PricesEntry.COLUMN_ITEM_ID + "=?";
+                if (itemId == -1)
+                    throw new IllegalArgumentException("uri and item id cannot be empty or -1");
+
+                selection = PricesEntry.COLUMN_ITEM_ID + "=?";
                 selectionArgs = new String[]{String.valueOf(itemId)};
-                loader = new CursorLoader(this, Contract.PricesEntry.CONTENT_URI, projection, selection,
+                loader = new CursorLoader(this, PricesEntry.CONTENT_URI, projection, selection,
                         selectionArgs, null);
                 break;
 
             case ITEM_PICTURE_LOADER_ID:
-                projection = new String[]{Contract.PicturesEntry._ID, Contract.PicturesEntry.COLUMN_FILE_PATH,
-                        Contract.PicturesEntry.COLUMN_ITEM_ID};
+                projection = new String[]{PicturesEntry._ID, PicturesEntry.COLUMN_FILE_PATH,
+                        PicturesEntry.COLUMN_ITEM_ID};
                 itemId = ContentUris.parseId(uri);
-                selection = Contract.PicturesEntry.COLUMN_ITEM_ID + "=?";
+                if (itemId == -1)
+                    throw new IllegalArgumentException("uri and item id cannot be empty or -1");
+
+                selection = PicturesEntry.COLUMN_ITEM_ID + "=?";
                 selectionArgs = new String[]{String.valueOf(itemId)};
-                loader = new CursorLoader(this, Contract.PicturesEntry.CONTENT_URI, projection, selection,
+                loader = new CursorLoader(this, PicturesEntry.CONTENT_URI, projection, selection,
                         selectionArgs, null);
                 break;
 
@@ -647,16 +713,6 @@ public abstract class ItemActivity extends AppCompatActivity
 
         int loaderId = loader.getId();
         switch (loaderId) {
-            case ITEM_LOADER_ID:
-                cursor.moveToFirst();
-
-                Item item = createItem(Contract.ItemsEntry._ID, Contract.ItemsEntry.COLUMN_NAME,
-                        Contract.ItemsEntry.COLUMN_BRAND, Contract.ItemsEntry.COLUMN_DESCRIPTION,
-                        Contract.ItemsEntry.COLUMN_COUNTRY_ORIGIN, cursor);
-                pictureMgr.setItemId(item.getId());
-                populateItemInputFields(item);
-
-                break;
             case ITEM_PRICE_LOADER_ID:
                 priceMgr = new PriceMgr(itemId, mCountryCode);
                 priceMgr.createPrices(cursor);
@@ -665,21 +721,21 @@ public abstract class ItemActivity extends AppCompatActivity
 
             case ITEM_PICTURE_LOADER_ID:
                 Picture pictureInDb = createPicture(cursor);
-                int colItemId = cursor.getColumnIndex(Contract.PicturesEntry.COLUMN_ITEM_ID);
+                int colItemId = cursor.getColumnIndex(PicturesEntry.COLUMN_ITEM_ID);
                 long itemId = cursor.getLong(colItemId);
-                pictureMgr.setItemId(itemId);
-                pictureMgr.setOriginalPicture(pictureInDb);
-                pictureMgr.setViewOriginalPicture();
-                //setPictureView(pictureMgr.getPictureForViewing().getFile());
-                setPictureView(pictureMgr.getPictureForViewing());
+                mPictureMgr.setItemId(itemId);
+                mPictureMgr.setOriginalPicture(pictureInDb);
+                mPictureMgr.setViewOriginalPicture();
+                //setPictureView(mPictureMgr.getPictureForViewing().getFile());
+                setPictureView(mPictureMgr.getPictureForViewing());
                 break;
         }
     }
 
     protected Picture createPicture(Cursor cursor)
     {
-        int colRowId = cursor.getColumnIndex(Contract.PicturesEntry._ID);
-        int colPicturePath = cursor.getColumnIndex(Contract.PicturesEntry.COLUMN_FILE_PATH);
+        int colRowId = cursor.getColumnIndex(PicturesEntry._ID);
+        int colPicturePath = cursor.getColumnIndex(PicturesEntry.COLUMN_FILE_PATH);
         Picture pictureInDb = null;
         if (cursor.moveToFirst()) {
             //pictureInDb = new Picture(cursor.getLong(colRowId), new File(cursor.getString(colPicturePath)));
@@ -693,7 +749,6 @@ public abstract class ItemActivity extends AppCompatActivity
     public void onLoaderReset(Loader<Cursor> loader)
     {
         // If the loader is invalidated, clear out all the data from the input fields.
-        populateItemInputFields(null);
         clearPriceInputFields();
         clearPictureField();
     }
@@ -702,4 +757,5 @@ public abstract class ItemActivity extends AppCompatActivity
     {
         mImgItemPic.setImageBitmap(null);
     }
+
 }

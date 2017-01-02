@@ -1,6 +1,4 @@
-package com.mirzairwan.shopping;
-
-import com.mirzairwan.shopping.domain.Picture;
+package com.mirzairwan.shopping.domain;
 
 import java.io.File;
 import java.io.IOException;
@@ -133,7 +131,7 @@ public class PictureMgr
             mDiscardedPictures.remove(mPictureInDb);
     }
 
-    protected File createFileHandle(File dirPictures) throws IOException
+    public File createFileHandle(File dirPictures) throws IOException
     {
         String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
         String picFilename = SHOPPING_LIST_PICS + "_" + timeStamp + "_";
@@ -160,12 +158,6 @@ public class PictureMgr
     {
         if (getPictureForViewing() != null)
             mDiscardedPictures.add(getPictureForViewing());
-    }
-
-    public void setExternalPictureForViewing(String filePath)
-    {
-        Picture externalPicture = new Picture(filePath);
-        setPictureForViewing(externalPicture);
     }
 
     public boolean isExternalFile(Picture picture)

@@ -23,7 +23,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".BuyingActivity"
+            android:name=".AddItemToListActivity"
             android:parentActivityName=".ShoppingActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

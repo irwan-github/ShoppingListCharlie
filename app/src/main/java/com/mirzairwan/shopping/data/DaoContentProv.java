@@ -13,7 +13,7 @@ import android.os.RemoteException;
 import android.support.v4.content.FileProvider;
 import android.util.Log;
 
-import com.mirzairwan.shopping.PictureMgr;
+import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.R;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PicturesEntry;
@@ -105,7 +105,7 @@ public class DaoContentProv implements DaoManager
             ContentProviderOperation.Builder priceBuilder =
                     ContentProviderOperation.newInsert(PricesEntry.CONTENT_URI);
 
-            long itemId = -1; //The item id does not exist at this point.
+            long itemId = -1; //The Item id does not exist at this point.
             ContentValues priceContentValues = getPriceContentValues(price, itemId, updateTime, null);
 
             priceBuilder = priceBuilder.withValues(priceContentValues).
@@ -303,20 +303,20 @@ public class DaoContentProv implements DaoManager
 
         Picture pictureLastViewed = pictureMgr.getPictureForViewing();
         Picture originalPicture = pictureMgr.getOriginalPicture();
-        if (originalPicture != null && pictureLastViewed != originalPicture) { //Update item's picture operation
+        if (originalPicture != null && pictureLastViewed != originalPicture) { //Update Item's picture operation
             Uri updatePictureUri = ContentUris.withAppendedId(PicturesEntry.CONTENT_URI, originalPicture.getId());
             ContentProviderOperation.Builder updatePictureBuilder = ContentProviderOperation.newUpdate(updatePictureUri);
             updatePictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, pictureLastViewed.getPicturePath());
             updatePictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
             ops.add(updatePictureBuilder.build());
             opSavePictureIdx = ops.size() - 1;
-        } else if (originalPicture == null && pictureLastViewed != null) { //Insert item's picture operation
+        } else if (originalPicture == null && pictureLastViewed != null) { //Insert Item's picture operation
             Uri insertPictureUri = PicturesEntry.CONTENT_URI;
             ContentProviderOperation.Builder insertPictureBuilder = ContentProviderOperation.newInsert(insertPictureUri);
             insertPictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, pictureLastViewed.getPicturePath());
 
             if (pictureMgr.getItemId() < 1) {
-                throw new IllegalArgumentException("Picture with item id " + pictureMgr.getItemId());
+                throw new IllegalArgumentException("Picture with Item id " + pictureMgr.getItemId());
             }
 
             insertPictureBuilder.withValue(PicturesEntry.COLUMN_ITEM_ID, pictureMgr.getItemId());
@@ -331,7 +331,7 @@ public class DaoContentProv implements DaoManager
     @Override
     public String update(Item item, List<Price> prices, PictureMgr pictureMgr)
     {
-        String msg;
+        String msg = null;
         ArrayList<ContentProviderOperation> ops = new ArrayList<>();
         Date updateTime = new Date();
         int opSavePictureIdx = -1; //Start with picture to make it easier to do FileProvider operation
@@ -353,7 +353,15 @@ public class DaoContentProv implements DaoManager
         ContentProviderResult[] results = null;
         try {
             results = mContext.getContentResolver().applyBatch(Contract.CONTENT_AUTHORITY, ops);
+
             msg = mContext.getString(R.string.database_success);
+
+            if (opSavePictureIdx > -1) {
+                String msgDiscardPics = cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
+                if (msgDiscardPics != null)
+                    msg += "\n" + msgDiscardPics;
+            }
+
         } catch (RemoteException e) {
             msg = mContext.getString(R.string.database_failed);
             e.printStackTrace();
@@ -363,13 +371,6 @@ public class DaoContentProv implements DaoManager
         }
 
         logDbOperation(results);
-
-        if (opSavePictureIdx > -1) {
-            String msgDiscardPics = cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
-            if (msgDiscardPics != null)
-                msg += "\n" + msgDiscardPics;
-        }
-
         return msg;
     }
 

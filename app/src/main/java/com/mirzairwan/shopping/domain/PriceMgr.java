@@ -1,7 +1,8 @@
-package com.mirzairwan.shopping;
+package com.mirzairwan.shopping.domain;
 
 import android.database.Cursor;
 
+import com.mirzairwan.shopping.NumberFormatter;
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Price;
@@ -101,7 +102,7 @@ public class PriceMgr
         if (item == null)
             throw new IllegalArgumentException("Item cannot be null");
 
-        //Clear the prices in the item object first before adding because it will accumulate identical prices types
+        //Clear the prices in the  object first before adding because it will accumulate identical prices types
         item.clearPrices();
 
         mUnitPrice.setUnitPrice(Double.parseDouble(unitPriceFromInputField));

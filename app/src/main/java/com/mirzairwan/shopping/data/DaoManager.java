@@ -1,6 +1,6 @@
 package com.mirzairwan.shopping.data;
 
-import com.mirzairwan.shopping.PictureMgr;
+import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ToBuyItem;

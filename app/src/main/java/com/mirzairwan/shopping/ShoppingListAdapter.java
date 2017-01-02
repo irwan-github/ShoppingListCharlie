@@ -74,7 +74,7 @@ public class ShoppingListAdapter extends CursorAdapter
 
         tagViews.checkItem.setOnCheckedChangeListener(null); //Disable checkbox listener to disable firing pre-existing checked items on the buy list
         int colIsChecked = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_IS_CHECKED);
-        tagViews.checkItem.setChecked(cursor.getInt(colIsChecked) == 1); //Now it is safe to associate the 'checked' status of buy item with the checkbox
+        tagViews.checkItem.setChecked(cursor.getInt(colIsChecked) == 1); //Now it is safe to associate the 'checked' status of buy  with the checkbox
         tagViews.onItemCheckedChangeListener.setCursorPosition(cursor.getPosition()); //Associate the listener with the position on the shopping list
         tagViews.checkItem.setOnCheckedChangeListener(tagViews.onItemCheckedChangeListener); //Enable checkbox listener
         tagViews.checkItem.setFocusable(false);

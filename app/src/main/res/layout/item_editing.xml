@@ -8,7 +8,7 @@
                 android:background="#fff"
                 android:elevation="4dp"
                 android:focusableInTouchMode="true"
-                tools:context="com.mirzairwan.shopping.ItemEditingActivity">
+                tools:context="com.mirzairwan.shopping.ItemEditingActivity3">
 
 
     <TextView

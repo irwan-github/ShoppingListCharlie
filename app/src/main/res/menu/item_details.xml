@@ -10,8 +10,7 @@
     <item
         android:id="@+id/menu_remove_item_from_list"
         android:icon="@drawable/ic_delete"
-        android:title="@string/remove_item_from_shopping_list_ok"
+        android:title="@string/menu_remove_item_from_shopping_list"
         app:showAsAction="ifRoom">
     </item>
-    <group android:id="@+id/menu_grp_photo" />
 </menu>

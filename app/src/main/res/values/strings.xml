@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Shopping List</string>
+    <string name="app_name">Go shopping</string>
     <string name="buy_list">Shopping List</string>
     <string name="catalogue">All items</string>
     <string name="item_name">Name</string>
@@ -12,7 +12,7 @@
     <string name="quantity_label">Quantity to buy</string>
     <string name="cb_unit_price">Unit price</string>
     <string name="cb_bundle_price">Bundle price</string>
-    <string name="new_buy_item_title">New purchase</string>
+    <string name="new_buy_item_title">New item</string>
     <string name="update_buy_item_title">Update Purchase details</string>
     <string name="remove_item_from_shopping_list_ok">Remove item from shopping list : OK</string>
     <string name="empty_view_title_text">No items in your shopping list</string>
@@ -58,4 +58,5 @@
     <string name="settings_screen">Settings</string>
     <string name="settings_catalogue">Catalogue</string>
     <string name="user_sort_pref">user_sort_pref</string>
+    <string name="menu_remove_item_from_shopping_list">Remove item from shopping list</string>
 </resources>

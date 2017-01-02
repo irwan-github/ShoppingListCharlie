@@ -10,8 +10,6 @@ import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ShoppingList;
 import com.mirzairwan.shopping.domain.ToBuyItem;
 
-import java.util.Currency;
-
 /**
  * Created by Mirza Irwan on 17/12/16.
  */
@@ -30,43 +28,35 @@ public class ShoppingCursorList implements ShoppingList
         mCatalogueCursor = cursor;
     }
 
+//    @Override
+//    public ToBuyItem addNewItem(String itemName, String itemBrand, String itemDescription, String countryOrigin, int quantityToBuy, String currencyCode, double unitPrice, double bundlePrice, double bundleQty, Price.Type selectedPriceType)
+//    {
+//        String msg = "Added to shopping list.";
+//        if (quantityToBuy < 1) {
+//            throw new IllegalArgumentException("Buy Quantity " + quantityToBuy + " is invalid: it must at least 1");
+//        }
+//
+//        if (currencyCode == null)
+//            throw new IllegalArgumentException("Currency code cannot be empty");
+//
+//        Item item = new Item(itemName);
+//        item.setBrand(itemBrand);
+//        item.setDescription(itemDescription);
+//        item.setCountryOrigin(countryOrigin);
+//
+//        if (selectedPriceType == null)
+//            selectedPriceType = Price.Type.UNIT_PRICE;
+//
+//        Price unitPriceFinal = new Price(unitPrice, currencyCode, defaultShopId);
+//        Price bundlePriceFinal = new Price(bundlePrice, bundleQty, currencyCode, defaultShopId);
+//        return addNewItem(item, quantityToBuy, unitPriceFinal, bundlePriceFinal, selectedPriceType);
+//
+//}
+
     @Override
-    public ToBuyItem createItem(String itemName, String itemBrand, String itemDescription, int quantityToBuy, String currencyCode, double unitPrice, double bundlePrice, double bundleQty, Price.Type selectedPriceType)
+    public ToBuyItem addNewItem(Item item, int quantityToBuy, Price selectedPrice)
     {
-        String msg = "Added to shopping list.";
-        if (quantityToBuy < 1) {
-            throw new IllegalArgumentException("Buy Quantity " + quantityToBuy + " is invalid: it must at least 1");
-        }
-        Item item = new Item(itemName);
-        item.setBrand(itemBrand);
-        item.setDescription(itemDescription);
-
-        Currency currency = null;
-
-        Price selectedPrice = null;
-        if(selectedPriceType == null)
-            selectedPriceType = Price.Type.UNIT_PRICE;
-
-        if(currencyCode != null) {
-            currency = Currency.getInstance(currencyCode);
-
-
-            Price unitPriceFinal = new Price(unitPrice, currency.getCurrencyCode(), defaultShopId);
-            item.addPrice(unitPriceFinal);
-
-            Price bundlePriceFinal = new Price(bundlePrice, bundleQty, currency.getCurrencyCode(), defaultShopId);
-            item.addPrice(bundlePriceFinal);
-
-            if (selectedPriceType == Price.Type.UNIT_PRICE)
-                selectedPrice = unitPriceFinal;
-            else
-                selectedPrice = bundlePriceFinal;
-
-
-        }
-
         return buyItem(item, quantityToBuy, selectedPrice);
-
     }
 
     @Override
