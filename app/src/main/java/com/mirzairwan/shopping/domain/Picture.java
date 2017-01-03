@@ -3,7 +3,7 @@ package com.mirzairwan.shopping.domain;
 import java.io.File;
 
 /**
- * A picture must have a file path. The picture may or may not have a File object associated with it.
+ * A picture must have a file path and a File object associated with it.
  * Created by Mirza Irwan on 27/12/16.
  */
 
@@ -27,6 +27,7 @@ public class Picture
     {
         _id = id;
         mPath = pictureFilePath;
+        mPictureFile = new File(pictureFilePath);
         if(mPath == null)
             throw new IllegalArgumentException("Picture cannot have empth path");
 
@@ -47,7 +48,7 @@ public class Picture
         mPath = pictureFilePath;
         if(mPath == null)
             throw new IllegalArgumentException("Picture cannot have empty path");
-
+        mPictureFile = new File(pictureFilePath);
     }
 
 
@@ -61,6 +62,7 @@ public class Picture
     public void setPath(String path)
     {
         this.mPath = path;
+        mPictureFile = new File(path);
         if(mPath == null)
             throw new IllegalArgumentException("Picture cannot have empth path");
 

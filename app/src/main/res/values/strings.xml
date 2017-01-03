@@ -59,4 +59,5 @@
     <string name="settings_catalogue">Catalogue</string>
     <string name="user_sort_pref">user_sort_pref</string>
     <string name="menu_remove_item_from_shopping_list">Remove item from shopping list</string>
+    <string name="summary_qty_purchase">Qty :</string>
 </resources>

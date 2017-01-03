@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Created by Mirza Irwan on 29/12/16.
  * <p>
- * Helper class to track all the pictures taken.
+ * Helper class to track all the pictures taken for an item.
  * Use the class to decide which pictures to delete and which one to save on the database
  * and the filesystem.
  */

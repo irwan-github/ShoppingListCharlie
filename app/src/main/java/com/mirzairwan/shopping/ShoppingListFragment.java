@@ -21,6 +21,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.mirzairwan.shopping.data.Contract;
+import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
@@ -33,26 +34,28 @@ import static com.mirzairwan.shopping.R.xml.preferences;
  */
 
 public class ShoppingListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
-        ShoppingListAdapter.OnCheckBuyItemListener, SharedPreferences.OnSharedPreferenceChangeListener
+        ShoppingListAdapter2.OnCheckBuyItemListener, SharedPreferences.OnSharedPreferenceChangeListener
 
 {
     public static final String BUY_LIST = "BUY_LIST";
     private static final String LOG_TAG = ShoppingListFragment.class.getSimpleName();
     private static final int LOADER_BUY_ITEM_ID = 1;
     private OnFragmentInteractionListener onFragmentInteractionListener;
-    private ShoppingListAdapter shoppingListAdapter;
+    private ShoppingListAdapter2 shoppingListAdapter;
     private String countryCode;
     private static final String SORT_COLUMN = "SORT_COLUMN";
 
 
-    public static ShoppingListFragment newInstance() {
+    public static ShoppingListFragment newInstance()
+    {
 
         ShoppingListFragment buyListFragment = new ShoppingListFragment();
         return buyListFragment;
     }
 
 
-    public ShoppingListFragment() {
+    public ShoppingListFragment()
+    {
     }
 
     @Override
@@ -70,7 +73,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+    {
         // If activity recreated (such as from screen rotate), restore
         // any necessary data set by onSaveInstanceState().
         // This is primarily necessary when in the two-pane layout.
@@ -106,7 +110,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     }
 
     @Override
-    public void onAttach(Activity activity) {
+    public void onAttach(Activity activity)
+    {
         super.onAttach(activity);
         onFragmentInteractionListener = (OnFragmentInteractionListener) activity;
     }
@@ -126,12 +131,15 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         super.onDestroyView();
     }
 
-    private void setupListItemListener(ListView lvBuyItems) {
-        lvBuyItems.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+    private void setupListItemListener(ListView lvBuyItems)
+    {
+        lvBuyItems.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+            {
                 //The id parameter is a buy_item id. However, the requirement is item id
-                Cursor cursor = (Cursor)shoppingListAdapter.getItem(position);
+                Cursor cursor = (Cursor) shoppingListAdapter.getItem(position);
                 int colItemIdIdx = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_ITEM_ID);
                 long itemId = cursor.getLong(colItemIdIdx);
                 onFragmentInteractionListener.onViewBuyItem(itemId);
@@ -140,17 +148,29 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     }
 
 
-    private void setupListView(ListView lvBuyItems) {
-        shoppingListAdapter = new ShoppingListAdapter(getActivity(), null,
-                this);
+    private void setupListView(ListView lvBuyItems)
+    {
+//        shoppingListAdapter = new ShoppingListAdapter2(getActivity(), null,
+//                this);
+
+        ImageResizer imageResizer =
+                new ImageResizer(getActivity(),
+                        getResources().getDimensionPixelSize(R.dimen.image_summary_width),
+                        getResources().getDimensionPixelSize(R.dimen.list_item_height));
+        shoppingListAdapter = new ShoppingListAdapter2(getActivity(), null,
+                this, imageResizer);
+
         lvBuyItems.setAdapter(shoppingListAdapter);
     }
 
-    private void setupFloatingActionButton(View view) {
+    private void setupFloatingActionButton(View view)
+    {
         FloatingActionButton btnAdd = (FloatingActionButton) view.findViewById(R.id.btn_add_item);
-        btnAdd.setOnClickListener(new View.OnClickListener() {
+        btnAdd.setOnClickListener(new View.OnClickListener()
+        {
             @Override
-            public void onClick(View v) {
+            public void onClick(View v)
+            {
                 onFragmentInteractionListener.onAdditem();
                 showCostOfItemsAdded();
             }
@@ -161,16 +181,17 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     public Loader<Cursor> onCreateLoader(int id, Bundle args)
     {
         String[] projection = new String[]{ToBuyItemsEntry._ID,
-                                            ToBuyItemsEntry.COLUMN_ITEM_ID,
-                                            ToBuyItemsEntry.COLUMN_QUANTITY,
-                                            ToBuyItemsEntry.COLUMN_IS_CHECKED,
-                                            ItemsEntry.COLUMN_NAME,
-                                            ItemsEntry.COLUMN_BRAND,
-                                            ItemsEntry.COLUMN_COUNTRY_ORIGIN,
-                                            ItemsEntry.COLUMN_DESCRIPTION,
-                                            PricesEntry.COLUMN_PRICE_TYPE_ID,
-                                            PricesEntry.COLUMN_PRICE,
-                                            PricesEntry.COLUMN_CURRENCY_CODE};
+                ToBuyItemsEntry.COLUMN_ITEM_ID,
+                ToBuyItemsEntry.COLUMN_QUANTITY,
+                ToBuyItemsEntry.COLUMN_IS_CHECKED,
+                ItemsEntry.COLUMN_NAME,
+                ItemsEntry.COLUMN_BRAND,
+                ItemsEntry.COLUMN_COUNTRY_ORIGIN,
+                ItemsEntry.COLUMN_DESCRIPTION,
+                PicturesEntry.COLUMN_FILE_PATH,
+                PricesEntry.COLUMN_PRICE_TYPE_ID,
+                PricesEntry.COLUMN_PRICE,
+                PricesEntry.COLUMN_CURRENCY_CODE};
 
         Uri uri = Contract.ShoppingList.CONTENT_URI;
 
@@ -208,7 +229,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     public void onCheckBuyItem(boolean isChecked, int mBuyItemPosition)
     {
         //Save buy item check status
-        Cursor cursor = (Cursor)shoppingListAdapter.getItem(mBuyItemPosition);
+        Cursor cursor = (Cursor) shoppingListAdapter.getItem(mBuyItemPosition);
         int buyItemIdColIdx = cursor.getColumnIndex(ToBuyItemsEntry._ID);
         long buyItemId = cursor.getLong(buyItemIdColIdx);
         String msg = Builder.getDaoManager(getActivity()).update(buyItemId, isChecked);
@@ -219,8 +240,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
     {
-        if(key.equals(getString(R.string.user_country_pref)))
-        {
+        if (key.equals(getString(R.string.user_country_pref))) {
             countryCode = sharedPreferences.getString(key, null);
             showCostOfItemsAdded();
             showCostOfItemsChecked();
@@ -245,12 +265,11 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     public void showCostOfItemsAdded()
     {
         String currencyCode = NumberFormatter.getCurrencyCode(countryCode);
-        TextView tvTotalValueAdded = (TextView)getActivity().findViewById(R.id.tv_total_buy);
+        TextView tvTotalValueAdded = (TextView) getActivity().findViewById(R.id.tv_total_buy);
         Double totalValueOfItemsAdded = 0.00d;
         Cursor cursor = shoppingListAdapter.getCursor();
         cursor.moveToPosition(-1);
-        while(cursor.moveToNext())
-        {
+        while (cursor.moveToNext()) {
             int colSelectedPriceTag = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
 
             int colCurrencyCode = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
@@ -260,8 +279,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
             int qtyPurchased = cursor.getInt(colQtyPurchased);
 
             //Only add item with same currency code as user home currency code
-            if(lCurrencyCode.trim().equalsIgnoreCase(currencyCode))
-                totalValueOfItemsAdded += ((cursor.getDouble(colSelectedPriceTag)/100) * qtyPurchased);
+            if (lCurrencyCode.trim().equalsIgnoreCase(currencyCode))
+                totalValueOfItemsAdded += ((cursor.getDouble(colSelectedPriceTag) / 100) * qtyPurchased);
         }
 
         tvTotalValueAdded.setText(NumberFormatter.formatCountryCurrency(countryCode, currencyCode, totalValueOfItemsAdded));
@@ -271,12 +290,11 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     public void showCostOfItemsChecked()
     {
         String currencyCode = NumberFormatter.getCurrencyCode(countryCode);
-        TextView tvTotalValueChecked = (TextView)getActivity().findViewById(R.id.tv_total_checked);
+        TextView tvTotalValueChecked = (TextView) getActivity().findViewById(R.id.tv_total_checked);
         Double totalValueOfItemsChecked = 0.00d;
         Cursor cursor = shoppingListAdapter.getCursor();
         cursor.moveToPosition(-1);
-        while(cursor.moveToNext())
-        {
+        while (cursor.moveToNext()) {
             int colSelectedPriceTag = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
             int colIsItemChecked = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_IS_CHECKED);
             int colCurrencyCode = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
@@ -287,14 +305,12 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
             boolean isItemChecked = cursor.getInt(colIsItemChecked) > 0;
 
             //Only add item with same currency code as user home currency code
-            if(isItemChecked && lCurrencyCode.trim().equalsIgnoreCase(currencyCode))
-                totalValueOfItemsChecked += ((cursor.getDouble(colSelectedPriceTag)/100) * qtyPurchased);
+            if (isItemChecked && lCurrencyCode.trim().equalsIgnoreCase(currencyCode))
+                totalValueOfItemsChecked += ((cursor.getDouble(colSelectedPriceTag) / 100) * qtyPurchased);
         }
 
         tvTotalValueChecked.setText(NumberFormatter.formatCountryCurrency(countryCode, currencyCode, totalValueOfItemsChecked));
     }
-
-
 
 
 }

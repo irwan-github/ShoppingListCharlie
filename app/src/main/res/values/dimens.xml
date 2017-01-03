@@ -9,8 +9,7 @@
     <dimen name="touch_target_width">48dp</dimen>
     <dimen name="summary_totals_height">48dp</dimen>
     <dimen name="toolbar_height">56dp</dimen>
-    <dimen name="list_item_height">72dp</dimen>
-    <dimen name="list_item_height_1">72dp</dimen>
+    <dimen name="list_item_height">128dp</dimen>
     <dimen name="edit_text_height">72dp</dimen>
     <dimen name="edit_text_padding_top">8dp</dimen>
     <dimen name="edit_text_padding_bottom">8dp</dimen>
@@ -30,4 +29,8 @@
     <dimen name="tv_item_brand_max_width">100dp</dimen>
     <dimen name="edit_surface_margin">8dp</dimen>
     <dimen name="edit_text_item_description_min_width">250dp</dimen>
+
+    <dimen name="image_summary_width">96dp</dimen>
+    <dimen name="summary_body_padding_top">2dp</dimen>
+    <dimen name="summary_header_padding_bottom">4dp</dimen>
 </resources>
