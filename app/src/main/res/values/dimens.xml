@@ -26,11 +26,13 @@
     <dimen name="edit_text_price_min_width">150dp</dimen>
     <dimen name="edit_text_bundle_qty_min_width">150dp</dimen>
     <dimen name="tv_item_name_max_width">150dp</dimen>
-    <dimen name="tv_item_brand_max_width">100dp</dimen>
+    <dimen name="tv_item_brand_max_width">150dp</dimen>
     <dimen name="edit_surface_margin">8dp</dimen>
     <dimen name="edit_text_item_description_min_width">250dp</dimen>
 
-    <dimen name="image_summary_width">96dp</dimen>
+    <dimen name="image_summary_width">100dp</dimen>
+    <dimen name="image_summary_height">100dp</dimen>
     <dimen name="summary_body_padding_top">2dp</dimen>
     <dimen name="summary_header_padding_bottom">4dp</dimen>
+    <dimen name="tv_item_price_max_width">100dp</dimen>
 </resources>

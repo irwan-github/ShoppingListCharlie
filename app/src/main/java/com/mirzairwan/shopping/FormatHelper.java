@@ -9,7 +9,7 @@ import java.util.Locale;
  * Created by Mirza Irwan on 7/12/16.
  */
 
-public class NumberFormatter
+public class FormatHelper
 {
     /**
      * Formats a value of type double
@@ -70,5 +70,12 @@ public class NumberFormatter
     {
         Locale userLocale = new Locale(Locale.getDefault().getLanguage(), countryCode);
         return getCurrencySymbol(userLocale, currencyCode);
+    }
+
+    public static String capitalizeFirstLetter(String original) {
+        if (original == null || original.length() == 0) {
+            return original;
+        }
+        return original.substring(0, 1).toUpperCase() + original.substring(1);
     }
 }

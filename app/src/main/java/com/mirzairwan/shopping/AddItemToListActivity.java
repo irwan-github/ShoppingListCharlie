@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.widget.EditText;
 import android.widget.RadioGroup;
@@ -27,6 +28,8 @@ import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
 public class AddItemToListActivity extends ItemActivity
 {
+    private static final String LOG_TAG = AddItemToListActivity.class.getSimpleName();
+    private static final String URI_ITEM = "uri"; //Used for saving instant state
     private int actionMode = -1; //Informs the editor whether this activity is creation or updating
     public static final int CREATE_BUY_ITEM_MODE = 1; //use for action mode
     public static final int EDIT_BUY_ITEM_MODE = 2; //use for action mode
@@ -38,11 +41,14 @@ public class AddItemToListActivity extends ItemActivity
 
     private long defaultShopId = 1;
     private ToBuyItem mToBuyItem;
+    private Uri mUriItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+
+        Log.d(LOG_TAG, ">>>savedInstantState is " + (savedInstanceState == null? "NULL" : "NOT NULL"));
 
         etQty = (EditText) findViewById(R.id.et_item_quantity);
         etQty.setOnTouchListener(mOnTouchListener);
@@ -51,9 +57,18 @@ public class AddItemToListActivity extends ItemActivity
         rgPriceTypeChoice = (RadioGroup) findViewById(R.id.price_type_choice);
         rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);
 
-        Intent intent = getIntent();
-        Uri uri = intent.getData();
-        if (uri == null) {
+
+        if(savedInstanceState != null) //Restore from previous state
+        {
+            mUriItem = savedInstanceState.getParcelable(URI_ITEM);
+        }
+        else
+        {
+            Intent intent = getIntent();
+            mUriItem = intent.getData();
+        }
+
+        if (mUriItem == null) {
             setTitle(R.string.new_buy_item_title);
             actionMode = CREATE_BUY_ITEM_MODE; // This flag is used for menu creation and database operation
         } else {
@@ -61,7 +76,7 @@ public class AddItemToListActivity extends ItemActivity
             actionMode = EDIT_BUY_ITEM_MODE; //This flag is used for database operation
         }
 
-        initLoaders(uri);
+        initLoaders(mUriItem);
 
     }
 
@@ -74,8 +89,8 @@ public class AddItemToListActivity extends ItemActivity
             //When adding new item to shopping list, set currency symbol according to current country
             // code preference for Price-related EditText
 
-            setCurrencySymbol(etUnitPrice, NumberFormatter.getCurrencyCode(mCountryCode));
-            setCurrencySymbol(etBundlePrice, NumberFormatter.getCurrencyCode(mCountryCode));
+            setCurrencySymbol(etUnitPrice, FormatHelper.getCurrencyCode(mCountryCode));
+            setCurrencySymbol(etBundlePrice, FormatHelper.getCurrencyCode(mCountryCode));
         }
     }
 
@@ -86,7 +101,8 @@ public class AddItemToListActivity extends ItemActivity
             Bundle arg = new Bundle();
             arg.putParcelable(ITEM_URI, uri);
 
-            getLoaderManager().initLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
+            //getLoaderManager().initLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
+            getLoaderManager().restartLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
             super.initPictureLoader(uri, this);
             super.initPriceLoader(uri, this);
         }
@@ -303,5 +319,10 @@ public class AddItemToListActivity extends ItemActivity
         return selectedPriceType;
     }
 
-
+    @Override
+    protected void onSaveInstanceState(Bundle outState)
+    {
+        outState.putParcelable(URI_ITEM, mUriItem);
+        super.onSaveInstanceState(outState);
+    }
 }

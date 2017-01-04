@@ -264,7 +264,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
     public void showCostOfItemsAdded()
     {
-        String currencyCode = NumberFormatter.getCurrencyCode(countryCode);
+        String currencyCode = FormatHelper.getCurrencyCode(countryCode);
         TextView tvTotalValueAdded = (TextView) getActivity().findViewById(R.id.tv_total_buy);
         Double totalValueOfItemsAdded = 0.00d;
         Cursor cursor = shoppingListAdapter.getCursor();
@@ -283,13 +283,13 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 totalValueOfItemsAdded += ((cursor.getDouble(colSelectedPriceTag) / 100) * qtyPurchased);
         }
 
-        tvTotalValueAdded.setText(NumberFormatter.formatCountryCurrency(countryCode, currencyCode, totalValueOfItemsAdded));
+        tvTotalValueAdded.setText(FormatHelper.formatCountryCurrency(countryCode, currencyCode, totalValueOfItemsAdded));
 
     }
 
     public void showCostOfItemsChecked()
     {
-        String currencyCode = NumberFormatter.getCurrencyCode(countryCode);
+        String currencyCode = FormatHelper.getCurrencyCode(countryCode);
         TextView tvTotalValueChecked = (TextView) getActivity().findViewById(R.id.tv_total_checked);
         Double totalValueOfItemsChecked = 0.00d;
         Cursor cursor = shoppingListAdapter.getCursor();
@@ -309,7 +309,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 totalValueOfItemsChecked += ((cursor.getDouble(colSelectedPriceTag) / 100) * qtyPurchased);
         }
 
-        tvTotalValueChecked.setText(NumberFormatter.formatCountryCurrency(countryCode, currencyCode, totalValueOfItemsChecked));
+        tvTotalValueChecked.setText(FormatHelper.formatCountryCurrency(countryCode, currencyCode, totalValueOfItemsChecked));
     }
 
 

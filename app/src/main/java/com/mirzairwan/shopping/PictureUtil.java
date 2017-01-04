@@ -78,7 +78,8 @@ public class PictureUtil
 
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeFile(pathName, options);
+        Bitmap bmp = BitmapFactory.decodeFile(pathName, options);
+        return correctOrientation(bmp, pathName);
     }
 
     public static Bitmap sizeToView(int width, int height, String pictureFilePath)

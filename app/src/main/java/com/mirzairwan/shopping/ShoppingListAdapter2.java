@@ -79,9 +79,9 @@ public class ShoppingListAdapter2 extends CursorAdapter
 
         int colPicPath = cursor.getColumnIndex(PicturesEntry.COLUMN_FILE_PATH);
         String pathPic = cursor.getString(colPicPath);
-        if(!TextUtils.isEmpty(pathPic)) {
+        tagViews.ivItem.setImageResource(R.drawable.empty_photo);
+        if(!TextUtils.isEmpty(pathPic))
             mImageResizer.loadImage(new File(pathPic), tagViews.ivItem);
-        }
 
         int colNameIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
         tagViews.tvItemName.setText(cursor.getString(colNameIdx));
@@ -105,7 +105,7 @@ public class ShoppingListAdapter2 extends CursorAdapter
         int colSelectedPriceTagIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
         double priceTag = cursor.getDouble(colSelectedPriceTagIdx);
         String countryCode = PreferenceManager.getDefaultSharedPreferences(context).getString("home_country_preference", null);
-        tagViews.tvSelectedPrice.setText(NumberFormatter.formatCountryCurrency(countryCode,
+        tagViews.tvSelectedPrice.setText(FormatHelper.formatCountryCurrency(countryCode,
                                                                      currencyCode, priceTag/100));
 
         int colBuyItemQty = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);

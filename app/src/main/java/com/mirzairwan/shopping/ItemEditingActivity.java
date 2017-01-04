@@ -19,25 +19,37 @@ public class ItemEditingActivity extends ItemActivity
 {
 
     private static final int ITEM_LOADER_ID = 23;
+    private static final String URI_ITEM = "uri"; //Used for saving instant state
+    private Uri mUriItem;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
 
-        initLoaders();
+        if(savedInstanceState != null) //Restore from previous state
+        {
+            mUriItem = savedInstanceState.getParcelable(URI_ITEM);
+        }
+        else
+        {
+            Intent intent = getIntent();
+            mUriItem = intent.getData();
+        }
+
+        initLoaders(mUriItem);
 
         setTitle(R.string.view_buy_item_details);
 
     }
 
-    protected void initLoaders()
+    protected void initLoaders(Uri uri)
     {
-        Intent intent = getIntent();
-        Uri uri = intent.getData();
         Bundle arg = new Bundle();
         arg.putParcelable(ITEM_URI, uri);
-        getLoaderManager().initLoader(ITEM_LOADER_ID, arg, this);
+        //getLoaderManager().initLoader(ITEM_LOADER_ID, arg, this);
+        getLoaderManager().restartLoader(ITEM_LOADER_ID, arg, this);
         super.initPictureLoader(uri, this);
         super.initPriceLoader(uri, this);
     }
@@ -138,6 +150,13 @@ public class ItemEditingActivity extends ItemActivity
             default:
                 super.onLoadFinished(loader, cursor);
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState)
+    {
+        outState.putParcelable(URI_ITEM, mUriItem);
+        super.onSaveInstanceState(outState);
     }
 
 

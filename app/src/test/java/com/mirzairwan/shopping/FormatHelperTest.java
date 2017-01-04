@@ -6,19 +6,19 @@ import java.text.NumberFormat;
 import java.util.Currency;
 import java.util.Locale;
 
-import static com.mirzairwan.shopping.NumberFormatter.getCurrencyCode;
+import static com.mirzairwan.shopping.FormatHelper.getCurrencyCode;
 
 /**
  * Created by Mirza Irwan on 18/12/16.
  */
-public class NumberFormatterTest
+public class FormatHelperTest
 {
     @Test
     public void formatCountryCurrency() throws Exception
     {
-        String formattedValue = NumberFormatter.formatCountryCurrency("SG", "SGD", 4.55);
+        String formattedValue = FormatHelper.formatCountryCurrency("SG", "SGD", 4.55);
         System.out.println(formattedValue);
-        formattedValue = NumberFormatter.formatCountryCurrency("GB", "SGD", 4.55);
+        formattedValue = FormatHelper.formatCountryCurrency("GB", "SGD", 4.55);
         System.out.println(formattedValue);
     }
 
@@ -33,7 +33,7 @@ public class NumberFormatterTest
 
         }
 
-        //String formatted = NumberFormatter.formatCurrency(currencyCode, 5.588d);
+        //String formatted = FormatHelper.formatCurrency(currencyCode, 5.588d);
 
 
 
@@ -65,8 +65,8 @@ public class NumberFormatterTest
     @Test
     public void formatCurrency4() throws Exception
     {
-        String output = NumberFormatter.formatCountryCurrency("GB", "GBP", 5.55d);
-        String output2 = NumberFormatter.formatCountryCurrency("SG", "GBP", 5.55d);
+        String output = FormatHelper.formatCountryCurrency("GB", "GBP", 5.55d);
+        String output2 = FormatHelper.formatCountryCurrency("SG", "GBP", 5.55d);
         System.out.println(">> " + output);
         System.out.println(">> " + output2);
     }
@@ -83,22 +83,22 @@ public class NumberFormatterTest
 //        symbol = getCurrencySymbol("US");
 //        System.out.println(">> " + symbol);
 
-//        String symbol = NumberFormatter.getCurrencySymbol("SG", "SGD");
+//        String symbol = FormatHelper.getCurrencySymbol("SG", "SGD");
 //        System.out.println(">> " + symbol);
 //
-//        symbol = NumberFormatter.getCurrencySymbol("GB", "GBP");
+//        symbol = FormatHelper.getCurrencySymbol("GB", "GBP");
 //        System.out.println(">> " + symbol);
 
-        String symbol = NumberFormatter.getCurrencySymbol("SG");
+        String symbol = FormatHelper.getCurrencySymbol("SG");
         System.out.println(">> " + symbol);
 
-        symbol = NumberFormatter.getCurrencySymbol("GB");
+        symbol = FormatHelper.getCurrencySymbol("GB");
         System.out.println(">> " + symbol);
 
-        symbol = NumberFormatter.getCurrencySymbol("MY");
+        symbol = FormatHelper.getCurrencySymbol("MY");
         System.out.println(">> " + symbol);
 
-        symbol = NumberFormatter.getCurrencySymbol("JP");
+        symbol = FormatHelper.getCurrencySymbol("JP");
         System.out.println(">> " + symbol);
     }
 

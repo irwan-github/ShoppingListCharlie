@@ -91,6 +91,9 @@ public abstract class ItemActivity extends AppCompatActivity implements
     private static final String LOG_TAG = ItemActivity.class.getSimpleName();
     private static final int REQUEST_PICK_PHOTO = 16;
     private static final int PERMISSION_GIVE_ITEM_PICTURE = 32;
+    private static final String BITMAP_STORAGE_KEY = "bsk";
+    private static final String UNIT_PRICE = "unit_px";
+    private static final String BUNDLE_PRICE = "bundle_px";
 
     protected EditText etName;
     protected EditText etBrand;
@@ -115,7 +118,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
     //private String mSortPref;
     private Toolbar toolbarPicture;
     protected ShoppingList shoppingList;
-
+    private Bitmap mTargetBitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -227,7 +230,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
     protected void setCurrencySymbol(EditText et, String currencyCode)
     {
-        String currencySymbol = NumberFormatter.getCurrencySymbol(mCountryCode, currencyCode);
+        String currencySymbol = FormatHelper.getCurrencySymbol(mCountryCode, currencyCode);
 
         ViewParent viewParent = et.getParent();
         TextInputLayout etLayout = (TextInputLayout) (viewParent.getParent());
@@ -242,7 +245,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
         Bundle arg = new Bundle();
         arg.putParcelable(ITEM_URI, uri);
-        getLoaderManager().initLoader(ITEM_PRICE_LOADER_ID, arg, callback);
+        //getLoaderManager().initLoader(ITEM_PRICE_LOADER_ID, arg, callback);
+        getLoaderManager().restartLoader(ITEM_PRICE_LOADER_ID, arg, callback);
     }
 
     protected void initPictureLoader(Uri uri, LoaderManager.LoaderCallbacks<Cursor> callback)
@@ -252,7 +256,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
         Bundle arg = new Bundle();
         arg.putParcelable(ITEM_URI, uri);
-        getLoaderManager().initLoader(ITEM_PICTURE_LOADER_ID, arg, callback);
+        //getLoaderManager().initLoader(ITEM_PICTURE_LOADER_ID, arg, callback);
+        getLoaderManager().restartLoader(ITEM_PICTURE_LOADER_ID, arg, callback);
     }
 
 
@@ -378,16 +383,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
             return;
         Picture externalPicture = new Picture(filePath);
         mPictureMgr.setPictureForViewing(externalPicture);
-
-
-        // Get the dimensions of the View
-        int targetW = mImgItemPic.getWidth();
-        int targetH = mImgItemPic.getHeight();
-
-        Bitmap bitmap = PictureUtil.sizeToView(targetW, targetH, filePath);
-        Bitmap toBeBitmap = PictureUtil.correctOrientation(bitmap, filePath);
-
-        mImgItemPic.setImageBitmap(toBeBitmap);
+        setPictureView(externalPicture);
 
     }
 
@@ -398,9 +394,9 @@ public abstract class ItemActivity extends AppCompatActivity implements
         int targetH = mImgItemPic.getHeight();
 
         Bitmap bitmap = PictureUtil.sizeToView(targetW, targetH, picture.getPath());
-        Bitmap toBeBitmap = PictureUtil.correctOrientation(bitmap, picture.getPath());
+        mTargetBitmap = PictureUtil.correctOrientation(bitmap, picture.getPath());
 
-        mImgItemPic.setImageBitmap(toBeBitmap);
+        mImgItemPic.setImageBitmap(mTargetBitmap);
     }
 
     @Override
@@ -534,7 +530,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
      */
     protected Item getItemFromInputField()
     {
-        String itemName = etName.getText().toString();
+        String itemName = FormatHelper.capitalizeFirstLetter(etName.getText().toString());
         String itemBrand = etBrand.getText().toString();
         String countryOrigin = etCountryOrigin.getText().toString();
         String itemDescription = etDescription.getText().toString();
@@ -633,7 +629,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
         etBundlePrice.setText(priceMgr.getBundlePriceForDisplay());
         setCurrencySymbol(etBundlePrice, priceMgr.getBundlePrice().getCurrencyCode());
-        etBundleQty.setText(NumberFormatter.formatToTwoDecimalPlaces(priceMgr.getBundlePrice().getBundleQuantity()));
+        etBundleQty.setText(FormatHelper.formatToTwoDecimalPlaces(priceMgr.getBundlePrice().getBundleQuantity()));
     }
 
 
@@ -670,6 +666,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
         switch (loaderId) {
             case ITEM_PRICE_LOADER_ID:
                 projection = new String[]{PricesEntry._ID,
+                        PricesEntry.COLUMN_ITEM_ID,
                         PricesEntry.COLUMN_PRICE_TYPE_ID,
                         PricesEntry.COLUMN_PRICE,
                         PricesEntry.COLUMN_BUNDLE_QTY,
@@ -710,19 +707,19 @@ public abstract class ItemActivity extends AppCompatActivity implements
     {
         if (cursor == null || cursor.getCount() < 1)
             return;
-
+        int colItemId;
         int loaderId = loader.getId();
         switch (loaderId) {
             case ITEM_PRICE_LOADER_ID:
-                priceMgr = new PriceMgr(itemId, mCountryCode);
+                priceMgr = new PriceMgr(mCountryCode);
                 priceMgr.createPrices(cursor);
                 populatePricesInputFields();
                 break;
 
             case ITEM_PICTURE_LOADER_ID:
                 Picture pictureInDb = createPicture(cursor);
-                int colItemId = cursor.getColumnIndex(PicturesEntry.COLUMN_ITEM_ID);
-                long itemId = cursor.getLong(colItemId);
+                colItemId = cursor.getColumnIndex(PicturesEntry.COLUMN_ITEM_ID);
+                itemId = cursor.getLong(colItemId);
                 mPictureMgr.setItemId(itemId);
                 mPictureMgr.setOriginalPicture(pictureInDb);
                 mPictureMgr.setViewOriginalPicture();
@@ -758,4 +755,21 @@ public abstract class ItemActivity extends AppCompatActivity implements
         mImgItemPic.setImageBitmap(null);
     }
 
+//    @Override
+//    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState)
+//    {
+//        outState.putParcelable(BITMAP_STORAGE_KEY, mTargetBitmap);
+//        outState.putParcelable(UNIT_PRICE, priceMgr.getUnitPrice());
+//        outState.putParcelable(BUNDLE_PRICE, priceMgr.getBundlePrice());
+//        super.onSaveInstanceState(outState, outPersistentState);
+//    }
+//
+//    @Override
+//    protected void onRestoreInstanceState(Bundle savedInstanceState)
+//    {
+//        super.onRestoreInstanceState(savedInstanceState);
+//        mTargetBitmap = (Bitmap)savedInstanceState.get(BITMAP_STORAGE_KEY);
+//        mImgItemPic.setImageBitmap(mTargetBitmap);
+//
+//    }
 }

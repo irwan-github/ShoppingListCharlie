@@ -2,19 +2,18 @@ package com.mirzairwan.shopping.domain;
 
 import android.database.Cursor;
 
-import com.mirzairwan.shopping.NumberFormatter;
+import com.mirzairwan.shopping.FormatHelper;
 import com.mirzairwan.shopping.data.Contract;
-import com.mirzairwan.shopping.domain.Item;
-import com.mirzairwan.shopping.domain.Price;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mirzairwan.shopping.NumberFormatter.formatToTwoDecimalPlaces;
+import static com.mirzairwan.shopping.FormatHelper.formatToTwoDecimalPlaces;
 import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
 /**
+ * PriceManager for handling the prices of one particular item
  * Created by Mirza Irwan on 29/12/16.
  */
 
@@ -29,8 +28,8 @@ public class PriceMgr
     public PriceMgr(String countryCode)
     {
         mCountryCode = countryCode;
-        mUnitPrice = new Price(0.00d, NumberFormatter.getCurrencyCode(countryCode), DEFAULT_SHOP_ID);
-        mBundlePrice = new Price(0.00d, 0.00d, NumberFormatter.getCurrencyCode(countryCode), DEFAULT_SHOP_ID);
+        mUnitPrice = new Price(0.00d, FormatHelper.getCurrencyCode(countryCode), DEFAULT_SHOP_ID);
+        mBundlePrice = new Price(0.00d, 0.00d, FormatHelper.getCurrencyCode(countryCode), DEFAULT_SHOP_ID);
     }
 
     public PriceMgr(long itemId, String countryCode)
@@ -39,11 +38,13 @@ public class PriceMgr
         mCountryCode = countryCode;
     }
 
-
     public void createPrices(Cursor cursor)
     {
 
         while (cursor.moveToNext()) {
+            int colItemId = cursor.getColumnIndex(Contract.PicturesEntry.COLUMN_ITEM_ID);
+            mItemId = cursor.getLong(colItemId);
+
             int colPriceTypeIdx = cursor.getColumnIndex(Contract.PricesEntry.COLUMN_PRICE_TYPE_ID);
             int priceTypeVal = cursor.getInt(colPriceTypeIdx);
 
@@ -74,6 +75,16 @@ public class PriceMgr
         }
     }
 
+    public void setUnitPrice(Price unitPrice)
+    {
+        mUnitPrice = unitPrice;
+    }
+
+    public void setBundlePrice(Price bundlePrice)
+    {
+        mBundlePrice = bundlePrice;
+    }
+
     public List<Price> getPrices()
     {
         ArrayList<Price> mPrices = new ArrayList<>();
@@ -94,7 +105,7 @@ public class PriceMgr
 
     public String getBundlePriceForDisplay()
     {
-        return NumberFormatter.formatToTwoDecimalPlaces(mBundlePrice.getBundlePrice());
+        return FormatHelper.formatToTwoDecimalPlaces(mBundlePrice.getBundlePrice());
     }
 
     public void setItemPricesForSaving(Item item, String unitPriceFromInputField, String bundlePriceFromInputField, String bundleQtyFromInputField)

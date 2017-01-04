@@ -84,7 +84,7 @@ public class ShoppingListAdapter extends CursorAdapter
         int colSelectedPriceTagIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
         double priceTag = cursor.getDouble(colSelectedPriceTagIdx);
         String countryCode = PreferenceManager.getDefaultSharedPreferences(context).getString("home_country_preference", null);
-        tagViews.tvSelectedPrice.setText(NumberFormatter.formatCountryCurrency(countryCode,
+        tagViews.tvSelectedPrice.setText(FormatHelper.formatCountryCurrency(countryCode,
                                                                      currencyCode, priceTag/100));
 
         int colBuyItemQty = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);

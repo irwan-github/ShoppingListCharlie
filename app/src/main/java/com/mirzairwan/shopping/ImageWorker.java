@@ -28,6 +28,8 @@ public abstract class ImageWorker
      * @param imageView The ImageView to bind the downloaded image to.
      */
     public void loadImage(File file, ImageView imageView) {
+        if(!file.exists())
+            return;
         BitmapWorkerTask task = new BitmapWorkerTask(imageView);
         task.execute(file);
     }

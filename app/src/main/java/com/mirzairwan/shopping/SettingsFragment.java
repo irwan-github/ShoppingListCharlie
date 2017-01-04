@@ -57,7 +57,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                 String countryCode = (String)newValue;
                 try {
 
-                    NumberFormatter.getCurrencyCode(countryCode);
+                    FormatHelper.getCurrencyCode(countryCode);
                     result = true;
                 }
                 catch (Exception ex)
