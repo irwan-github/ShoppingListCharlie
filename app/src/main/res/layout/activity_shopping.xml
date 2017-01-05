@@ -1,34 +1,53 @@
-<?xml version="1.0" encoding="utf-8"?>
 <!--
 This is the parent screen that pages the 2 child views:
 1. To-buy list view (managed by BuyListFragment
 2. Catalogue/History View (managed by HistoryFragment)
 -->
-
-<RelativeLayout
+<android.support.v4.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/shopping_list_container"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    >
 
-    <android.support.v4.view.ViewPager
-        android:id="@+id/pager_shopping"
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/shopping_list_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
+        android:layout_height="match_parent">
 
-        <android.support.design.widget.TabLayout
-            android:id="@+id/tab_shopping"
+        <android.support.v4.view.ViewPager
+            android:id="@+id/pager_shopping"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_gravity="top"
-            android:background="@color/colorPrimary"
-            app:tabSelectedTextColor="@color/tabTextColor"
-            app:tabTextColor="@color/tabTextColor"
+            android:layout_height="match_parent"
             >
-        </android.support.design.widget.TabLayout>
-    </android.support.v4.view.ViewPager>
 
-</RelativeLayout>
+            <android.support.design.widget.TabLayout
+                android:id="@+id/tab_shopping"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_gravity="top"
+                android:background="@color/colorPrimary"
+                app:tabSelectedTextColor="@color/tabTextColor"
+                app:tabTextColor="@color/tabTextColor"
+                >
+            </android.support.design.widget.TabLayout>
+        </android.support.v4.view.ViewPager>
+
+    </RelativeLayout>
+
+    <ListView
+        android:id="@+id/left_drawer"
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/colorAccent"
+        android:choiceMode="singleChoice"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="0dp"
+        android:paddingTop="100dp"
+        />
+
+</android.support.v4.widget.DrawerLayout>

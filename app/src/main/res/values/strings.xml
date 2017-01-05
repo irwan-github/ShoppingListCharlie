@@ -56,8 +56,11 @@
     <string name="added_to_shopping_list_error">Add to shopping list : Error</string>
     <string name="remove_item_from_shopping_list_error">Remove item from shopping list : Error</string>
     <string name="settings_screen">Settings</string>
-    <string name="settings_catalogue">Catalogue</string>
+    <string name="settings_catalogue">Shopping list</string>
     <string name="user_sort_pref">user_sort_pref</string>
     <string name="menu_remove_item_from_shopping_list">Remove item from shopping list</string>
     <string name="summary_qty_purchase">Qty :</string>
+    <string name="drawer_open">Opennn</string>
+    <string name="drawer_close">Clozeee</string>
+    <string name="sort_desc">Sort shopping list by</string>
 </resources>

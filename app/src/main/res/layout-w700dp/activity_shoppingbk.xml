@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+This is the parent screen that pages the 2 child views:
+1. To-buy list view (managed by BuyListFragment
+2. Catalogue/History View (managed by HistoryFragment)
+-->
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/shopping_list_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/pager_shopping"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+
+        <android.support.design.widget.TabLayout
+            android:id="@+id/tab_shopping"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_gravity="top"
+            android:background="@color/colorPrimary"
+            app:tabSelectedTextColor="@color/tabTextColor"
+            app:tabTextColor="@color/tabTextColor"
+            >
+        </android.support.design.widget.TabLayout>
+    </android.support.v4.view.ViewPager>
+
+</RelativeLayout>

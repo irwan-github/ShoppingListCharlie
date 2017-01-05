@@ -20,6 +20,6 @@
             android:entries="@array/setting_sort_by_name"
             android:entryValues="@array/setting_sort_by_values"
             android:defaultValue="Name"
-            android:title="Sort item by"/>
+            android:title="@string/sort_desc"/>
     </PreferenceCategory>
 </PreferenceScreen>
