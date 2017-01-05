@@ -320,9 +320,9 @@ public class AddItemToListActivity extends ItemActivity
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState)
+    public void onSaveInstanceState(Bundle outState)
     {
-        outState.putParcelable(URI_ITEM, mUriItem);
         super.onSaveInstanceState(outState);
+        outState.putParcelable(URI_ITEM, mUriItem);
     }
 }

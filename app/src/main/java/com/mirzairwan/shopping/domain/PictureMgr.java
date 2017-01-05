@@ -1,5 +1,8 @@
 package com.mirzairwan.shopping.domain;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -15,7 +18,7 @@ import java.util.List;
  * and the filesystem.
  */
 
-public class PictureMgr
+public class PictureMgr implements Parcelable
 {
     private Picture mPictureInDb; //Currently stored in database
     private List<Picture> mTargetPictureForViewing = new ArrayList<>(); //Currently shown to the user. For this implementation, only one picture is allowed.
@@ -62,13 +65,22 @@ public class PictureMgr
     }
 
     /**
-     * The current picture will be put in the discarded list
+     * If the current picture is different from targetPicture,
+     * the current picture will be put in the discarded list.
+     * If not different, the target picture will be ignored.
      *
-     * @param targetPicture will be the picture used for viewing
+     * @param targetPicture will be the picture to be used for viewing
      */
     public void setPictureForViewing(Picture targetPicture)
     {
+        if(targetPicture == null)
+            return;
+
+        if (sameAsCurrentViewedPicture(targetPicture))
+            return;
+
         Picture discardedPic = null;
+
         if (mTargetPictureForViewing.size() == 1)
             discardedPic = mTargetPictureForViewing.set(0, targetPicture);
         else
@@ -76,6 +88,20 @@ public class PictureMgr
 
         if (discardedPic != null)
             mDiscardedPictures.add(discardedPic);
+    }
+
+    private boolean sameAsCurrentViewedPicture(Picture targetPicture)
+    {
+        Picture currentViewedPicture = null;
+        if(mTargetPictureForViewing.size() == 0)
+            return false;
+        else
+            currentViewedPicture = mTargetPictureForViewing.get(0);
+
+        if (currentViewedPicture.getPath().equals(targetPicture.getPath()))
+            return true;
+        else
+            return false;
     }
 
 
@@ -103,6 +129,9 @@ public class PictureMgr
         return mDiscardedPictures;
     }
 
+    /**
+     * @return Picture stored in database
+     */
     public Picture getOriginalPicture()
     {
         return mPictureInDb;
@@ -131,7 +160,7 @@ public class PictureMgr
             mDiscardedPictures.remove(mPictureInDb);
     }
 
-    public File createFileHandle(File dirPictures) throws IOException
+    public static File createFileHandle(File dirPictures) throws IOException
     {
         String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
         String picFilename = SHOPPING_LIST_PICS + "_" + timeStamp + "_";
@@ -164,4 +193,44 @@ public class PictureMgr
     {
         return !picture.getPath().contains(mAuthorityPackage);
     }
+
+    @Override
+    public int describeContents()
+    {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags)
+    {
+        dest.writeLong(mItemId);
+        dest.writeTypedList(mTargetPictureForViewing);
+        dest.writeTypedList(mDiscardedPictures);
+        dest.writeParcelable(mPictureInDb, flags);
+        dest.writeString(mAuthorityPackage);
+    }
+
+    public static final Creator<PictureMgr> CREATOR
+            = new Creator<PictureMgr>()
+    {
+        public PictureMgr createFromParcel(Parcel in)
+        {
+            return new PictureMgr(in);
+        }
+
+        public PictureMgr[] newArray(int size)
+        {
+            return new PictureMgr[size];
+        }
+    };
+
+    private PictureMgr(Parcel in)
+    {
+        mItemId = in.readLong();
+        in.readTypedList(mTargetPictureForViewing, Picture.CREATOR);
+        in.readTypedList(mDiscardedPictures, Picture.CREATOR);
+        mPictureInDb = in.readParcelable(getClass().getClassLoader());
+        mAuthorityPackage = in.readString();
+    }
+
 }

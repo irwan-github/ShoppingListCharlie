@@ -94,6 +94,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
     private static final String BITMAP_STORAGE_KEY = "bsk";
     private static final String UNIT_PRICE = "unit_px";
     private static final String BUNDLE_PRICE = "bundle_px";
+    private static final String PICTURE_MANAGER = "picture_mgr";
 
     protected EditText etName;
     protected EditText etBrand;
@@ -129,7 +130,11 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
         daoManager = Builder.getDaoManager(this);
         shoppingList = Builder.getShoppingList();
-        mPictureMgr = new PictureMgr(getApplicationInfo().packageName);
+
+        if (savedInstanceState == null)
+            mPictureMgr = new PictureMgr(getApplicationInfo().packageName);
+        else
+            mPictureMgr = savedInstanceState.getParcelable(PICTURE_MANAGER);
 
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         mCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
@@ -158,9 +163,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
                         return true;
 
                     case R.id.choose_picture:
-                        Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
-                        photoPickerIntent.setType("image/*");
-                        startActivityForResult(photoPickerIntent, REQUEST_PICK_PHOTO);
+                        startPickPictureActivity();
                         return true;
 
                     default:
@@ -187,6 +190,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
                     PERMISSION_GIVE_ITEM_PICTURE);
 
     }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
@@ -330,7 +334,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
         if (cameraIntent.resolveActivity(getPackageManager()) != null) {
             File itemPicFile = null;
             try {
-                itemPicFile = mPictureMgr.createFileHandle(getExternalFilesDir(Environment.DIRECTORY_PICTURES));
+                itemPicFile = PictureMgr.createFileHandle(getExternalFilesDir(Environment.DIRECTORY_PICTURES));
                 mPictureMgr.setPictureForViewing(itemPicFile);
                 Uri itemPicUri = FileProvider.getUriForFile(this, "com.mirzairwan.shopping.fileprovider", itemPicFile);
                 cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, itemPicUri);
@@ -344,6 +348,19 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
         }
     }
+
+    /**
+     * Use this when picking picture from media gallery. I do not need to create a
+     * filename for the picture as it was created outside this app. This method query the filepath
+     * of the picture using ContentResolver.
+     */
+    protected void startPickPictureActivity()
+    {
+        Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+        photoPickerIntent.setType("image/*");
+        startActivityForResult(photoPickerIntent, REQUEST_PICK_PHOTO);
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
@@ -367,6 +384,13 @@ public abstract class ItemActivity extends AppCompatActivity implements
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    /**
+     * use this when picking picture from media gallery. I do not need to create a
+     * filename for the picture as it was created outside this app. This method query the filepath
+     * of the picture using ContentResolver.
+     *
+     * @param data
+     */
     protected void setPictureView(Intent data)
     {
         Uri photoUri = data.getData();
@@ -382,7 +406,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
         if (filePath == null)
             return;
         Picture externalPicture = new Picture(filePath);
-        mPictureMgr.setPictureForViewing(externalPicture);
+        mPictureMgr.setPictureForViewing(externalPicture); //Update PictureMgr on the target picture
         setPictureView(externalPicture);
 
     }
@@ -390,13 +414,11 @@ public abstract class ItemActivity extends AppCompatActivity implements
     protected void setPictureView(Picture picture)
     {
         // Get the dimensions of the View
-        int targetW = mImgItemPic.getWidth();
-        int targetH = mImgItemPic.getHeight();
+        int targetW = getResources().getDimensionPixelSize(R.dimen.picture_item_detail_width);
+        int targetH = getResources().getDimensionPixelSize(R.dimen.picture_item_detail_height);
 
-        Bitmap bitmap = PictureUtil.sizeToView(targetW, targetH, picture.getPath());
-        mTargetBitmap = PictureUtil.correctOrientation(bitmap, picture.getPath());
-
-        mImgItemPic.setImageBitmap(mTargetBitmap);
+        ImageResizer imageResizer = new ImageResizer(this, targetW, targetH);
+        imageResizer.loadImage(picture.getFile(), mImgItemPic);
     }
 
     @Override
@@ -510,6 +532,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
     /**
      * Validate item details
+     *
      * @return
      */
     protected boolean fieldsValidated()
@@ -755,15 +778,17 @@ public abstract class ItemActivity extends AppCompatActivity implements
         mImgItemPic.setImageBitmap(null);
     }
 
-//    @Override
-//    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState)
-//    {
+    @Override
+    public void onSaveInstanceState(Bundle outState)
+    {
 //        outState.putParcelable(BITMAP_STORAGE_KEY, mTargetBitmap);
 //        outState.putParcelable(UNIT_PRICE, priceMgr.getUnitPrice());
 //        outState.putParcelable(BUNDLE_PRICE, priceMgr.getBundlePrice());
-//        super.onSaveInstanceState(outState, outPersistentState);
-//    }
-//
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(PICTURE_MANAGER, mPictureMgr);
+
+    }
+
 //    @Override
 //    protected void onRestoreInstanceState(Bundle savedInstanceState)
 //    {

@@ -1,5 +1,8 @@
 package com.mirzairwan.shopping.domain;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.io.File;
 
 /**
@@ -7,7 +10,7 @@ import java.io.File;
  * Created by Mirza Irwan on 27/12/16.
  */
 
-public class Picture
+public class Picture implements Parcelable
 {
     private long _id = -1L;
     private File mPictureFile;
@@ -101,4 +104,32 @@ public class Picture
 
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(_id);
+        dest.writeString(mPath);
+        dest.writeSerializable(mPictureFile);
+    }
+
+    public static final Creator<Picture> CREATOR
+            = new Creator<Picture>() {
+        public Picture createFromParcel(Parcel in) {
+            return new Picture(in);
+        }
+
+        public Picture[] newArray(int size) {
+            return new Picture[size];
+        }
+    };
+
+    private Picture(Parcel in) {
+        _id = in.readLong();
+        mPath = in.readString();
+        mPictureFile = (File)in.readSerializable();
+    }
 }
