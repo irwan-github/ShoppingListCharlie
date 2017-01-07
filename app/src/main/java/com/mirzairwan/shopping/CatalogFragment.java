@@ -7,10 +7,12 @@ import android.content.CursorLoader;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.support.v4.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +22,7 @@ import android.widget.Toast;
 
 import com.mirzairwan.shopping.data.Contract.Catalogue;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import com.mirzairwan.shopping.data.DaoContentProv;
@@ -41,13 +44,13 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
 {
     private static final String LOG_TAG = CatalogFragment.class.getSimpleName();
     private static final int LOADER_CATALOG_ID = 2;
-    private static final int LOADER_PRICE_ID = 3;
     private static final String SORT_COLUMN = "SORT_COLUMN";
     private CatalogAdapter catalogAdapter;
     private ShoppingList shoppingList;
     private DaoManager daoManager;
     private OnFragmentInteractionListener mOnFragmentInteractionListener;
     private Cursor mCursor;
+    private LruCache<String, Bitmap> mThumbBitmapCache;
 
     public static CatalogFragment newInstance()
     {
@@ -55,9 +58,11 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
         return catalogFragment;
     }
 
-    public CatalogFragment()
+    @Override
+    public void onCreate(Bundle savedInstanceState)
     {
-
+        super.onCreate(savedInstanceState);
+        mThumbBitmapCache = PictureCache.createCache();
     }
 
     @Override
@@ -102,9 +107,14 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
     }
 
 
-    public void setupListView(ListView lvAllItems)
+    private void setupListView(ListView lvAllItems)
     {
-        catalogAdapter = new CatalogAdapter(getActivity(), null, this);
+        ImageResizer imageResizer =
+                new ImageResizer(getActivity(),
+                        getResources().getDimensionPixelSize(R.dimen.image_summary_width),
+                        getResources().getDimensionPixelSize(R.dimen.list_item_height),
+                        mThumbBitmapCache);
+        catalogAdapter = new CatalogAdapter(getActivity(), null, this, imageResizer);
         lvAllItems.setAdapter(catalogAdapter);
 
         lvAllItems.setOnItemClickListener(this);
@@ -135,7 +145,8 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
             case LOADER_CATALOG_ID:
                 Uri uriCatalogue = Catalogue.CONTENT_URI;
                 String[] projection = new String[]{ItemsEntry._ID, ItemsEntry.COLUMN_NAME,
-                        ItemsEntry.COLUMN_BRAND, ToBuyItemsEntry.ALIAS_ID, PricesEntry.ALIAS_ID};
+                        ItemsEntry.COLUMN_BRAND, ToBuyItemsEntry.ALIAS_ID, PricesEntry.ALIAS_ID,
+                        PicturesEntry.COLUMN_FILE_PATH};
                 String selection = PricesEntry.COLUMN_PRICE_TYPE_ID + "=?";
 
                 String[] selectionArgs = new String[]{String.valueOf(Price.Type.UNIT_PRICE.getType())};

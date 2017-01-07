@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
+import android.support.v4.util.LruCache;
 import android.widget.ImageView;
 
 import java.io.File;
@@ -16,10 +17,15 @@ import java.lang.ref.WeakReference;
 public abstract class ImageWorker
 {
     protected Resources mResources;
-
+    protected LruCache<String, Bitmap> mThumbBitmapCache;
 
     protected ImageWorker(Context context) {
         mResources = context.getResources();
+    }
+
+    protected ImageWorker(Context context, LruCache<String, Bitmap> thumbBitmapCache) {
+        mResources = context.getResources();
+        mThumbBitmapCache = thumbBitmapCache;
     }
 
     /**
@@ -34,7 +40,15 @@ public abstract class ImageWorker
         task.execute(file);
     }
 
+    public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+        if (mThumbBitmapCache !=null && getBitmapFromMemCache(key) == null) {
+            mThumbBitmapCache.put(key, bitmap);
+        }
+    }
 
+    public Bitmap getBitmapFromMemCache(String key) {
+        return mThumbBitmapCache.get(key);
+    }
 
 
     /**
@@ -68,15 +82,16 @@ public abstract class ImageWorker
         public BitmapWorkerTask(ImageView imageView)
         {
             // Use a WeakReference to ensure the ImageView can be garbage collected
-            imageViewReference = new WeakReference<ImageView>(imageView);
+            imageViewReference = new WeakReference<>(imageView);
 
         }
 
         @Override
         protected Bitmap doInBackground(File... params)
         {
-            return processBitmap(params[0]);
-
+            Bitmap bitmap = processBitmap(params[0]);
+            addBitmapToMemoryCache(params[0].getPath(), bitmap);
+            return bitmap;
         }
 
         // Once complete, see if ImageView is still around and set bitmap.

@@ -2,16 +2,21 @@ package com.mirzairwan.shopping;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.CursorAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+
+import java.io.File;
 
 /**
  * Created by Mirza Irwan on 18/12/16.
@@ -20,11 +25,15 @@ import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 public class CatalogAdapter extends CursorAdapter
 {
     private OnToggleCatalogItemListener mOnToggleCatalogItemListener;
+    private ImageResizer mImageResizer;
 
-    public CatalogAdapter(Context context, Cursor cursor, OnToggleCatalogItemListener onToggleCatalogItemListener)
+    public CatalogAdapter(Context context, Cursor cursor,
+                          OnToggleCatalogItemListener onToggleCatalogItemListener,
+                          ImageResizer imageResizer)
     {
         super(context, cursor, 0);
         mOnToggleCatalogItemListener = onToggleCatalogItemListener;
+        mImageResizer = imageResizer;
     }
 
     @Override
@@ -32,7 +41,7 @@ public class CatalogAdapter extends CursorAdapter
     {
         View convertView = LayoutInflater.from(context).inflate(R.layout.row_catalogue, parent,
                                                                         false);
-
+        ImageView ivItem = (ImageView) convertView.findViewById(R.id.iv_history_pic_thb);
         TextView tvItemName = (TextView)convertView.findViewById(R.id.tv_all_item_name_row);
         TextView tvItemBrand = (TextView)convertView.findViewById(R.id.tv_all_item_brand_row);
         ToggleButton toggleItem = (ToggleButton)convertView.findViewById(R.id.toggle_buy_list);
@@ -42,6 +51,7 @@ public class CatalogAdapter extends CursorAdapter
                 new OnItemCheckedChangeListener(mOnToggleCatalogItemListener);
 
         Tag tag = new Tag();
+        tag.ivItem = ivItem;
         tag.itemName = tvItemName;
         tag.itemBrand = tvItemBrand;
         tag.toggleItem = toggleItem;
@@ -55,6 +65,13 @@ public class CatalogAdapter extends CursorAdapter
     public void bindView(View convertView, Context context, Cursor cursor)
     {
         Tag tag = (Tag) convertView.getTag();
+
+        tag.ivItem.setImageResource(R.drawable.empty_photo);
+
+        int colPicPath = cursor.getColumnIndex(Contract.PicturesEntry.COLUMN_FILE_PATH);
+        String pathPic = cursor.getString(colPicPath);
+        setImageView(pathPic, tag.ivItem);
+
         int nameColIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
         tag.itemName.setText(cursor.getString(nameColIdx));
         int brandColIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_BRAND);
@@ -73,8 +90,23 @@ public class CatalogAdapter extends CursorAdapter
         tag.toggleItem.setOnCheckedChangeListener(tag.onItemCheckedChangeListener);
     }
 
+    private void setImageView(String pathPic, ImageView ivItem)
+    {
+        if(TextUtils.isEmpty(pathPic))
+            return;
+        Bitmap bitmap = mImageResizer.getBitmapFromMemCache(pathPic);
+
+        if(bitmap != null)
+        {
+            ivItem.setImageBitmap(bitmap);
+        }
+        else
+            mImageResizer.loadImage(new File(pathPic), ivItem);
+    }
+
     private static class Tag
     {
+        public ImageView ivItem;
         public TextView itemName;
         public TextView itemBrand;
         public ToggleButton toggleItem;

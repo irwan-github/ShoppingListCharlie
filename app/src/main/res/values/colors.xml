@@ -6,4 +6,5 @@
     <color name="colorAccent">#304ffe</color>
     <color name="tabTextColor">#FFFFFF</color>
     <color name="segment_divider">#80b3ff</color>
+    <color name="shopping_list_toolbar">#F5F5F5</color>
 </resources>

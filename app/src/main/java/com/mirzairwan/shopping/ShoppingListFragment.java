@@ -7,25 +7,30 @@ import android.content.CursorLoader;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.util.LruCache;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.mirzairwan.shopping.data.Contract;
-import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
+import com.mirzairwan.shopping.data.DaoManager;
 
+import static com.mirzairwan.shopping.Builder.getDaoManager;
 import static com.mirzairwan.shopping.R.xml.preferences;
 
 /**
@@ -44,18 +49,12 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     private ShoppingListAdapter2 shoppingListAdapter;
     private String countryCode;
     private static final String SORT_COLUMN = "SORT_COLUMN";
-
+    private LruCache<String, Bitmap> mThumbBitmapCache;
 
     public static ShoppingListFragment newInstance()
     {
-
         ShoppingListFragment buyListFragment = new ShoppingListFragment();
         return buyListFragment;
-    }
-
-
-    public ShoppingListFragment()
-    {
     }
 
     @Override
@@ -71,6 +70,13 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         countryCode = sharedPreferences.getString(getString(R.string.user_country_pref), null);
     }
 
+    @Override
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        mThumbBitmapCache = PictureCache.createCache();
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -79,7 +85,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         // any necessary data set by onSaveInstanceState().
         // This is primarily necessary when in the two-pane layout.
         if (savedInstanceState != null) {
-
+            //Nothing to do because the screen is going to query the database without any parameters
         }
 
         View rootView = inflater.inflate(R.layout.fragment_shopping_list, container, false);
@@ -88,6 +94,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         setupListView(lvBuyItems);
         setupListItemListener(lvBuyItems);
         setupEmptyView(rootView, lvBuyItems);
+        setupShoppingListToolbar((Toolbar)rootView.findViewById(R.id.shopping_list_toolbar));
 
         PreferenceManager.setDefaultValues(getActivity(), preferences, false);
         PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
@@ -95,11 +102,31 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         Bundle args = new Bundle();
         args.putString(SORT_COLUMN, sharedPrefs.getString(getString(R.string.user_sort_pref), null));
 
-
         //Kick off the loader
         getLoaderManager().initLoader(LOADER_BUY_ITEM_ID, args, this);
 
         return rootView;
+    }
+
+    private void setupShoppingListToolbar(Toolbar shoppingListToolbar)
+    {
+        shoppingListToolbar.inflateMenu(R.menu.shopping_list_toolbar);
+        shoppingListToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener(){
+            @Override
+            public boolean onMenuItemClick(MenuItem item)
+            {
+                int itemId = item.getItemId();
+                switch (itemId) {
+                    case R.id.clear_checked_item:
+                        DaoManager daoMgr = Builder.getDaoManager(ShoppingListFragment.this.getActivity());
+                        daoMgr.deleteCheckedItems();
+                        return true;
+                    default:
+                        return false;
+                }
+
+            }
+        });
     }
 
     private void setupEmptyView(View rootView, ListView lvBuyItems)
@@ -150,13 +177,12 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
     private void setupListView(ListView lvBuyItems)
     {
-//        shoppingListAdapter = new ShoppingListAdapter2(getActivity(), null,
-//                this);
-
         ImageResizer imageResizer =
                 new ImageResizer(getActivity(),
                         getResources().getDimensionPixelSize(R.dimen.image_summary_width),
-                        getResources().getDimensionPixelSize(R.dimen.list_item_height));
+                        getResources().getDimensionPixelSize(R.dimen.list_item_height),
+                        mThumbBitmapCache);
+
         shoppingListAdapter = new ShoppingListAdapter2(getActivity(), null,
                 this, imageResizer);
 
@@ -232,9 +258,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         Cursor cursor = (Cursor) shoppingListAdapter.getItem(mBuyItemPosition);
         int buyItemIdColIdx = cursor.getColumnIndex(ToBuyItemsEntry._ID);
         long buyItemId = cursor.getLong(buyItemIdColIdx);
-        String msg = Builder.getDaoManager(getActivity()).update(buyItemId, isChecked);
-        Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
-
+        getDaoManager(getActivity()).update(buyItemId, isChecked);
+//        Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
     }
 
     @Override

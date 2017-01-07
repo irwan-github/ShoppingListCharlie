@@ -2,6 +2,7 @@ package com.mirzairwan.shopping;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.support.v4.util.LruCache;
 
 import java.io.File;
 
@@ -14,6 +15,7 @@ public class ImageResizer extends ImageWorker
     protected int mImageWidth;
     protected int mImageHeight;
 
+
     /**
      * Initialize providing a single target image size (used for both width and height);
      *
@@ -21,8 +23,22 @@ public class ImageResizer extends ImageWorker
      * @param imageWidth
      * @param imageHeight
      */
-    public ImageResizer(Context context, int imageWidth, int imageHeight) {
+    public ImageResizer(Context context, int imageWidth, int imageHeight)
+    {
         super(context);
+        setImageSize(imageWidth, imageHeight);
+    }
+
+    /**
+     * Initialize providing a single target image size (used for both width and height);
+     *
+     * @param context
+     * @param imageWidth
+     * @param imageHeight
+     */
+    public ImageResizer(Context context, int imageWidth, int imageHeight, LruCache<String, Bitmap> thumbBitmapCache)
+    {
+        super(context, thumbBitmapCache);
         setImageSize(imageWidth, imageHeight);
     }
 
@@ -32,12 +48,13 @@ public class ImageResizer extends ImageWorker
      * @param width
      * @param height
      */
-    public void setImageSize(int width, int height) {
+    public void setImageSize(int width, int height)
+    {
         mImageWidth = width;
         mImageHeight = height;
     }
 
-    public static Bitmap decodeSampledBitmapFromDescriptor(File file, int reqWidth, int reqHeight)
+    public Bitmap decodeSampledBitmapFromDescriptor(File file, int reqWidth, int reqHeight)
     {
         return PictureUtil.decodeSampledBitmap(file.getPath(), reqWidth, reqHeight);
     }
@@ -46,5 +63,6 @@ public class ImageResizer extends ImageWorker
     protected Bitmap processBitmap(File file)
     {
         return decodeSampledBitmapFromDescriptor(file, mImageWidth, mImageHeight);
+
     }
 }

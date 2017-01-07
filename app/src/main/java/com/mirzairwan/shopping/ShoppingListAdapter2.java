@@ -1,10 +1,11 @@
 package com.mirzairwan.shopping;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,8 +22,6 @@ import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 
 import java.io.File;
 
-import static android.preference.PreferenceManager.getDefaultSharedPreferences;
-
 /**
  * Created by Mirza Irwan on 18/12/16.
  */
@@ -30,26 +29,17 @@ import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 public class ShoppingListAdapter2 extends CursorAdapter
 {
     private static final String LOG_TAG = ShoppingListAdapter2.class.getSimpleName();
-    private final SharedPreferences userPreferences;
     private ImageResizer mImageResizer;
     private OnCheckBuyItemListener mOnFragmentInteractionListener;
 
-    public ShoppingListAdapter2(Context context, Cursor cursor, OnCheckBuyItemListener onFragmentInteractionListener)
-    {
-        super(context, cursor, 0);
-        mOnFragmentInteractionListener = onFragmentInteractionListener;
-        userPreferences = getDefaultSharedPreferences(context);
-    }
-
     public ShoppingListAdapter2(Context context, Cursor cursor,
-                                OnCheckBuyItemListener onFragmentInteractionListener, ImageResizer imageResizer)
+                                OnCheckBuyItemListener onFragmentInteractionListener, ImageResizer imageResizer
+                                )
     {
         super(context, cursor, 0);
         mOnFragmentInteractionListener = onFragmentInteractionListener;
-        userPreferences = getDefaultSharedPreferences(context);
         mImageResizer = imageResizer;
     }
-
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent)
@@ -75,13 +65,17 @@ public class ShoppingListAdapter2 extends CursorAdapter
     @Override
     public void bindView(View convertView, Context context, Cursor cursor)
     {
+
         TagBuyItemViews tagViews = (TagBuyItemViews)convertView.getTag();
 
         int colPicPath = cursor.getColumnIndex(PicturesEntry.COLUMN_FILE_PATH);
         String pathPic = cursor.getString(colPicPath);
+
+        Log.d(LOG_TAG, ">>> bindView " + pathPic);
+
         tagViews.ivItem.setImageResource(R.drawable.empty_photo);
-        if(!TextUtils.isEmpty(pathPic))
-            mImageResizer.loadImage(new File(pathPic), tagViews.ivItem);
+
+        setImageView(pathPic, tagViews.ivItem);
 
         int colNameIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
         tagViews.tvItemName.setText(cursor.getString(colNameIdx));
@@ -111,6 +105,20 @@ public class ShoppingListAdapter2 extends CursorAdapter
         int colBuyItemQty = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);
         tagViews.tvItemQty.setText(String.valueOf(cursor.getInt(colBuyItemQty)));
         tagViews.tvItemQty.setFocusable(false);
+    }
+
+    private void setImageView(String pathPic, ImageView ivItem)
+    {
+        if(TextUtils.isEmpty(pathPic))
+            return;
+        Bitmap bitmap = mImageResizer.getBitmapFromMemCache(pathPic);
+
+        if(bitmap != null)
+        {
+            ivItem.setImageBitmap(bitmap);
+        }
+        else
+            mImageResizer.loadImage(new File(pathPic), ivItem);
     }
 
     private static class TagBuyItemViews

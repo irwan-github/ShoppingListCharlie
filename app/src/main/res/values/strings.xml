@@ -63,4 +63,5 @@
     <string name="drawer_open">Opennn</string>
     <string name="drawer_close">Clozeee</string>
     <string name="sort_desc">Sort shopping list by</string>
+    <string name="clear_checked_item">Clear checked item</string>
 </resources>

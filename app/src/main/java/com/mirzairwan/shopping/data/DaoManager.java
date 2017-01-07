@@ -83,4 +83,5 @@ public interface DaoManager
      */
     String cleanUpDiscardedPictures(PictureMgr pictureMgr);
 
+    String  deleteCheckedItems();
 }

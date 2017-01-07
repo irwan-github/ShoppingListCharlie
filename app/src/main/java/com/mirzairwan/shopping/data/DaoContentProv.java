@@ -520,4 +520,14 @@ public class DaoContentProv implements DaoManager
         buyItemValues.put(ToBuyItemsEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
         return buyItemValues;
     }
+
+    @Override
+    public String deleteCheckedItems()
+    {
+        Uri uriDeleteCheckedItem = ToBuyItemsEntry.CONTENT_URI;
+        String where = ToBuyItemsEntry.COLUMN_IS_CHECKED + "=?";
+        String[] selectionArgs = new String[]{String.valueOf(ToBuyItemsEntry.IS_CHECKED)};
+        int deleted = mContext.getContentResolver().delete(uriDeleteCheckedItem, where, selectionArgs);
+        return "Deleted " + deleted;
+    }
 }

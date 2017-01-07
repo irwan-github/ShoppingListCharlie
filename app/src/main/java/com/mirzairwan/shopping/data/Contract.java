@@ -206,6 +206,7 @@ public final class Contract
 
         public static final String ALIAS_COLUMN_LAST_UPDATED_ON = "buy_item_last_updated_on";
 
+        public static final int IS_CHECKED = 1;
     }
 //
 

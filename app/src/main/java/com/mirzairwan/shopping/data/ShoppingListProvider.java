@@ -125,6 +125,7 @@ public class ShoppingListProvider extends ContentProvider
 //        sCatalogueProjectionMap.put(PricesEntry.COLUMN_BUNDLE_QTY, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_BUNDLE_QTY);
 //        sCatalogueProjectionMap.put(PricesEntry.COLUMN_SHOP_ID, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_SHOP_ID);
         sCatalogueProjectionMap.put(ToBuyItemsEntry.ALIAS_ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry._ID + " AS " + ToBuyItemsEntry.ALIAS_ID);
+        sCatalogueProjectionMap.put(PicturesEntry.COLUMN_FILE_PATH, PicturesEntry.COLUMN_FILE_PATH);
 
         sPictureProjectionMap.put(PicturesEntry._ID, PicturesEntry._ID);
         sPictureProjectionMap.put(PicturesEntry.COLUMN_ITEM_ID, PicturesEntry.COLUMN_ITEM_ID);
@@ -307,7 +308,11 @@ public class ShoppingListProvider extends ContentProvider
                 " LEFT JOIN " +
                 PricesEntry.TABLE_NAME + " ON " +
                 ItemsEntry.TABLE_NAME + "." + ItemsEntry._ID + "=" +
-                PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_ITEM_ID
+                PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_ITEM_ID +
+                " LEFT JOIN " + PicturesEntry.TABLE_NAME +
+                " ON " + ItemsEntry.TABLE_NAME + "." +
+                ItemsEntry._ID + "=" +
+                        PicturesEntry.TABLE_NAME + "." + PicturesEntry.COLUMN_ITEM_ID
         );
 
         queryBuilder.setProjectionMap(sCatalogueProjectionMap);
@@ -528,6 +533,10 @@ public class ShoppingListProvider extends ContentProvider
                 selection = "_id=?";
                 selectionArgs = new String[]{String.valueOf(_id)};
                 deleted = deleteItems(uri, selection, selectionArgs);
+                break;
+            case BUY_ITEMS:
+                deleted = mShoppingListDbHelper.getWritableDatabase()
+                        .delete(ToBuyItemsEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             case BUY_ITEM_ID:
                 _id = ContentUris.parseId(uri);
