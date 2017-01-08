@@ -50,6 +50,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     private String countryCode;
     private static final String SORT_COLUMN = "SORT_COLUMN";
     private LruCache<String, Bitmap> mThumbBitmapCache;
+    private Toolbar mShoppingListToolbar;
 
     public static ShoppingListFragment newInstance()
     {
@@ -94,7 +95,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         setupListView(lvBuyItems);
         setupListItemListener(lvBuyItems);
         setupEmptyView(rootView, lvBuyItems);
-        setupShoppingListToolbar((Toolbar)rootView.findViewById(R.id.shopping_list_toolbar));
+        setupShoppingListToolbar((Toolbar) rootView.findViewById(R.id.shopping_list_toolbar));
 
         PreferenceManager.setDefaultValues(getActivity(), preferences, false);
         PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
@@ -111,7 +112,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     private void setupShoppingListToolbar(Toolbar shoppingListToolbar)
     {
         shoppingListToolbar.inflateMenu(R.menu.shopping_list_toolbar);
-        shoppingListToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener(){
+        shoppingListToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener()
+        {
             @Override
             public boolean onMenuItemClick(MenuItem item)
             {
@@ -127,6 +129,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
             }
         });
+        mShoppingListToolbar = shoppingListToolbar;
     }
 
     private void setupEmptyView(View rootView, ListView lvBuyItems)
@@ -259,7 +262,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         int buyItemIdColIdx = cursor.getColumnIndex(ToBuyItemsEntry._ID);
         long buyItemId = cursor.getLong(buyItemIdColIdx);
         getDaoManager(getActivity()).update(buyItemId, isChecked);
-//        Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -309,11 +311,11 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         }
 
         tvTotalValueAdded.setText(FormatHelper.formatCountryCurrency(countryCode, currencyCode, totalValueOfItemsAdded));
-
     }
 
     public void showCostOfItemsChecked()
     {
+        byte atLeastAnItemChecked = (byte)0;
         String currencyCode = FormatHelper.getCurrencyCode(countryCode);
         TextView tvTotalValueChecked = (TextView) getActivity().findViewById(R.id.tv_total_checked);
         Double totalValueOfItemsChecked = 0.00d;
@@ -328,11 +330,14 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
             String lCurrencyCode = cursor.getString(colCurrencyCode);
             boolean isItemChecked = cursor.getInt(colIsItemChecked) > 0;
+            atLeastAnItemChecked |= (byte)cursor.getInt(colIsItemChecked);
 
             //Only add item with same currency code as user home currency code
             if (isItemChecked && lCurrencyCode.trim().equalsIgnoreCase(currencyCode))
                 totalValueOfItemsChecked += ((cursor.getDouble(colSelectedPriceTag) / 100) * qtyPurchased);
         }
+        //Show or hide the "Clear" action item
+        mShoppingListToolbar.getMenu().findItem(R.id.clear_checked_item).setVisible(atLeastAnItemChecked > 0);
 
         tvTotalValueChecked.setText(FormatHelper.formatCountryCurrency(countryCode, currencyCode, totalValueOfItemsChecked));
     }

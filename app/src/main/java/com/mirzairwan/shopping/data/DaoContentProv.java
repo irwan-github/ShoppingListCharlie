@@ -47,16 +47,16 @@ public class DaoContentProv implements DaoManager
     }
 
     @Override
-    public String update(long buyItemId, boolean isChecked)
+    public int update(long buyItemId, boolean isChecked)
     {
         ContentValues values = new ContentValues();
         values.put(ToBuyItemsEntry.COLUMN_IS_CHECKED, isChecked ? 1 : 0);
         Uri updateBuyItemUri = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItemId);
-        int updated = mContext.getContentResolver().update(updateBuyItemUri, values, null, null);
-        if (updated == 1)
-            return mContext.getString(R.string.database_success);
-        else
-            return mContext.getString(R.string.database_failed);
+        return mContext.getContentResolver().update(updateBuyItemUri, values, null, null);
+//        if (updated == 1)
+//            return mContext.getString(R.string.database_success);
+//        else
+//            return mContext.getString(R.string.database_failed);
     }
 
     @Override

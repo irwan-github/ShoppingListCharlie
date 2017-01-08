@@ -56,7 +56,7 @@ public interface DaoManager
      * @param isChecked indicates whether the item is checked in the shopping list
      * @return
      */
-    String update(long buyItemId, boolean isChecked);
+    int update(long buyItemId, boolean isChecked);
 
     /**
      * Delete item in catalogue and its child records in other tables.
