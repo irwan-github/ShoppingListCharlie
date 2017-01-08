@@ -13,6 +13,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import com.mirzairwan.shopping.data.Contract.Catalogue;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
@@ -232,6 +233,10 @@ public class ShoppingListProvider extends ContentProvider
         int matchCode = sUriMatcher.match(uri);
         Cursor cursor = null;
         SQLiteDatabase database = null;
+
+        if(!TextUtils.isEmpty(sortOrder))
+            sortOrder += " COLLATE NOCASE";
+
         long id = -1;
         switch (matchCode) {
             case ITEMS:

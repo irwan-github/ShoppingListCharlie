@@ -39,6 +39,7 @@ import android.widget.Toast;
 import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.DaoManager;
+import com.mirzairwan.shopping.domain.InputFilterUtil;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
@@ -433,7 +434,9 @@ public abstract class ItemActivity extends AppCompatActivity implements
         };
 
         etName = (EditText) findViewById(R.id.et_item_name);
+        InputFilterUtil.setInitialCapInputFilter(etName);
         etBrand = (EditText) findViewById(R.id.et_item_brand);
+        InputFilterUtil.setInitialCapInputFilter(etBrand);
         etDescription = (EditText) findViewById(R.id.et_item_description);
         etCountryOrigin = (EditText) findViewById(R.id.et_item_country_origin);
         mImgItemPic = (ImageView) findViewById(R.id.img_item);
@@ -551,7 +554,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
      */
     protected Item getItemFromInputField()
     {
-        String itemName = FormatHelper.capitalizeFirstLetter(etName.getText().toString());
+        String itemName = etName.getText().toString();
         String itemBrand = etBrand.getText().toString();
         String countryOrigin = etCountryOrigin.getText().toString();
         String itemDescription = etDescription.getText().toString();

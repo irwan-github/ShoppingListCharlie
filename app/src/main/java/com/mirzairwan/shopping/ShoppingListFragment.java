@@ -42,7 +42,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         ShoppingListAdapter2.OnCheckBuyItemListener, SharedPreferences.OnSharedPreferenceChangeListener
 
 {
-    public static final String BUY_LIST = "BUY_LIST";
     private static final String LOG_TAG = ShoppingListFragment.class.getSimpleName();
     private static final int LOADER_BUY_ITEM_ID = 1;
     private OnFragmentInteractionListener onFragmentInteractionListener;
@@ -337,7 +336,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 totalValueOfItemsChecked += ((cursor.getDouble(colSelectedPriceTag) / 100) * qtyPurchased);
         }
         //Show or hide the "Clear" action item
-        mShoppingListToolbar.getMenu().findItem(R.id.clear_checked_item).setVisible(atLeastAnItemChecked > 0);
+        mShoppingListToolbar.getMenu().findItem(R.id.clear_checked_item).
+                                                    setVisible(atLeastAnItemChecked == 1);
 
         tvTotalValueChecked.setText(FormatHelper.formatCountryCurrency(countryCode, currencyCode, totalValueOfItemsChecked));
     }
