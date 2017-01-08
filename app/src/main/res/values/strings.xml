@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Go shopping</string>
     <string name="buy_list">Shopping List</string>
-    <string name="catalogue">All items</string>
+    <string name="catalogue">History</string>
     <string name="item_name">Name</string>
     <string name="brand_label">Brand</string>
     <string name="use_price_type">Which price to use in shopping list?</string>

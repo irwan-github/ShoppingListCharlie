@@ -56,13 +56,23 @@ public class ImageResizer extends ImageWorker
 
     public Bitmap decodeSampledBitmapFromDescriptor(File file, int reqWidth, int reqHeight)
     {
-        return PictureUtil.decodeSampledBitmap(file.getPath(), reqWidth, reqHeight);
+        return PictureUtil.decodeSampledBitmapFile(file.getPath(), reqWidth, reqHeight);
     }
 
-    @Override
-    protected Bitmap processBitmap(File file)
+    private Bitmap processBitmap(File file)
     {
         return decodeSampledBitmapFromDescriptor(file, mImageWidth, mImageHeight);
 
+    }
+
+    private Bitmap processBitmap(String filepath)
+    {
+        return processBitmap(new File(filepath));
+    }
+
+    @Override
+    protected Bitmap processBitmap(Object data)
+    {
+        return processBitmap(String.valueOf(data));
     }
 }

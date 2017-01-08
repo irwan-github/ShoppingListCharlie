@@ -48,7 +48,6 @@ public class ItemEditingActivity extends ItemActivity
     {
         Bundle arg = new Bundle();
         arg.putParcelable(ITEM_URI, uri);
-        //getLoaderManager().initLoader(ITEM_LOADER_ID, arg, this);
         getLoaderManager().restartLoader(ITEM_LOADER_ID, arg, this);
         super.initPictureLoader(uri, this);
         super.initPriceLoader(uri, this);

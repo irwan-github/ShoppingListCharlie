@@ -114,9 +114,9 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
                         getResources().getDimensionPixelSize(R.dimen.image_summary_width),
                         getResources().getDimensionPixelSize(R.dimen.list_item_height),
                         mThumbBitmapCache);
+
         catalogAdapter = new CatalogAdapter(getActivity(), null, this, imageResizer);
         lvAllItems.setAdapter(catalogAdapter);
-
         lvAllItems.setOnItemClickListener(this);
     }
 

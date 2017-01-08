@@ -2,7 +2,6 @@ package com.mirzairwan.shopping;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -34,7 +33,7 @@ public class ShoppingListAdapter2 extends CursorAdapter
 
     public ShoppingListAdapter2(Context context, Cursor cursor,
                                 OnCheckBuyItemListener onFragmentInteractionListener, ImageResizer imageResizer
-                                )
+    )
     {
         super(context, cursor, 0);
         mOnFragmentInteractionListener = onFragmentInteractionListener;
@@ -66,15 +65,14 @@ public class ShoppingListAdapter2 extends CursorAdapter
     public void bindView(View convertView, Context context, Cursor cursor)
     {
 
-        TagBuyItemViews tagViews = (TagBuyItemViews)convertView.getTag();
+        TagBuyItemViews tagViews = (TagBuyItemViews) convertView.getTag();
 
         int colPicPath = cursor.getColumnIndex(PicturesEntry.COLUMN_FILE_PATH);
         String pathPic = cursor.getString(colPicPath);
 
         Log.d(LOG_TAG, ">>> bindView " + pathPic);
 
-        tagViews.ivItem.setImageResource(R.drawable.empty_photo);
-
+        //tagViews.ivItem.setImageResource(R.drawable.empty_photo);
         setImageView(pathPic, tagViews.ivItem);
 
         int colNameIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
@@ -82,7 +80,7 @@ public class ShoppingListAdapter2 extends CursorAdapter
 
         int colBrandIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_BRAND);
         String brand = cursor.getString(colBrandIdx);
-        if(!TextUtils.isEmpty(brand))
+        if (!TextUtils.isEmpty(brand))
             tagViews.tvItemBrand.setText(brand);
         else
             tagViews.tvItemBrand.setText(R.string.default_brand_name);
@@ -100,7 +98,7 @@ public class ShoppingListAdapter2 extends CursorAdapter
         double priceTag = cursor.getDouble(colSelectedPriceTagIdx);
         String countryCode = PreferenceManager.getDefaultSharedPreferences(context).getString("home_country_preference", null);
         tagViews.tvSelectedPrice.setText(FormatHelper.formatCountryCurrency(countryCode,
-                                                                     currencyCode, priceTag/100));
+                currencyCode, priceTag / 100));
 
         int colBuyItemQty = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);
         tagViews.tvItemQty.setText(String.valueOf(cursor.getInt(colBuyItemQty)));
@@ -109,16 +107,11 @@ public class ShoppingListAdapter2 extends CursorAdapter
 
     private void setImageView(String pathPic, ImageView ivItem)
     {
-        if(TextUtils.isEmpty(pathPic))
+        if (TextUtils.isEmpty(pathPic)) {
+            ivItem.setImageResource(R.drawable.empty_photo);
             return;
-        Bitmap bitmap = mImageResizer.getBitmapFromMemCache(pathPic);
-
-        if(bitmap != null)
-        {
-            ivItem.setImageBitmap(bitmap);
         }
-        else
-            mImageResizer.loadImage(new File(pathPic), ivItem);
+        mImageResizer.loadImage(new File(pathPic), ivItem);
     }
 
     private static class TagBuyItemViews

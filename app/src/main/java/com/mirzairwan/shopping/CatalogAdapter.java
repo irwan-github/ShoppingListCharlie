@@ -2,8 +2,8 @@ package com.mirzairwan.shopping;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +24,7 @@ import java.io.File;
 
 public class CatalogAdapter extends CursorAdapter
 {
+    private static final String LOG_TAG = CatalogAdapter.class.getSimpleName();
     private OnToggleCatalogItemListener mOnToggleCatalogItemListener;
     private ImageResizer mImageResizer;
 
@@ -66,10 +67,10 @@ public class CatalogAdapter extends CursorAdapter
     {
         Tag tag = (Tag) convertView.getTag();
 
-        tag.ivItem.setImageResource(R.drawable.empty_photo);
-
+        //tag.ivItem.setImageResource(R.drawable.empty_photo);
         int colPicPath = cursor.getColumnIndex(Contract.PicturesEntry.COLUMN_FILE_PATH);
         String pathPic = cursor.getString(colPicPath);
+        Log.d(LOG_TAG, ">>> bindView " + pathPic);
         setImageView(pathPic, tag.ivItem);
 
         int nameColIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
@@ -92,16 +93,11 @@ public class CatalogAdapter extends CursorAdapter
 
     private void setImageView(String pathPic, ImageView ivItem)
     {
-        if(TextUtils.isEmpty(pathPic))
+        if(TextUtils.isEmpty(pathPic)) {
+            ivItem.setImageResource(R.drawable.empty_photo);
             return;
-        Bitmap bitmap = mImageResizer.getBitmapFromMemCache(pathPic);
-
-        if(bitmap != null)
-        {
-            ivItem.setImageBitmap(bitmap);
         }
-        else
-            mImageResizer.loadImage(new File(pathPic), ivItem);
+        mImageResizer.loadImage(new File(pathPic), ivItem);
     }
 
     private static class Tag

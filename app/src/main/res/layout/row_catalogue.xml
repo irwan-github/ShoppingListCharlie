@@ -10,9 +10,8 @@
         android:id="@+id/iv_history_pic_thb"
         android:layout_width="@dimen/image_summary_width"
         android:layout_height="@dimen/image_summary_height"
-        android:background="@android:color/black"
         android:scaleType="centerCrop"
-        android:src="@drawable/empty_photo"/>
+        />
 
     <LinearLayout
         android:layout_width="wrap_content"

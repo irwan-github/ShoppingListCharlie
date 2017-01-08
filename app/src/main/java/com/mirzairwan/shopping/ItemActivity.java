@@ -249,7 +249,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
         Bundle arg = new Bundle();
         arg.putParcelable(ITEM_URI, uri);
-        //getLoaderManager().initLoader(ITEM_PRICE_LOADER_ID, arg, callback);
         getLoaderManager().restartLoader(ITEM_PRICE_LOADER_ID, arg, callback);
     }
 
@@ -408,7 +407,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
         Picture externalPicture = new Picture(filePath);
         mPictureMgr.setPictureForViewing(externalPicture); //Update PictureMgr on the target picture
         setPictureView(externalPicture);
-
     }
 
     protected void setPictureView(Picture picture)

@@ -109,10 +109,6 @@ public class ShoppingActivity extends AppCompatActivity implements
                 Intent intentDb = new Intent(this, AndroidDatabaseManager.class);
                 startActivity(intentDb);
                 return true;
-            case R.id.menu_user_settings:
-                Intent intentSettings = new Intent(this, SettingsActivity.class);
-                startActivity(intentSettings);
-                return true;
             default:
                 // Pass the event to ActionBarDrawerToggle, if it returns
                 // true, then it has handled the app icon touch event

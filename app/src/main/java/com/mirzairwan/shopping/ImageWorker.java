@@ -3,6 +3,9 @@ package com.mirzairwan.shopping;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.v4.util.LruCache;
 import android.widget.ImageView;
@@ -16,38 +19,80 @@ import java.lang.ref.WeakReference;
 
 public abstract class ImageWorker
 {
+    private Bitmap mPlaceHolderBitmap;
     protected Resources mResources;
-    protected LruCache<String, Bitmap> mThumbBitmapCache;
+    protected LruCache<String, Bitmap> mBitmapCache;
 
-    protected ImageWorker(Context context) {
+    protected ImageWorker(Context context)
+    {
         mResources = context.getResources();
     }
 
-    protected ImageWorker(Context context, LruCache<String, Bitmap> thumbBitmapCache) {
+    protected ImageWorker(Context context, LruCache<String, Bitmap> thumbBitmapCache)
+    {
         mResources = context.getResources();
-        mThumbBitmapCache = thumbBitmapCache;
+        mBitmapCache = thumbBitmapCache;
+        mPlaceHolderBitmap = BitmapFactory.decodeResource(mResources, R.drawable.empty_photo);
     }
 
     /**
      * Load an image specified by the data parameter into an ImageView
-     * @param file The URL of the image to download.
+     *
+     * @param file      The URL of the image to download.
      * @param imageView The ImageView to bind the downloaded image to.
      */
-    public void loadImage(File file, ImageView imageView) {
-        if(!file.exists())
+    public void loadImage(File file, ImageView imageView)
+    {
+        if (!file.exists())
             return;
-        BitmapWorkerTask task = new BitmapWorkerTask(imageView);
-        task.execute(file);
-    }
 
-    public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
-        if (mThumbBitmapCache !=null && getBitmapFromMemCache(key) == null) {
-            mThumbBitmapCache.put(key, bitmap);
+        Bitmap bitmapFromMemCache = getBitmapFromMemCache(file.getPath());
+        if (bitmapFromMemCache != null) {
+            imageView.setImageBitmap(bitmapFromMemCache);
+            return;
+        }
+
+        if (cancelPotentialWork(file, imageView)) {
+            BitmapWorkerTask task = new BitmapWorkerTask(file.getPath(), imageView);
+            final AsyncDrawable asyncDrawable =
+                    new AsyncDrawable(mResources, mPlaceHolderBitmap, task);
+            imageView.setImageDrawable(asyncDrawable);
+            task.execute();
         }
     }
 
-    public Bitmap getBitmapFromMemCache(String key) {
-        return mThumbBitmapCache.get(key);
+    public static boolean cancelPotentialWork(Object data, ImageView imageView)
+    {
+        final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
+        if (bitmapWorkerTask != null) {
+            final Object bitmapData = bitmapWorkerTask.mData;
+            // If bitmapData is not yet set or it differs from the new data
+            if (bitmapData == null || !bitmapData.equals(data)) {
+                // Cancel previous task
+                bitmapWorkerTask.cancel(true);
+            } else {
+                // The same work is already in progress.
+                return false;
+            }
+        }
+        // No task associated with the ImageView, or an existing task was cancelled
+        return true;
+
+    }
+
+    public void addBitmapToMemoryCache(String key, Bitmap bitmap)
+    {
+        if (mBitmapCache != null && getBitmapFromMemCache(key) == null) {
+            mBitmapCache.put(key, bitmap);
+        }
+    }
+
+    public Bitmap getBitmapFromMemCache(String key)
+    {
+        if (mBitmapCache != null)
+            return mBitmapCache.get(key);
+        else
+            return null;
     }
 
 
@@ -56,10 +101,10 @@ public abstract class ImageWorker
      * the final bitmap. This will be executed in a background thread and be long running. For
      * example, you could resize a large bitmap here, or pull down an image from the network.
      *
-     * @param file The data to identify which image to process, as provided by
+     * @param data The data to identify which image to process, as provided by
      * @return The processed bitmap
      */
-    protected abstract Bitmap processBitmap(File file);
+    protected abstract Bitmap processBitmap(Object data);
 
     /**
      * Called when the processing is complete and the final drawable should be
@@ -73,11 +118,35 @@ public abstract class ImageWorker
         imageView.setImageBitmap(bitmap);
     }
 
+    /**
+     * A helper used to retrieve the task associated with a particular ImageView:
+     *
+     * @param imageView
+     * @return
+     */
+    private static BitmapWorkerTask getBitmapWorkerTask(ImageView imageView)
+    {
+        if (imageView != null) {
+            final Drawable drawable = imageView.getDrawable();
+            if (drawable instanceof AsyncDrawable) {
+                final AsyncDrawable asyncDrawable = (AsyncDrawable) drawable;
+                return asyncDrawable.getBitmapWorkerTask();
+            }
+        }
+        return null;
+    }
 
-
-    class BitmapWorkerTask extends AsyncTask<File, Void, Bitmap>
+    class BitmapWorkerTask extends AsyncTask<Void, Void, Bitmap>
     {
         private final WeakReference<ImageView> imageViewReference;
+        private Object mData;
+
+        public BitmapWorkerTask(Object data, ImageView imageView)
+        {
+            // Use a WeakReference to ensure the ImageView can be garbage collected
+            imageViewReference = new WeakReference<>(imageView);
+            mData = data;
+        }
 
         public BitmapWorkerTask(ImageView imageView)
         {
@@ -86,11 +155,18 @@ public abstract class ImageWorker
 
         }
 
-        @Override
         protected Bitmap doInBackground(File... params)
         {
             Bitmap bitmap = processBitmap(params[0]);
             addBitmapToMemoryCache(params[0].getPath(), bitmap);
+            return bitmap;
+        }
+
+        @Override
+        protected Bitmap doInBackground(Void... params)
+        {
+            Bitmap bitmap = processBitmap(mData);
+            addBitmapToMemoryCache(String.valueOf(mData), bitmap);
             return bitmap;
         }
 
@@ -105,6 +181,24 @@ public abstract class ImageWorker
                 }
             }
 
+        }
+    }
+
+    static class AsyncDrawable extends BitmapDrawable
+    {
+        private final WeakReference<BitmapWorkerTask> bitmapWorkerTaskReference;
+
+        public AsyncDrawable(Resources res, Bitmap bitmap,
+                             BitmapWorkerTask bitmapWorkerTask)
+        {
+            super(res, bitmap);
+            bitmapWorkerTaskReference =
+                    new WeakReference<BitmapWorkerTask>(bitmapWorkerTask);
+        }
+
+        public BitmapWorkerTask getBitmapWorkerTask()
+        {
+            return bitmapWorkerTaskReference.get();
         }
     }
 }
