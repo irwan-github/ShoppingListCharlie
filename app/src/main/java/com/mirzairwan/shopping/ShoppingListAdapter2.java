@@ -18,8 +18,7 @@ import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
-
-import java.io.File;
+import com.mirzairwan.shopping.domain.Picture;
 
 /**
  * Created by Mirza Irwan on 18/12/16.
@@ -28,16 +27,17 @@ import java.io.File;
 public class ShoppingListAdapter2 extends CursorAdapter
 {
     private static final String LOG_TAG = ShoppingListAdapter2.class.getSimpleName();
-    private ImageResizer mImageResizer;
+    private OnPictureRequestListener mOnPictureRequestListener;
     private OnCheckBuyItemListener mOnFragmentInteractionListener;
 
     public ShoppingListAdapter2(Context context, Cursor cursor,
-                                OnCheckBuyItemListener onFragmentInteractionListener, ImageResizer imageResizer
-    )
+                                OnCheckBuyItemListener onFragmentInteractionListener,
+                                OnPictureRequestListener onPictureRequestListener)
     {
         super(context, cursor, 0);
         mOnFragmentInteractionListener = onFragmentInteractionListener;
-        mImageResizer = imageResizer;
+        //mImageResizer = imageResizer;
+        mOnPictureRequestListener = onPictureRequestListener;
     }
 
     @Override
@@ -111,7 +111,8 @@ public class ShoppingListAdapter2 extends CursorAdapter
             ivItem.setImageResource(R.drawable.empty_photo);
             return;
         }
-        mImageResizer.loadImage(new File(pathPic), ivItem);
+        mOnPictureRequestListener.onRequest(new Picture(pathPic), ivItem);
+        //mImageResizer.loadImage(new File(pathPic), ivItem);
     }
 
     private static class TagBuyItemViews

@@ -15,8 +15,7 @@ import android.widget.ToggleButton;
 
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
-
-import java.io.File;
+import com.mirzairwan.shopping.domain.Picture;
 
 /**
  * Created by Mirza Irwan on 18/12/16.
@@ -25,16 +24,16 @@ import java.io.File;
 public class CatalogAdapter extends CursorAdapter
 {
     private static final String LOG_TAG = CatalogAdapter.class.getSimpleName();
+    private OnPictureRequestListener mOnPictureRequestListener;
     private OnToggleCatalogItemListener mOnToggleCatalogItemListener;
-    private ImageResizer mImageResizer;
 
     public CatalogAdapter(Context context, Cursor cursor,
                           OnToggleCatalogItemListener onToggleCatalogItemListener,
-                          ImageResizer imageResizer)
+                          OnPictureRequestListener onPictureRequestListener)
     {
         super(context, cursor, 0);
         mOnToggleCatalogItemListener = onToggleCatalogItemListener;
-        mImageResizer = imageResizer;
+        mOnPictureRequestListener = onPictureRequestListener;
     }
 
     @Override
@@ -97,7 +96,8 @@ public class CatalogAdapter extends CursorAdapter
             ivItem.setImageResource(R.drawable.empty_photo);
             return;
         }
-        mImageResizer.loadImage(new File(pathPic), ivItem);
+        //mImageResizer.loadImage(new File(pathPic), ivItem);
+        mOnPictureRequestListener.onRequest(new Picture(pathPic), ivItem);
     }
 
     private static class Tag

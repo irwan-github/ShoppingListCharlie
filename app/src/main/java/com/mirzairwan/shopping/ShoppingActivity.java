@@ -11,28 +11,31 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ImageView;
 import android.widget.ListView;
 
 import com.mirzairwan.shopping.data.AndroidDatabaseManager;
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+import com.mirzairwan.shopping.domain.Picture;
 
 import static com.mirzairwan.shopping.ItemEditingActivity.ITEM_IS_IN_SHOPPING_LIST;
 import static com.mirzairwan.shopping.R.id.menu_database_shopping_list;
 
 public class ShoppingActivity extends AppCompatActivity implements
         ShoppingListFragment.OnFragmentInteractionListener,
-        CatalogFragment.OnFragmentInteractionListener
+        CatalogFragment.OnFragmentInteractionListener, OnPictureRequestListener
 {
-    public static final String HOME_COUNTRY_CODE = "HOME_COUNTRY_CODE";
-    public static final String PERSONAL = "PERSONAL";
+    private static final String LOG_TAG = ShoppingActivity.class.getSimpleName();
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
+    private ImageResizer mImageResizer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -47,6 +50,12 @@ public class ShoppingActivity extends AppCompatActivity implements
         viewPager.setAdapter(pagerAdapter);
 
         setUpNavDrawer();
+
+        mImageResizer =
+                new ImageResizer(this,
+                        getResources().getDimensionPixelSize(R.dimen.image_summary_width),
+                        getResources().getDimensionPixelSize(R.dimen.list_item_height)
+                );
     }
 
     private void setUpNavDrawer()
@@ -154,6 +163,13 @@ public class ShoppingActivity extends AppCompatActivity implements
         Uri uri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, itemId);
         intentToViewItem.setData(uri);
         startActivity(intentToViewItem);
+    }
+
+    @Override
+    public void onRequest(Picture picture, ImageView ivItem)
+    {
+        Log.d(LOG_TAG, ">>>onRequest(Picture picture...");
+        mImageResizer.loadImage(picture.getFile(), ivItem);
     }
 
     private class DrawerItemClickListener implements ListView.OnItemClickListener

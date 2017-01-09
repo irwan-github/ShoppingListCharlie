@@ -13,6 +13,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,7 +33,7 @@ import static com.mirzairwan.shopping.Builder.getDaoManager;
 import static com.mirzairwan.shopping.R.xml.preferences;
 
 /**
- * Display shopping list
+ * Display shopping list screen
  * Created by Mirza Irwan on 19/11/16.
  */
 
@@ -47,6 +48,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     private String countryCode;
     private static final String SORT_COLUMN = "SORT_COLUMN";
     private Toolbar mShoppingListToolbar;
+    private OnPictureRequestListener mOnPictureRequestListener;
 
     public static ShoppingListFragment newInstance()
     {
@@ -137,8 +139,10 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onAttach(Activity activity)
     {
+        Log.d(LOG_TAG, "onAttach");
         super.onAttach(activity);
         onFragmentInteractionListener = (OnFragmentInteractionListener) activity;
+        mOnPictureRequestListener = (OnPictureRequestListener)activity;
     }
 
     @Override
@@ -175,14 +179,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
     private void setupListView(ListView lvBuyItems)
     {
-        ImageResizer imageResizer =
-                new ImageResizer(getActivity(),
-                        getResources().getDimensionPixelSize(R.dimen.image_summary_width),
-                        getResources().getDimensionPixelSize(R.dimen.list_item_height)
-                        );
-
         shoppingListAdapter = new ShoppingListAdapter2(getActivity(), null,
-                this, imageResizer);
+                this, mOnPictureRequestListener);
 
         lvBuyItems.setAdapter(shoppingListAdapter);
     }

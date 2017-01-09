@@ -48,6 +48,7 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
     private DaoManager daoManager;
     private OnFragmentInteractionListener mOnFragmentInteractionListener;
     private Cursor mCursor;
+    private OnPictureRequestListener mOnPictureRequestListener;
 
     public static CatalogFragment newInstance()
     {
@@ -67,6 +68,7 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
         super.onAttach(activity);
         daoManager = new DaoContentProv(activity);
         mOnFragmentInteractionListener = (OnFragmentInteractionListener) activity;
+        mOnPictureRequestListener = (OnPictureRequestListener)activity;
     }
 
     @Nullable
@@ -111,7 +113,7 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
                         getResources().getDimensionPixelSize(R.dimen.list_item_height)
                         );
 
-        catalogAdapter = new CatalogAdapter(getActivity(), null, this, imageResizer);
+        catalogAdapter = new CatalogAdapter(getActivity(), null, this, mOnPictureRequestListener);
         lvAllItems.setAdapter(catalogAdapter);
         lvAllItems.setOnItemClickListener(this);
     }
