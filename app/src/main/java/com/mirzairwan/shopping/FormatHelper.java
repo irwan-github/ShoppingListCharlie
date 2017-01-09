@@ -78,4 +78,9 @@ public class FormatHelper
         }
         return original.substring(0, 1).toUpperCase() + original.substring(1);
     }
+
+    public static boolean validateCurrencyCode(String currencyCode)
+    {
+        return Currency.getInstance(currencyCode).getCurrencyCode().equals(currencyCode);
+    }
 }

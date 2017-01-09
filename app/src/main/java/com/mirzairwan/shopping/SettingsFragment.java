@@ -8,14 +8,9 @@ import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AlertDialog;
-import android.text.InputFilter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Created by Mirza Irwan on 24/12/16.
@@ -46,7 +41,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     {
         super.onResume();
         etPref = (EditTextPreference)findPreference(getString(R.string.user_country_pref));
-        setAllCapsInputFilter(etPref.getEditText());
+        InputFilterUtil.setAllCapsInputFilter(etPref.getEditText());
 
         etPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener()
         {
@@ -88,17 +83,6 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                 getString(R.string.user_sort_pref));
 
 
-    }
-
-    private void setAllCapsInputFilter(EditText et)
-    {
-        InputFilter[] prefFilters;
-        prefFilters = et.getFilters();
-        ArrayList<InputFilter> filters = new ArrayList<>(Arrays.asList(prefFilters));
-        filters.add(new InputFilter.AllCaps());
-        prefFilters = new InputFilter[filters.size()];
-        filters.toArray(prefFilters);
-        et.setFilters(prefFilters);
     }
 
     private void updatePrefSummary(SharedPreferences sharedPreferences, String key)

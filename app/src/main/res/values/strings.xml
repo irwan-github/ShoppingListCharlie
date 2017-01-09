@@ -64,4 +64,7 @@
     <string name="drawer_close">Clozeee</string>
     <string name="sort_desc">Sort shopping list by</string>
     <string name="clear_checked_item">Clear checked item</string>
+    <string name="currency_code_txt">3-letter currency code</string>
+    <string name="max_currency_len">3</string>
+    <string name="max_country_code_len">2</string>
 </resources>

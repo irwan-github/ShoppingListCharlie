@@ -134,4 +134,10 @@ public class PriceMgr
     {
         return mBundlePrice;
     }
+
+    public void setCurrencyCode(String currencyCode)
+    {
+        mUnitPrice.setCurrencyCode(currencyCode);
+        mBundlePrice.setCurrencyCode(currencyCode);
+    }
 }

@@ -7,12 +7,10 @@ import android.content.CursorLoader;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
-import android.support.v4.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,7 +48,6 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
     private DaoManager daoManager;
     private OnFragmentInteractionListener mOnFragmentInteractionListener;
     private Cursor mCursor;
-    private LruCache<String, Bitmap> mThumbBitmapCache;
 
     public static CatalogFragment newInstance()
     {
@@ -62,7 +59,6 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        mThumbBitmapCache = PictureCache.createCache();
     }
 
     @Override
@@ -112,8 +108,8 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
         ImageResizer imageResizer =
                 new ImageResizer(getActivity(),
                         getResources().getDimensionPixelSize(R.dimen.image_summary_width),
-                        getResources().getDimensionPixelSize(R.dimen.list_item_height),
-                        mThumbBitmapCache);
+                        getResources().getDimensionPixelSize(R.dimen.list_item_height)
+                        );
 
         catalogAdapter = new CatalogAdapter(getActivity(), null, this, imageResizer);
         lvAllItems.setAdapter(catalogAdapter);

@@ -8,7 +8,7 @@
             android:dialogTitle="@string/dialog_title_home_country_preference"
             android:key="@string/user_country_pref"
             android:lines="1"
-            android:maxLength="2"
+            android:maxLength="@string/max_country_code_len"
             android:title="@string/home_country_preference"
             />
     </PreferenceCategory>

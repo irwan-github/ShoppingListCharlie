@@ -14,6 +14,8 @@ import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
  */
 public class Price implements Parcelable
 {
+
+
     public enum Type
     {
         //All price types must follow ordered sequence
@@ -125,6 +127,11 @@ public class Price implements Parcelable
     public void setId(long _id)
     {
         this._id = _id;
+    }
+
+    public void setCurrencyCode(String currencyCode)
+    {
+        mCurrencyCode = currencyCode;
     }
 
     public String getCurrencyCode()

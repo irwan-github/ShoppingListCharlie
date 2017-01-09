@@ -39,7 +39,6 @@ import android.widget.Toast;
 import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.DaoManager;
-import com.mirzairwan.shopping.domain.InputFilterUtil;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
@@ -121,6 +120,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
     private Toolbar toolbarPicture;
     protected ShoppingList shoppingList;
     private Bitmap mTargetBitmap;
+    protected EditText etCurrencyCode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -231,16 +231,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
                 super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         }
-    }
-
-    protected void setCurrencySymbol(EditText et, String currencyCode)
-    {
-        String currencySymbol = FormatHelper.getCurrencySymbol(mCountryCode, currencyCode);
-
-        ViewParent viewParent = et.getParent();
-        TextInputLayout etLayout = (TextInputLayout) (viewParent.getParent());
-        String hint = etLayout.getHint().toString();
-        etLayout.setHint(hint + " (" + currencySymbol + ")");
     }
 
     protected void initPriceLoader(Uri uri, LoaderManager.LoaderCallbacks<Cursor> callback)
@@ -434,9 +424,9 @@ public abstract class ItemActivity extends AppCompatActivity implements
         };
 
         etName = (EditText) findViewById(R.id.et_item_name);
-        InputFilterUtil.setInitialCapInputFilter(etName);
+        //InputFilterUtil.setInitialCapInputFilter(etName);
         etBrand = (EditText) findViewById(R.id.et_item_brand);
-        InputFilterUtil.setInitialCapInputFilter(etBrand);
+        //InputFilterUtil.setInitialCapInputFilter(etBrand);
         etDescription = (EditText) findViewById(R.id.et_item_description);
         etCountryOrigin = (EditText) findViewById(R.id.et_item_country_origin);
         mImgItemPic = (ImageView) findViewById(R.id.img_item);
@@ -445,7 +435,10 @@ public abstract class ItemActivity extends AppCompatActivity implements
         etBrand.setOnTouchListener(mOnTouchListener);
         etDescription.setOnTouchListener(mOnTouchListener);
         etCountryOrigin.setOnTouchListener(mOnTouchListener);
-        ;
+
+        etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
+        InputFilterUtil.setAllCapsInputFilter(etCurrencyCode);
+        etCurrencyCode.setOnFocusChangeListener(new CurrencyCodeChecker());
 
         etUnitPrice = (EditText) findViewById(R.id.et_unit_price);
         etBundlePrice = (EditText) findViewById(R.id.et_bundle_price);
@@ -648,12 +641,43 @@ public abstract class ItemActivity extends AppCompatActivity implements
      */
     protected void populatePricesInputFields()
     {
+        etCurrencyCode.setText(priceMgr.getUnitPrice().getCurrencyCode());
+
         etUnitPrice.setText(priceMgr.getUnitPriceForDisplay());
-        setCurrencySymbol(etUnitPrice, priceMgr.getUnitPrice().getCurrencyCode());
+        setCurrencySymbol(priceMgr.getUnitPrice().getCurrencyCode());
 
         etBundlePrice.setText(priceMgr.getBundlePriceForDisplay());
-        setCurrencySymbol(etBundlePrice, priceMgr.getBundlePrice().getCurrencyCode());
+        setCurrencySymbol(priceMgr.getBundlePrice().getCurrencyCode());
         etBundleQty.setText(FormatHelper.formatToTwoDecimalPlaces(priceMgr.getBundlePrice().getBundleQuantity()));
+    }
+
+//    protected void setCurrencySymbol(EditText et, String currencyCode)
+//    {
+//        String currencySymbol = FormatHelper.getCurrencySymbol(mCountryCode, currencyCode);
+//
+//        ViewParent viewParent = et.getParent();
+//        TextInputLayout etLayout = (TextInputLayout) (viewParent.getParent());
+//        String hint = etLayout.getHint().toString();
+//        etLayout.setHint(hint + " (" + currencySymbol + ")");
+//    }
+
+    protected void setCurrencySymbol(String currencyCode)
+    {
+        String currencySymbol = FormatHelper.getCurrencySymbol(mCountryCode, currencyCode);
+
+        String hintUnitPx = getString(R.string.unit_price_txt) + " (" + currencySymbol + ")";
+        setCurrencySymbol(etUnitPrice, hintUnitPx);
+
+        String hintBundlePx = getString(R.string.bundle_price_txt) + " (" + currencySymbol + ")";
+        setCurrencySymbol(etBundlePrice, hintBundlePx);
+
+    }
+
+    protected void setCurrencySymbol(EditText et, String hint)
+    {
+        ViewParent viewParent = et.getParent();
+        TextInputLayout etLayout = (TextInputLayout) (viewParent.getParent());
+        etLayout.setHint(hint);
     }
 
 
@@ -782,20 +806,33 @@ public abstract class ItemActivity extends AppCompatActivity implements
     @Override
     public void onSaveInstanceState(Bundle outState)
     {
-//        outState.putParcelable(BITMAP_STORAGE_KEY, mTargetBitmap);
-//        outState.putParcelable(UNIT_PRICE, priceMgr.getUnitPrice());
-//        outState.putParcelable(BUNDLE_PRICE, priceMgr.getBundlePrice());
         super.onSaveInstanceState(outState);
         outState.putParcelable(PICTURE_MANAGER, mPictureMgr);
 
     }
 
-//    @Override
-//    protected void onRestoreInstanceState(Bundle savedInstanceState)
-//    {
-//        super.onRestoreInstanceState(savedInstanceState);
-//        mTargetBitmap = (Bitmap)savedInstanceState.get(BITMAP_STORAGE_KEY);
-//        mImgItemPic.setImageBitmap(mTargetBitmap);
-//
-//    }
+    private class CurrencyCodeChecker implements View.OnFocusChangeListener
+    {
+        @Override
+        public void onFocusChange(View v, boolean hasFocus)
+        {
+            EditText etCurrencyCode = (EditText) v;
+            String newCurrencyCode = etCurrencyCode.getText().toString();
+
+            try {
+                if (FormatHelper.validateCurrencyCode(newCurrencyCode) &&
+                        !newCurrencyCode.equals(priceMgr.getUnitPrice().getCurrencyCode()))
+                    setCurrencySymbol(newCurrencyCode);
+
+            } catch (IllegalArgumentException argEx) {
+                Toast.makeText(ItemActivity.this, argEx.getMessage(), Toast.LENGTH_SHORT).show();
+                etCurrencyCode.setText(ItemActivity.this.priceMgr.getUnitPrice().getCurrencyCode());
+            }
+            catch(Exception ex)
+            {
+                Toast.makeText(ItemActivity.this, ex.getMessage(), Toast.LENGTH_SHORT).show();
+                etCurrencyCode.setText(ItemActivity.this.priceMgr.getUnitPrice().getCurrencyCode());
+            }
+        }
+    }
 }

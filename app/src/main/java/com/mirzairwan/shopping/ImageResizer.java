@@ -2,16 +2,18 @@ package com.mirzairwan.shopping;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.support.v4.util.LruCache;
+import android.util.Log;
 
 import java.io.File;
 
 /**
  * Created by Mirza Irwan on 4/1/17.
+ * Decodes and resizes bitmaps located in device filesystem
  */
 
 public class ImageResizer extends ImageWorker
 {
+    private static final String LOG_TAG = ImageResizer.class.getSimpleName();
     protected int mImageWidth;
     protected int mImageHeight;
 
@@ -26,19 +28,6 @@ public class ImageResizer extends ImageWorker
     public ImageResizer(Context context, int imageWidth, int imageHeight)
     {
         super(context);
-        setImageSize(imageWidth, imageHeight);
-    }
-
-    /**
-     * Initialize providing a single target image size (used for both width and height);
-     *
-     * @param context
-     * @param imageWidth
-     * @param imageHeight
-     */
-    public ImageResizer(Context context, int imageWidth, int imageHeight, LruCache<String, Bitmap> thumbBitmapCache)
-    {
-        super(context, thumbBitmapCache);
         setImageSize(imageWidth, imageHeight);
     }
 
@@ -61,18 +50,16 @@ public class ImageResizer extends ImageWorker
 
     private Bitmap processBitmap(File file)
     {
+        Log.d(LOG_TAG, "processBitmap(File file)");
         return decodeSampledBitmapFromDescriptor(file, mImageWidth, mImageHeight);
-
     }
 
-    private Bitmap processBitmap(String filepath)
-    {
-        return processBitmap(new File(filepath));
-    }
 
     @Override
     protected Bitmap processBitmap(Object data)
     {
-        return processBitmap(String.valueOf(data));
+        if(data instanceof File)
+            return  processBitmap((File)data);
+        return null;
     }
 }

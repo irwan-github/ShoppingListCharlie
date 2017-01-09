@@ -7,13 +7,11 @@ import android.content.CursorLoader;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.util.LruCache;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -48,7 +46,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     private ShoppingListAdapter2 shoppingListAdapter;
     private String countryCode;
     private static final String SORT_COLUMN = "SORT_COLUMN";
-    private LruCache<String, Bitmap> mThumbBitmapCache;
     private Toolbar mShoppingListToolbar;
 
     public static ShoppingListFragment newInstance()
@@ -74,7 +71,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        mThumbBitmapCache = PictureCache.createCache();
     }
 
     @Nullable
@@ -182,8 +178,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         ImageResizer imageResizer =
                 new ImageResizer(getActivity(),
                         getResources().getDimensionPixelSize(R.dimen.image_summary_width),
-                        getResources().getDimensionPixelSize(R.dimen.list_item_height),
-                        mThumbBitmapCache);
+                        getResources().getDimensionPixelSize(R.dimen.list_item_height)
+                        );
 
         shoppingListAdapter = new ShoppingListAdapter2(getActivity(), null,
                 this, imageResizer);

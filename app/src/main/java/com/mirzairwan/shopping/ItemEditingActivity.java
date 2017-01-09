@@ -92,6 +92,8 @@ public class ItemEditingActivity extends ItemActivity
 
         priceMgr.setItemPricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
 
+        priceMgr.setCurrencyCode(etCurrencyCode.getText().toString());
+
         String msg = daoManager.update(item, item.getPrices(), mPictureMgr);
 
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();

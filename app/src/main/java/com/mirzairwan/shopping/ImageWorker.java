@@ -15,6 +15,10 @@ import java.lang.ref.WeakReference;
 
 /**
  * Created by Mirza Irwan on 4/1/17.
+ * Performs the following long running task:
+ * 1. Spawn a new thread
+ * 2. Setting a placeholder image for given bitmap.
+ * 3. Retrieves imaga from cache if image is available
  */
 
 public abstract class ImageWorker
@@ -26,12 +30,7 @@ public abstract class ImageWorker
     protected ImageWorker(Context context)
     {
         mResources = context.getResources();
-    }
-
-    protected ImageWorker(Context context, LruCache<String, Bitmap> thumbBitmapCache)
-    {
-        mResources = context.getResources();
-        mBitmapCache = thumbBitmapCache;
+        mBitmapCache = PictureCache.createCache();
         mPlaceHolderBitmap = BitmapFactory.decodeResource(mResources, R.drawable.empty_photo);
     }
 
@@ -53,7 +52,7 @@ public abstract class ImageWorker
         }
 
         if (cancelPotentialWork(file, imageView)) {
-            BitmapWorkerTask task = new BitmapWorkerTask(file.getPath(), imageView);
+            BitmapWorkerTask task = new BitmapWorkerTask(file, imageView);
             final AsyncDrawable asyncDrawable =
                     new AsyncDrawable(mResources, mPlaceHolderBitmap, task);
             imageView.setImageDrawable(asyncDrawable);
@@ -148,25 +147,12 @@ public abstract class ImageWorker
             mData = data;
         }
 
-        public BitmapWorkerTask(ImageView imageView)
-        {
-            // Use a WeakReference to ensure the ImageView can be garbage collected
-            imageViewReference = new WeakReference<>(imageView);
-
-        }
-
-        protected Bitmap doInBackground(File... params)
-        {
-            Bitmap bitmap = processBitmap(params[0]);
-            addBitmapToMemoryCache(params[0].getPath(), bitmap);
-            return bitmap;
-        }
-
         @Override
         protected Bitmap doInBackground(Void... params)
         {
             Bitmap bitmap = processBitmap(mData);
-            addBitmapToMemoryCache(String.valueOf(mData), bitmap);
+            String key = String.valueOf(mData);
+            addBitmapToMemoryCache(key, bitmap);
             return bitmap;
         }
 

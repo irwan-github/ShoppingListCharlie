@@ -88,9 +88,11 @@ public class AddItemToListActivity extends ItemActivity
 
             //When adding new item to shopping list, set currency symbol according to current country
             // code preference for Price-related EditText
-
-            setCurrencySymbol(etUnitPrice, FormatHelper.getCurrencyCode(mCountryCode));
-            setCurrencySymbol(etBundlePrice, FormatHelper.getCurrencyCode(mCountryCode));
+            etCurrencyCode.setText(FormatHelper.getCurrencyCode(mCountryCode));
+            //setCurrencySymbol(etUnitPrice, FormatHelper.getCurrencyCode(mCountryCode));
+            setCurrencySymbol(FormatHelper.getCurrencyCode(mCountryCode));
+            //setCurrencySymbol(etBundlePrice, FormatHelper.getCurrencyCode(mCountryCode));
+            //setCurrencySymbol(FormatHelper.getCurrencyCode(mCountryCode));
         }
     }
 
@@ -280,6 +282,7 @@ public class AddItemToListActivity extends ItemActivity
         }
 
         priceMgr.setItemPricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
+        priceMgr.setCurrencyCode(etCurrencyCode.getText().toString());
 
         String msg;
 
