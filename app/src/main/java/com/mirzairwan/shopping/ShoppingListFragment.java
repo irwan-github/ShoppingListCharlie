@@ -106,18 +106,21 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         return rootView;
     }
 
-    private void setupShoppingListToolbar(Toolbar shoppingListToolbar)
+    private void setupShoppingListToolbar(final Toolbar shoppingListToolbar)
     {
         shoppingListToolbar.inflateMenu(R.menu.shopping_list_toolbar);
-        shoppingListToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener()
+
+        final Toolbar.OnMenuItemClickListener onMenuItemClickListener = new Toolbar.OnMenuItemClickListener()
         {
             @Override
             public boolean onMenuItemClick(MenuItem item)
             {
                 int itemId = item.getItemId();
-                switch (itemId) {
+                switch (itemId)
+                {
                     case R.id.clear_checked_item:
-                        DaoManager daoMgr = Builder.getDaoManager(ShoppingListFragment.this.getActivity());
+                        DaoManager daoMgr = Builder.getDaoManager(ShoppingListFragment.this
+                                .getActivity());
                         daoMgr.deleteCheckedItems();
                         return true;
                     default:
@@ -125,7 +128,20 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 }
 
             }
+        };
+
+        shoppingListToolbar.setOnMenuItemClickListener(onMenuItemClickListener);
+
+        final MenuItem menuItem = shoppingListToolbar.getMenu().findItem(R.id.clear_checked_item);
+        View menuItemView = menuItem.getActionView();
+        menuItemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v)
+            {
+                onMenuItemClickListener.onMenuItemClick(menuItem);
+            }
         });
+
         mShoppingListToolbar = shoppingListToolbar;
     }
 

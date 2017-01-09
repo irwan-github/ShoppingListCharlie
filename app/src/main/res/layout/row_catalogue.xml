@@ -59,6 +59,7 @@
         android:textOff=""
         android:button="@drawable/star"
         android:focusable="false"
+        android:layout_marginRight="@dimen/keyline_1"
         />
 
 </RelativeLayout>

@@ -651,16 +651,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
         etBundleQty.setText(FormatHelper.formatToTwoDecimalPlaces(priceMgr.getBundlePrice().getBundleQuantity()));
     }
 
-//    protected void setCurrencySymbol(EditText et, String currencyCode)
-//    {
-//        String currencySymbol = FormatHelper.getCurrencySymbol(mCountryCode, currencyCode);
-//
-//        ViewParent viewParent = et.getParent();
-//        TextInputLayout etLayout = (TextInputLayout) (viewParent.getParent());
-//        String hint = etLayout.getHint().toString();
-//        etLayout.setHint(hint + " (" + currencySymbol + ")");
-//    }
-
     protected void setCurrencySymbol(String currencyCode)
     {
         String currencySymbol = FormatHelper.getCurrencySymbol(mCountryCode, currencyCode);
@@ -819,6 +809,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
             EditText etCurrencyCode = (EditText) v;
             String newCurrencyCode = etCurrencyCode.getText().toString();
 
+            String originalCurrencyCode = ItemActivity.this.priceMgr.getUnitPrice().getCurrencyCode();
             try {
                 if (FormatHelper.validateCurrencyCode(newCurrencyCode) &&
                         !newCurrencyCode.equals(priceMgr.getUnitPrice().getCurrencyCode()))
@@ -826,12 +817,14 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
             } catch (IllegalArgumentException argEx) {
                 Toast.makeText(ItemActivity.this, argEx.getMessage(), Toast.LENGTH_SHORT).show();
-                etCurrencyCode.setText(ItemActivity.this.priceMgr.getUnitPrice().getCurrencyCode());
+                etCurrencyCode.setText(originalCurrencyCode);
+                setCurrencySymbol(originalCurrencyCode);
             }
             catch(Exception ex)
             {
                 Toast.makeText(ItemActivity.this, ex.getMessage(), Toast.LENGTH_SHORT).show();
-                etCurrencyCode.setText(ItemActivity.this.priceMgr.getUnitPrice().getCurrencyCode());
+                etCurrencyCode.setText(originalCurrencyCode);
+                setCurrencySymbol(originalCurrencyCode);
             }
         }
     }

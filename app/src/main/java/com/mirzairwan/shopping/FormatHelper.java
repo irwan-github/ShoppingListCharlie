@@ -81,6 +81,8 @@ public class FormatHelper
 
     public static boolean validateCurrencyCode(String currencyCode)
     {
+        if(currencyCode.equalsIgnoreCase("XXX")) //This is a valid currency code used for testing. But not accepted so as not to confuse users.
+            throw new IllegalArgumentException("Unsupported ISO 4217 currency code: " + currencyCode);
         return Currency.getInstance(currencyCode).getCurrencyCode().equals(currencyCode);
     }
 }
