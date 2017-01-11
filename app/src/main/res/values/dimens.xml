@@ -21,14 +21,14 @@
     <dimen name="text_view_padding_bottom">8dp</dimen>
     <dimen name="text_padding_right">8dp</dimen>
     <dimen name="text_padding_left">8dp</dimen>
-    <dimen name="edit_text_item_name_min_width">200dp</dimen>
+    <dimen name="edit_text_item_name_min_width">300dp</dimen>
     <dimen name="edit_text_item_quantity_min_width">150dp</dimen>
     <dimen name="edit_text_price_min_width">150dp</dimen>
     <dimen name="edit_text_bundle_qty_min_width">150dp</dimen>
     <dimen name="tv_item_name_max_width">150dp</dimen>
     <dimen name="tv_item_brand_max_width">150dp</dimen>
     <dimen name="edit_surface_margin">8dp</dimen>
-    <dimen name="edit_text_item_description_min_width">250dp</dimen>
+    <dimen name="edit_text_item_description_min_width">300dp</dimen>
 
     <dimen name="image_summary_width">100dp</dimen>
     <dimen name="image_summary_height">100dp</dimen>

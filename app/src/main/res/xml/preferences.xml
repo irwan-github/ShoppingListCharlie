@@ -10,14 +10,15 @@
             android:lines="1"
             android:maxLength="@string/max_country_code_len"
             android:title="@string/home_country_preference"
+            android:selectAllOnFocus="true"
             />
     </PreferenceCategory>
 
     <PreferenceCategory
         android:title="@string/settings_catalogue">
         <ListPreference
-            android:key="user_sort_pref"
-            android:entries="@array/setting_sort_by_name"
+            android:key="@string/key_user_sort_pref"
+            android:entries="@array/setting_sort_by_labels"
             android:entryValues="@array/setting_sort_by_values"
             android:defaultValue="Name"
             android:title="@string/sort_desc"/>

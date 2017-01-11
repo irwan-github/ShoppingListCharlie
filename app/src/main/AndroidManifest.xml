@@ -4,7 +4,7 @@
 
     <uses-feature android:name="android.hardware.camera"/>
 
-    <uses-permission android:name="android.permission.CAMERA"/>
+
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application
@@ -23,7 +23,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".AddItemToListActivity"
+            android:name=".ShoppingListEditingActivity"
             android:parentActivityName=".ShoppingActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -60,9 +60,6 @@
                 android:resource="@xml/file_paths">
             </meta-data>
         </provider>
-
-        <activity android:name=".ItemActivity">
-        </activity>
     </application>
 
 </manifest>

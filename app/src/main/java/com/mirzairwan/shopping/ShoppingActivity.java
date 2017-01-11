@@ -132,7 +132,7 @@ public class ShoppingActivity extends AppCompatActivity implements
     public void onAdditem()
     {
         Intent intentToEditItem = new Intent();
-        intentToEditItem.setClass(this, AddItemToListActivity.class);
+        intentToEditItem.setClass(this, ShoppingListEditingActivity.class);
         startActivity(intentToEditItem);
     }
 
@@ -141,7 +141,7 @@ public class ShoppingActivity extends AppCompatActivity implements
     {
         Intent intentToViewItem = new Intent();
         //intentToViewItem.setClass(this, BuyingActivity.class);
-        intentToViewItem.setClass(this, AddItemToListActivity.class);
+        intentToViewItem.setClass(this, ShoppingListEditingActivity.class);
         Uri uri = Contract.ShoppingList.CONTENT_URI;
         uri = ContentUris.withAppendedId(uri, itemId);
         intentToViewItem.setData(uri);

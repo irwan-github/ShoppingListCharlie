@@ -32,7 +32,6 @@
         android:layout_marginRight="@dimen/keyline_1"
         android:paddingBottom="@dimen/edit_text_padding_bottom"
         android:paddingTop="@dimen/edit_text_padding_top"
-
         >
 
         <android.support.design.widget.TextInputEditText
@@ -44,6 +43,7 @@
             android:maxLength="@string/text_item_name_max_length"
             android:minWidth="@dimen/edit_text_item_name_min_width"
             android:textAppearance="?android:textAppearanceMedium"
+            android:inputType="textCapSentences"
             tools:text="Milk"
             >
 
@@ -71,32 +71,8 @@
             android:maxLength="@string/text_item_brand_max_length"
             android:minWidth="@dimen/edit_text_item_brand_min_width"
             android:textAppearance="?android:textAppearanceMedium"
+            android:inputType="textCapSentences"
             tools:text="Magnolia"
-            />
-
-    </android.support.design.widget.TextInputLayout>
-
-    <android.support.design.widget.TextInputLayout
-        android:id="@+id/item_description_layout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/item_brand_layout"
-        android:layout_marginLeft="@dimen/keyline_1"
-        android:layout_marginRight="@dimen/keyline_1"
-        android:paddingBottom="@dimen/edit_text_padding_bottom"
-        android:paddingTop="@dimen/edit_text_padding_top"
-        >
-
-        <android.support.design.widget.TextInputEditText
-            android:id="@+id/et_item_description"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:focusableInTouchMode="true"
-            android:hint="@string/description_label"
-            android:maxLength="@string/text_item_description_max_length"
-            android:minWidth="@dimen/edit_text_item_description_min_width"
-            android:textAppearance="?android:textAppearanceMedium"
-            tools:text="500ml"
             />
 
     </android.support.design.widget.TextInputLayout>
@@ -105,7 +81,7 @@
         android:id="@+id/item_country_origin_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/item_description_layout"
+        android:layout_below="@id/item_brand_layout"
         android:layout_marginLeft="@dimen/keyline_1"
         android:layout_marginRight="@dimen/keyline_1"
         android:paddingBottom="@dimen/edit_text_padding_bottom"
@@ -121,7 +97,34 @@
             android:maxLength="@string/country_origin_max_length"
             android:minWidth="@dimen/edit_text_item_name_min_width"
             android:textAppearance="?android:textAppearanceMedium"
+            android:inputType="textCapSentences"
             tools:text="USA"
+            />
+
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/item_description_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/item_country_origin_layout"
+        android:layout_marginLeft="@dimen/keyline_1"
+        android:layout_marginRight="@dimen/keyline_1"
+        android:paddingBottom="@dimen/edit_text_padding_bottom"
+        android:paddingTop="@dimen/edit_text_padding_top"
+        >
+
+        <android.support.design.widget.TextInputEditText
+            android:id="@+id/et_item_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:focusableInTouchMode="true"
+            android:hint="@string/description_label"
+            android:maxLength="@string/text_item_description_max_length"
+            android:minWidth="@dimen/edit_text_item_description_min_width"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:inputType="textCapSentences"
+            tools:text="500ml"
             />
 
     </android.support.design.widget.TextInputLayout>

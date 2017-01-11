@@ -7,4 +7,10 @@
     <color name="tabTextColor">#FFFFFF</color>
     <color name="segment_divider">#80b3ff</color>
     <color name="shopping_list_toolbar">#F5F5F5</color>
+
+    <!-- Text color for the details of the earthquake in the list item -->
+    <color name="textColorItemBrand">#B4BAC0</color>
+
+    <!-- Text color for the primary location of the earthquake in the list item -->
+    <color name="textColorItemName">#2B3D4D</color>
 </resources>

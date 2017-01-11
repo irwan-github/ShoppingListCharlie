@@ -245,6 +245,11 @@ public class DaoContentProv implements DaoManager
 
     }
 
+    /**
+     * Delete image files from filesystem of device internal storage
+     * @param pictureMgr tracks item's updated and discarded or replaced pictures
+     * @return
+     */
     @Override
     public String cleanUpDiscardedPictures(PictureMgr pictureMgr)
     {
@@ -529,5 +534,13 @@ public class DaoContentProv implements DaoManager
         String[] selectionArgs = new String[]{String.valueOf(ToBuyItemsEntry.IS_CHECKED)};
         int deleted = mContext.getContentResolver().delete(uriDeleteCheckedItem, where, selectionArgs);
         return "Deleted " + deleted;
+    }
+
+    @Override
+    public int deletePicture(long itemId)
+    {
+        String where = PicturesEntry.COLUMN_ITEM_ID + "= ?";
+        String[] selectionArgs = new String[]{String.valueOf(itemId)};
+        return mContext.getContentResolver().delete(PicturesEntry.CONTENT_URI, where, selectionArgs);
     }
 }

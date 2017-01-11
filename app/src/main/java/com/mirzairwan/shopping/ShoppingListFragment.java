@@ -79,9 +79,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
-        // If activity recreated (such as from screen rotate), restore
-        // any necessary data set by onSaveInstanceState().
-        // This is primarily necessary when in the two-pane layout.
+
         if (savedInstanceState != null) {
             //Nothing to do because the screen is going to query the database without any parameters
         }

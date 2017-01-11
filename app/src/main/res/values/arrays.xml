@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string-array name="setting_sort_by_name">
-        <item>Name</item>
-        <item>Brand</item>
+    <string-array name="setting_sort_by_labels">
+        <item>@string/sort_by_name</item>
+        <item>@string/sort_by_brand</item>
     </string-array>
     <string-array name="setting_sort_by_values">
         <item>Name</item>
@@ -13,4 +13,6 @@
         <item>Settings</item>
     </string-array>
 
+    <string name="sort_by_name">Name</string>
+    <string name="sort_by_brand">Brand</string>
 </resources>

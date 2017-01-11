@@ -10,4 +10,9 @@
           android:title="Insert a picture"
           android:icon="@drawable/ic_insert_photo"
           app:showAsAction="always" />
+
+    <item android:id="@+id/remove_picture"
+          android:title="Insert a picture"
+          android:icon="@drawable/ic_cancel"
+          app:showAsAction="always" />
 </menu>

@@ -8,17 +8,16 @@ import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AlertDialog;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 
 /**
  * Created by Mirza Irwan on 24/12/16.
  */
 
-public class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener
+public class SettingsFragment extends PreferenceFragment implements Preference
+        .OnPreferenceChangeListener
 {
-    private EditTextPreference etPref;
+    private Preference countryCodePref;
+    private Preference sortPref;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -26,62 +25,24 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         super.onCreate(savedInstanceState);
         getActivity().setTitle(R.string.settings_screen);
         addPreferencesFromResource(R.xml.preferences);
-        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+        countryCodePref = findPreference(getString(R.string.user_country_pref));
+        InputFilterUtil.setAllCapsInputFilter(((EditTextPreference) countryCodePref).getEditText());
+        countryCodePref.setOnPreferenceChangeListener(this);
+        sortPref = findPreference(getString(R.string.key_user_sort_pref));
+        sortPref.setOnPreferenceChangeListener(this);
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
-    {
-
-        return super.onCreateView(inflater, container, savedInstanceState);
-    }
 
     @Override
     public void onResume()
     {
         super.onResume();
-        etPref = (EditTextPreference)findPreference(getString(R.string.user_country_pref));
-        InputFilterUtil.setAllCapsInputFilter(etPref.getEditText());
-
-        etPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener()
-        {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue)
-            {
-                boolean result = false;
-                String countryCode = (String)newValue;
-                try {
-
-                    FormatHelper.getCurrencyCode(countryCode);
-                    result = true;
-                }
-                catch (Exception ex)
-                {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                    builder.setMessage(R.string.invalid_country_code);
-                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
-                    {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which)
-                        {
-                            dialog.dismiss();
-                        }
-                    });
-                    builder.show();
-
-                }
-
-
-                return result;
-            }
-        });
 
         updatePrefSummary(PreferenceManager.getDefaultSharedPreferences(getActivity()),
-                                                        getString(R.string.user_country_pref));
+                getString(R.string.user_country_pref));
 
         updatePrefSummary(PreferenceManager.getDefaultSharedPreferences(getActivity()),
                 getString(R.string.user_sort_pref));
-
 
     }
 
@@ -93,17 +54,44 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     }
 
     @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
+    public boolean onPreferenceChange(Preference preference, Object newValue)
     {
-            updatePrefSummary(sharedPreferences, key);
-    }
+        boolean result = true;
+        String key = preference.getKey();
+        if (key.equals(getString(R.string.user_country_pref)))
+        {
 
-    @Override
-    public void onPause()
-    {
-        super.onPause();
-        getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+            String countryCode = (String) newValue;
+            try
+            {
 
+                FormatHelper.getCurrencyCode(countryCode);
+
+                preference.setSummary(newValue.toString());
+            } catch (Exception ex)
+            {
+                result = false;
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setMessage(R.string.invalid_country_code);
+                builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
+                {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which)
+                    {
+                        dialog.dismiss();
+                    }
+                });
+                builder.show();
+
+            }
+
+        }
+        else
+        {
+            preference.setSummary(newValue.toString());
+        }
+
+        return result;
     }
 
 }

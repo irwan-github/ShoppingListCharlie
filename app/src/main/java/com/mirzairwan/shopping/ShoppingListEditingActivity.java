@@ -26,9 +26,9 @@ import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
  * Created by Mirza Irwan on 2/1/17.
  */
 
-public class AddItemToListActivity extends ItemActivity
+public class ShoppingListEditingActivity extends ItemActivity
 {
-    private static final String LOG_TAG = AddItemToListActivity.class.getSimpleName();
+    private static final String LOG_TAG = ShoppingListEditingActivity.class.getSimpleName();
     private static final String URI_ITEM = "uri"; //Used for saving instant state
     private int actionMode = -1; //Informs the editor whether this activity is creation or updating
     public static final int CREATE_BUY_ITEM_MODE = 1; //use for action mode
@@ -89,10 +89,7 @@ public class AddItemToListActivity extends ItemActivity
             //When adding new item to shopping list, set currency symbol according to current country
             // code preference for Price-related EditText
             etCurrencyCode.setText(FormatHelper.getCurrencyCode(mCountryCode));
-            //setCurrencySymbol(etUnitPrice, FormatHelper.getCurrencyCode(mCountryCode));
             setCurrencySymbol(FormatHelper.getCurrencyCode(mCountryCode));
-            //setCurrencySymbol(etBundlePrice, FormatHelper.getCurrencyCode(mCountryCode));
-            //setCurrencySymbol(FormatHelper.getCurrencyCode(mCountryCode));
         }
     }
 
@@ -103,8 +100,8 @@ public class AddItemToListActivity extends ItemActivity
             Bundle arg = new Bundle();
             arg.putParcelable(ITEM_URI, uri);
 
-            //getLoaderManager().initLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
-            getLoaderManager().restartLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
+            getLoaderManager().initLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
+            //getLoaderManager().restartLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
             super.initPictureLoader(uri, this);
             super.initPriceLoader(uri, this);
         }
@@ -198,8 +195,8 @@ public class AddItemToListActivity extends ItemActivity
         int colQtyIdx = cursor.getColumnIndex(Contract.ToBuyItemsEntry.COLUMN_QUANTITY);
         int buyQty = cursor.getInt(colQtyIdx);
 
-//        int colSelectedPriceIdIdx = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID);
-//        selectedPriceId = cursor.getLong(colSelectedPriceIdIdx);
+        int colIsChecked = cursor.getColumnIndex(Contract.ToBuyItemsEntry.COLUMN_IS_CHECKED);
+        boolean isItemChecked = cursor.getInt(colIsChecked) > 0;
 
         int colPriceTypeIdx = cursor.getColumnIndex(Contract.PricesEntry.COLUMN_PRICE_TYPE_ID);
         int priceTypeVal = cursor.getInt(colPriceTypeIdx);
@@ -227,7 +224,10 @@ public class AddItemToListActivity extends ItemActivity
         if (priceTypeVal == Price.Type.BUNDLE_PRICE.getType())
             price = new Price(priceId, priceDbl, bundleQty, currencyCode, shopId, null);
 
-        return new ToBuyItem(buyItemId, buyQty, price, mItem, null);
+
+        ToBuyItem toBuyItem = new ToBuyItem(buyItemId, buyQty, price, mItem, null);
+        toBuyItem.setCheck(isItemChecked);
+        return toBuyItem;
 
 
     }

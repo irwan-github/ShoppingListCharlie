@@ -133,9 +133,13 @@ public abstract class ItemActivity extends AppCompatActivity implements
         shoppingList = Builder.getShoppingList();
 
         if (savedInstanceState == null)
+        {
             mPictureMgr = new PictureMgr(getApplicationInfo().packageName);
+        }
         else
+        {
             mPictureMgr = savedInstanceState.getParcelable(PICTURE_MANAGER);
+        }
 
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         mCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
@@ -150,7 +154,15 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
         toolbarPicture = (Toolbar) findViewById(R.id.picture_toolbar);
 
-        toolbarPicture.inflateMenu(R.menu.picture_item);
+        toolbarPicture.inflateMenu(R.menu.picture_item_toolbar);
+
+        //check for the availability of the camera at runtime
+        PackageManager pMgr = getPackageManager();
+        if (!pMgr.hasSystemFeature(PackageManager.FEATURE_CAMERA))
+        {
+            MenuItem itemCamera = toolbarPicture.getMenu().findItem(R.id.menu_camera);
+            itemCamera.setEnabled(false);
+        }
 
         //Add menu click handler
         toolbarPicture.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener()
@@ -158,7 +170,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
             @Override
             public boolean onMenuItemClick(MenuItem item)
             {
-                switch (item.getItemId()) {
+                switch (item.getItemId())
+                {
                     case R.id.menu_camera:
                         startSnapShotActivity();
                         return true;
@@ -166,6 +179,9 @@ public abstract class ItemActivity extends AppCompatActivity implements
                     case R.id.choose_picture:
                         startPickPictureActivity();
                         return true;
+
+                    case R.id.remove_picture:
+                        removePictureFromView();
 
                     default:
                         return false;
@@ -176,51 +192,51 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
         ArrayList<String> permissionRequest = new ArrayList<>();
 
-        int permissionCamera = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.CAMERA);
-        if (permissionCamera == PackageManager.PERMISSION_DENIED)
-            permissionRequest.add(Manifest.permission.CAMERA);
-
         int permissionPickPicture = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.READ_EXTERNAL_STORAGE);
         if (permissionPickPicture == PackageManager.PERMISSION_DENIED)
+        {
             permissionRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        }
 
         if (permissionRequest.size() > 0)
-            ActivityCompat.requestPermissions(this, permissionRequest.toArray(new String[permissionRequest.size()]),
+        {
+            ActivityCompat.requestPermissions(this, permissionRequest.toArray(new
+                            String[permissionRequest.size()]),
                     PERMISSION_GIVE_ITEM_PICTURE);
+        }
 
     }
 
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults)
     {
-        switch (requestCode) {
+        switch (requestCode)
+        {
             case PERMISSION_GIVE_ITEM_PICTURE:
 
-                for (int k = 0; k < permissions.length; ++k) {
-                    if (permissions[k].equalsIgnoreCase(Manifest.permission.CAMERA)) {
+                for (int k = 0; k < permissions.length; ++k)
+                {
 
-                        MenuItem itemCamera = toolbarPicture.getMenu().findItem(R.id.menu_camera);
+                    if (permissions[k].equalsIgnoreCase(Manifest.permission.READ_EXTERNAL_STORAGE))
+                    {
 
-                        if (grantResults[k] == PackageManager.PERMISSION_DENIED && itemCamera != null)
-                            itemCamera.setEnabled(false);
+                        MenuItem itemPicturePicker = toolbarPicture.getMenu().findItem(R.id
+                                .choose_picture);
 
-                        if (grantResults[k] == PackageManager.PERMISSION_GRANTED && itemCamera != null)
-                            itemCamera.setEnabled(true);
-
-                    }
-
-                    if (permissions[k].equalsIgnoreCase(Manifest.permission.READ_EXTERNAL_STORAGE)) {
-
-                        MenuItem itemPicturePicker = toolbarPicture.getMenu().findItem(R.id.choose_picture);
-
-                        if (grantResults[k] == PackageManager.PERMISSION_DENIED && itemPicturePicker != null)
+                        if (grantResults[k] == PackageManager.PERMISSION_DENIED &&
+                                itemPicturePicker != null)
+                        {
                             itemPicturePicker.setEnabled(false);
+                        }
 
-                        if (grantResults[k] == PackageManager.PERMISSION_GRANTED && itemPicturePicker != null)
+                        if (grantResults[k] == PackageManager.PERMISSION_GRANTED &&
+                                itemPicturePicker != null)
+                        {
                             itemPicturePicker.setEnabled(true);
+                        }
 
                     }
                 }
@@ -236,22 +252,27 @@ public abstract class ItemActivity extends AppCompatActivity implements
     protected void initPriceLoader(Uri uri, LoaderManager.LoaderCallbacks<Cursor> callback)
     {
         if (ContentUris.parseId(uri) == -1)
+        {
             throw new IllegalArgumentException("uri and item id cannot be empty or -1");
+        }
 
         Bundle arg = new Bundle();
         arg.putParcelable(ITEM_URI, uri);
-        getLoaderManager().restartLoader(ITEM_PRICE_LOADER_ID, arg, callback);
+        //getLoaderManager().restartLoader(ITEM_PRICE_LOADER_ID, arg, callback);
+        getLoaderManager().initLoader(ITEM_PRICE_LOADER_ID, arg, callback);
     }
 
     protected void initPictureLoader(Uri uri, LoaderManager.LoaderCallbacks<Cursor> callback)
     {
         if (ContentUris.parseId(uri) == -1)
+        {
             throw new IllegalArgumentException("uri and item id cannot be empty or -1");
+        }
 
         Bundle arg = new Bundle();
         arg.putParcelable(ITEM_URI, uri);
-        //getLoaderManager().initLoader(ITEM_PICTURE_LOADER_ID, arg, callback);
-        getLoaderManager().restartLoader(ITEM_PICTURE_LOADER_ID, arg, callback);
+        getLoaderManager().initLoader(ITEM_PICTURE_LOADER_ID, arg, callback);
+        //getLoaderManager().restartLoader(ITEM_PICTURE_LOADER_ID, arg, callback);
     }
 
 
@@ -267,7 +288,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
     public boolean onOptionsItemSelected(MenuItem menuItem)
     {
 
-        switch (menuItem.getItemId()) {
+        switch (menuItem.getItemId())
+        {
             case R.id.save_item_details:
                 save();
                 mItemHaveChanged = false;
@@ -277,6 +299,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
                 return true;
             case android.R.id.home:
                 if (mItemHaveChanged)
+                {
                     showUnsavedDialog(new DialogInterface.OnClickListener()
                     {
                         @Override
@@ -285,7 +308,9 @@ public abstract class ItemActivity extends AppCompatActivity implements
                             NavUtils.navigateUpFromSameTask(ItemActivity.this);
                         }
                     });
-                else {
+                }
+                else
+                {
                     NavUtils.navigateUpFromSameTask(ItemActivity.this);
                     removeUnwantedPicturesFromApp();
                 }
@@ -302,9 +327,12 @@ public abstract class ItemActivity extends AppCompatActivity implements
     protected void removeUnwantedPicturesFromApp()
     {
         if (mPictureMgr.getOriginalPicture() == null && mPictureMgr.getPictureForViewing() != null)
-            mPictureMgr.discardLastViewedPicture();
+        {
+            mPictureMgr.discardCurrentPictureInView();
+        }
 
-        if (mPictureMgr.getDiscardedPictures().size() > 0) {
+        if (mPictureMgr.getDiscardedPictures().size() > 0)
+        {
             mPictureMgr.setViewOriginalPicture();
             String msg = daoManager.cleanUpDiscardedPictures(mPictureMgr);
             Toast.makeText(ItemActivity.this, msg, Toast.LENGTH_LONG).show();
@@ -312,6 +340,37 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
     }
 
+    /**
+     * Delete record if any that associates picture to the item in the database.
+     * If the item is written to storage memory by this app, the image file is deleted.
+     * If the currently view picture is not the original picture, the original picture will be used
+     * for viewing if exist.
+     */
+    private void removePictureFromView()
+    {
+        if (mPictureMgr.getPictureForViewing() == null)
+        {
+            return;
+        }
+
+        Picture pictureInView = mPictureMgr.discardCurrentPictureInView();
+        Picture targetPicture;
+        if (pictureInView != null && pictureInView.getId() > 0) // This is the original. Delete
+        // record in database.
+        {
+            int deleted = daoManager.deletePicture(itemId);
+        }
+        else //Current picture is not stored in database
+        {
+            Picture originalPicture = mPictureMgr.getOriginalPicture();
+
+            //PictureMgr replace viewed picture with original picture
+            mPictureMgr.setViewOriginalPicture();
+        }
+        setPictureView(mPictureMgr.getPictureForViewing());
+        String msg = daoManager.cleanUpDiscardedPictures(mPictureMgr);
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+    }
 
     /**
      * Current implemetation supports only 1 picture. Therefore when user make subsequent snapshots,
@@ -321,18 +380,24 @@ public abstract class ItemActivity extends AppCompatActivity implements
     {
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
-        if (cameraIntent.resolveActivity(getPackageManager()) != null) {
+        if (cameraIntent.resolveActivity(getPackageManager()) != null)
+        {
             File itemPicFile = null;
-            try {
-                itemPicFile = PictureMgr.createFileHandle(getExternalFilesDir(Environment.DIRECTORY_PICTURES));
+            try
+            {
+                itemPicFile = PictureMgr.createFileHandle(getExternalFilesDir(Environment
+                        .DIRECTORY_PICTURES));
                 mPictureMgr.setPictureForViewing(itemPicFile);
-                Uri itemPicUri = FileProvider.getUriForFile(this, "com.mirzairwan.shopping.fileprovider", itemPicFile);
+                Uri itemPicUri = FileProvider.getUriForFile(this, "com.mirzairwan.shopping" +
+                        ".fileprovider", itemPicFile);
                 cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, itemPicUri);
                 startActivityForResult(cameraIntent, REQUEST_SNAP_PICTURE);
 
-            } catch (IOException e) {
+            } catch (IOException e)
+            {
                 e.printStackTrace();
-                Toast.makeText(this, "Photo file cannot be created. Aborting camera operation", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Photo file cannot be created. Aborting camera operation",
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -355,9 +420,11 @@ public abstract class ItemActivity extends AppCompatActivity implements
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
-        switch (resultCode) {
+        switch (resultCode)
+        {
             case Activity.RESULT_OK:
-                switch (requestCode) {
+                switch (requestCode)
+                {
                     case REQUEST_SNAP_PICTURE:
                         setPictureView(mPictureMgr.getPictureForViewing());
                         break;
@@ -387,14 +454,17 @@ public abstract class ItemActivity extends AppCompatActivity implements
         String[] filePathColumn = {MediaStore.Images.Media.DATA};
         Cursor cursor = getContentResolver().query(photoUri, filePathColumn, null, null, null);
         String filePath = null;
-        if (cursor.moveToFirst()) {
+        if (cursor.moveToFirst())
+        {
             int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
             filePath = cursor.getString(columnIndex);
             cursor.close();
         }
 
         if (filePath == null)
+        {
             return;
+        }
         Picture externalPicture = new Picture(filePath);
         mPictureMgr.setPictureForViewing(externalPicture); //Update PictureMgr on the target picture
         setPictureView(externalPicture);
@@ -402,6 +472,12 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
     protected void setPictureView(Picture picture)
     {
+        if (picture == null)
+        {
+            mImgItemPic.setImageBitmap(null);
+            return;
+        }
+
         // Get the dimensions of the View
         int targetW = getResources().getDimensionPixelSize(R.dimen.picture_item_detail_width);
         int targetH = getResources().getDimensionPixelSize(R.dimen.picture_item_detail_height);
@@ -454,6 +530,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
     public void onBackPressed()
     {
         if (mItemHaveChanged)
+        {
             showUnsavedDialog(new DialogInterface.OnClickListener()
             {
                 @Override
@@ -463,7 +540,9 @@ public abstract class ItemActivity extends AppCompatActivity implements
                     finish();
                 }
             });
-        else {
+        }
+        else
+        {
             removeUnwantedPicturesFromApp();
             super.onBackPressed();
         }
@@ -531,11 +610,15 @@ public abstract class ItemActivity extends AppCompatActivity implements
      */
     protected boolean fieldsValidated()
     {
-        if (TextUtils.isEmpty(etName.getText())) {
+        if (TextUtils.isEmpty(etName.getText()))
+        {
             alertRequiredField(R.string.message_title, R.string.mandatory_name);
             return false;
-        } else
+        }
+        else
+        {
             return true;
+        }
     }
 
     /**
@@ -553,9 +636,13 @@ public abstract class ItemActivity extends AppCompatActivity implements
         String itemDescription = etDescription.getText().toString();
 
         if (mItem == null)
+        {
             mItem = new Item(itemName);
+        }
         else
+        {
             mItem.setName(itemName);
+        }
 
         mItem.setBrand(itemBrand);
         mItem.setCountryOrigin(countryOrigin);
@@ -568,7 +655,9 @@ public abstract class ItemActivity extends AppCompatActivity implements
         String bundleQty;
         bundleQty = "0.00";
         if (etBundleQty != null && !TextUtils.isEmpty(etBundleQty.getText()))
+        {
             bundleQty = etBundleQty.getText().toString();
+        }
         return bundleQty;
     }
 
@@ -577,7 +666,9 @@ public abstract class ItemActivity extends AppCompatActivity implements
         String bundlePrice;
         bundlePrice = "0.00";
         if (etBundlePrice != null && !TextUtils.isEmpty(etBundlePrice.getText()))
+        {
             bundlePrice = etBundlePrice.getText().toString();
+        }
         return bundlePrice;
     }
 
@@ -586,7 +677,9 @@ public abstract class ItemActivity extends AppCompatActivity implements
         String unitPrice;
         unitPrice = "0.00";
         if (etUnitPrice != null && !TextUtils.isEmpty(etUnitPrice.getText()))
+        {
             unitPrice = etUnitPrice.getText().toString();
+        }
         return unitPrice;
     }
 
@@ -602,7 +695,9 @@ public abstract class ItemActivity extends AppCompatActivity implements
                               Cursor cursor)
     {
         if (cursor == null)
+        {
             throw new IllegalArgumentException("Cursor cannot be null");
+        }
 
         long itemId;
         String itemName, itemBrand, itemDescription, countryOrigin;
@@ -648,7 +743,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
         etBundlePrice.setText(priceMgr.getBundlePriceForDisplay());
         setCurrencySymbol(priceMgr.getBundlePrice().getCurrencyCode());
-        etBundleQty.setText(FormatHelper.formatToTwoDecimalPlaces(priceMgr.getBundlePrice().getBundleQuantity()));
+        etBundleQty.setText(FormatHelper.formatToTwoDecimalPlaces(priceMgr.getBundlePrice()
+                .getBundleQuantity()));
     }
 
     protected void setCurrencySymbol(String currencyCode)
@@ -691,6 +787,15 @@ public abstract class ItemActivity extends AppCompatActivity implements
     }
 
 
+    /**
+     * Select item its following child records:
+     * 1. Prices
+     * 2. Pictures
+     *
+     * @param loaderId
+     * @param args
+     * @return
+     */
     @Override
     public Loader<Cursor> onCreateLoader(int loaderId, Bundle args)
     {
@@ -701,7 +806,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
         String selection = null;
         String[] selectionArgs = null;
 
-        switch (loaderId) {
+        switch (loaderId)
+        {
             case ITEM_PRICE_LOADER_ID:
                 projection = new String[]{PricesEntry._ID,
                         PricesEntry.COLUMN_ITEM_ID,
@@ -712,7 +818,9 @@ public abstract class ItemActivity extends AppCompatActivity implements
                         PricesEntry.COLUMN_SHOP_ID};
                 itemId = ContentUris.parseId(uri);
                 if (itemId == -1)
+                {
                     throw new IllegalArgumentException("uri and item id cannot be empty or -1");
+                }
 
                 selection = PricesEntry.COLUMN_ITEM_ID + "=?";
                 selectionArgs = new String[]{String.valueOf(itemId)};
@@ -725,7 +833,9 @@ public abstract class ItemActivity extends AppCompatActivity implements
                         PicturesEntry.COLUMN_ITEM_ID};
                 itemId = ContentUris.parseId(uri);
                 if (itemId == -1)
+                {
                     throw new IllegalArgumentException("uri and item id cannot be empty or -1");
+                }
 
                 selection = PicturesEntry.COLUMN_ITEM_ID + "=?";
                 selectionArgs = new String[]{String.valueOf(itemId)};
@@ -744,10 +854,13 @@ public abstract class ItemActivity extends AppCompatActivity implements
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
     {
         if (cursor == null || cursor.getCount() < 1)
+        {
             return;
+        }
         int colItemId;
         int loaderId = loader.getId();
-        switch (loaderId) {
+        switch (loaderId)
+        {
             case ITEM_PRICE_LOADER_ID:
                 priceMgr = new PriceMgr(mCountryCode);
                 priceMgr.createPrices(cursor);
@@ -761,7 +874,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
                 mPictureMgr.setItemId(itemId);
                 mPictureMgr.setOriginalPicture(pictureInDb);
                 mPictureMgr.setViewOriginalPicture();
-                //setPictureView(mPictureMgr.getPictureForViewing().getFile());
                 setPictureView(mPictureMgr.getPictureForViewing());
                 break;
         }
@@ -772,8 +884,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
         int colRowId = cursor.getColumnIndex(PicturesEntry._ID);
         int colPicturePath = cursor.getColumnIndex(PicturesEntry.COLUMN_FILE_PATH);
         Picture pictureInDb = null;
-        if (cursor.moveToFirst()) {
-            //pictureInDb = new Picture(cursor.getLong(colRowId), new File(cursor.getString(colPicturePath)));
+        if (cursor.moveToFirst())
+        {
             pictureInDb = new Picture(cursor.getLong(colRowId), cursor.getString(colPicturePath));
         }
 
@@ -809,18 +921,22 @@ public abstract class ItemActivity extends AppCompatActivity implements
             EditText etCurrencyCode = (EditText) v;
             String newCurrencyCode = etCurrencyCode.getText().toString();
 
-            String originalCurrencyCode = ItemActivity.this.priceMgr.getUnitPrice().getCurrencyCode();
-            try {
+            String originalCurrencyCode = ItemActivity.this.priceMgr.getUnitPrice()
+                    .getCurrencyCode();
+            try
+            {
                 if (FormatHelper.validateCurrencyCode(newCurrencyCode) &&
                         !newCurrencyCode.equals(priceMgr.getUnitPrice().getCurrencyCode()))
+                {
                     setCurrencySymbol(newCurrencyCode);
+                }
 
-            } catch (IllegalArgumentException argEx) {
+            } catch (IllegalArgumentException argEx)
+            {
                 Toast.makeText(ItemActivity.this, argEx.getMessage(), Toast.LENGTH_SHORT).show();
                 etCurrencyCode.setText(originalCurrencyCode);
                 setCurrencySymbol(originalCurrencyCode);
-            }
-            catch(Exception ex)
+            } catch (Exception ex)
             {
                 Toast.makeText(ItemActivity.this, ex.getMessage(), Toast.LENGTH_SHORT).show();
                 etCurrencyCode.setText(originalCurrencyCode);

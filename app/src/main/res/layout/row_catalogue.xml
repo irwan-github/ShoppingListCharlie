@@ -28,8 +28,11 @@
             android:layout_height="wrap_content"
             android:maxLength="@string/text_item_name_max_length"
             android:maxLines="@string/text_max_line"
+            android:maxWidth="@dimen/tv_item_name_max_width"
             android:textAppearance="?android:textAppearanceMedium"
             android:textStyle="bold"
+            android:textColor="@color/textColorItemName"
+            android:ellipsize="end"
             android:focusable="false"
             tools:text="Sardine">
         </TextView>
@@ -42,6 +45,10 @@
             android:maxLength="@string/text_item_brand_max_length"
             android:maxLines="@string/text_max_line"
             android:textAppearance="?android:textAppearanceSmall"
+            android:textColor="@color/textColorItemBrand"
+            android:fontFamily="sans-serif-medium"
+            android:maxWidth="@dimen/tv_item_brand_max_width"
+            android:ellipsize="end"
             android:focusable="false"
             tools:text="Abcdefghijklmnopqrstuvwxyz"
             >

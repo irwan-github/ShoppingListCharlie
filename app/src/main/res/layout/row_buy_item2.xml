@@ -34,6 +34,8 @@ Or else, the scaling is bypassed resulting in OutOfMemoryError
         android:paddingTop="@dimen/text_view_padding_top"
         android:textAppearance="?android:textAppearanceMedium"
         android:textStyle="bold"
+        android:textColor="@color/textColorItemName"
+        android:ellipsize="end"
         tools:text="Sardine">
     </TextView>
 
@@ -49,6 +51,9 @@ Or else, the scaling is bypassed resulting in OutOfMemoryError
         android:maxWidth="@dimen/tv_item_brand_max_width"
         android:paddingLeft="@dimen/keyline_1"
         android:textAppearance="?android:textAppearanceSmall"
+        android:textColor="@color/textColorItemBrand"
+        android:fontFamily="sans-serif-medium"
+        android:ellipsize="end"
         tools:text="Selfridge"
         >
     </TextView>
@@ -72,6 +77,7 @@ Or else, the scaling is bypassed resulting in OutOfMemoryError
             android:paddingRight="@dimen/text_padding_right"
             android:paddingTop="@dimen/summary_body_padding_top"
             android:textAppearance="?android:textAppearanceSmall"
+            android:textColor="@color/textColorItemBrand"
             tools:text="$19.55"
             >
         </TextView>
@@ -86,6 +92,7 @@ Or else, the scaling is bypassed resulting in OutOfMemoryError
             android:paddingTop="@dimen/summary_body_padding_top"
             android:text="@string/summary_qty_purchase"
             android:textAppearance="?android:textAppearanceSmall"
+            android:textColor="@color/textColorItemBrand"
             tools:text="Qty :"
             >
         </TextView>
@@ -102,6 +109,7 @@ Or else, the scaling is bypassed resulting in OutOfMemoryError
             android:paddingRight="@dimen/text_padding_right"
             android:paddingTop="@dimen/summary_body_padding_top"
             android:textAppearance="?android:textAppearanceSmall"
+            android:textColor="@color/textColorItemBrand"
             tools:text="1234"
             >
         </TextView>
