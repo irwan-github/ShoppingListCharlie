@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -19,17 +18,16 @@ import java.util.List;
  * and the filesystem.
  */
 
-public class PictureMgr implements Parcelable
+public class PictureMgr2 implements Parcelable
 {
     private Picture mPictureInDb; //Currently stored in database
-    private List<Picture> mTargetPictureForViewing = new ArrayList<>(); //Currently shown to the
-    // user. For this implementation, only one picture is allowed.
+    private List<Picture> mTargetPictureForViewing = new ArrayList<>(); //Currently shown to the user. For this implementation, only one picture is allowed.
     private List<Picture> mDiscardedPictures = new ArrayList<>(); //To be deleted from filesystem
     private long mItemId = -1;
     private static final String SHOPPING_LIST_PICS = "Item_";
     private String mAuthorityPackage = null;
 
-    public PictureMgr(String authorityPackage)
+    public PictureMgr2(String authorityPackage)
     {
         mAuthorityPackage = authorityPackage;
     }
@@ -38,14 +36,14 @@ public class PictureMgr implements Parcelable
      * @param pictureInDb will be the picture used for viewing initially.
      * @param itemId
      */
-    public PictureMgr(Picture pictureInDb, long itemId, String authorityPackage)
+    public PictureMgr2(Picture pictureInDb, long itemId, String authorityPackage)
     {
         mPictureInDb = pictureInDb;
         mItemId = itemId;
         setPictureForViewing(mPictureInDb);
     }
 
-    public PictureMgr(long itemId, String authorityPackage)
+    public PictureMgr2(long itemId, String authorityPackage)
     {
         mItemId = itemId;
     }
@@ -57,10 +55,8 @@ public class PictureMgr implements Parcelable
 
     /**
      * The current picture will replaced by the new picture.
-     * If the current picture is different from newPicture and if it's path is not associated with
-     * the item stored in database, the current picture will be put in the discarded list.
-     * Original file (exist in database records) will never be put in discarded list in this method
-     * because it is NOT known whether user want to save the new picture.
+     * If the current picture is different from newPicture,
+     * the current picture will be put in the discarded list.
      * If not different, the target picture will be ignored.
      *
      * @param newPictureFile
@@ -68,117 +64,62 @@ public class PictureMgr implements Parcelable
     public void setPictureForViewing(File newPictureFile)
     {
         if (newPictureFile != null)
-        {
             setPictureForViewing(new Picture(newPictureFile));
-        }
     }
 
     /**
      * The current picture will replaced by the new picture.
-     * If the current picture is different from newPicture and if it's path is not associated with
-     * the item stored in database, the current picture will be put in the discarded list.
-     * Original file (exist in database records) will never be put in discarded list in this method
-     * because it is NOT known whether user want to save the new picture.
+     * If the current picture is different from newPicture,
+     * the current picture will be put in the discarded list.
+     * If not different, the target picture will be ignored.
      *
      * @param newPicture will be the picture to be used for viewing
      */
     public void setPictureForViewing(Picture newPicture)
     {
-        if (newPicture == null)
-        {
+        if(newPicture == null)
             return;
-        }
 
-        if (isSameAsCurrentViewedPicture(newPicture))
-        {
+        if (sameAsCurrentViewedPicture(newPicture))
             return;
-        }
 
         Picture discardedPic = null;
 
         if (mTargetPictureForViewing.size() == 1)
-        {
             discardedPic = mTargetPictureForViewing.set(0, newPicture);
-        }
         else
-        {
             mTargetPictureForViewing.add(newPicture);
-        }
 
-        if (discardedPic != null && !isOriginalPicture(discardedPic))
-        {
+        if (discardedPic != null)
             mDiscardedPictures.add(discardedPic);
-        }
     }
 
-    private boolean isOriginalPicture(Picture discardedPic)
-    {
-        if (mPictureInDb != null && mPictureInDb.getPath().equals(discardedPic.getPath()))
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    private boolean isSameAsCurrentViewedPicture(Picture targetPicture)
+    private boolean sameAsCurrentViewedPicture(Picture targetPicture)
     {
         Picture currentViewedPicture = null;
-        if (mTargetPictureForViewing.size() == 0)
-        {
+        if(mTargetPictureForViewing.size() == 0)
             return false;
-        }
         else
-        {
             currentViewedPicture = mTargetPictureForViewing.get(0);
-        }
 
         if (currentViewedPicture.getPath().equals(targetPicture.getPath()))
-        {
             return true;
-        }
         else
-        {
             return false;
-        }
-    }
-
-    public boolean hasDiscardedInternalPictures()
-    {
-        Iterator<Picture> iteratorDiscardPics = mDiscardedPictures.iterator();
-        boolean hasInternalPic = false;
-        while (iteratorDiscardPics.hasNext()) {
-
-            Picture discardedPicture = iteratorDiscardPics.next();
-
-            if (!isExternalFile(discardedPicture) && discardedPicture.getFile() != null)
-            {
-                hasInternalPic = true;
-                break;
-            }
-        }
-        return hasInternalPic;
     }
 
 
     /**
-     * Get picture for viewing. If target picture for viewing is empty, then original picture
-     * is used. However, if original picture was deleted, then null will be returned
+     * Get picture for viewing
      *
      * @return
      */
     public Picture getPictureForViewing()
     {
         if (mTargetPictureForViewing.size() > 0)
-        {
             return mTargetPictureForViewing.get(0);
-        }
         else
-        {
             return mPictureInDb;
-        }
     }
 
     public List<Picture> getPictureForSaving()
@@ -213,20 +154,15 @@ public class PictureMgr implements Parcelable
     }
 
     /**
-     * Original picture, if exist,  wll be the pictute target picture and removed from discarded
-     * pile. The current target picture is put in discarded file.
+     * Original picture, if exist,  wll be the pictute target picture and removed from discarded pile
      */
     public void setViewOriginalPicture()
     {
         if (mPictureInDb == null)
-        {
             return;
-        }
         setPictureForViewing(mPictureInDb);
         if (mDiscardedPictures.contains(mPictureInDb))
-        {
             mDiscardedPictures.remove(mPictureInDb);
-        }
     }
 
     public static File createFileHandle(File dirPictures) throws IOException
@@ -248,7 +184,7 @@ public class PictureMgr implements Parcelable
 
     /**
      * Move original picture (path stored in database) to discarded list if it was NOT already in.
-     * Remove original picture from current viewed picture
+     * Remove original picture from vurrent viewed picture
      */
     public void discardOriginalPicture()
     {
@@ -261,28 +197,20 @@ public class PictureMgr implements Parcelable
         {
             mTargetPictureForViewing.remove(mPictureInDb);
         }
-        mPictureInDb = null;
     }
 
     /**
-     * Invoked when user clicks on delete button in picture toolbar
-     * Move picture to discarded list if it was NOT already in, Original picture will also be
-     * put in the discarded list
+     * Move picture to discarded list if it was NOT already in.
      * The current picture for viewing is removed.
-     * If current picture is original picture, then original picture will not exist anymore.
      */
     public Picture discardCurrentPictureInView()
     {
         Picture pictureForViewing = getPictureForViewing();
-        if (pictureForViewing != null && !mDiscardedPictures.contains(pictureForViewing)
-                && !isOriginalPicture(pictureForViewing))
+        if (pictureForViewing != null && !mDiscardedPictures.contains(pictureForViewing))
         {
             mDiscardedPictures.add(pictureForViewing);
-            mTargetPictureForViewing.remove(pictureForViewing);
+            mTargetPictureForViewing.clear();
         }
-        if(isOriginalPicture(pictureForViewing))
-            discardOriginalPicture();
-
         return pictureForViewing;
     }
 
@@ -307,21 +235,21 @@ public class PictureMgr implements Parcelable
         dest.writeString(mAuthorityPackage);
     }
 
-    public static final Creator<PictureMgr> CREATOR
-            = new Creator<PictureMgr>()
+    public static final Creator<PictureMgr2> CREATOR
+            = new Creator<PictureMgr2>()
     {
-        public PictureMgr createFromParcel(Parcel in)
+        public PictureMgr2 createFromParcel(Parcel in)
         {
-            return new PictureMgr(in);
+            return new PictureMgr2(in);
         }
 
-        public PictureMgr[] newArray(int size)
+        public PictureMgr2[] newArray(int size)
         {
-            return new PictureMgr[size];
+            return new PictureMgr2[size];
         }
     };
 
-    private PictureMgr(Parcel in)
+    private PictureMgr2(Parcel in)
     {
         mItemId = in.readLong();
         in.readTypedList(mTargetPictureForViewing, Picture.CREATOR);

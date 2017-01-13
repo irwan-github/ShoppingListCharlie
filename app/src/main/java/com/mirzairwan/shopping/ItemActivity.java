@@ -181,8 +181,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
                         return true;
 
                     case R.id.remove_picture:
-                        removePictureFromView();
-
+                        deletePictureInView();
+                        return true;
                     default:
                         return false;
                 }
@@ -322,12 +322,14 @@ public abstract class ItemActivity extends AppCompatActivity implements
     }
 
     /**
-     * Call this method when user back or navigate up with no intention of saving any pictures
+     * Invoked when user click system back or navigate up with no intention of saving any pictures.
+     * Does not delete original picture because it is not the intention of the user
      */
     protected void removeUnwantedPicturesFromApp()
     {
         if (mPictureMgr.getOriginalPicture() == null && mPictureMgr.getPictureForViewing() != null)
         {
+            //Does not delete original picture because it is not the intention of the user
             mPictureMgr.discardCurrentPictureInView();
         }
 
@@ -335,27 +337,29 @@ public abstract class ItemActivity extends AppCompatActivity implements
         {
             mPictureMgr.setViewOriginalPicture();
             String msg = daoManager.cleanUpDiscardedPictures(mPictureMgr);
-            Toast.makeText(ItemActivity.this, msg, Toast.LENGTH_LONG).show();
+//            Toast.makeText(ItemActivity.this, msg, Toast.LENGTH_LONG).show();
         }
 
     }
 
+
     /**
+     * Invoked when user clicks on delete button in picture toolbar
      * Delete record if any that associates picture to the item in the database.
      * If the item is written to storage memory by this app, the image file is deleted.
      * If the currently view picture is not the original picture, the original picture will be used
      * for viewing if exist.
      */
-    private void removePictureFromView()
+    private void deletePictureInView()
     {
         if (mPictureMgr.getPictureForViewing() == null)
         {
             return;
         }
 
-        Picture pictureInView = mPictureMgr.discardCurrentPictureInView();
-        Picture targetPicture;
-        if (pictureInView != null && pictureInView.getId() > 0) // This is the original. Delete
+        Picture discardedPic = mPictureMgr.discardCurrentPictureInView();
+
+        if (discardedPic != null && discardedPic.getId() > 0) // This is the original. Delete
         // record in database.
         {
             int deleted = daoManager.deletePicture(itemId);
@@ -416,7 +420,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
         startActivityForResult(photoPickerIntent, REQUEST_PICK_PHOTO);
     }
 
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
@@ -426,6 +429,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
                 switch (requestCode)
                 {
                     case REQUEST_SNAP_PICTURE:
+                        daoManager.cleanUpDiscardedPictures(mPictureMgr); //Original picture is not deleted.
                         setPictureView(mPictureMgr.getPictureForViewing());
                         break;
                     case REQUEST_PICK_PHOTO:
@@ -442,7 +446,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
     }
 
     /**
-     * use this when picking picture from media gallery. I do not need to create a
+     * Invoked when picking picture from media gallery. I do not need to create a
      * filename for the picture as it was created outside this app. This method query the filepath
      * of the picture using ContentResolver.
      *
@@ -467,9 +471,14 @@ public abstract class ItemActivity extends AppCompatActivity implements
         }
         Picture externalPicture = new Picture(filePath);
         mPictureMgr.setPictureForViewing(externalPicture); //Update PictureMgr on the target picture
+        daoManager.cleanUpDiscardedPictures(mPictureMgr); //delete previous picture. But original picture will not be deleted
         setPictureView(externalPicture);
     }
 
+    /**
+     * Called after external camera task or picture picture task
+     * @param picture
+     */
     protected void setPictureView(Picture picture)
     {
         if (picture == null)

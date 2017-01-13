@@ -122,7 +122,7 @@ public class ShoppingListProvider extends ContentProvider
         sCatalogueProjectionMap.put(PricesEntry.ALIAS_ID, PricesEntry.TABLE_NAME + "." + PricesEntry._ID + " AS " + PricesEntry.ALIAS_ID);
 //        sCatalogueProjectionMap.put(PricesEntry.COLUMN_PRICE_TYPE_ID, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_PRICE_TYPE_ID);
 //        sCatalogueProjectionMap.put(PricesEntry.COLUMN_PRICE, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_PRICE);
-//        sCatalogueProjectionMap.put(PricesEntry.COLUMN_CURRENCY_CODE, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_CURRENCY_CODE);
+//        sCatalogueProjectionMap.put(PricesEntry.COLUMN_SRC_CURRENCY_CODE, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_SRC_CURRENCY_CODE);
 //        sCatalogueProjectionMap.put(PricesEntry.COLUMN_BUNDLE_QTY, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_BUNDLE_QTY);
 //        sCatalogueProjectionMap.put(PricesEntry.COLUMN_SHOP_ID, PricesEntry.TABLE_NAME + "." + PricesEntry.COLUMN_SHOP_ID);
         sCatalogueProjectionMap.put(ToBuyItemsEntry.ALIAS_ID, ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry._ID + " AS " + ToBuyItemsEntry.ALIAS_ID);

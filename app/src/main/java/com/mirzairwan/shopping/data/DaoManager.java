@@ -1,7 +1,7 @@
 package com.mirzairwan.shopping.data;
 
-import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.domain.Item;
+import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ToBuyItem;
 
@@ -86,4 +86,6 @@ public interface DaoManager
     String  deleteCheckedItems();
 
     int deletePicture(long itemId);
+
+    int deletePicture(PictureMgr pictureMgr);
 }

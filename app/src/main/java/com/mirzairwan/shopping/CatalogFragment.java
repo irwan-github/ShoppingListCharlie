@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -170,6 +171,7 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
     {
+        Log.d(LOG_TAG, "Calling onLoadFinished");
         mCursor = cursor;
         catalogAdapter.swapCursor(cursor);
         shoppingList = Builder.getShoppingList(cursor);

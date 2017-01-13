@@ -2,7 +2,9 @@ package com.mirzairwan.shopping;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Calendar;
 import java.util.Currency;
+import java.util.Date;
 import java.util.Locale;
 
 /**
@@ -84,5 +86,21 @@ public class FormatHelper
         if(currencyCode.equalsIgnoreCase("XXX")) //This is a valid currency code used for testing. But not accepted so as not to confuse users.
             throw new IllegalArgumentException("Unsupported ISO 4217 currency code: " + currencyCode);
         return Currency.getInstance(currencyCode).getCurrencyCode().equals(currencyCode);
+    }
+
+    public static Date strToDate(String strDate, String splitter)
+    {
+        Calendar cal = Calendar.getInstance();
+
+        if(!strDate.contains(splitter))
+        {
+            return null;
+        }
+
+        String[] tokens = strDate.split(splitter);
+        cal.set(Integer.parseInt(tokens[0]),
+                Integer.parseInt(tokens[1]),
+                Integer.parseInt(tokens[2]));
+        return cal.getTime();
     }
 }

@@ -208,6 +208,18 @@ public final class Contract
 
         public static final int IS_CHECKED = 1;
     }
-//
+
+    public static final class ExchangeRateEntry implements BaseColumns
+    {
+        public static final String TABLE_NAME = "exchange_rate";
+
+        public static final String COLUMN_SRC_CURRENCY_CODE = "src_currency_code";
+
+        public static final String COLUMN_DES_CURRENCY_CODE = "des_currency_code";
+
+        public static final String COLUMN_RATE = "rate";
+
+        public static final String COLUMN_LAST_UPDATED_ON = "last_updated_on";
+    }
 
 }
