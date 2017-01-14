@@ -17,17 +17,38 @@ public class FormatHelper
      * Formats a value of type double
      *
      * @param countryCode
+     * @param currencyCode if currency code is invalid, a currency code based on a default locale will be used
      * @param value
      * @return formatted value prefix/suffixed wilth a currency symbol
      */
     public static String formatCountryCurrency(String countryCode, String currencyCode, double value)
     {
+        if(countryCode == null)
+            throw new IllegalArgumentException("Country code cannot be null");
+
         Locale defaultLocale = Locale.getDefault();
         Locale homeLocale = new Locale(defaultLocale.getLanguage(), countryCode);
-
         NumberFormat formatterHome = NumberFormat.getCurrencyInstance(homeLocale);
-        Currency currency = Currency.getInstance(currencyCode);
-        formatterHome.setCurrency(currency);
+        Currency currency;
+        try
+        {
+            currency = Currency.getInstance(currencyCode);
+            formatterHome.setCurrency(currency);
+        }
+        catch (Exception ex1)
+        {
+            try
+            {
+                //Fallback to default currency
+                currency = Currency.getInstance(homeLocale);
+                formatterHome.setCurrency(currency);
+            }
+            catch (Exception ex2)
+            {
+                // Fallback to whatever NumberFormat want to do!
+            }
+        }
+
         return formatterHome.format(value);
     }
 
@@ -58,7 +79,17 @@ public class FormatHelper
 
     public static String getCurrencySymbol(Locale locale, String currencyCode)
     {
-        return Currency.getInstance(currencyCode).getSymbol(locale);
+        Currency currency;
+        try
+        {
+            currency = Currency.getInstance(currencyCode);
+        }
+        catch (Exception ex)
+        {
+            currency = Currency.getInstance(locale);
+        }
+
+        return currency.getSymbol(locale);
     }
 
     public static String getCurrencyCode(String countryCode)
@@ -81,11 +112,21 @@ public class FormatHelper
         return original.substring(0, 1).toUpperCase() + original.substring(1);
     }
 
-    public static boolean validateCurrencyCode(String currencyCode)
+    public static boolean isValidCurrencyCode(String currencyCode)
     {
         if(currencyCode.equalsIgnoreCase("XXX")) //This is a valid currency code used for testing. But not accepted so as not to confuse users.
-            throw new IllegalArgumentException("Unsupported ISO 4217 currency code: " + currencyCode);
-        return Currency.getInstance(currencyCode).getCurrencyCode().equals(currencyCode);
+            return false;
+        Currency currency;
+        try
+        {
+            currency = Currency.getInstance(currencyCode);
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
+
+        return currency.getCurrencyCode().equals(currencyCode);
     }
 
     public static Date strToDate(String strDate, String splitter)

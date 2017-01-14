@@ -1,11 +1,15 @@
 package com.mirzairwan.shopping;
 
+import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.Intent;
+import android.content.Loader;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -22,26 +26,47 @@ import android.widget.ListView;
 import com.mirzairwan.shopping.data.AndroidDatabaseManager;
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+import com.mirzairwan.shopping.domain.ExchangeRate;
 import com.mirzairwan.shopping.domain.Picture;
+import com.mirzairwan.shopping.domain.PictureMgr;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.mirzairwan.shopping.ItemEditingActivity.ITEM_IS_IN_SHOPPING_LIST;
 import static com.mirzairwan.shopping.R.id.menu_database_shopping_list;
+import static com.mirzairwan.shopping.domain.ExchangeRate.FOREIGN_CURRENCY_CODES;
+import static com.mirzairwan.shopping.domain.ExchangeRate.FOREX_API_URL;
 
 public class ShoppingActivity extends AppCompatActivity implements
         ShoppingListFragment.OnFragmentInteractionListener,
-        CatalogFragment.OnFragmentInteractionListener, OnPictureRequestListener
+        CatalogFragment.OnFragmentInteractionListener, OnPictureRequestListener,
+        OnExchangeRateRequestListener
 {
     private static final String LOG_TAG = ShoppingActivity.class.getSimpleName();
+    private static final int LOADER_EXCHANGE_RATES = 1;
+    public static final String EXCHANGE_RATE = "EXCHANGE_RATE";
+    private static final int PERMISSION_ACCESS_NETWORK_STATE = 44;
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
     private ImageResizer mImageResizer;
+    private ExchangeRateLoader mExchangeRateLoader;
+    Map<String, ExchangeRate> mExchangeRates;
+    ExchangeRateLoaderCallback mExchangeRateLoaderCallback;
+    private String mCountryCode;
+    private ExchangeRateCallback mExchangeRateCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_shopping);
+
+        PermissionHelper.setupStorageReadPermission(this);
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
@@ -56,6 +81,18 @@ public class ShoppingActivity extends AppCompatActivity implements
                         getResources().getDimensionPixelSize(R.dimen.image_summary_width),
                         getResources().getDimensionPixelSize(R.dimen.list_item_height)
                 );
+
+        setupUserLocale();
+
+        mExchangeRateLoaderCallback = new ExchangeRateLoaderCallback(
+                FormatHelper.getCurrencyCode(mCountryCode));
+    }
+
+    public void setupUserLocale()
+    {
+        SharedPreferences sharedPreferences = PreferenceManager.
+                getDefaultSharedPreferences(this);
+        mCountryCode = sharedPreferences.getString(getString(R.string.user_country_pref), null);
     }
 
     private void setUpNavDrawer()
@@ -113,7 +150,8 @@ public class ShoppingActivity extends AppCompatActivity implements
     {
         int menuItemId = menuItem.getItemId();
 
-        switch (menuItemId) {
+        switch (menuItemId)
+        {
             case menu_database_shopping_list:
                 Intent intentDb = new Intent(this, AndroidDatabaseManager.class);
                 startActivity(intentDb);
@@ -121,10 +159,14 @@ public class ShoppingActivity extends AppCompatActivity implements
             default:
                 // Pass the event to ActionBarDrawerToggle, if it returns
                 // true, then it has handled the app icon touch event
-                if (mDrawerToggle.onOptionsItemSelected(menuItem)) {
+                if (mDrawerToggle.onOptionsItemSelected(menuItem))
+                {
                     return true;
-                } else
+                }
+                else
+                {
                     return super.onOptionsItemSelected(menuItem);
+                }
         }
     }
 
@@ -137,13 +179,17 @@ public class ShoppingActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onViewBuyItem(long itemId)
+    public void onViewBuyItem(long itemId, String currencyCode)
     {
         Intent intentToViewItem = new Intent();
         intentToViewItem.setClass(this, ShoppingListEditingActivity.class);
         Uri uri = Contract.ShoppingList.CONTENT_URI;
         uri = ContentUris.withAppendedId(uri, itemId);
         intentToViewItem.setData(uri);
+        if (mExchangeRates != null)
+        {
+            intentToViewItem.putExtra(EXCHANGE_RATE, mExchangeRates.get(currencyCode));
+        }
         startActivity(intentToViewItem);
     }
 
@@ -154,13 +200,17 @@ public class ShoppingActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onViewItemDetails(long itemId, boolean isInShoppingList)
+    public void onViewItemDetails(long itemId, String currencyCode, boolean isInShoppingList)
     {
         Intent intentToViewItem = new Intent();
         intentToViewItem.setClass(this, ItemEditingActivity.class);
         intentToViewItem.putExtra(ITEM_IS_IN_SHOPPING_LIST, isInShoppingList);
         Uri uri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, itemId);
         intentToViewItem.setData(uri);
+        if (mExchangeRates != null)
+        {
+            intentToViewItem.putExtra(EXCHANGE_RATE, mExchangeRates.get(currencyCode));
+        }
         startActivity(intentToViewItem);
     }
 
@@ -168,7 +218,55 @@ public class ShoppingActivity extends AppCompatActivity implements
     public void onRequest(Picture picture, ImageView ivItem)
     {
         Log.d(LOG_TAG, ">>>onRequest(Picture picture...");
-        mImageResizer.loadImage(picture.getFile(), ivItem);
+
+        //If user does not permit reading of device storage drive, degrade the service gracefully.
+        if (PictureMgr.isExternalFile(picture) && !PermissionHelper.hasReadStoragePermission(this))
+        {
+            mImageResizer.loadImage(null, ivItem);
+        }
+        else
+        {
+            mImageResizer.loadImage(picture.getFile(), ivItem);
+        }
+    }
+
+    @Override
+    public void onRequest(Set<String> sourceCurrencies,
+                          ExchangeRateCallback exchangeRateCallback)
+    {
+        Bundle args = getBundleForExchangeRateLoader(sourceCurrencies);
+
+        if(!PermissionHelper.isInternetUp(this))
+            return;
+
+        if (mExchangeRateLoader == null || mExchangeRateLoader.getSourceCurrencies().containsAll
+                (sourceCurrencies))
+        {
+            mExchangeRateLoader = (ExchangeRateLoader) getLoaderManager().initLoader
+                    (LOADER_EXCHANGE_RATES,
+                            args, mExchangeRateLoaderCallback);
+        }
+        else
+        {
+            mExchangeRateLoader = (ExchangeRateLoader) getLoaderManager().restartLoader
+                    (LOADER_EXCHANGE_RATES,
+                            args, mExchangeRateLoaderCallback);
+        }
+
+        mExchangeRateCallback = exchangeRateCallback;
+
+    }
+
+    @NonNull
+    protected Bundle getBundleForExchangeRateLoader(Set<String> foreignCurrencyCode)
+    {
+        String baseEndPoint = "http://api.fixer.io/latest";
+        Bundle args = new Bundle();
+        String[] codes = new String[foreignCurrencyCode.size()];
+
+        args.putStringArray(FOREIGN_CURRENCY_CODES, foreignCurrencyCode.toArray(codes));
+        args.putString(FOREX_API_URL, baseEndPoint);
+        return args;
     }
 
     private class DrawerItemClickListener implements ListView.OnItemClickListener
@@ -182,5 +280,47 @@ public class ShoppingActivity extends AppCompatActivity implements
         }
     }
 
+    private class ExchangeRateLoaderCallback implements LoaderManager.LoaderCallbacks<Map<String,
+            ExchangeRate>>
+    {
+        private final String LOG_TAG = ExchangeRateLoaderCallback.class.getSimpleName();
+        private final String mBaseCurrencyCode;
 
+        ExchangeRateLoaderCallback(String baseCurrecyCode)
+        {
+            mBaseCurrencyCode = baseCurrecyCode;
+        }
+
+        @Override
+        public Loader<Map<String, ExchangeRate>> onCreateLoader(int id, Bundle args)
+        {
+            Log.d(LOG_TAG, ">>>>onCreateLoader()");
+            String[] codes = args.getStringArray(FOREIGN_CURRENCY_CODES);
+            HashSet<String> sourceCurrencies = null;
+            if (codes != null && codes.length > 0)
+            {
+                List<String> foreignCurrencies = Arrays.asList(codes);
+                sourceCurrencies = new HashSet<>(foreignCurrencies);
+            }
+            return new ExchangeRateLoader(ShoppingActivity.this,
+                    sourceCurrencies,
+                    args.getString(FOREX_API_URL));
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Map<String, ExchangeRate>> loader, Map<String,
+                ExchangeRate> exchangeRates)
+        {
+            Log.d(LOG_TAG, ">>>>onLoadFinished()");
+            mExchangeRates = exchangeRates;
+            mExchangeRateCallback.doCoversion(exchangeRates);
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Map<String, ExchangeRate>> loader)
+        {
+            Log.d(LOG_TAG, ">>>>onLoaderReset()");
+            mExchangeRates = null;
+        }
+    }
 }

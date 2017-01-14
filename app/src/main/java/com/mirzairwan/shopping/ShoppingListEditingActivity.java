@@ -267,7 +267,7 @@ public class ShoppingListEditingActivity extends ItemActivity
     @Override
     protected void save()
     {
-        if (!fieldsValidated())
+        if (!areFieldsValid())
             return;
 
         Item item = getItemFromInputField();

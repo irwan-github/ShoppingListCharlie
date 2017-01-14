@@ -10,7 +10,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.Toolbar;
@@ -32,16 +31,15 @@ import com.mirzairwan.shopping.data.DaoManager;
 import com.mirzairwan.shopping.domain.ExchangeRate;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static com.mirzairwan.shopping.Builder.getDaoManager;
+import static com.mirzairwan.shopping.FormatHelper.formatCountryCurrency;
+import static com.mirzairwan.shopping.FormatHelper.getCurrencyCode;
 import static com.mirzairwan.shopping.R.xml.preferences;
-import static com.mirzairwan.shopping.domain.ExchangeRate.FOREIGN_CURRENCY_CODES;
-import static com.mirzairwan.shopping.domain.ExchangeRate.FOREX_API_URL;
 
 /**
  * Display shopping list screen
@@ -49,7 +47,7 @@ import static com.mirzairwan.shopping.domain.ExchangeRate.FOREX_API_URL;
  */
 
 public class ShoppingListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
-        ShoppingListAdapter2.OnCheckBuyItemListener, SharedPreferences
+        ShoppingListAdapter.OnCheckBuyItemListener, SharedPreferences
                 .OnSharedPreferenceChangeListener
 
 {
@@ -57,12 +55,12 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     private static final int LOADER_BUY_ITEM_ID = 1;
     private static final int LOADER_EXCHANGE_RATES = 2;
     private OnFragmentInteractionListener onFragmentInteractionListener;
-    private ShoppingListAdapter2 shoppingListAdapter;
-    private String countryCode;
+    private ShoppingListAdapter shoppingListAdapter;
+    private String mCountryCode;
     private static final String SORT_COLUMN = "SORT_COLUMN";
     private Toolbar mShoppingListToolbar;
     private OnPictureRequestListener mOnPictureRequestListener;
-    private ExchangeRateLoaderCallback mExchangeRateLoaderCallback;
+    //private ExchangeRateLoaderCallback mExchangeRateLoaderCallback;
     private List<ItemCost> mForeignItems = new ArrayList<>();
     private List<ItemCost> mForeignItemsChecked = new ArrayList<>();
     private TextView mTvTotalValueAdded;
@@ -73,6 +71,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     private View mLoadingIndicator;
     private View mShoppingListTotalsView;
     private ExchangeRateLoader mExchangeRateLoader;
+    private OnExchangeRateRequestListener mOnExchangeRateListener;
+    private ExchangeRateCallback mExchangeRateCallback;
 
     public static ShoppingListFragment newInstance()
     {
@@ -84,7 +84,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences
                 (getActivity());
-        countryCode = sharedPreferences.getString(getString(R.string.user_country_pref), null);
+        mCountryCode = sharedPreferences.getString(getString(R.string.user_country_pref), null);
     }
 
     @Nullable
@@ -95,7 +95,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
         if (savedInstanceState != null)
         {
-            //Nothing to do because the screen is going to query the database without any parameters
+            //Nothing was saved before because the data involved is huge and saving will be a
+            // complex task. So screen is going to query the database,
         }
 
         View rootView = inflater.inflate(R.layout.fragment_shopping_list, container, false);
@@ -122,8 +123,9 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         //Kick off the loader
         getLoaderManager().initLoader(LOADER_BUY_ITEM_ID, args, this);
         setupUserLocale();
-        mExchangeRateLoaderCallback = new ExchangeRateLoaderCallback(FormatHelper.getCurrencyCode
-                (countryCode));
+//        mExchangeRateLoaderCallback = new ExchangeRateLoaderCallback(getCurrencyCode
+//                (countryCode));
+        mExchangeRateCallback = new ExchangeRateCallbackImpl();
 
         return rootView;
     }
@@ -149,7 +151,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                     default:
                         return false;
                 }
-
             }
         };
 
@@ -183,6 +184,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         super.onAttach(activity);
         onFragmentInteractionListener = (OnFragmentInteractionListener) activity;
         mOnPictureRequestListener = (OnPictureRequestListener) activity;
+        mOnExchangeRateListener = (OnExchangeRateRequestListener)activity;
     }
 
     @Override
@@ -211,8 +213,10 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 //The id parameter is a buy_item id. However, the requirement is item id
                 Cursor cursor = (Cursor) shoppingListAdapter.getItem(position);
                 int colItemIdIdx = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_ITEM_ID);
+                int colItemCurrencyCode = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
                 long itemId = cursor.getLong(colItemIdIdx);
-                onFragmentInteractionListener.onViewBuyItem(itemId);
+                String currencyCode = cursor.getString(colItemCurrencyCode);
+                onFragmentInteractionListener.onViewBuyItem(itemId, currencyCode);
             }
         });
     }
@@ -220,7 +224,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
     private void setupListView(ListView lvBuyItems)
     {
-        shoppingListAdapter = new ShoppingListAdapter2(getActivity(), null,
+        shoppingListAdapter = new ShoppingListAdapter(getActivity(), null,
                 this, mOnPictureRequestListener);
 
         lvBuyItems.setAdapter(shoppingListAdapter);
@@ -270,10 +274,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                     ItemsEntry.TABLE_NAME + "." + ItemsEntry.COLUMN_BRAND;
         }
 
-        CursorLoader loader = new CursorLoader(getActivity(), uri, projection, selection, null,
+        return new CursorLoader(getActivity(), uri, projection, selection, null,
                 sortOrder);
-
-        return loader;
     }
 
     @Override
@@ -287,19 +289,39 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         prepareSummaryOfItemsAdded();
         prepareSummaryOfItemsChecked();
 
-        Bundle args = getBundleForExchageRateLoader(mForeignCurrencyCodes);
-
-        if (mExchangeRateLoader == null || mExchangeRateLoader.getSourceCurrencies().containsAll(mForeignCurrencyCodes))
-        {
-            mExchangeRateLoader = (ExchangeRateLoader) getLoaderManager().initLoader(LOADER_EXCHANGE_RATES,
-                    args, mExchangeRateLoaderCallback);
-        }
+        if(PermissionHelper.isInternetUp(getActivity()) && !mForeignCurrencyCodes.isEmpty())
+            mOnExchangeRateListener.onRequest(mForeignCurrencyCodes, mExchangeRateCallback);
         else
         {
-            mExchangeRateLoader = (ExchangeRateLoader) getLoaderManager().restartLoader(LOADER_EXCHANGE_RATES,
-                    args, mExchangeRateLoaderCallback);
+            setSummaryTotalsForLocalItems();
         }
+    }
 
+    protected void setSummaryTotalsForLocalItems()
+    {
+        String currencyCode = FormatHelper.getCurrencyCode(mCountryCode);
+
+        String totalCostofItemsAdded = formatCountryCurrency(mCountryCode,
+                currencyCode, mTotalValueOfItemsAdded);
+
+        String totalCostofItemsChecked = FormatHelper.formatCountryCurrency(mCountryCode,
+                currencyCode, mTotalValueOfItemsChecked);
+
+        setSummaryTotals(totalCostofItemsAdded, totalCostofItemsChecked);
+    }
+
+    /**
+     * Set the summary views showing the total cost added and total cost checked.
+     * Next, it removes the progress indicator.
+     * @param totalCostAdded Cost of items added to shopping list
+     * @param totalCostChecked Cost of items added to shopping list and checked
+     */
+    protected void setSummaryTotals(String totalCostAdded, String totalCostChecked)
+    {
+        mTvTotalValueAdded.setText(totalCostAdded);
+        mTvTotalValueChecked.setText(totalCostChecked);
+        mLoadingIndicator.setVisibility(View.INVISIBLE);
+        mShoppingListTotalsView.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -323,7 +345,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     {
         if (key.equals(getString(R.string.user_country_pref)))
         {
-            countryCode = sharedPreferences.getString(key, null);
+            mCountryCode = sharedPreferences.getString(key, null);
             prepareSummaryOfItemsAdded();
             prepareSummaryOfItemsChecked();
             shoppingListAdapter.notifyDataSetChanged();
@@ -342,20 +364,21 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     {
         void onAdditem();
 
-        void onViewBuyItem(long rowId);
+        void onViewBuyItem(long itemId, String currencyCode);
     }
 
     /**
      * Add up total cost of local items added to shopping list
-     * List the foreign items in the shopping list. This list will be used to fetch exchange rates
+     * Populate the foreign currency codes list. This list will be used to fetch exchange rates
      * in the web.
+     * List the foreign items found in the shopping list.
      */
     public void prepareSummaryOfItemsAdded()
     {
         mForeignCurrencyCodes.clear();
         mForeignItems.clear();
         mTotalValueOfItemsAdded = 0.00d;
-        String baseCurrencyCode = FormatHelper.getCurrencyCode(countryCode);
+        String baseCurrencyCode = getCurrencyCode(mCountryCode);
 
 
         Cursor cursor = shoppingListAdapter.getCursor();
@@ -386,18 +409,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         }
     }
 
-    @NonNull
-    protected Bundle getBundleForExchageRateLoader(Set<String> foreignCurrencyCode)
-    {
-        String baseEndPoint = "http://api.fixer.io/latest";
-        Bundle args = new Bundle();
-        String[] codes = new String[foreignCurrencyCode.size()];
-
-        args.putStringArray(FOREIGN_CURRENCY_CODES, foreignCurrencyCode.toArray(codes));
-        args.putString(FOREX_API_URL, baseEndPoint);
-        return args;
-    }
-
     /**
      * Add up total cost of local items checked in shopping list
      * List the foreign items checked in the shopping list.
@@ -407,7 +418,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         mForeignItemsChecked.clear();
         mTotalValueOfItemsChecked = 0.00d;
         byte atLeastAnItemChecked = (byte) 0;
-        String currencyCode = FormatHelper.getCurrencyCode(countryCode);
+        String currencyCode = getCurrencyCode(mCountryCode);
         mTvTotalValueChecked = (TextView) getActivity().findViewById(R.id.tv_total_checked);
 
         Cursor cursor = shoppingListAdapter.getCursor();
@@ -443,79 +454,65 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
     }
 
-    private class ExchangeRateLoaderCallback implements LoaderManager.LoaderCallbacks<Map<String,
-            ExchangeRate>>
+
+    protected String totalCostItemsAdded(Map<String, ExchangeRate> exchangeRates)
     {
-        private final String LOG_TAG = ExchangeRateLoaderCallback.class.getSimpleName();
-        private final String mBaseCurrencyCode;
+        double totalForexCost = 0;
 
-        ExchangeRateLoaderCallback(String baseCurrecyCode)
+        //Apply the rate and add the foreign currency
+        for (ItemCost costOfItem : mForeignItems)
         {
-            mBaseCurrencyCode = baseCurrecyCode;
+            ExchangeRate fc = exchangeRates.get(costOfItem.getSourceCurrencyCode());
+            totalForexCost += fc.compute(costOfItem.getAmt());
         }
 
-        @Override
-        public Loader<Map<String, ExchangeRate>> onCreateLoader(int id, Bundle args)
+        String currencyCode = FormatHelper.getCurrencyCode(mCountryCode);
+        String totalCostofItemsAdded = formatCountryCurrency(mCountryCode,
+                currencyCode, mTotalValueOfItemsAdded + totalForexCost);
+        return totalCostofItemsAdded;
+//        mTvTotalValueAdded.setText(totalCostofItemsAdded);
+    }
+
+    protected String totalItemsChecked(Map<String, ExchangeRate> exchangeRates)
+    {
+        double totalCostForexItemChecked = 0;
+        for (ItemCost foreignItemChecked : mForeignItemsChecked)
         {
-            Log.d(LOG_TAG, ">>>>onCreateLoader()");
-            String[] codes = args.getStringArray(FOREIGN_CURRENCY_CODES);
-            HashSet<String> sourceCurrencies = null;
-            if (codes != null && codes.length > 0)
-            {
-                List<String> foreignCurrencies = Arrays.asList(codes);
-                sourceCurrencies = new HashSet<>(foreignCurrencies);
-            }
-            return new ExchangeRateLoader(getActivity(),
-                    sourceCurrencies,
-                    args.getString(FOREX_API_URL));
+            ExchangeRate fc = exchangeRates.get(foreignItemChecked.getSourceCurrencyCode());
+            totalCostForexItemChecked += fc.compute(foreignItemChecked.getAmt());
         }
 
+        String destCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
+
+        return formatCountryCurrency(mCountryCode,
+                destCurrencyCode,
+                mTotalValueOfItemsChecked + totalCostForexItemChecked);
+
+//        mTvTotalValueChecked.setText(formatCountryCurrency(countryCode,
+//                baseCurrencyCode,
+//                mTotalValueOfItemsChecked + totalCostForexItemChecked));
+    }
+
+
+    private class ExchangeRateCallbackImpl implements ExchangeRateCallback
+    {
+        private final String LOG_TAG = ExchangeRateCallbackImpl.class.getSimpleName();
         @Override
-        public void onLoadFinished(Loader<Map<String, ExchangeRate>> loader,
-                                   Map<String, ExchangeRate> exchangeRates)
+        public void doCoversion(Map<String, ExchangeRate> exchangeRates)
         {
             Log.d(LOG_TAG, ">>>>onLoadFinished()");
-            totalCostItemsAdded(exchangeRates);
-            totalItemsChecked(exchangeRates);
-            mLoadingIndicator.setVisibility(View.INVISIBLE);
-            mShoppingListTotalsView.setVisibility(View.VISIBLE);
-        }
 
-        protected void totalCostItemsAdded(Map<String, ExchangeRate> exchangeRates)
-        {
-            double totalForexCost = 0;
-
-            //Apply the rate and add the foreign currency
-            for (ItemCost costOfItem : mForeignItems)
+            //if exchange rate is null, abort
+            if(exchangeRates == null)
+                setSummaryTotalsForLocalItems();
+            else
             {
-                ExchangeRate fc = exchangeRates.get(costOfItem.getSourceCurrencyCode());
-                totalForexCost += fc.compute(costOfItem.getAmt());
+                //set summary total costs of domestic and foreign items
+                String totalCostAdded = totalCostItemsAdded(exchangeRates);
+                String totalCostChecked = totalItemsChecked(exchangeRates);
+                setSummaryTotals(totalCostAdded, totalCostChecked);
             }
-
-            String totalCostofItemsAdded = FormatHelper.formatCountryCurrency(countryCode,
-                    mBaseCurrencyCode, mTotalValueOfItemsAdded + totalForexCost);
-            mTvTotalValueAdded.setText(totalCostofItemsAdded);
         }
-
-        protected void totalItemsChecked(Map<String, ExchangeRate> exchangeRates)
-        {
-            double totalCostForexItemChecked = 0;
-            for (ItemCost foreignItemChecked : mForeignItemsChecked)
-            {
-                ExchangeRate fc = exchangeRates.get(foreignItemChecked.getSourceCurrencyCode());
-                totalCostForexItemChecked += fc.compute(foreignItemChecked.getAmt());
-            }
-            mTvTotalValueChecked.setText(FormatHelper.formatCountryCurrency(countryCode,
-                    mBaseCurrencyCode,
-                    mTotalValueOfItemsChecked + totalCostForexItemChecked));
-        }
-
-        @Override
-        public void onLoaderReset(Loader<Map<String, ExchangeRate>> loader)
-        {
-
-        }
-
     }
 
     private class ItemCost

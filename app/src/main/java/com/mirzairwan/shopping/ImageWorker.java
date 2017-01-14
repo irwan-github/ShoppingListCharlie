@@ -42,7 +42,7 @@ public abstract class ImageWorker
      */
     public void loadImage(File file, ImageView imageView)
     {
-        if (!file.exists())
+        if (file == null || !file.exists())
             return;
 
         Bitmap bitmapFromMemCache = getBitmapFromMemCache(file.getPath());

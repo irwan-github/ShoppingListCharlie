@@ -1,23 +1,24 @@
 package com.mirzairwan.shopping;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CursorAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
+import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
-
-import static android.preference.PreferenceManager.getDefaultSharedPreferences;
+import com.mirzairwan.shopping.domain.Picture;
 
 /**
  * Created by Mirza Irwan on 18/12/16.
@@ -26,22 +27,25 @@ import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 public class ShoppingListAdapter extends CursorAdapter
 {
     private static final String LOG_TAG = ShoppingListAdapter.class.getSimpleName();
-    private final SharedPreferences userPreferences;
+    private OnPictureRequestListener mOnPictureRequestListener;
     private OnCheckBuyItemListener mOnFragmentInteractionListener;
 
-    public ShoppingListAdapter(Context context, Cursor cursor, OnCheckBuyItemListener onFragmentInteractionListener)
+    public ShoppingListAdapter(Context context, Cursor cursor,
+                               OnCheckBuyItemListener onFragmentInteractionListener,
+                               OnPictureRequestListener onPictureRequestListener)
     {
         super(context, cursor, 0);
         mOnFragmentInteractionListener = onFragmentInteractionListener;
-        userPreferences = getDefaultSharedPreferences(context);
-
+        //mImageResizer = imageResizer;
+        mOnPictureRequestListener = onPictureRequestListener;
     }
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent)
     {
-        View convertView = LayoutInflater.from(context).inflate(R.layout.row_buy_item, parent, false);
+        View convertView = LayoutInflater.from(context).inflate(R.layout.row_buy_item2, parent, false);
         TagBuyItemViews tag = new TagBuyItemViews();
+        tag.ivItem = (ImageView) convertView.findViewById(R.id.iv_item_pic_thb);
         tag.tvItemName = (TextView) convertView.findViewById(R.id.item_name_row);
         tag.tvItemBrand = (TextView) convertView.findViewById(R.id.item_brand_row);
         tag.tvSelectedPrice = (TextView) convertView.findViewById(R.id.item_selected_price_row);
@@ -60,14 +64,23 @@ public class ShoppingListAdapter extends CursorAdapter
     @Override
     public void bindView(View convertView, Context context, Cursor cursor)
     {
-        TagBuyItemViews tagViews = (TagBuyItemViews)convertView.getTag();
+
+        TagBuyItemViews tagViews = (TagBuyItemViews) convertView.getTag();
+
+        int colPicPath = cursor.getColumnIndex(PicturesEntry.COLUMN_FILE_PATH);
+        String pathPic = cursor.getString(colPicPath);
+
+        Log.d(LOG_TAG, ">>> bindView " + pathPic);
+
+        //tagViews.ivItem.setImageResource(R.drawable.empty_photo);
+        setImageView(pathPic, tagViews.ivItem);
 
         int colNameIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
         tagViews.tvItemName.setText(cursor.getString(colNameIdx));
 
         int colBrandIdx = cursor.getColumnIndex(ItemsEntry.COLUMN_BRAND);
         String brand = cursor.getString(colBrandIdx);
-        if(!TextUtils.isEmpty(brand))
+        if (!TextUtils.isEmpty(brand))
             tagViews.tvItemBrand.setText(brand);
         else
             tagViews.tvItemBrand.setText(R.string.default_brand_name);
@@ -85,15 +98,26 @@ public class ShoppingListAdapter extends CursorAdapter
         double priceTag = cursor.getDouble(colSelectedPriceTagIdx);
         String countryCode = PreferenceManager.getDefaultSharedPreferences(context).getString("home_country_preference", null);
         tagViews.tvSelectedPrice.setText(FormatHelper.formatCountryCurrency(countryCode,
-                                                                     currencyCode, priceTag/100));
+                currencyCode, priceTag / 100));
 
         int colBuyItemQty = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);
         tagViews.tvItemQty.setText(String.valueOf(cursor.getInt(colBuyItemQty)));
         tagViews.tvItemQty.setFocusable(false);
     }
 
+    private void setImageView(String pathPic, ImageView ivItem)
+    {
+        if (TextUtils.isEmpty(pathPic)) {
+            ivItem.setImageResource(R.drawable.empty_photo);
+            return;
+        }
+        mOnPictureRequestListener.onRequest(new Picture(pathPic), ivItem);
+        //mImageResizer.loadImage(new File(pathPic), ivItem);
+    }
+
     private static class TagBuyItemViews
     {
+        ImageView ivItem;
         TextView tvItemName;
         TextView tvItemBrand;
         TextView tvItemQty;

@@ -1,6 +1,5 @@
 package com.mirzairwan.shopping;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.LoaderManager;
 import android.content.ContentUris;
@@ -17,11 +16,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NavUtils;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -39,15 +35,16 @@ import android.widget.Toast;
 import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.DaoManager;
+import com.mirzairwan.shopping.domain.ExchangeRate;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
+import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.PriceMgr;
 import com.mirzairwan.shopping.domain.ShoppingList;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  * This is a base class for subclasses to leverage on the following:
@@ -102,6 +99,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
     protected EditText etCountryOrigin;
 
     protected EditText etUnitPrice;
+    private EditText etTranslatedUnitPrice;
     protected EditText etBundlePrice;
     protected EditText etBundleQty;
 
@@ -116,11 +114,12 @@ public abstract class ItemActivity extends AppCompatActivity implements
     protected PriceMgr priceMgr;
     protected String mCountryCode;
     private long itemId;
-    //private String mSortPref;
     private Toolbar toolbarPicture;
     protected ShoppingList shoppingList;
     private Bitmap mTargetBitmap;
     protected EditText etCurrencyCode;
+    private ExchangeRate mExchangeRate;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -134,7 +133,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
         if (savedInstanceState == null)
         {
-            mPictureMgr = new PictureMgr(getApplicationInfo().packageName);
+            mPictureMgr = new PictureMgr();
         }
         else
         {
@@ -144,6 +143,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         mCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
         priceMgr = new PriceMgr(mCountryCode);
+
+        mExchangeRate = getIntent().getParcelableExtra(ShoppingActivity.EXCHANGE_RATE);
 
     }
 
@@ -177,9 +178,15 @@ public abstract class ItemActivity extends AppCompatActivity implements
                         return true;
 
                     case R.id.choose_picture:
-                        startPickPictureActivity();
+                        if (PermissionHelper.hasReadStoragePermission(ItemActivity.this))
+                        {
+                            startPickPictureActivity();
+                        }
+                        else
+                        {
+                            PermissionHelper.setupStorageReadPermission(ItemActivity.this);
+                        }
                         return true;
-
                     case R.id.remove_picture:
                         deletePictureInView();
                         return true;
@@ -190,63 +197,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
             }
         });
 
-        ArrayList<String> permissionRequest = new ArrayList<>();
+        PermissionHelper.setupStorageReadPermission(this);
 
-        int permissionPickPicture = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.READ_EXTERNAL_STORAGE);
-        if (permissionPickPicture == PackageManager.PERMISSION_DENIED)
-        {
-            permissionRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-        }
-
-        if (permissionRequest.size() > 0)
-        {
-            ActivityCompat.requestPermissions(this, permissionRequest.toArray(new
-                            String[permissionRequest.size()]),
-                    PERMISSION_GIVE_ITEM_PICTURE);
-        }
-
-    }
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults)
-    {
-        switch (requestCode)
-        {
-            case PERMISSION_GIVE_ITEM_PICTURE:
-
-                for (int k = 0; k < permissions.length; ++k)
-                {
-
-                    if (permissions[k].equalsIgnoreCase(Manifest.permission.READ_EXTERNAL_STORAGE))
-                    {
-
-                        MenuItem itemPicturePicker = toolbarPicture.getMenu().findItem(R.id
-                                .choose_picture);
-
-                        if (grantResults[k] == PackageManager.PERMISSION_DENIED &&
-                                itemPicturePicker != null)
-                        {
-                            itemPicturePicker.setEnabled(false);
-                        }
-
-                        if (grantResults[k] == PackageManager.PERMISSION_GRANTED &&
-                                itemPicturePicker != null)
-                        {
-                            itemPicturePicker.setEnabled(true);
-                        }
-
-                    }
-                }
-
-                break;
-
-            default:
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        }
     }
 
     protected void initPriceLoader(Uri uri, LoaderManager.LoaderCallbacks<Cursor> callback)
@@ -272,7 +224,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
         Bundle arg = new Bundle();
         arg.putParcelable(ITEM_URI, uri);
         getLoaderManager().initLoader(ITEM_PICTURE_LOADER_ID, arg, callback);
-        //getLoaderManager().restartLoader(ITEM_PICTURE_LOADER_ID, arg, callback);
     }
 
 
@@ -366,8 +317,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
         }
         else //Current picture is not stored in database
         {
-            Picture originalPicture = mPictureMgr.getOriginalPicture();
-
             //PictureMgr replace viewed picture with original picture
             mPictureMgr.setViewOriginalPicture();
         }
@@ -429,7 +378,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
                 switch (requestCode)
                 {
                     case REQUEST_SNAP_PICTURE:
-                        daoManager.cleanUpDiscardedPictures(mPictureMgr); //Original picture is not deleted.
+                        daoManager.cleanUpDiscardedPictures(mPictureMgr); //Original picture is
+                        // not deleted.
                         setPictureView(mPictureMgr.getPictureForViewing());
                         break;
                     case REQUEST_PICK_PHOTO:
@@ -471,12 +421,15 @@ public abstract class ItemActivity extends AppCompatActivity implements
         }
         Picture externalPicture = new Picture(filePath);
         mPictureMgr.setPictureForViewing(externalPicture); //Update PictureMgr on the target picture
-        daoManager.cleanUpDiscardedPictures(mPictureMgr); //delete previous picture. But original picture will not be deleted
+        daoManager.cleanUpDiscardedPictures(mPictureMgr); //delete previous picture. But original
+        // picture will not be deleted
         setPictureView(externalPicture);
     }
 
     /**
-     * Called after external camera task or picture picture task
+     * Called after external camera task or picture picking task.
+     * Also called when activity is being created and loading data.
+     *
      * @param picture
      */
     protected void setPictureView(Picture picture)
@@ -492,7 +445,12 @@ public abstract class ItemActivity extends AppCompatActivity implements
         int targetH = getResources().getDimensionPixelSize(R.dimen.picture_item_detail_height);
 
         ImageResizer imageResizer = new ImageResizer(this, targetW, targetH);
-        imageResizer.loadImage(picture.getFile(), mImgItemPic);
+
+        if (!PictureMgr.isExternalFile(picture) | PermissionHelper.hasReadStoragePermission(this))
+        {
+            imageResizer.loadImage(picture.getFile(), mImgItemPic);
+        }
+
     }
 
     @Override
@@ -521,15 +479,20 @@ public abstract class ItemActivity extends AppCompatActivity implements
         etDescription.setOnTouchListener(mOnTouchListener);
         etCountryOrigin.setOnTouchListener(mOnTouchListener);
 
+        ExRateTranslator onFocusChangeListener = new ExRateTranslator(priceMgr.getCurrencyCode());
+
         etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
         InputFilterUtil.setAllCapsInputFilter(etCurrencyCode);
-        etCurrencyCode.setOnFocusChangeListener(new CurrencyCodeChecker());
+        etCurrencyCode.setOnTouchListener(mOnTouchListener);
+        etCurrencyCode.setOnFocusChangeListener(onFocusChangeListener);
 
         etUnitPrice = (EditText) findViewById(R.id.et_unit_price);
+        etTranslatedUnitPrice = (EditText) findViewById(R.id.et_translated_unit_price);
+        etUnitPrice.setOnTouchListener(mOnTouchListener);
+        etUnitPrice.setOnFocusChangeListener(onFocusChangeListener);
+
         etBundlePrice = (EditText) findViewById(R.id.et_bundle_price);
         etBundleQty = (EditText) findViewById(R.id.et_bundle_qty);
-
-        etUnitPrice.setOnTouchListener(mOnTouchListener);
         etBundlePrice.setOnTouchListener(mOnTouchListener);
         etBundleQty.setOnTouchListener(mOnTouchListener);
         super.onStart();
@@ -606,28 +569,41 @@ public abstract class ItemActivity extends AppCompatActivity implements
         alertDialog.show();
     }
 
-
     /**
      * Delete item if only item is NOT in shoppinglist
      */
     protected abstract void delete();
 
     /**
-     * Validate item details
+     * Validate item details.
+     * Show error messages.
      *
-     * @return
+     * @return true if input fields are valid
      */
-    protected boolean fieldsValidated()
+    protected boolean areFieldsValid()
     {
         if (TextUtils.isEmpty(etName.getText()))
         {
             alertRequiredField(R.string.message_title, R.string.mandatory_name);
             return false;
         }
-        else
+
+//        if (!FormatHelper.isValidCurrencyCode(etCurrencyCode.getText().toString()))
+//        {
+//            alertRequiredField(R.string.invalid_currency_code_msg, R.string
+// .valid_country_code_msg);
+//            etCurrencyCode.setText(FormatHelper.getCurrencyCode(mCountryCode));
+//            setCurrencySymbol(FormatHelper.getCurrencyCode(mCountryCode));
+//            return false;
+//        }
+
+        if (!isCurrencyCodeValid())
         {
-            return true;
+            alertRequiredField(R.string.invalid_currency_code_msg, R.string.valid_country_code_msg);
+            return false;
         }
+
+        return true;
     }
 
     /**
@@ -749,11 +725,44 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
         etUnitPrice.setText(priceMgr.getUnitPriceForDisplay());
         setCurrencySymbol(priceMgr.getUnitPrice().getCurrencyCode());
-
         etBundlePrice.setText(priceMgr.getBundlePriceForDisplay());
         setCurrencySymbol(priceMgr.getBundlePrice().getCurrencyCode());
         etBundleQty.setText(FormatHelper.formatToTwoDecimalPlaces(priceMgr.getBundlePrice()
                 .getBundleQuantity()));
+
+        if (mExchangeRate != null)
+        {
+            setTranslatePrice(priceMgr.getUnitPrice());
+        }
+    }
+
+    protected void setTranslatePrice(Price price)
+    {
+
+        double priceVal = price.getUnitPrice();
+        if (price.getCurrencyCode().equals(FormatHelper.getCurrencyCode(mCountryCode)))
+        {
+            etTranslatedUnitPrice.setText(null);
+            etTranslatedUnitPrice.setVisibility(View.INVISIBLE);
+        }
+        else
+        {
+            setTranslatedUnitPriceVisibility(View.VISIBLE);
+            findViewById(R.id.tv_equal_symbol_unit_price).setVisibility(View.VISIBLE);
+            double translated = mExchangeRate.compute(priceVal);
+            etTranslatedUnitPrice.setText(FormatHelper.formatToTwoDecimalPlaces(translated));
+            String currencySymbol = FormatHelper.getCurrencySymbol(mCountryCode);
+            String hintUnitPx = getString(R.string.unit_price_txt) + " (" + currencySymbol + ")";
+            setCurrencySymbol(etTranslatedUnitPrice, hintUnitPx);
+        }
+    }
+
+    private void setTranslatedUnitPriceVisibility(int visibleId)
+    {
+        etTranslatedUnitPrice.setVisibility(visibleId);
+        ViewParent viewParent = etTranslatedUnitPrice.getParent();
+        TextInputLayout etLayout = (TextInputLayout) (viewParent.getParent());
+        etLayout.setVisibility(visibleId);
     }
 
     protected void setCurrencySymbol(String currencyCode)
@@ -801,8 +810,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
      * 1. Prices
      * 2. Pictures
      *
-     * @param loaderId
-     * @param args
+     * @param loaderId Identify type of SQL query
+     * @param args     Store item id
      * @return
      */
     @Override
@@ -922,34 +931,103 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
     }
 
-    private class CurrencyCodeChecker implements View.OnFocusChangeListener
+    protected boolean isCurrencyCodeValid(EditText etCurrencyCode, String newCurrencyCode, String
+            originalCurrencyCode)
     {
+
+        if (FormatHelper.isValidCurrencyCode(newCurrencyCode))
+        {
+            setCurrencySymbol(newCurrencyCode);
+            setTranslatedUnitPriceVisibility(View.GONE);
+            return true;
+        }
+        else
+        {
+            Toast.makeText(this, "Invalid country code", Toast.LENGTH_SHORT).show();
+            etCurrencyCode.setText(originalCurrencyCode);
+            setCurrencySymbol(originalCurrencyCode);
+            return false;
+        }
+    }
+
+    protected boolean isCurrencyCodeValid()
+    {
+        String newCurrencyCode = etCurrencyCode.getText().toString();
+
+        if (!TextUtils.isEmpty(etCurrencyCode.getText()) &&
+                FormatHelper.isValidCurrencyCode(newCurrencyCode))
+        {
+            setCurrencySymbol(newCurrencyCode);
+            setTranslatedUnitPriceVisibility(View.GONE);
+            return true;
+        }
+        else
+        {
+            if (!etCurrencyCode.hasFocus())
+            {
+                Toast.makeText(this, "Invalid currency code", Toast.LENGTH_SHORT).show(); //Don't show when currency code has the focus when user saved
+            }
+            etCurrencyCode.setText(priceMgr.getCurrencyCode());
+            setCurrencySymbol(priceMgr.getCurrencyCode());
+            return false;
+        }
+    }
+
+
+    protected class ExRateTranslator extends CurrencyCodeChecker
+    {
+
+        public ExRateTranslator(String existingCurrencyCode)
+        {
+            super(existingCurrencyCode);
+        }
+
         @Override
         public void onFocusChange(View v, boolean hasFocus)
         {
-            EditText etCurrencyCode = (EditText) v;
+            //Validate currency code
+            super.onFocusChange(v, hasFocus);
+
+            //Unit price greater than 0.00
+            boolean isValidValue = !TextUtils.isEmpty(etUnitPrice.getText()) &&
+                    Integer.parseInt(etUnitPrice.getText().toString()) > 0;
+
+            boolean isDiffFromHomeCurrency = !mExistingCurrecyCode.equals(FormatHelper
+                    .getCurrencyCode(mCountryCode));
+
+            boolean hasFocusCurrencyCode = (v == etCurrencyCode) && hasFocus;
+
+            boolean hasFocusUnitPrice = (v == etUnitPrice) && hasFocus;
+
+            if ((isValidValue && isDiffFromHomeCurrency) && (!hasFocusCurrencyCode &&
+                    !hasFocusUnitPrice))
+            {
+                //Init Loader
+                Toast.makeText(ItemActivity.this, "Fetch currency " + mExistingCurrecyCode, Toast
+                        .LENGTH_SHORT).show();
+            }
+
+        }
+    }
+
+    protected class CurrencyCodeChecker implements View.OnFocusChangeListener
+    {
+        protected String mExistingCurrecyCode;
+
+
+        public CurrencyCodeChecker(String existingCurrencyCode)
+        {
+            mExistingCurrecyCode = existingCurrencyCode;
+        }
+
+        @Override
+        public void onFocusChange(View v, boolean hasFocus)
+        {
             String newCurrencyCode = etCurrencyCode.getText().toString();
 
-            String originalCurrencyCode = ItemActivity.this.priceMgr.getUnitPrice()
-                    .getCurrencyCode();
-            try
+            if (isCurrencyCodeValid(etCurrencyCode, newCurrencyCode, mExistingCurrecyCode))
             {
-                if (FormatHelper.validateCurrencyCode(newCurrencyCode) &&
-                        !newCurrencyCode.equals(priceMgr.getUnitPrice().getCurrencyCode()))
-                {
-                    setCurrencySymbol(newCurrencyCode);
-                }
-
-            } catch (IllegalArgumentException argEx)
-            {
-                Toast.makeText(ItemActivity.this, argEx.getMessage(), Toast.LENGTH_SHORT).show();
-                etCurrencyCode.setText(originalCurrencyCode);
-                setCurrencySymbol(originalCurrencyCode);
-            } catch (Exception ex)
-            {
-                Toast.makeText(ItemActivity.this, ex.getMessage(), Toast.LENGTH_SHORT).show();
-                etCurrencyCode.setText(originalCurrencyCode);
-                setCurrencySymbol(originalCurrencyCode);
+                mExistingCurrecyCode = newCurrencyCode;
             }
         }
     }

@@ -114,7 +114,7 @@ public class PictureMgrTest2
     @Before
     public void setUp() throws Exception
     {
-        pictureMgr = new PictureMgr("");
+        pictureMgr = new PictureMgr();
 
     }
 

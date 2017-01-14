@@ -145,7 +145,7 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
                 Uri uriCatalogue = Catalogue.CONTENT_URI;
                 String[] projection = new String[]{ItemsEntry._ID, ItemsEntry.COLUMN_NAME,
                         ItemsEntry.COLUMN_BRAND, ToBuyItemsEntry.ALIAS_ID, PricesEntry.ALIAS_ID,
-                        PicturesEntry.COLUMN_FILE_PATH};
+                        PricesEntry.COLUMN_CURRENCY_CODE, PicturesEntry.COLUMN_FILE_PATH};
                 String selection = PricesEntry.COLUMN_PRICE_TYPE_ID + "=?";
 
                 String[] selectionArgs = new String[]{String.valueOf(Price.Type.UNIT_PRICE.getType())};
@@ -191,7 +191,8 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
         //Check that item is in shopping list
         mCursor.moveToPosition(position);
         boolean isInShoppingList = !mCursor.isNull(mCursor.getColumnIndex(ToBuyItemsEntry.ALIAS_ID));
-        mOnFragmentInteractionListener.onViewItemDetails(id, isInShoppingList);
+        String currencyCode = mCursor.getString(mCursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE));
+        mOnFragmentInteractionListener.onViewItemDetails(id, currencyCode, isInShoppingList);
     }
 
     @Override
@@ -207,7 +208,7 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
 
     public interface OnFragmentInteractionListener
     {
-        void onViewItemDetails(long itemId, boolean isInShoppingList);
+        void onViewItemDetails(long itemId, String currencyCode, boolean isInShoppingList);
 
     }
 }

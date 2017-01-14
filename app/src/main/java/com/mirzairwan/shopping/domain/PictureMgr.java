@@ -27,28 +27,24 @@ public class PictureMgr implements Parcelable
     private List<Picture> mDiscardedPictures = new ArrayList<>(); //To be deleted from filesystem
     private long mItemId = -1;
     private static final String SHOPPING_LIST_PICS = "Item_";
-    private String mAuthorityPackage = null;
+    private static String mAuthorityPackage = "Android/data/com.mirzairwan.shopping/files/Pictures";
 
-    public PictureMgr(String authorityPackage)
+    public PictureMgr()
     {
-        mAuthorityPackage = authorityPackage;
+
     }
 
     /**
      * @param pictureInDb will be the picture used for viewing initially.
      * @param itemId
      */
-    public PictureMgr(Picture pictureInDb, long itemId, String authorityPackage)
+    public PictureMgr(Picture pictureInDb, long itemId)
     {
         mPictureInDb = pictureInDb;
         mItemId = itemId;
         setPictureForViewing(mPictureInDb);
     }
 
-    public PictureMgr(long itemId, String authorityPackage)
-    {
-        mItemId = itemId;
-    }
 
     public long getItemId()
     {
@@ -286,7 +282,7 @@ public class PictureMgr implements Parcelable
         return pictureForViewing;
     }
 
-    public boolean isExternalFile(Picture picture)
+    public static boolean isExternalFile(Picture picture)
     {
         return !picture.getPath().contains(mAuthorityPackage);
     }
