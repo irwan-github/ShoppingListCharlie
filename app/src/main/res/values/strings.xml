@@ -68,6 +68,6 @@
     <string name="max_currency_len">3</string>
     <string name="max_country_code_len">2</string>
     <string name="key_user_sort_pref" translatable="false">user_sort_pref</string>
-    <string name="invalid_currency_code_msg">Invalid currency code</string>
+    <string name="invalid_currency_code_msg"></string>
     <string name="valid_country_code_msg">Enter a valid 3-letter currency code</string>
 </resources>

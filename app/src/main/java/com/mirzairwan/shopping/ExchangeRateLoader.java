@@ -32,6 +32,7 @@ import java.util.Set;
 class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
 {
     private static final String LOG_TAG = ExchangeRateLoader.class.getSimpleName();
+    private final Context mContext;
     private String mBaseUri;
 
     private Set<String> mSourceCurrencies;
@@ -39,6 +40,7 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
     ExchangeRateLoader(Context context, Set<String> sourceCurrencies, String baseUri)
     {
         super(context);
+        mContext = context;
         mSourceCurrencies = sourceCurrencies;
         mBaseUri = baseUri;
     }
@@ -52,7 +54,7 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
     @Override
     public Map<String, ExchangeRate> loadInBackground()
     {
-        Log.d(LOG_TAG, ">>>>loadInBackground()");
+        Log.d(LOG_TAG, mContext.getClass().getSimpleName() + " -> loadInBackground()");
 
         if (mSourceCurrencies == null || mSourceCurrencies.size() == 0)
         {
@@ -138,7 +140,6 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
         StringBuilder sb = new StringBuilder();
         if (is != null)
         {
-
             BufferedInputStream bis = new BufferedInputStream(is);
             InputStreamReader inputStreamReader = new InputStreamReader(bis);
             BufferedReader br = new BufferedReader(inputStreamReader);
@@ -169,7 +170,7 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
     private String createQueryUri()
     {
         Uri.Builder builder = Uri.parse(mBaseUri).buildUpon().appendQueryParameter("base", "SGD");
-        String symbols = null;
+        String symbols="";
         Iterator<String> iterator = mSourceCurrencies.iterator();
 
         while (iterator.hasNext())
@@ -182,7 +183,9 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
             }
         }
         builder.appendQueryParameter("symbols", symbols);
-        return builder.build().toString();
+        String queryUri = builder.build().toString();
+        Log.d(LOG_TAG, queryUri);
+        return queryUri;
     }
 
     public Set<String> getSourceCurrencies()

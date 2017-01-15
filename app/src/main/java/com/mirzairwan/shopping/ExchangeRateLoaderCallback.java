@@ -20,16 +20,15 @@ import static com.mirzairwan.shopping.domain.ExchangeRate.FOREX_API_URL;
  * Created by Mirza Irwan on 13/1/17.
  */
 
-public class ExchangeRateLoaderCallback implements LoaderManager.LoaderCallbacks<Map<String,
+public abstract class ExchangeRateLoaderCallback implements LoaderManager.LoaderCallbacks<Map<String,
         ExchangeRate>>
 {
-    private final String LOG_TAG = ExchangeRateLoaderCallback.class.getSimpleName();
-    private String mBaseCurrencyCode;
+    protected static final String LOG_TAG = ExchangeRateLoaderCallback.class.getSimpleName();
     private Context mContext;
 
-    ExchangeRateLoaderCallback(String baseCurrecyCode, Context context)
+    ExchangeRateLoaderCallback(Context context)
     {
-        mBaseCurrencyCode = baseCurrecyCode;
+        Log.d(LOG_TAG, "Construct");
         mContext = context;
     }
 
@@ -37,11 +36,11 @@ public class ExchangeRateLoaderCallback implements LoaderManager.LoaderCallbacks
     public Loader<Map<String, ExchangeRate>> onCreateLoader(int id, Bundle args)
     {
         Log.d(LOG_TAG, ">>>>onCreateLoader()");
-        String[] codes = args.getStringArray(FOREIGN_CURRENCY_CODES);
+        String[] foreignCurrencyCodes = args.getStringArray(FOREIGN_CURRENCY_CODES);
         HashSet<String> sourceCurrencies = null;
-        if (codes != null && codes.length > 0)
+        if (foreignCurrencyCodes != null && foreignCurrencyCodes.length > 0)
         {
-            List<String> foreignCurrencies = Arrays.asList(codes);
+            List<String> foreignCurrencies = Arrays.asList(foreignCurrencyCodes);
             sourceCurrencies = new HashSet<>(foreignCurrencies);
         }
         return new ExchangeRateLoader(mContext,
@@ -49,19 +48,6 @@ public class ExchangeRateLoaderCallback implements LoaderManager.LoaderCallbacks
                 args.getString(FOREX_API_URL));
     }
 
-    @Override
-    public void onLoadFinished(Loader<Map<String, ExchangeRate>> loader,
-                               Map<String, ExchangeRate> exchangeRates)
-    {
-
-    }
-
-
-    @Override
-    public void onLoaderReset(Loader<Map<String, ExchangeRate>> loader)
-    {
-
-    }
 
 
 }

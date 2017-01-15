@@ -11,17 +11,16 @@ import android.widget.Toast;
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.domain.Item;
 
+import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
+
 /**
  * Created by Mirza Irwan on 2/1/17.
  */
 
 public class ItemEditingActivity extends ItemActivity
 {
-
-    private static final int ITEM_LOADER_ID = 23;
     private static final String URI_ITEM = "uri"; //Used for saving instant state
     private Uri mUriItem;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -41,7 +40,6 @@ public class ItemEditingActivity extends ItemActivity
         initLoaders(mUriItem);
 
         setTitle(R.string.view_buy_item_details);
-
     }
 
     protected void initLoaders(Uri uri)
@@ -49,7 +47,6 @@ public class ItemEditingActivity extends ItemActivity
         Bundle arg = new Bundle();
         arg.putParcelable(ITEM_URI, uri);
         getLoaderManager().initLoader(ITEM_LOADER_ID, arg, this);
-        //getLoaderManager().restartLoader(ITEM_LOADER_ID, arg, this);
         super.initPictureLoader(uri, this);
         super.initPriceLoader(uri, this);
     }

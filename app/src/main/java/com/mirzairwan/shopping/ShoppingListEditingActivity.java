@@ -19,6 +19,7 @@ import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ToBuyItem;
 
+import static com.mirzairwan.shopping.LoaderHelper.PURCHASE_ITEM_LOADER_ID;
 import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
@@ -33,7 +34,7 @@ public class ShoppingListEditingActivity extends ItemActivity
     private int actionMode = -1; //Informs the editor whether this activity is creation or updating
     public static final int CREATE_BUY_ITEM_MODE = 1; //use for action mode
     public static final int EDIT_BUY_ITEM_MODE = 2; //use for action mode
-    private static final int PURCHASE_ITEM_LOADER_ID = 30;
+//    private static final int PURCHASE_ITEM_LOADER_ID = 30;
     private boolean isItemDeleted = false; // After deleting, don't update picture and prices
 
     private EditText etQty;
@@ -101,7 +102,6 @@ public class ShoppingListEditingActivity extends ItemActivity
             arg.putParcelable(ITEM_URI, uri);
 
             getLoaderManager().initLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
-            //getLoaderManager().restartLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
             super.initPictureLoader(uri, this);
             super.initPriceLoader(uri, this);
         }
@@ -228,8 +228,6 @@ public class ShoppingListEditingActivity extends ItemActivity
         ToBuyItem toBuyItem = new ToBuyItem(buyItemId, buyQty, price, mItem, null);
         toBuyItem.setCheck(isItemChecked);
         return toBuyItem;
-
-
     }
 
     @Override

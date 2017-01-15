@@ -55,7 +55,7 @@ public class ExchangeRate implements Parcelable
         if(!destCurrencyCode.equals(mDestCurrencyCode))
             return (1/mRate) * sourceCurrencyVal;
         else
-            return -1;
+            throw new IllegalArgumentException("Destination Currency code-> Expected: " + mDestCurrencyCode + " Actual :" + destCurrencyCode );
     }
 
     public static final Creator<ExchangeRate> CREATOR = new Creator<ExchangeRate>()

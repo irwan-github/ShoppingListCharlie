@@ -3,6 +3,7 @@ package com.mirzairwan.shopping;
 import android.app.Activity;
 import android.app.LoaderManager;
 import android.content.ContentUris;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -22,7 +23,9 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -39,12 +42,18 @@ import com.mirzairwan.shopping.domain.ExchangeRate;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
-import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.PriceMgr;
 import com.mirzairwan.shopping.domain.ShoppingList;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+
+import static com.mirzairwan.shopping.LoaderHelper.ITEM_EXCHANGE_RATE_LOADER_ID;
+import static com.mirzairwan.shopping.LoaderHelper.ITEM_PICTURE_LOADER_ID;
+import static com.mirzairwan.shopping.LoaderHelper.ITEM_PRICE_LOADER_ID;
+import static com.mirzairwan.shopping.domain.ExchangeRate.FOREIGN_CURRENCY_CODES;
+import static com.mirzairwan.shopping.domain.ExchangeRate.FOREX_API_URL;
 
 /**
  * This is a base class for subclasses to leverage on the following:
@@ -82,8 +91,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
 {
     public static final String ITEM_IS_IN_SHOPPING_LIST = "ITEM_IS_IN_SHOPPING_LIST";
     protected static final String ITEM_URI = "ITEM_URI";
-    protected static final int ITEM_PRICE_LOADER_ID = 21;
-    protected static final int ITEM_PICTURE_LOADER_ID = 22;
     private static final int REQUEST_SNAP_PICTURE = 15;
     private static final String LOG_TAG = ItemActivity.class.getSimpleName();
     private static final int REQUEST_PICK_PHOTO = 16;
@@ -101,6 +108,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
     protected EditText etUnitPrice;
     private EditText etTranslatedUnitPrice;
     protected EditText etBundlePrice;
+    private EditText etTranslatedBundlePrice;
     protected EditText etBundleQty;
 
     private ImageView mImgItemPic;
@@ -479,7 +487,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
         etDescription.setOnTouchListener(mOnTouchListener);
         etCountryOrigin.setOnTouchListener(mOnTouchListener);
 
-        ExRateTranslator onFocusChangeListener = new ExRateTranslator(priceMgr.getCurrencyCode());
+        CurrencyCodeChecker onFocusChangeListener = new CurrencyCodeChecker(priceMgr
+                .getCurrencyCode());
 
         etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
         InputFilterUtil.setAllCapsInputFilter(etCurrencyCode);
@@ -489,11 +498,25 @@ public abstract class ItemActivity extends AppCompatActivity implements
         etUnitPrice = (EditText) findViewById(R.id.et_unit_price);
         etTranslatedUnitPrice = (EditText) findViewById(R.id.et_translated_unit_price);
         etUnitPrice.setOnTouchListener(mOnTouchListener);
-        etUnitPrice.setOnFocusChangeListener(onFocusChangeListener);
+
+        OnExchangeRateListenerImpl onExchangeRateListener = new OnExchangeRateListenerImpl();
+        String homeCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
+        ExchangeRateDisplayState unitPriceTranslatorListener = new ExchangeRateDisplayState(
+                onExchangeRateListener, homeCurrencyCode,
+                etCurrencyCode, etUnitPrice);
+        etUnitPrice.setOnFocusChangeListener(unitPriceTranslatorListener);
 
         etBundlePrice = (EditText) findViewById(R.id.et_bundle_price);
-        etBundleQty = (EditText) findViewById(R.id.et_bundle_qty);
+        etTranslatedBundlePrice = (EditText) findViewById(R.id.et_translated_bundle_price);
         etBundlePrice.setOnTouchListener(mOnTouchListener);
+
+        ExchangeRateDisplayState bundlePriceTranslatorListener = new ExchangeRateDisplayState(
+                onExchangeRateListener,
+                homeCurrencyCode,
+                etCurrencyCode, etBundlePrice);
+        etBundlePrice.setOnFocusChangeListener(bundlePriceTranslatorListener);
+
+        etBundleQty = (EditText) findViewById(R.id.et_bundle_qty);
         etBundleQty.setOnTouchListener(mOnTouchListener);
         super.onStart();
     }
@@ -575,7 +598,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
     protected abstract void delete();
 
     /**
-     * Validate item details.
+     * Validate item details. Invoked when user clicks on save button.
      * Show error messages.
      *
      * @return true if input fields are valid
@@ -588,17 +611,13 @@ public abstract class ItemActivity extends AppCompatActivity implements
             return false;
         }
 
-//        if (!FormatHelper.isValidCurrencyCode(etCurrencyCode.getText().toString()))
-//        {
-//            alertRequiredField(R.string.invalid_currency_code_msg, R.string
-// .valid_country_code_msg);
-//            etCurrencyCode.setText(FormatHelper.getCurrencyCode(mCountryCode));
-//            setCurrencySymbol(FormatHelper.getCurrencyCode(mCountryCode));
-//            return false;
-//        }
+        Editable currencyCodeEditable = etCurrencyCode.getText();
+        boolean isCurrencyCodeValid = !TextUtils.isEmpty(currencyCodeEditable) &&
+                FormatHelper.isValidCurrencyCode(currencyCodeEditable.toString());
 
-        if (!isCurrencyCodeValid())
+        if (!isCurrencyCodeValid)
         {
+            etCurrencyCode.clearFocus();
             alertRequiredField(R.string.invalid_currency_code_msg, R.string.valid_country_code_msg);
             return false;
         }
@@ -732,37 +751,60 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
         if (mExchangeRate != null)
         {
-            setTranslatePrice(priceMgr.getUnitPrice());
+            setTranslatedPrice();
         }
     }
 
-    protected void setTranslatePrice(Price price)
+    protected void setTranslatedPrice()
     {
-
-        double priceVal = price.getUnitPrice();
-        if (price.getCurrencyCode().equals(FormatHelper.getCurrencyCode(mCountryCode)))
+        //Unit price greater than 0.00
+        boolean isUnitPriceValid = !TextUtils.isEmpty(etUnitPrice.getText()) &&
+                Double.parseDouble(etUnitPrice.getText().toString()) > 0;
+        if (isUnitPriceValid && !etUnitPrice.hasFocus())
         {
-            etTranslatedUnitPrice.setText(null);
-            etTranslatedUnitPrice.setVisibility(View.INVISIBLE);
-        }
-        else
-        {
-            setTranslatedUnitPriceVisibility(View.VISIBLE);
-            findViewById(R.id.tv_equal_symbol_unit_price).setVisibility(View.VISIBLE);
+            String sUnitPx = etUnitPrice.getText().toString();
+            double priceVal;
+            setTranslatedPricesVisibility(etTranslatedUnitPrice, View.VISIBLE);
+            priceVal = Double.parseDouble(sUnitPx);
             double translated = mExchangeRate.compute(priceVal);
             etTranslatedUnitPrice.setText(FormatHelper.formatToTwoDecimalPlaces(translated));
             String currencySymbol = FormatHelper.getCurrencySymbol(mCountryCode);
             String hintUnitPx = getString(R.string.unit_price_txt) + " (" + currencySymbol + ")";
             setCurrencySymbol(etTranslatedUnitPrice, hintUnitPx);
         }
+
+        //Unit price greater than 0.00
+        boolean isBundlePriceValid = !TextUtils.isEmpty(etBundlePrice.getText()) &&
+                Double.parseDouble(etBundlePrice.getText().toString()) > 0;
+        if (isBundlePriceValid && !etBundlePrice.hasFocus())
+        {
+            String sUnitPx = etBundlePrice.getText().toString();
+            double priceVal;
+            setTranslatedPricesVisibility(etTranslatedBundlePrice, View.VISIBLE);
+            priceVal = Double.parseDouble(sUnitPx);
+
+            double translated = mExchangeRate.compute(priceVal);
+            etTranslatedBundlePrice.setText(FormatHelper.formatToTwoDecimalPlaces(translated));
+            String currencySymbol = FormatHelper.getCurrencySymbol(mCountryCode);
+            String hintUnitPx = getString(R.string.bundle_price_txt) + " (" + currencySymbol + ")";
+            setCurrencySymbol(etTranslatedBundlePrice, hintUnitPx);
+        }
     }
 
-    private void setTranslatedUnitPriceVisibility(int visibleId)
+    private void setTranslatedPricesVisibility(EditText etTranslatedPx, int visibleId)
     {
-        etTranslatedUnitPrice.setVisibility(visibleId);
-        ViewParent viewParent = etTranslatedUnitPrice.getParent();
-        TextInputLayout etLayout = (TextInputLayout) (viewParent.getParent());
-        etLayout.setVisibility(visibleId);
+        boolean isCurrencyDiffFromHomeCurrency = !etCurrencyCode.getText().toString().equals
+                (FormatHelper
+                        .getCurrencyCode(mCountryCode));
+
+        if (isCurrencyDiffFromHomeCurrency)
+        {
+            etTranslatedPx.setVisibility(visibleId);
+            ViewParent viewParent = etTranslatedPx.getParent();
+            TextInputLayout etLayout = (TextInputLayout) (viewParent.getParent());
+            etLayout.setVisibility(visibleId);
+        }
+        //findViewById(R.id.tv_equal_symbol_unit_price).setVisibility(visibleId);
     }
 
     protected void setCurrencySymbol(String currencyCode)
@@ -931,41 +973,31 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
     }
 
-    protected boolean isCurrencyCodeValid(EditText etCurrencyCode, String newCurrencyCode, String
-            originalCurrencyCode)
-    {
-
-        if (FormatHelper.isValidCurrencyCode(newCurrencyCode))
-        {
-            setCurrencySymbol(newCurrencyCode);
-            setTranslatedUnitPriceVisibility(View.GONE);
-            return true;
-        }
-        else
-        {
-            Toast.makeText(this, "Invalid country code", Toast.LENGTH_SHORT).show();
-            etCurrencyCode.setText(originalCurrencyCode);
-            setCurrencySymbol(originalCurrencyCode);
-            return false;
-        }
-    }
-
+    /**
+     * Validate currency code. It does not display translated prices.
+     * If invalid, it set the currency code to the previous valid value.
+     * If invalid, it changes the currency symbol to reflect the updated currency code.
+     *
+     * @return
+     */
     protected boolean isCurrencyCodeValid()
     {
         String newCurrencyCode = etCurrencyCode.getText().toString();
 
-        if (!TextUtils.isEmpty(etCurrencyCode.getText()) &&
-                FormatHelper.isValidCurrencyCode(newCurrencyCode))
+        boolean isCurrencyCodeValid = !TextUtils.isEmpty(etCurrencyCode.getText()) &&
+                FormatHelper.isValidCurrencyCode(newCurrencyCode);
+
+        if (isCurrencyCodeValid) //Currency code is valid
         {
             setCurrencySymbol(newCurrencyCode);
-            setTranslatedUnitPriceVisibility(View.GONE);
             return true;
         }
         else
         {
             if (!etCurrencyCode.hasFocus())
             {
-                Toast.makeText(this, "Invalid currency code", Toast.LENGTH_SHORT).show(); //Don't show when currency code has the focus when user saved
+                Toast.makeText(this, "Invalid currency code", Toast.LENGTH_SHORT).show(); //Don't
+                // show when currency code has the focus when user saved
             }
             etCurrencyCode.setText(priceMgr.getCurrencyCode());
             setCurrencySymbol(priceMgr.getCurrencyCode());
@@ -973,49 +1005,11 @@ public abstract class ItemActivity extends AppCompatActivity implements
         }
     }
 
-
-    protected class ExRateTranslator extends CurrencyCodeChecker
-    {
-
-        public ExRateTranslator(String existingCurrencyCode)
-        {
-            super(existingCurrencyCode);
-        }
-
-        @Override
-        public void onFocusChange(View v, boolean hasFocus)
-        {
-            //Validate currency code
-            super.onFocusChange(v, hasFocus);
-
-            //Unit price greater than 0.00
-            boolean isValidValue = !TextUtils.isEmpty(etUnitPrice.getText()) &&
-                    Integer.parseInt(etUnitPrice.getText().toString()) > 0;
-
-            boolean isDiffFromHomeCurrency = !mExistingCurrecyCode.equals(FormatHelper
-                    .getCurrencyCode(mCountryCode));
-
-            boolean hasFocusCurrencyCode = (v == etCurrencyCode) && hasFocus;
-
-            boolean hasFocusUnitPrice = (v == etUnitPrice) && hasFocus;
-
-            if ((isValidValue && isDiffFromHomeCurrency) && (!hasFocusCurrencyCode &&
-                    !hasFocusUnitPrice))
-            {
-                //Init Loader
-                Toast.makeText(ItemActivity.this, "Fetch currency " + mExistingCurrecyCode, Toast
-                        .LENGTH_SHORT).show();
-            }
-
-        }
-    }
-
     protected class CurrencyCodeChecker implements View.OnFocusChangeListener
     {
         protected String mExistingCurrecyCode;
 
-
-        public CurrencyCodeChecker(String existingCurrencyCode)
+        protected CurrencyCodeChecker(String existingCurrencyCode)
         {
             mExistingCurrecyCode = existingCurrencyCode;
         }
@@ -1025,10 +1019,74 @@ public abstract class ItemActivity extends AppCompatActivity implements
         {
             String newCurrencyCode = etCurrencyCode.getText().toString();
 
-            if (isCurrencyCodeValid(etCurrencyCode, newCurrencyCode, mExistingCurrecyCode))
+            boolean isCurrencyCodeValid = !TextUtils.isEmpty(etCurrencyCode.getText()) &&
+                    FormatHelper.isValidCurrencyCode(newCurrencyCode);
+
+            if (isCurrencyCodeValid && !etCurrencyCode.hasFocus()) //Check currency code and update the symbols of the price
+            // input fields
             {
                 mExistingCurrecyCode = newCurrencyCode;
+                setCurrencySymbol(newCurrencyCode);
             }
+            else if (!etCurrencyCode.hasFocus())
+            {
+                etCurrencyCode.setText(mExistingCurrecyCode);
+                Toast.makeText(ItemActivity.this,
+                                    "Invalid currency code: " + newCurrencyCode,
+                                            Toast.LENGTH_SHORT)
+                                    .show();
+            }
+        }
+    }
+
+    protected class ItemExchangeRateLoaderCallback extends ExchangeRateLoaderCallback
+    {
+        private final String LOG_TAG = ItemExchangeRateLoaderCallback.class.getSimpleName();
+
+        ItemExchangeRateLoaderCallback(Context context)
+        {
+            super(context);
+            Log.d(LOG_TAG, "Construct");
+        }
+
+        @Override
+        public Loader<Map<String, ExchangeRate>> onCreateLoader(int id, Bundle args)
+        {
+            Log.d(LOG_TAG, "onCreateLoader");
+            return super.onCreateLoader(id, args);
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Map<String, ExchangeRate>> loader, Map<String,
+                ExchangeRate> exchangeRates)
+        {
+            Log.d(LOG_TAG, "onLoadFinished");
+            mExchangeRate = exchangeRates.get(etCurrencyCode.getText().toString());
+            setTranslatedPrice();
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Map<String, ExchangeRate>> loader)
+        {
+
+        }
+    }
+
+    protected class OnExchangeRateListenerImpl implements ExchangeRateDisplayState
+            .OnExchangeRateListener
+    {
+        private String baseEndPoint = "http://api.fixer.io/latest";
+        ItemExchangeRateLoaderCallback mItemExchangeRateCallback =
+                new ItemExchangeRateLoaderCallback(ItemActivity.this);
+
+        @Override
+        public void processExchangeRate(String foreignCurrencyCode)
+        {
+            Bundle args = new Bundle();
+            args.putStringArray(FOREIGN_CURRENCY_CODES, new String[]{foreignCurrencyCode});
+            args.putString(FOREX_API_URL, baseEndPoint);
+            getLoaderManager().initLoader(ITEM_EXCHANGE_RATE_LOADER_ID, args,
+                    mItemExchangeRateCallback);
         }
     }
 }

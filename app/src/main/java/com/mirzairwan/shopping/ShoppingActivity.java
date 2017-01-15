@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.mirzairwan.shopping.ItemEditingActivity.ITEM_IS_IN_SHOPPING_LIST;
+import static com.mirzairwan.shopping.LoaderHelper.EXCHANGE_RATES_SHOPPING_LIST_LOADER_ID;
 import static com.mirzairwan.shopping.R.id.menu_database_shopping_list;
 import static com.mirzairwan.shopping.domain.ExchangeRate.FOREIGN_CURRENCY_CODES;
 import static com.mirzairwan.shopping.domain.ExchangeRate.FOREX_API_URL;
@@ -47,7 +48,7 @@ public class ShoppingActivity extends AppCompatActivity implements
         OnExchangeRateRequestListener
 {
     private static final String LOG_TAG = ShoppingActivity.class.getSimpleName();
-    private static final int LOADER_EXCHANGE_RATES = 1;
+
     public static final String EXCHANGE_RATE = "EXCHANGE_RATE";
     private static final int PERMISSION_ACCESS_NETWORK_STATE = 44;
     private DrawerLayout mDrawerLayout;
@@ -243,13 +244,13 @@ public class ShoppingActivity extends AppCompatActivity implements
                 (sourceCurrencies))
         {
             mExchangeRateLoader = (ExchangeRateLoader) getLoaderManager().initLoader
-                    (LOADER_EXCHANGE_RATES,
+                    (EXCHANGE_RATES_SHOPPING_LIST_LOADER_ID,
                             args, mExchangeRateLoaderCallback);
         }
         else
         {
             mExchangeRateLoader = (ExchangeRateLoader) getLoaderManager().restartLoader
-                    (LOADER_EXCHANGE_RATES,
+                    (EXCHANGE_RATES_SHOPPING_LIST_LOADER_ID,
                             args, mExchangeRateLoaderCallback);
         }
 
