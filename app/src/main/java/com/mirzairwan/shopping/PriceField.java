@@ -7,6 +7,10 @@ import android.view.ViewParent;
 import android.widget.EditText;
 
 import com.mirzairwan.shopping.domain.ExchangeRate;
+import com.mirzairwan.shopping.domain.Price;
+
+import static com.mirzairwan.shopping.LoaderHelper.BUNDLE_PRICE_EXCHANGE_RATE_LOADER_ID;
+import static com.mirzairwan.shopping.LoaderHelper.UNIT_PRICE_EXCHANGE_RATE_LOADER_ID;
 
 /**
  * Created by Mirza Irwan on 16/1/17.
@@ -14,6 +18,7 @@ import com.mirzairwan.shopping.domain.ExchangeRate;
 
 public class PriceField
 {
+    private final Price.Type mPriceType;
     private View mProgressBar;
     private String mHomeCountryCode;
     private EditText mEtCurrencyCode;
@@ -22,7 +27,7 @@ public class PriceField
     private String mTextHint;
 
     public PriceField(EditText etCurrencyCode, EditText etPrice, EditText etTranslatedPrice, View progressBar,
-                      String homeCountryCode, String textHintId)
+                      String homeCountryCode, String textHintId, Price.Type priceType)
     {
         mEtCurrencyCode = etCurrencyCode;
         mEtPrice = etPrice;
@@ -30,6 +35,7 @@ public class PriceField
         mProgressBar = progressBar;
         mHomeCountryCode = homeCountryCode;
         mTextHint = textHintId;
+        mPriceType = priceType;
     }
 
     public void setTranslatedPrice(ExchangeRate exchangeRate)
@@ -121,5 +127,28 @@ public class PriceField
         mEtPrice.setText(null);
         mEtTranslatedPrice.setText(null);
         setTranslatedPricesVisibility(View.INVISIBLE);
+    }
+
+    public EditText getCurrencyCodeView()
+    {
+        return mEtCurrencyCode;
+    }
+
+    public String getHomeCurrencyCode()
+    {
+        return mHomeCountryCode;
+    }
+
+    public int getLoaderId()
+    {
+        if(mPriceType == Price.Type.UNIT_PRICE)
+            return UNIT_PRICE_EXCHANGE_RATE_LOADER_ID;
+
+        else if(mPriceType == Price.Type.BUNDLE_PRICE)
+            return BUNDLE_PRICE_EXCHANGE_RATE_LOADER_ID;
+        else
+            throw new IllegalArgumentException("Loader not supported");
+
+
     }
 }

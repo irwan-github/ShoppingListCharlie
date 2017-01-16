@@ -14,7 +14,7 @@ import java.util.Locale;
 public class FormatHelper
 {
     /**
-     * Formats a value of type double
+     * Formats a currency fit for display
      *
      * @param countryCode Country code is independent of currency code.
      * @param currencyCode if currency code is invalid, a currency code based on a default locale will be used
@@ -52,37 +52,6 @@ public class FormatHelper
         }
 
         return currencyFormatter.format(value);
-    }
-
-    public static String formatCountryCurrency2(String countryCode, String currencyCode, double value)
-    {
-        if(countryCode == null)
-            throw new IllegalArgumentException("Country code cannot be null");
-
-        Locale defaultLocale = Locale.getDefault();
-        Locale homeLocale = new Locale(defaultLocale.getLanguage(), countryCode);
-        NumberFormat formatterHome = NumberFormat.getCurrencyInstance(homeLocale);
-        Currency currency;
-        try
-        {
-            currency = Currency.getInstance(currencyCode);
-            formatterHome.setCurrency(currency);
-        }
-        catch (Exception ex1)
-        {
-            try
-            {
-                //Fallback to default currency
-                currency = Currency.getInstance(homeLocale);
-                formatterHome.setCurrency(currency);
-            }
-            catch (Exception ex2)
-            {
-                // Fallback to whatever NumberFormat want to do!
-            }
-        }
-
-        return formatterHome.format(value);
     }
 
     /**

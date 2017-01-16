@@ -28,7 +28,7 @@ public abstract class ExchangeRateLoaderCallback implements LoaderManager.Loader
 
     ExchangeRateLoaderCallback(Context context)
     {
-        Log.d(LOG_TAG, "Construct");
+        //Log.d(LOG_TAG, "Construct");
         mContext = context;
     }
 

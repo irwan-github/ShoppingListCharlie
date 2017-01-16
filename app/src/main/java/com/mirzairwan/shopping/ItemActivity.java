@@ -40,6 +40,7 @@ import com.mirzairwan.shopping.domain.ExchangeRate;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
+import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.PriceMgr;
 import com.mirzairwan.shopping.domain.ShoppingList;
 
@@ -49,7 +50,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.mirzairwan.shopping.LoaderHelper.ITEM_EXCHANGE_RATE_LOADER_ID;
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_PICTURE_LOADER_ID;
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_PRICE_LOADER_ID;
 import static com.mirzairwan.shopping.domain.ExchangeRate.FOREIGN_CURRENCY_CODES;
@@ -492,15 +492,13 @@ public abstract class ItemActivity extends AppCompatActivity implements
         etUnitPrice.setOnTouchListener(mOnTouchListener);
         View pbUnitPx = findViewById(R.id.pb_translated_unit_px);
         mUnitPrice = new PriceField(etCurrencyCode, etUnitPrice, etTranslatedUnitPrice, pbUnitPx,
-                mCountryCode, getString(R.string.unit_price_txt));
-
+                mCountryCode, getString(R.string.unit_price_txt), Price.Type.UNIT_PRICE);
         ItemExchangeRateLoaderCallback unitPxExLoaderCb = new ItemExchangeRateLoaderCallback
                 (this, mUnitPrice);
         ExchangeRateDisplayState.OnExchangeRateListener onExchangeRateUnitPriceListener = new
                 OnExchangeRateListenerImpl(unitPxExLoaderCb);
         ExchangeRateDisplayState unitPriceTranslatorListener = new ExchangeRateDisplayState(
-                onExchangeRateUnitPriceListener, homeCurrencyCode,
-                etCurrencyCode, mUnitPrice);
+                onExchangeRateUnitPriceListener, mUnitPrice);
         etUnitPrice.setOnFocusChangeListener(unitPriceTranslatorListener);
 
 
@@ -509,16 +507,14 @@ public abstract class ItemActivity extends AppCompatActivity implements
         etBundlePrice.setOnTouchListener(mOnTouchListener);
         View pbBundlePx = findViewById(R.id.pb_translated_bundle_px);
         mBundlePrice = new PriceField(etCurrencyCode, etBundlePrice, etTranslatedBundlePrice,
-                pbBundlePx, mCountryCode, getString(R.string.unit_price_txt));
+                pbBundlePx, mCountryCode, getString(R.string.bundle_price_txt), Price.Type.BUNDLE_PRICE);
 
         ItemExchangeRateLoaderCallback bundlePxExLoaderCb = new ItemExchangeRateLoaderCallback
                 (this, mBundlePrice);
         ExchangeRateDisplayState.OnExchangeRateListener onExchangeRateBundlePriceListener = new
                 OnExchangeRateListenerImpl(bundlePxExLoaderCb);
         ExchangeRateDisplayState bundlePriceTranslatorListener = new ExchangeRateDisplayState(
-                onExchangeRateBundlePriceListener,
-                homeCurrencyCode,
-                etCurrencyCode, mBundlePrice);
+                onExchangeRateBundlePriceListener, mBundlePrice);
         etBundlePrice.setOnFocusChangeListener(bundlePriceTranslatorListener);
 
         List<PriceField> translatedPrices = new ArrayList<>();
@@ -529,12 +525,16 @@ public abstract class ItemActivity extends AppCompatActivity implements
         ExchangeRateDisplayState.OnExchangeRateListener onExchangeRateCurrencyCodeListener = new
                 OnExchangeRateListenerImpl(currencyCodeLoaderCb);
 
-        CurrencyCodeChecker onFocusChangeCurrencyCodeListener = new CurrencyCodeChecker(priceMgr
-                .getCurrencyCode(), onExchangeRateCurrencyCodeListener);
+        CurrencyCodeChecker onFocusChangeCurrencyCodeListener =
+                new CurrencyCodeChecker(etCurrencyCode, mCountryCode, mUnitPrice, mBundlePrice,
+                        onExchangeRateCurrencyCodeListener);
 
         InputFilterUtil.setAllCapsInputFilter(etCurrencyCode);
         etCurrencyCode.setOnTouchListener(mOnTouchListener);
         etCurrencyCode.setOnFocusChangeListener(onFocusChangeCurrencyCodeListener);
+
+        unitPriceTranslatorListener.setCurrencyCodeObserver(onFocusChangeCurrencyCodeListener);
+        bundlePriceTranslatorListener.setCurrencyCodeObserver(onFocusChangeCurrencyCodeListener);
 
 
         etBundleQty = (EditText) findViewById(R.id.et_bundle_qty);
@@ -879,74 +879,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
     {
         super.onSaveInstanceState(outState);
         outState.putParcelable(PICTURE_MANAGER, mPictureMgr);
-
-    }
-
-    protected class CurrencyCodeChecker implements View.OnFocusChangeListener
-    {
-        private ExchangeRateDisplayState.OnExchangeRateListener mOnExchangeRateListener;
-        protected String mExistingCurrecyCode;
-
-        protected CurrencyCodeChecker(String existingCurrencyCode,
-                                      ExchangeRateDisplayState.OnExchangeRateListener
-                                              onExchangeRateListener)
-        {
-            mExistingCurrecyCode = existingCurrencyCode;
-            mOnExchangeRateListener = onExchangeRateListener;
-        }
-
-        @Override
-        public void onFocusChange(View v, boolean hasFocus)
-        {
-            String newCurrencyCode = etCurrencyCode.getText().toString();
-
-            boolean isCurrencyCodeValid = !TextUtils.isEmpty(etCurrencyCode.getText()) &&
-                    FormatHelper.isValidCurrencyCode(newCurrencyCode);
-
-            String homeCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
-
-            boolean isNewCodeIdenticalToHomeCode = homeCurrencyCode.equals(newCurrencyCode);
-
-            //Check currency code and update the symbols of the price input fields
-            if (isCurrencyCodeValid && !etCurrencyCode.hasFocus())
-            {
-                boolean isNewCodeIdenticalToPrevCode = mExistingCurrecyCode.equals(newCurrencyCode);
-                mExistingCurrecyCode = newCurrencyCode;
-                mUnitPrice.setCurrencySymbolInPriceHint();
-                mBundlePrice.setCurrencySymbolInPriceHint();
-
-                boolean isAnyPriceExist = !mUnitPrice.isEmpty() ||
-                        !mBundlePrice.isEmpty();
-
-
-
-                if (isAnyPriceExist && !isNewCodeIdenticalToHomeCode)
-                {
-                    mUnitPrice.setTranslatedPricesVisibility(View.INVISIBLE);
-                    mUnitPrice.getProgressBar().setVisibility(View.VISIBLE);
-
-                    mBundlePrice.setTranslatedPricesVisibility(View.INVISIBLE);
-                    mBundlePrice.getProgressBar().setVisibility(View.VISIBLE);
-
-                    if (isNewCodeIdenticalToPrevCode)
-                    {
-                        mOnExchangeRateListener.processExchangeRate(newCurrencyCode);
-                    }
-                    else
-                        mOnExchangeRateListener.restartProcessExchangeRate(newCurrencyCode);
-                }
-
-
-            }
-            else if (!etCurrencyCode.hasFocus())
-            {
-                etCurrencyCode.setText(mExistingCurrecyCode);
-                Toast.makeText(ItemActivity.this,
-                        "Invalid currency code: " + newCurrencyCode,
-                        Toast.LENGTH_SHORT)
-                        .show();
-            }
-        }
     }
 
     protected class ItemExchangeRateLoaderCallback extends ExchangeRateLoaderCallback
@@ -958,7 +890,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
         {
             super(context);
             mTranslatedPrices.add(translatedPrice);
-            Log.d(LOG_TAG, "Construct");
+            Log.d(LOG_TAG, ">>> Construct " + translatedPrice.getPrice());
         }
 
         ItemExchangeRateLoaderCallback(Context context, List<PriceField> translatedPrices)
@@ -969,23 +901,17 @@ public abstract class ItemActivity extends AppCompatActivity implements
         }
 
         @Override
-        public Loader<Map<String, ExchangeRate>> onCreateLoader(int id, Bundle args)
-        {
-            Log.d(LOG_TAG, "onCreateLoader");
-            return super.onCreateLoader(id, args);
-        }
-
-        @Override
         public void onLoadFinished(Loader<Map<String, ExchangeRate>> loader, Map<String,
                 ExchangeRate> exchangeRates)
         {
-            Log.d(LOG_TAG, "onLoadFinished");
+            //Log.d(LOG_TAG, "onLoadFinished");
             if (exchangeRates != null)
             {
                 mExchangeRate = exchangeRates.get(etCurrencyCode.getText().toString());
                 //setTranslatedPrice();
                 for (PriceField px : mTranslatedPrices)
                 {
+                    Log.d(LOG_TAG, ">>> onLoadFinished " + px.getPrice());
                     px.setTranslatedPrice(mExchangeRate);
                 }
             }
@@ -1000,13 +926,19 @@ public abstract class ItemActivity extends AppCompatActivity implements
         {
 
         }
+
+        public List<PriceField> getPrices()
+        {
+            return mTranslatedPrices;
+        }
     }
 
     protected class OnExchangeRateListenerImpl implements ExchangeRateDisplayState
             .OnExchangeRateListener
     {
         private String baseEndPoint = "http://api.fixer.io/latest";
-        ItemExchangeRateLoaderCallback mItemExchangeRateCallback;
+        private ItemExchangeRateLoaderCallback mItemExchangeRateCallback;
+        private final String LOG_TAG = OnExchangeRateListenerImpl.class.getSimpleName();
 
         public OnExchangeRateListenerImpl(ItemExchangeRateLoaderCallback
                                                   itemExchangeRateCallback)
@@ -1015,22 +947,24 @@ public abstract class ItemActivity extends AppCompatActivity implements
         }
 
         @Override
-        public void processExchangeRate(String foreignCurrencyCode)
+        public void processExchangeRate(String foreignCurrencyCode, int loaderID)
         {
+            String logPrice = mItemExchangeRateCallback.getPrices().get(0).getPrice();
+            Log.d(LOG_TAG, ">>> processExchangeRate " + foreignCurrencyCode + " for " + logPrice);
             Bundle args = new Bundle();
             args.putStringArray(FOREIGN_CURRENCY_CODES, new String[]{foreignCurrencyCode});
             args.putString(FOREX_API_URL, baseEndPoint);
-            getLoaderManager().initLoader(ITEM_EXCHANGE_RATE_LOADER_ID, args,
+            getLoaderManager().initLoader(loaderID, args,
                     mItemExchangeRateCallback);
         }
 
         @Override
-        public void restartProcessExchangeRate(String newforeignCurrencyCode)
+        public void restartProcessExchangeRate(String newforeignCurrencyCode, int loaderId)
         {
             Bundle args = new Bundle();
             args.putStringArray(FOREIGN_CURRENCY_CODES, new String[]{newforeignCurrencyCode});
             args.putString(FOREX_API_URL, baseEndPoint);
-            getLoaderManager().restartLoader(ITEM_EXCHANGE_RATE_LOADER_ID, args,
+            getLoaderManager().restartLoader(loaderId, args,
                     mItemExchangeRateCallback);
         }
     }
