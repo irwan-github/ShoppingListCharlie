@@ -10,6 +10,7 @@ import android.widget.EditText;
 
 public class ExchangeRateDisplayState implements View.OnFocusChangeListener
 {
+    private PriceField mTranslatedPrice;
     String mHomeCurrencyCode;
     EditText mEtCurrencyCode;
     EditText mEtPrice;
@@ -17,33 +18,37 @@ public class ExchangeRateDisplayState implements View.OnFocusChangeListener
 
     public ExchangeRateDisplayState(OnExchangeRateListener onExchangeRateListener,
                                     String homeCurrencyCode, EditText etCurrencyCode,
-                                    EditText etPrice)
+                                    PriceField translatedPrice)
     {
         mHomeCurrencyCode = homeCurrencyCode;
         mEtCurrencyCode = etCurrencyCode;
-        mEtPrice = etPrice;
+        mEtPrice = translatedPrice.getEditTextSourcePrice();
+        mTranslatedPrice = translatedPrice;
         mOnExchangeRateListener = onExchangeRateListener;
-
     }
 
     @Override
     public void onFocusChange(View v, boolean hasFocus)
     {
-        boolean areCodesIdentical = mHomeCurrencyCode.equals(mEtCurrencyCode.getText().toString());
+        boolean isNewCodeIdenticalToHomeCode = mHomeCurrencyCode.equals(mEtCurrencyCode.getText().toString());
         boolean isPriceEmpty = TextUtils.isEmpty(mEtPrice.getText());
 
-        if(v == mEtPrice && !v.hasFocus())
+        if(!v.hasFocus())
         {
-            if(!mEtCurrencyCode.hasFocus() && !areCodesIdentical && !isPriceEmpty)
+            if(!mEtCurrencyCode.hasFocus() && !isNewCodeIdenticalToHomeCode && !isPriceEmpty)
             {
+                mTranslatedPrice.getProgressBar().setVisibility(View.VISIBLE);
                 mOnExchangeRateListener.processExchangeRate(mEtCurrencyCode.getText().toString());
             }
         }
+
     }
 
     public interface OnExchangeRateListener
     {
         void processExchangeRate(String currencyCode);
+
+        void restartProcessExchangeRate(String newCurrencyCode);
     }
 
 

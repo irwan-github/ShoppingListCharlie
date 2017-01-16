@@ -43,9 +43,9 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_marginLeft="@dimen/keyline_1"
         android:layout_marginRight="@dimen/keyline_1"
+        android:orientation="horizontal"
         >
 
         <android.support.design.widget.TextInputLayout
@@ -70,43 +70,58 @@
 
         </android.support.design.widget.TextInputLayout>
 
+        <FrameLayout
+            android:id="@+id/translated_unit_px_grp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-        <android.support.design.widget.TextInputLayout
-            android:id="@+id/translated_unit_price_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="@dimen/keyline_1"
-            android:layout_marginRight="@dimen/keyline_1"
-            android:paddingBottom="@dimen/edit_text_padding_bottom"
-            android:paddingTop="@dimen/edit_text_padding_top"
-            android:visibility="invisible"
-            >
-
-            <android.support.design.widget.TextInputEditText
-                android:id="@+id/et_translated_unit_price"
+            <android.support.design.widget.TextInputLayout
+                android:id="@+id/translated_unit_price_layout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:enabled="false"
-                android:focusableInTouchMode="true"
-                android:hint="@string/unit_price_txt"
-                android:inputType="none"
-                android:maxLength="@string/text_price_max_length"
-                android:minWidth="@dimen/edit_text_price_min_width"
-                android:textAppearance="?android:textAppearanceMedium"
+                android:layout_marginLeft="@dimen/keyline_1"
+                android:layout_marginRight="@dimen/keyline_1"
+                android:paddingBottom="@dimen/edit_text_padding_bottom"
+                android:paddingTop="@dimen/edit_text_padding_top"
                 android:visibility="invisible"
-                tools:text="4.25"/>
+                >
 
-        </android.support.design.widget.TextInputLayout>
+                <android.support.design.widget.TextInputEditText
+                    android:id="@+id/et_translated_unit_price"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:enabled="false"
+                    android:focusableInTouchMode="true"
+                    android:hint="@string/unit_price_txt"
+                    android:inputType="none"
+                    android:maxLength="@string/text_price_max_length"
+                    android:minWidth="@dimen/edit_text_price_min_width"
+                    android:textAppearance="?android:textAppearanceMedium"
+                    android:visibility="invisible"
+                    tools:text="4.25"/>
 
+            </android.support.design.widget.TextInputLayout>
+
+            <ProgressBar
+                android:id="@+id/pb_translated_unit_px"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:paddingBottom="@dimen/edit_text_padding_bottom"
+                android:paddingTop="@dimen/edit_text_padding_top"
+                android:visibility="invisible"
+                />
+        </FrameLayout>
     </LinearLayout>
+
 
     <LinearLayout
         android:id="@+id/bundle_price_group"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_marginLeft="@dimen/keyline_1"
         android:layout_marginRight="@dimen/keyline_1"
+        android:orientation="horizontal"
         >
 
         <android.support.design.widget.TextInputLayout
@@ -116,6 +131,7 @@
             android:paddingBottom="@dimen/edit_text_padding_bottom"
             android:paddingTop="@dimen/edit_text_padding_top"
             >
+
             <android.support.design.widget.TextInputEditText
                 android:id="@+id/et_bundle_price"
                 android:layout_width="wrap_content"
@@ -129,34 +145,51 @@
                 />
         </android.support.design.widget.TextInputLayout>
 
-        <android.support.design.widget.TextInputLayout
-            android:id="@+id/translated_bundle_price_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="@dimen/keyline_1"
-            android:layout_marginRight="@dimen/keyline_1"
-            android:paddingBottom="@dimen/edit_text_padding_bottom"
-            android:paddingTop="@dimen/edit_text_padding_top"
-            android:visibility="invisible"
-            >
+        <FrameLayout
+            android:id="@+id/translated_bundle_px_grp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-            <android.support.design.widget.TextInputEditText
-                android:id="@+id/et_translated_bundle_price"
+            <android.support.design.widget.TextInputLayout
+                android:id="@+id/translated_bundle_price_layout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:enabled="false"
-                android:focusableInTouchMode="true"
-                android:hint="@string/unit_price_txt"
-                android:inputType="none"
-                android:maxLength="@string/text_price_max_length"
-                android:minWidth="@dimen/edit_text_price_min_width"
-                android:textAppearance="?android:textAppearanceMedium"
+                android:layout_marginLeft="@dimen/keyline_1"
+                android:layout_marginRight="@dimen/keyline_1"
+                android:paddingBottom="@dimen/edit_text_padding_bottom"
+                android:paddingTop="@dimen/edit_text_padding_top"
                 android:visibility="invisible"
-                tools:text="4.25"/>
+                >
 
-        </android.support.design.widget.TextInputLayout>
+                <android.support.design.widget.TextInputEditText
+                    android:id="@+id/et_translated_bundle_price"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:enabled="false"
+                    android:focusableInTouchMode="true"
+                    android:hint="@string/bundle_price_txt"
+                    android:inputType="none"
+                    android:maxLength="@string/text_price_max_length"
+                    android:minWidth="@dimen/edit_text_price_min_width"
+                    android:textAppearance="?android:textAppearanceMedium"
+                    android:visibility="invisible"
+                    tools:text="4.25"/>
+
+            </android.support.design.widget.TextInputLayout>
+
+            <ProgressBar
+                android:id="@+id/pb_translated_bundle_px"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:paddingBottom="@dimen/edit_text_padding_bottom"
+                android:paddingTop="@dimen/edit_text_padding_top"
+                android:visibility="invisible"
+                />
+        </FrameLayout>
 
     </LinearLayout>
+
 
     <android.support.design.widget.TextInputLayout
         android:id="@+id/bundle_qty_layout"

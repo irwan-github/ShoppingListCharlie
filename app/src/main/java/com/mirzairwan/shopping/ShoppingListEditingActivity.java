@@ -34,7 +34,7 @@ public class ShoppingListEditingActivity extends ItemActivity
     private int actionMode = -1; //Informs the editor whether this activity is creation or updating
     public static final int CREATE_BUY_ITEM_MODE = 1; //use for action mode
     public static final int EDIT_BUY_ITEM_MODE = 2; //use for action mode
-//    private static final int PURCHASE_ITEM_LOADER_ID = 30;
+    //    private static final int PURCHASE_ITEM_LOADER_ID = 30;
     private boolean isItemDeleted = false; // After deleting, don't update picture and prices
 
     private EditText etQty;
@@ -49,7 +49,8 @@ public class ShoppingListEditingActivity extends ItemActivity
     {
         super.onCreate(savedInstanceState);
 
-        Log.d(LOG_TAG, ">>>savedInstantState is " + (savedInstanceState == null? "NULL" : "NOT NULL"));
+        Log.d(LOG_TAG, ">>>savedInstantState is " + (savedInstanceState == null ? "NULL" : "NOT " +
+                "NULL"));
 
         etQty = (EditText) findViewById(R.id.et_item_quantity);
         etQty.setOnTouchListener(mOnTouchListener);
@@ -59,7 +60,7 @@ public class ShoppingListEditingActivity extends ItemActivity
         rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);
 
 
-        if(savedInstanceState != null) //Restore from previous state
+        if (savedInstanceState != null) //Restore from previous state
         {
             mUriItem = savedInstanceState.getParcelable(URI_ITEM);
         }
@@ -69,10 +70,14 @@ public class ShoppingListEditingActivity extends ItemActivity
             mUriItem = intent.getData();
         }
 
-        if (mUriItem == null) {
+        if (mUriItem == null)
+        {
             setTitle(R.string.new_buy_item_title);
-            actionMode = CREATE_BUY_ITEM_MODE; // This flag is used for menu creation and database operation
-        } else {
+            actionMode = CREATE_BUY_ITEM_MODE; // This flag is used for menu creation and
+            // database operation
+        }
+        else
+        {
             setTitle(R.string.view_buy_item_details);
             actionMode = EDIT_BUY_ITEM_MODE; //This flag is used for database operation
         }
@@ -85,19 +90,22 @@ public class ShoppingListEditingActivity extends ItemActivity
     protected void onResume()
     {
         super.onResume();
-        if (actionMode == CREATE_BUY_ITEM_MODE) {
+        if (actionMode == CREATE_BUY_ITEM_MODE)
+        {
 
-            //When adding new item to shopping list, set currency symbol according to current country
+            //When adding new item to shopping list, set currency symbol according to current
+            // country
             // code preference for Price-related EditText
-            etCurrencyCode.setText(FormatHelper.getCurrencyCode(mCountryCode));
-            setCurrencySymbol(FormatHelper.getCurrencyCode(mCountryCode));
+            //etCurrencyCode.setText(FormatHelper.getCurrencyCode(mCountryCode));
+            //setCurrencySymbol(FormatHelper.getCurrencyCode(mCountryCode));
         }
     }
 
     private void initLoaders(Uri uri)
     {
-        //if no bundle, then the request is for new creation
-        if (uri != null) {
+        //if no bundle, then the request is for new item in shopping list
+        if (uri != null)
+        {
             Bundle arg = new Bundle();
             arg.putParcelable(ITEM_URI, uri);
 
@@ -121,7 +129,8 @@ public class ShoppingListEditingActivity extends ItemActivity
         Uri uri;
         Loader<Cursor> loader = null;
 
-        switch (loaderId) {
+        switch (loaderId)
+        {
             case PURCHASE_ITEM_LOADER_ID:
                 projection = new String[]{Contract.ToBuyItemsEntry._ID,
                         Contract.ToBuyItemsEntry.COLUMN_ITEM_ID,
@@ -154,18 +163,25 @@ public class ShoppingListEditingActivity extends ItemActivity
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
     {
         if (cursor == null || cursor.getCount() < 1)
+        {
             return;
+        }
 
         int loaderId = loader.getId();
-        switch (loaderId) {
+        switch (loaderId)
+        {
 
             case PURCHASE_ITEM_LOADER_ID:
-                // Proceed with moving to the first row of the cursor for purchase mItem and reading data from it
+                // Proceed with moving to the first row of the cursor for purchase mItem and
+                // reading data from it
                 // (This should be the only purchase mItem row in the cursor)
-                if (cursor.moveToFirst()) {
+                if (cursor.moveToFirst())
+                {
                     //populateItemDetails(cursor);
-                    mItem = createItem(Contract.ToBuyItemsEntry.COLUMN_ITEM_ID, Contract.ItemsEntry.COLUMN_NAME,
-                            Contract.ItemsEntry.COLUMN_BRAND, Contract.ItemsEntry.COLUMN_DESCRIPTION,
+                    mItem = createItem(Contract.ToBuyItemsEntry.COLUMN_ITEM_ID, Contract
+                            .ItemsEntry.COLUMN_NAME,
+                            Contract.ItemsEntry.COLUMN_BRAND, Contract.ItemsEntry
+                                    .COLUMN_DESCRIPTION,
                             Contract.ItemsEntry.COLUMN_COUNTRY_ORIGIN, cursor);
                     mToBuyItem = createPurchase(cursor);
                     populateItemInputFields(mItem);
@@ -175,9 +191,13 @@ public class ShoppingListEditingActivity extends ItemActivity
 
             default:
                 if (isItemDeleted) //Don't populate prices and pictures
+                {
                     return;
+                }
                 else
+                {
                     super.onLoadFinished(loader, cursor);
+                }
         }
     }
 
@@ -219,10 +239,14 @@ public class ShoppingListEditingActivity extends ItemActivity
         double priceDbl = cursor.getDouble(colPriceIdx) / 100;
 
         if (priceTypeVal == Price.Type.UNIT_PRICE.getType())
+        {
             price = new Price(priceId, priceDbl, currencyCode, shopId, null);
+        }
 
         if (priceTypeVal == Price.Type.BUNDLE_PRICE.getType())
+        {
             price = new Price(priceId, priceDbl, bundleQty, currencyCode, shopId, null);
+        }
 
 
         ToBuyItem toBuyItem = new ToBuyItem(buyItemId, buyQty, price, mItem, null);
@@ -233,7 +257,8 @@ public class ShoppingListEditingActivity extends ItemActivity
     @Override
     public boolean onPrepareOptionsMenu(Menu menu)
     {
-        if (actionMode == CREATE_BUY_ITEM_MODE) {
+        if (actionMode == CREATE_BUY_ITEM_MODE)
+        {
             menu.removeItem(R.id.menu_remove_item_from_list);
         }
         return super.onPrepareOptionsMenu(menu);
@@ -255,8 +280,10 @@ public class ShoppingListEditingActivity extends ItemActivity
     @Override
     protected void delete()
     {
-        isItemDeleted = true; //the onLoaderFinished method will use this flag to decide whether to load prices
-        Uri uriDeleteBuyItem = ContentUris.withAppendedId(Contract.ToBuyItemsEntry.CONTENT_URI, mToBuyItem.getId());
+        isItemDeleted = true; //the onLoaderFinished method will use this flag to decide whether
+        // to load prices
+        Uri uriDeleteBuyItem = ContentUris.withAppendedId(Contract.ToBuyItemsEntry.CONTENT_URI,
+                mToBuyItem.getId());
         getContentResolver().delete(uriDeleteBuyItem, null, null);
         finish();
 
@@ -266,34 +293,45 @@ public class ShoppingListEditingActivity extends ItemActivity
     protected void save()
     {
         if (!areFieldsValid())
+        {
             return;
+        }
 
         Item item = getItemFromInputField();
 
         String itemQuantity = "1";
-        if (TextUtils.isEmpty(etQty.getText()) || Integer.parseInt(etQty.getText().toString()) < 1) {
+        if (TextUtils.isEmpty(etQty.getText()) || Integer.parseInt(etQty.getText().toString()) < 1)
+        {
             alertRequiredField(R.string.message_title, R.string.mandatory_quantity);
             etQty.requestFocus();
             return;
-        } else {
+        }
+        else
+        {
             itemQuantity = etQty.getText().toString();
         }
 
-        priceMgr.setItemPricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
+        priceMgr.setItemPricesForSaving(item, mUnitPrice.getPrice(),
+                mBundlePrice.getPrice(), getBundleQtyFromInputField());
         priceMgr.setCurrencyCode(etCurrencyCode.getText().toString());
 
         String msg;
 
-        if (actionMode == CREATE_BUY_ITEM_MODE) {
+        if (actionMode == CREATE_BUY_ITEM_MODE)
+        {
 
-            ToBuyItem toBuyItem = shoppingList.addNewItem(item, Integer.parseInt(itemQuantity), priceMgr.getSelectedPrice(getSelectedPriceType()));
+            ToBuyItem toBuyItem = shoppingList.addNewItem(item, Integer.parseInt(itemQuantity),
+                    priceMgr.getSelectedPrice(getSelectedPriceType()));
 
             msg = daoManager.insert(toBuyItem, toBuyItem.getItem(), item.getPrices(), mPictureMgr);
 
-        } else //Existing item in the shopping list
+        }
+        else //Existing item in the shopping list
         {
             if (mPictureMgr.getItemId() == -1)
+            {
                 mPictureMgr.setItemId(item.getId());
+            }
 
             mToBuyItem.setItem(item);
 

@@ -54,7 +54,7 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
     @Override
     public Map<String, ExchangeRate> loadInBackground()
     {
-        Log.d(LOG_TAG, mContext.getClass().getSimpleName() + " -> loadInBackground()");
+        Log.d(LOG_TAG, mContext.getClass().getSimpleName() + " >>> loadInBackground()");
 
         if (mSourceCurrencies == null || mSourceCurrencies.size() == 0)
         {
@@ -184,7 +184,7 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
         }
         builder.appendQueryParameter("symbols", symbols);
         String queryUri = builder.build().toString();
-        Log.d(LOG_TAG, queryUri);
+        Log.d(LOG_TAG, ">>>" + queryUri);
         return queryUri;
     }
 

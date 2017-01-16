@@ -16,12 +16,45 @@ public class FormatHelper
     /**
      * Formats a value of type double
      *
-     * @param countryCode
+     * @param countryCode Country code is independent of currency code.
      * @param currencyCode if currency code is invalid, a currency code based on a default locale will be used
      * @param value
      * @return formatted value prefix/suffixed wilth a currency symbol
      */
     public static String formatCountryCurrency(String countryCode, String currencyCode, double value)
+    {
+        if(countryCode == null)
+            throw new IllegalArgumentException("Country code cannot be null");
+
+        Locale defaultLocale = Locale.getDefault();
+        Locale homeLocale = new Locale(defaultLocale.getLanguage(), countryCode);
+        NumberFormat currencyFormatter = null;
+
+        try
+        {
+            currencyFormatter = NumberFormat.getCurrencyInstance(homeLocale);
+            currencyFormatter.setCurrency(Currency.getInstance(currencyCode));
+        }
+        catch (Exception ex1)
+        {
+            try
+            {
+                //Fallback to default currency
+                currencyFormatter = NumberFormat.getInstance(Locale.getDefault());
+                currencyFormatter.setCurrency(Currency.getInstance(currencyCode));
+            }
+            catch (Exception ex2)
+            {
+                // Fallback to whatever NumberFormat want to do!
+                currencyFormatter = NumberFormat.getInstance();
+                currencyFormatter.setCurrency(Currency.getInstance(currencyCode));
+            }
+        }
+
+        return currencyFormatter.format(value);
+    }
+
+    public static String formatCountryCurrency2(String countryCode, String currencyCode, double value)
     {
         if(countryCode == null)
             throw new IllegalArgumentException("Country code cannot be null");
@@ -53,6 +86,43 @@ public class FormatHelper
     }
 
     /**
+     * Formats a currency value
+     *
+     * @param currencyCode if currency code is invalid, a currency code based on a default locale will be used
+     * @param value
+     * @return formatted value prefix/suffixed wilth a currency symbol
+     */
+    public static String formatCountryCurrency(String currencyCode, double value)
+    {
+        if(currencyCode == null)
+            throw new IllegalArgumentException("Currency code cannot be null");
+
+        String countryCode = currencyCode.substring(0, 2);
+        Locale homeLocale = new Locale(Locale.getDefault().getLanguage(), countryCode);
+        NumberFormat currencyformatter = null;
+
+        try
+        {
+            currencyformatter = NumberFormat.getCurrencyInstance(homeLocale);
+        }
+        catch (Exception ex1)
+        {
+            try
+            {
+                //Fallback to default currency
+                currencyformatter = NumberFormat.getCurrencyInstance(Locale.getDefault());
+            }
+            catch (Exception ex2)
+            {
+                // Fallback to whatever NumberFormat want to do!
+                currencyformatter = NumberFormat.getCurrencyInstance();
+            }
+        }
+
+        return currencyformatter.format(value);
+    }
+
+    /**
      * Decimal point symbol and round off to 2 decimal places according to default locale
      *
      * @param value
@@ -70,11 +140,36 @@ public class FormatHelper
         return numberFormat.format(value);
     }
 
-    public static String getCurrencySymbol(String countryCode)
+    /**
+     * Get currency symbol based on country code
+     * @param countryCode
+     * @return
+     */
+    public static String getCurrencySymbolOfCountry(String countryCode)
     {
         Locale userLocale = new Locale(Locale.getDefault().getLanguage(), countryCode);
         Currency currency = Currency.getInstance(userLocale);
         return getCurrencySymbol(userLocale, currency.getCurrencyCode());
+    }
+
+    /**
+     * Extract the country code from currency code. Create a Locale based on the country code
+     * and default language of the device. The currency symbol is based on the created locale
+     * @param currencyCode
+     * @return currency symbol
+     */
+    public static String getCurrencySymbol(String currencyCode)
+    {
+        //Extract 2-letter country-code
+        String countryCode = currencyCode.substring(0,2);
+        Locale userLocale = new Locale(Locale.getDefault().getLanguage(), countryCode);
+        return Currency.getInstance(currencyCode).getSymbol(userLocale);
+    }
+
+    public static String getCurrencySymbol(String countryCode, String currencyCode)
+    {
+        Locale userLocale = new Locale(Locale.getDefault().getLanguage(), countryCode);
+        return getCurrencySymbol(userLocale, currencyCode);
     }
 
     public static String getCurrencySymbol(Locale locale, String currencyCode)
@@ -82,7 +177,7 @@ public class FormatHelper
         Currency currency;
         try
         {
-            currency = Currency.getInstance(currencyCode);
+            currency = Currency.getInstance(locale);
         }
         catch (Exception ex)
         {
@@ -99,11 +194,7 @@ public class FormatHelper
         return currency.getCurrencyCode();
     }
 
-    public static String getCurrencySymbol(String countryCode, String currencyCode)
-    {
-        Locale userLocale = new Locale(Locale.getDefault().getLanguage(), countryCode);
-        return getCurrencySymbol(userLocale, currencyCode);
-    }
+
 
     public static String capitalizeFirstLetter(String original) {
         if (original == null || original.length() == 0) {

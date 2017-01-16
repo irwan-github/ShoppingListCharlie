@@ -88,7 +88,7 @@ public class ItemEditingActivity extends ItemActivity
 
         Item item = getItemFromInputField();
 
-        priceMgr.setItemPricesForSaving(item, getUnitPriceFromInputField(), getBundlePriceFromInputField(), getBundleQtyFromInputField());
+        priceMgr.setItemPricesForSaving(item, mUnitPrice.getPrice(), mBundlePrice.getPrice(), getBundleQtyFromInputField());
 
         priceMgr.setCurrencyCode(etCurrencyCode.getText().toString());
 

@@ -487,10 +487,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         return formatCountryCurrency(mCountryCode,
                 destCurrencyCode,
                 mTotalValueOfItemsChecked + totalCostForexItemChecked);
-
-//        mTvTotalValueChecked.setText(formatCountryCurrency(countryCode,
-//                baseCurrencyCode,
-//                mTotalValueOfItemsChecked + totalCostForexItemChecked));
     }
 
 

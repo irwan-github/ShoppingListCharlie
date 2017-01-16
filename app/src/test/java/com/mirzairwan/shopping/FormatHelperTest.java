@@ -86,20 +86,20 @@ public class FormatHelperTest
 //        String symbol = FormatHelper.getCurrencySymbol("SG", "SGD");
 //        System.out.println(">> " + symbol);
 //
-//        symbol = FormatHelper.getCurrencySymbol("GB", "GBP");
+        String symbol = FormatHelper.getCurrencySymbol("GB", "GBP");
+        System.out.println(">> " + symbol);
+
+        symbol = FormatHelper.getCurrencySymbol("SG", "GBP");
+        System.out.println(">> " + symbol);
+
+        symbol = FormatHelper.getCurrencySymbol("GBP");
+        System.out.println(">> " + symbol);
+//
+//        symbol = FormatHelper.getCurrencySymbol("MY");
 //        System.out.println(">> " + symbol);
-
-        String symbol = FormatHelper.getCurrencySymbol("SG");
-        System.out.println(">> " + symbol);
-
-        symbol = FormatHelper.getCurrencySymbol("GB");
-        System.out.println(">> " + symbol);
-
-        symbol = FormatHelper.getCurrencySymbol("MY");
-        System.out.println(">> " + symbol);
-
-        symbol = FormatHelper.getCurrencySymbol("JP");
-        System.out.println(">> " + symbol);
+//
+//        symbol = FormatHelper.getCurrencySymbol("JP");
+//        System.out.println(">> " + symbol);
     }
 
     @Test
