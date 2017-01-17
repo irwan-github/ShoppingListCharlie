@@ -70,15 +70,12 @@ Or else, the scaling is bypassed resulting in OutOfMemoryError
             android:layout_width="@dimen/tv_item_price_max_width"
             android:layout_height="wrap_content"
             android:focusable="false"
-            android:maxLength="@string/text_price_max_length"
             android:maxLines="@string/text_max_line"
-            android:maxWidth="@dimen/tv_item_price_max_width"
             android:paddingLeft="@dimen/keyline_1"
-            android:paddingRight="@dimen/text_padding_right"
             android:paddingTop="@dimen/summary_body_padding_top"
             android:textAppearance="?android:textAppearanceSmall"
             android:textColor="@color/textColorItemBrand"
-            tools:text="$19.55"
+            tools:text="$199.55 (est)"
             >
         </TextView>
 

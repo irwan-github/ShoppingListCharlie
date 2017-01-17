@@ -64,7 +64,6 @@
                 android:focusableInTouchMode="true"
                 android:hint="@string/unit_price_txt"
                 android:inputType="numberDecimal"
-                android:maxLength="@string/text_price_max_length"
                 android:minWidth="@dimen/edit_text_price_min_width"
                 android:textAppearance="?android:textAppearanceMedium"
                 tools:text="4.25"/>
@@ -95,7 +94,6 @@
                     android:focusableInTouchMode="true"
                     android:hint="@string/unit_price_txt"
                     android:inputType="none"
-                    android:maxLength="@string/text_price_max_length"
                     android:minWidth="@dimen/edit_text_price_min_width"
                     android:textAppearance="?android:textAppearanceMedium"
                     android:visibility="invisible"
@@ -140,7 +138,6 @@
                 android:focusableInTouchMode="true"
                 android:hint="@string/bundle_price_txt"
                 android:inputType="numberDecimal"
-                android:maxLength="@string/text_price_max_length"
                 android:minWidth="@dimen/edit_text_price_min_width"
                 android:textAppearance="?android:textAppearanceMedium"
                 />
@@ -170,7 +167,6 @@
                     android:focusableInTouchMode="true"
                     android:hint="@string/bundle_price_txt"
                     android:inputType="none"
-                    android:maxLength="@string/text_price_max_length"
                     android:minWidth="@dimen/edit_text_price_min_width"
                     android:textAppearance="?android:textAppearanceMedium"
                     android:visibility="invisible"
@@ -209,7 +205,6 @@
             android:focusableInTouchMode="true"
             android:hint="@string/bundle_quantity_txt"
             android:inputType="numberDecimal"
-            android:maxLength="@string/text_bundle_qty_length"
             android:minWidth="@dimen/edit_text_bundle_qty_min_width"
             android:textAppearance="?android:textAppearanceMedium"
             />

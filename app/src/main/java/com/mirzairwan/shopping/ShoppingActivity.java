@@ -70,7 +70,7 @@ public class ShoppingActivity extends AppCompatActivity implements
 
         PermissionHelper.setupStorageReadPermission(this);
 
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
 
         PagerAdapter pagerAdapter = new PagerAdapter(getFragmentManager(), this);
         ViewPager viewPager = (ViewPager) findViewById(R.id.pager_shopping);
@@ -91,6 +91,7 @@ public class ShoppingActivity extends AppCompatActivity implements
         SharedPreferences sharedPrefs = getDefaultSharedPreferences(this);
         String webUriKey = getString(R.string.key_forex_web_api_1);
         mBaseEndPoint = sharedPrefs.getString(webUriKey, null);
+        mCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
     }
 
     public void setupUserLocale()

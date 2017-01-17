@@ -127,7 +127,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
         setContentView(getLayoutXml());
         setupPictureToolbar();
 
@@ -147,7 +147,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
         mCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
         priceMgr = new PriceMgr(mCountryCode);
 
-        mWebApiBase = sharedPrefs.getString(getString(R.string.key_forex_web_api_1), null);
+        String webApiKeyPref = getString(R.string.key_forex_web_api_1);
+        mWebApiBase = sharedPrefs.getString(webApiKeyPref, null);
 
         mExchangeRate = getIntent().getParcelableExtra(ShoppingActivity.EXCHANGE_RATE);
 
@@ -203,7 +204,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
         });
 
         PermissionHelper.setupStorageReadPermission(this);
-
     }
 
     protected void initPriceLoader(Uri uri, LoaderManager.LoaderCallbacks<Cursor> callback)
@@ -215,7 +215,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
         Bundle arg = new Bundle();
         arg.putParcelable(ITEM_URI, uri);
-        //getLoaderManager().restartLoader(ITEM_PRICE_LOADER_ID, arg, callback);
         getLoaderManager().initLoader(ITEM_PRICE_LOADER_ID, arg, callback);
     }
 
@@ -744,6 +743,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
         etCurrencyCode.setText(priceMgr.getUnitPrice().getCurrencyCode());
         mUnitPrice.setFormattedPrice(priceMgr.getUnitPriceForDisplay());
         mBundlePrice.setFormattedPrice(priceMgr.getBundlePriceForDisplay());
+        etBundleQty.setText(FormatHelper.formatToTwoDecimalPlaces((priceMgr.getBundlePrice().getBundleQuantity())));
+
         if (mExchangeRate != null)
         {
             mUnitPrice.setTranslatedPrice(mExchangeRate);

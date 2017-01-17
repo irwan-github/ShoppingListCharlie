@@ -278,6 +278,14 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 sortOrder);
     }
 
+    /**
+     * Set the shopping list adapter with data
+     * Prepare summary of items
+     * Fetch exchange rates from the web if internet is UP.
+     * If internet is down, show summary of local-priced items only.
+     * @param loader
+     * @param cursor
+     */
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
     {
@@ -506,6 +514,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 String totalCostAdded = totalCostItemsAdded(exchangeRates);
                 String totalCostChecked = totalItemsChecked(exchangeRates);
                 setSummaryTotals(totalCostAdded, totalCostChecked);
+                shoppingListAdapter.setExchangeRates(exchangeRates);
+                shoppingListAdapter.notifyDataSetChanged();
             }
         }
     }

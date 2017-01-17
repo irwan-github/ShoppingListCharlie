@@ -19,6 +19,8 @@ import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ToBuyItem;
 
+import java.text.ParseException;
+
 import static com.mirzairwan.shopping.LoaderHelper.PURCHASE_ITEM_LOADER_ID;
 import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
@@ -290,6 +292,20 @@ public class ShoppingListEditingActivity extends ItemActivity
     }
 
     @Override
+    protected boolean areFieldsValid()
+    {
+        boolean result = super.areFieldsValid();
+        if (TextUtils.isEmpty(etQty.getText()) || Integer.parseInt(etQty.getText().toString()) < 1)
+        {
+            alertRequiredField(R.string.message_title, R.string.mandatory_quantity);
+            etQty.requestFocus();
+            result =  false;
+        }
+
+        return result;
+    }
+
+    @Override
     protected void save()
     {
         if (!areFieldsValid())
@@ -299,20 +315,19 @@ public class ShoppingListEditingActivity extends ItemActivity
 
         Item item = getItemFromInputField();
 
-        String itemQuantity = "1";
-        if (TextUtils.isEmpty(etQty.getText()) || Integer.parseInt(etQty.getText().toString()) < 1)
+        String itemQuantity = etQty.getText().toString();
+
+        try
         {
-            alertRequiredField(R.string.message_title, R.string.mandatory_quantity);
-            etQty.requestFocus();
+            priceMgr.setItemPricesForSaving(item, mUnitPrice.getPrice(),
+                    mBundlePrice.getPrice(), getBundleQtyFromInputField());
+        } catch (ParseException e)
+        {
+            e.printStackTrace();
+            alertRequiredField(R.string.message_title, R.string.invalid_price);
             return;
         }
-        else
-        {
-            itemQuantity = etQty.getText().toString();
-        }
 
-        priceMgr.setItemPricesForSaving(item, mUnitPrice.getPrice(),
-                mBundlePrice.getPrice(), getBundleQtyFromInputField());
         priceMgr.setCurrencyCode(etCurrencyCode.getText().toString());
 
         String msg;

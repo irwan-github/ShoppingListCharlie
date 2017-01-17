@@ -11,6 +11,8 @@ import android.widget.Toast;
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.domain.Item;
 
+import java.text.ParseException;
+
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
 
 /**
@@ -88,7 +90,18 @@ public class ItemEditingActivity extends ItemActivity
 
         Item item = getItemFromInputField();
 
-        priceMgr.setItemPricesForSaving(item, mUnitPrice.getPrice(), mBundlePrice.getPrice(), getBundleQtyFromInputField());
+        String bundleQtyFromInputField = getBundleQtyFromInputField();
+
+        try
+        {
+            priceMgr.setItemPricesForSaving(item, mUnitPrice.getPrice(), mBundlePrice.getPrice(),
+                    bundleQtyFromInputField);
+        } catch (ParseException e)
+        {
+            e.printStackTrace();
+            alertRequiredField(R.string.dialog_invalid_title, R.string.invalid_price);
+            return;
+        }
 
         priceMgr.setCurrencyCode(etCurrencyCode.getText().toString());
 

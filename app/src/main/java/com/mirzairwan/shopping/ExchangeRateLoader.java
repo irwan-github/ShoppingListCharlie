@@ -80,6 +80,10 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
         {
             e.printStackTrace();
         }
+        catch(Exception ex)
+        {
+          return null;
+        }
         if (jsonResp == null)
         {
             return null;
