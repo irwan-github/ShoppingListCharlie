@@ -61,8 +61,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     private Toolbar mShoppingListToolbar;
     private OnPictureRequestListener mOnPictureRequestListener;
     //private ExchangeRateLoaderCallback mExchangeRateLoaderCallback;
-    private List<ItemCost> mForeignItems = new ArrayList<>();
-    private List<ItemCost> mForeignItemsChecked = new ArrayList<>();
+    private List<ForeignItem> mForeignItems = new ArrayList<>();
+    private List<ForeignItem> mForeignItemsChecked = new ArrayList<>();
     private TextView mTvTotalValueAdded;
     private TextView mTvTotalValueChecked;
     private Double mTotalValueOfItemsAdded = 0.00d;
@@ -411,7 +411,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
             else
             {
                 mForeignCurrencyCodes.add(lCurrencyCode);
-                ItemCost val = new ItemCost(cost / 100, lCurrencyCode);
+                ForeignItem val = new ForeignItem(cost / 100, lCurrencyCode, qtyPurchased);
                 mForeignItems.add(val);
             }
         }
@@ -452,7 +452,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
             }
             else if (isItemChecked && !lCurrencyCode.trim().equalsIgnoreCase(currencyCode))
             {
-                ItemCost val = new ItemCost(cost / 100, lCurrencyCode);
+                ForeignItem val = new ForeignItem(cost / 100, lCurrencyCode, qtyPurchased);
                 mForeignItemsChecked.add(val);
             }
         }
@@ -463,15 +463,20 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     }
 
 
+    /**
+     * Add cost of all local-priced and foreign-priced items in the shopping list
+     * @param exchangeRates
+     * @return total cost of all items in shopping list
+     */
     protected String totalCostItemsAdded(Map<String, ExchangeRate> exchangeRates)
     {
         double totalForexCost = 0;
 
         //Apply the rate and add the foreign currency
-        for (ItemCost costOfItem : mForeignItems)
+        for (ForeignItem foreignItem : mForeignItems)
         {
-            ExchangeRate fc = exchangeRates.get(costOfItem.getSourceCurrencyCode());
-            totalForexCost += fc.compute(costOfItem.getAmt());
+            ExchangeRate fc = exchangeRates.get(foreignItem.getSourceCurrencyCode());
+            totalForexCost += (fc.compute(foreignItem.getCost()) * foreignItem.getQuantity());
         }
 
         String currencyCode = FormatHelper.getCurrencyCode(mCountryCode);
@@ -480,13 +485,18 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         return totalCostofItemsAdded;
     }
 
+    /**
+     * Add cost of all checked local-priced and foreign-priced items in the shopping list
+     * @param exchangeRates
+     * @return total cost of checked items in shopping list
+     */
     protected String totalItemsChecked(Map<String, ExchangeRate> exchangeRates)
     {
         double totalCostForexItemChecked = 0;
-        for (ItemCost foreignItemChecked : mForeignItemsChecked)
+        for (ForeignItem foreignItemChecked : mForeignItemsChecked)
         {
             ExchangeRate fc = exchangeRates.get(foreignItemChecked.getSourceCurrencyCode());
-            totalCostForexItemChecked += fc.compute(foreignItemChecked.getAmt());
+            totalCostForexItemChecked += (fc.compute(foreignItemChecked.getCost()) * foreignItemChecked.getQuantity());
         }
 
         String destCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
@@ -520,25 +530,38 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         }
     }
 
-    private class ItemCost
+    private class ForeignItem
     {
-        double mAmt;
-        String mSourceCurrencyCode; //Foreign currency
+        private int mQtyToBuy;
+        private double mCost;
+        private String mSourceCurrencyCode; //Foreign currency
 
-        public ItemCost(double amt, String sourceCurrencyCode)
+//        public ForeignItem(double cost, String sourceCurrencyCode)
+//        {
+//            mCost = cost;
+//            mSourceCurrencyCode = sourceCurrencyCode;
+//        }
+
+        public ForeignItem(double cost, String sourceCurrencyCode, int qtyToBuy)
         {
-            mAmt = amt;
+            mCost = cost;
             mSourceCurrencyCode = sourceCurrencyCode;
+            mQtyToBuy = qtyToBuy;
         }
 
-        public double getAmt()
+        public double getCost()
         {
-            return mAmt;
+            return mCost;
         }
 
         public String getSourceCurrencyCode()
         {
             return mSourceCurrencyCode;
+        }
+
+        public int getQuantity()
+        {
+            return mQtyToBuy;
         }
     }
 
