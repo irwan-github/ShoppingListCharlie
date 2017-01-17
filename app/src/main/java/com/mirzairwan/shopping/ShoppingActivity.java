@@ -1,7 +1,7 @@
 package com.mirzairwan.shopping;
 
-import android.app.LoaderManager;
 import android.content.ContentUris;
+import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
@@ -30,22 +30,21 @@ import com.mirzairwan.shopping.domain.ExchangeRate;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static com.mirzairwan.shopping.ItemEditingActivity.ITEM_IS_IN_SHOPPING_LIST;
 import static com.mirzairwan.shopping.LoaderHelper.EXCHANGE_RATES_SHOPPING_LIST_LOADER_ID;
 import static com.mirzairwan.shopping.R.id.menu_database_shopping_list;
+import static com.mirzairwan.shopping.domain.ExchangeRate.DESTINATION_CURRENCY_CODE;
 import static com.mirzairwan.shopping.domain.ExchangeRate.FOREIGN_CURRENCY_CODES;
 import static com.mirzairwan.shopping.domain.ExchangeRate.FOREX_API_URL;
 
 public class ShoppingActivity extends AppCompatActivity implements
         ShoppingListFragment.OnFragmentInteractionListener,
         CatalogFragment.OnFragmentInteractionListener, OnPictureRequestListener,
-        OnExchangeRateRequestListener
+        OnExchangeRateRequestListener, SharedPreferences.OnSharedPreferenceChangeListener
 {
     private static final String LOG_TAG = ShoppingActivity.class.getSimpleName();
 
@@ -60,6 +59,8 @@ public class ShoppingActivity extends AppCompatActivity implements
     ExchangeRateLoaderCallback mExchangeRateLoaderCallback;
     private String mCountryCode;
     private ExchangeRateCallback mExchangeRateCallback;
+    private Set<String> mSourceCurrencies;
+    private String mBaseEndPoint; //Web API for fetching exchange rates
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -85,13 +86,16 @@ public class ShoppingActivity extends AppCompatActivity implements
 
         setupUserLocale();
 
-        mExchangeRateLoaderCallback = new ExchangeRateLoaderCallback(
-                FormatHelper.getCurrencyCode(mCountryCode));
+        mExchangeRateLoaderCallback = new ShoppingListExchangeRateLoaderCb(this);
+
+        SharedPreferences sharedPrefs = getDefaultSharedPreferences(this);
+        String webUriKey = getString(R.string.key_forex_web_api_1);
+        mBaseEndPoint = sharedPrefs.getString(webUriKey, null);
     }
 
     public void setupUserLocale()
     {
-        SharedPreferences sharedPreferences = PreferenceManager.
+        SharedPreferences sharedPreferences =
                 getDefaultSharedPreferences(this);
         mCountryCode = sharedPreferences.getString(getString(R.string.user_country_pref), null);
     }
@@ -235,10 +239,13 @@ public class ShoppingActivity extends AppCompatActivity implements
     public void onRequest(Set<String> sourceCurrencies,
                           ExchangeRateCallback exchangeRateCallback)
     {
+        mSourceCurrencies = sourceCurrencies;
         Bundle args = getBundleForExchangeRateLoader(sourceCurrencies);
 
-        if(!PermissionHelper.isInternetUp(this))
+        if (!PermissionHelper.isInternetUp(this))
+        {
             return;
+        }
 
         if (mExchangeRateLoader == null || mExchangeRateLoader.getSourceCurrencies().containsAll
                 (sourceCurrencies))
@@ -261,13 +268,30 @@ public class ShoppingActivity extends AppCompatActivity implements
     @NonNull
     protected Bundle getBundleForExchangeRateLoader(Set<String> foreignCurrencyCode)
     {
-        String baseEndPoint = "http://api.fixer.io/latest";
         Bundle args = new Bundle();
         String[] codes = new String[foreignCurrencyCode.size()];
-
+        args.putString(DESTINATION_CURRENCY_CODE, FormatHelper.getCurrencyCode(mCountryCode));
         args.putStringArray(FOREIGN_CURRENCY_CODES, foreignCurrencyCode.toArray(codes));
-        args.putString(FOREX_API_URL, baseEndPoint);
+        args.putString(FOREX_API_URL, mBaseEndPoint);
         return args;
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
+    {
+        if (key.equalsIgnoreCase(getString(R.string.key_forex_web_api_1)))
+        {
+
+            mBaseEndPoint = sharedPreferences.getString(key, null);
+            Bundle args = getBundleForExchangeRateLoader(mSourceCurrencies);
+
+            if (mExchangeRateCallback != null)
+            {
+                mExchangeRateLoader = (ExchangeRateLoader) getLoaderManager().restartLoader
+                        (EXCHANGE_RATES_SHOPPING_LIST_LOADER_ID,
+                                args, mExchangeRateLoaderCallback);
+            }
+        }
     }
 
     private class DrawerItemClickListener implements ListView.OnItemClickListener
@@ -281,31 +305,13 @@ public class ShoppingActivity extends AppCompatActivity implements
         }
     }
 
-    private class ExchangeRateLoaderCallback implements LoaderManager.LoaderCallbacks<Map<String,
-            ExchangeRate>>
+    private class ShoppingListExchangeRateLoaderCb extends ExchangeRateLoaderCallback
     {
         private final String LOG_TAG = ExchangeRateLoaderCallback.class.getSimpleName();
-        private final String mBaseCurrencyCode;
 
-        ExchangeRateLoaderCallback(String baseCurrecyCode)
+        ShoppingListExchangeRateLoaderCb(Context context)
         {
-            mBaseCurrencyCode = baseCurrecyCode;
-        }
-
-        @Override
-        public Loader<Map<String, ExchangeRate>> onCreateLoader(int id, Bundle args)
-        {
-            Log.d(LOG_TAG, ">>>>onCreateLoader()");
-            String[] codes = args.getStringArray(FOREIGN_CURRENCY_CODES);
-            HashSet<String> sourceCurrencies = null;
-            if (codes != null && codes.length > 0)
-            {
-                List<String> foreignCurrencies = Arrays.asList(codes);
-                sourceCurrencies = new HashSet<>(foreignCurrencies);
-            }
-            return new ExchangeRateLoader(ShoppingActivity.this,
-                    sourceCurrencies,
-                    args.getString(FOREX_API_URL));
+            super(context);
         }
 
         @Override

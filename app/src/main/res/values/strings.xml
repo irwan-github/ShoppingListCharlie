@@ -39,7 +39,7 @@
     <string name="country_origin_max_length">26</string>
     <string name="item_details_header">Item details</string>
     <string name="purchase_details_header">Purchase details</string>
-    <string name="home_country_preference">2-Letter country code</string>
+    <string name="home_country_preference">Two-letter country code</string>
     <string name="example_home_country_preference">Example: SG for Singapore</string>
     <string name="dialog_title_home_country_preference">Country code</string>
     <string name="country_based_preferences">Country</string>
@@ -70,4 +70,9 @@
     <string name="key_user_sort_pref" translatable="false">user_sort_pref</string>
     <string name="invalid_currency_code_msg"></string>
     <string name="valid_country_code_msg">Enter a valid 3-letter currency code</string>
+    <string name="exchange_rate_title">Exchange rates - European Central Bank</string>
+    <string name="key_forex_web_api_1" translatable="false">key_forex_web_api_1</string>
+    <string name="web_api_cat_pref">Web API</string>
+    <string name="exchange_rate_dialog_pref">Changing the url may render the app or parts of it unworkable</string>
+    <string name="country_code_dialog_pref">Country code determines the app\'s home currency</string>
 </resources>

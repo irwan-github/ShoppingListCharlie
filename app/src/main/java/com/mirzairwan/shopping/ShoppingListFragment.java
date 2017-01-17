@@ -470,7 +470,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         String totalCostofItemsAdded = formatCountryCurrency(mCountryCode,
                 currencyCode, mTotalValueOfItemsAdded + totalForexCost);
         return totalCostofItemsAdded;
-//        mTvTotalValueAdded.setText(totalCostofItemsAdded);
     }
 
     protected String totalItemsChecked(Map<String, ExchangeRate> exchangeRates)
@@ -498,7 +497,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         {
             Log.d(LOG_TAG, ">>>>onLoadFinished()");
 
-            //if exchange rate is null, abort
+            //if exchange rate is null, only add for local-priced items
             if(exchangeRates == null)
                 setSummaryTotalsForLocalItems();
             else

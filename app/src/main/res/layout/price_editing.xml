@@ -36,6 +36,7 @@
             android:maxLength="@string/max_currency_len"
             android:minWidth="160dp"
             android:textAppearance="?android:textAppearanceMedium"
+            android:selectAllOnFocus="true"
             tools:text="GBP"/>
 
     </android.support.design.widget.TextInputLayout>

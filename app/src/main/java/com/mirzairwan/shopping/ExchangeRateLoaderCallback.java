@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import static com.mirzairwan.shopping.domain.ExchangeRate.DESTINATION_CURRENCY_CODE;
 import static com.mirzairwan.shopping.domain.ExchangeRate.FOREIGN_CURRENCY_CODES;
 import static com.mirzairwan.shopping.domain.ExchangeRate.FOREX_API_URL;
 
@@ -36,6 +37,7 @@ public abstract class ExchangeRateLoaderCallback implements LoaderManager.Loader
     public Loader<Map<String, ExchangeRate>> onCreateLoader(int id, Bundle args)
     {
         Log.d(LOG_TAG, ">>>>onCreateLoader()");
+        String destCurrencyCode = args.getString(DESTINATION_CURRENCY_CODE);
         String[] foreignCurrencyCodes = args.getStringArray(FOREIGN_CURRENCY_CODES);
         HashSet<String> sourceCurrencies = null;
         if (foreignCurrencyCodes != null && foreignCurrencyCodes.length > 0)
@@ -45,7 +47,7 @@ public abstract class ExchangeRateLoaderCallback implements LoaderManager.Loader
         }
         return new ExchangeRateLoader(mContext,
                 sourceCurrencies,
-                args.getString(FOREX_API_URL));
+                args.getString(FOREX_API_URL), destCurrencyCode);
     }
 
 

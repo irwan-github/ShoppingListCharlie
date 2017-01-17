@@ -18,6 +18,7 @@ public class SettingsFragment extends PreferenceFragment implements Preference
 {
     private Preference countryCodePref;
     private Preference sortPref;
+    private Preference mWebApiExchRatesEcb1Pref;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -25,11 +26,16 @@ public class SettingsFragment extends PreferenceFragment implements Preference
         super.onCreate(savedInstanceState);
         getActivity().setTitle(R.string.settings_screen);
         addPreferencesFromResource(R.xml.preferences);
+
         countryCodePref = findPreference(getString(R.string.user_country_pref));
         InputFilterUtil.setAllCapsInputFilter(((EditTextPreference) countryCodePref).getEditText());
         countryCodePref.setOnPreferenceChangeListener(this);
+
         sortPref = findPreference(getString(R.string.key_user_sort_pref));
         sortPref.setOnPreferenceChangeListener(this);
+
+        mWebApiExchRatesEcb1Pref = findPreference(getString(R.string.key_forex_web_api_1));
+        mWebApiExchRatesEcb1Pref.setOnPreferenceChangeListener(this);
     }
 
 
@@ -43,6 +49,9 @@ public class SettingsFragment extends PreferenceFragment implements Preference
 
         updatePrefSummary(PreferenceManager.getDefaultSharedPreferences(getActivity()),
                 getString(R.string.user_sort_pref));
+
+        updatePrefSummary(PreferenceManager.getDefaultSharedPreferences(getActivity()),
+                getString(R.string.key_forex_web_api_1));
 
     }
 

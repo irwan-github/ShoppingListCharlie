@@ -17,6 +17,7 @@ public class ExchangeRate implements Parcelable
 
     public final static String FOREIGN_CURRENCY_CODES = "FOREIGN_CURRENCY_CODES";
     public final static String FOREX_API_URL = "FOREX_API_URL";
+    public final static String DESTINATION_CURRENCY_CODE = "DESTINATION_CURRENCY_CODE";
 
     public ExchangeRate(String sourceCurrencyCode, String destinationCurrencyCode, double rate,
                         Date date)

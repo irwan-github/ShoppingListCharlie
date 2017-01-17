@@ -40,7 +40,7 @@ public class ExchangeRateDisplayState implements View.OnFocusChangeListener
         boolean isCodeSameAsHomeCode = mHomeCurrencyCode.equals(mEtCurrencyCode.getText().toString());
         boolean isPriceEmpty = TextUtils.isEmpty(mEtPrice.getText());
 
-        if(!v.hasFocus())
+        if(!v.hasFocus() && !isPriceEmpty)
         {
             if(!mEtCurrencyCode.hasFocus() && !isCodeSameAsHomeCode && !isPriceEmpty &&
                     mCurrencyCodeObserver.isCurrecyCodeSameAsPrev())
@@ -61,6 +61,11 @@ public class ExchangeRateDisplayState implements View.OnFocusChangeListener
             }
 
         }
+        else if(!v.hasFocus())//Price is empty
+        {
+            mTranslatedPrice.clear();
+        }
+
 
     }
 

@@ -122,6 +122,11 @@ public class PriceField
         return TextUtils.isEmpty(mEtPrice.getText());
     }
 
+    /**
+     * Set the text value of source price to null.
+     * Set the text value of destination price to null.
+     * Remove the translated price field and header/hint
+     */
     public void clear()
     {
         mEtPrice.setText(null);

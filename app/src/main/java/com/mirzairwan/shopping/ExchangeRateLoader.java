@@ -32,17 +32,26 @@ import java.util.Set;
 class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
 {
     private static final String LOG_TAG = ExchangeRateLoader.class.getSimpleName();
-    private final Context mContext;
+    private Context mContext;
+    private String mDestCurrencyCode;
     private String mBaseUri;
 
     private Set<String> mSourceCurrencies;
 
-    ExchangeRateLoader(Context context, Set<String> sourceCurrencies, String baseUri)
+    ExchangeRateLoader(Context context, Set<String> sourceCurrencies, String baseUri, String destCurrencyCode)
     {
         super(context);
+
+        if(baseUri == null)
+            throw new IllegalArgumentException("Web uri cannot be NULL");
+
+        if(destCurrencyCode == null)
+            throw new IllegalArgumentException("Destination currency code cannot be NULL");
+
         mContext = context;
         mSourceCurrencies = sourceCurrencies;
         mBaseUri = baseUri;
+        mDestCurrencyCode = destCurrencyCode;
     }
 
     @Override
@@ -169,7 +178,8 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
 
     private String createQueryUri()
     {
-        Uri.Builder builder = Uri.parse(mBaseUri).buildUpon().appendQueryParameter("base", "SGD");
+        Uri.Builder builder = Uri.parse(mBaseUri).buildUpon().appendQueryParameter("base",
+                                                                                mDestCurrencyCode);
         String symbols="";
         Iterator<String> iterator = mSourceCurrencies.iterator();
 

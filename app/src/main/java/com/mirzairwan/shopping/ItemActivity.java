@@ -52,6 +52,7 @@ import java.util.Map;
 
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_PICTURE_LOADER_ID;
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_PRICE_LOADER_ID;
+import static com.mirzairwan.shopping.domain.ExchangeRate.DESTINATION_CURRENCY_CODE;
 import static com.mirzairwan.shopping.domain.ExchangeRate.FOREIGN_CURRENCY_CODES;
 import static com.mirzairwan.shopping.domain.ExchangeRate.FOREX_API_URL;
 
@@ -63,8 +64,6 @@ import static com.mirzairwan.shopping.domain.ExchangeRate.FOREX_API_URL;
  * Loader for Pictures table. Subclass just need to call initLoader with the correct loader id.
  * <p>
  * Create Item objects and populate screen.
- * <p>
- * Ask permission for camera use
  * <p>
  * Ask permission for file access
  * <p>
@@ -121,12 +120,14 @@ public abstract class ItemActivity extends AppCompatActivity implements
     private ExchangeRate mExchangeRate;
     protected PriceField mUnitPrice;
     protected PriceField mBundlePrice;
+    private String mWebApiBase;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         setContentView(getLayoutXml());
         setupPictureToolbar();
 
@@ -145,6 +146,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         mCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
         priceMgr = new PriceMgr(mCountryCode);
+
+        mWebApiBase = sharedPrefs.getString(getString(R.string.key_forex_web_api_1), null);
 
         mExchangeRate = getIntent().getParcelableExtra(ShoppingActivity.EXCHANGE_RATE);
 
@@ -458,6 +461,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
     @Override
     protected void onStart()
     {
+        String destCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
         mOnTouchListener = new View.OnTouchListener()
         {
             @Override
@@ -481,8 +485,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
         etDescription.setOnTouchListener(mOnTouchListener);
         etCountryOrigin.setOnTouchListener(mOnTouchListener);
 
-        String homeCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
-
         etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
         //Set default currency code
         etCurrencyCode.setText(FormatHelper.getCurrencyCode(mCountryCode));
@@ -496,7 +498,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
         ItemExchangeRateLoaderCallback unitPxExLoaderCb = new ItemExchangeRateLoaderCallback
                 (this, mUnitPrice);
         ExchangeRateDisplayState.OnExchangeRateListener onExchangeRateUnitPriceListener = new
-                OnExchangeRateListenerImpl(unitPxExLoaderCb);
+                OnExchangeRateListenerImpl(unitPxExLoaderCb, mWebApiBase, destCurrencyCode);
         ExchangeRateDisplayState unitPriceTranslatorListener = new ExchangeRateDisplayState(
                 onExchangeRateUnitPriceListener, mUnitPrice);
         etUnitPrice.setOnFocusChangeListener(unitPriceTranslatorListener);
@@ -512,7 +514,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
         ItemExchangeRateLoaderCallback bundlePxExLoaderCb = new ItemExchangeRateLoaderCallback
                 (this, mBundlePrice);
         ExchangeRateDisplayState.OnExchangeRateListener onExchangeRateBundlePriceListener = new
-                OnExchangeRateListenerImpl(bundlePxExLoaderCb);
+                OnExchangeRateListenerImpl(bundlePxExLoaderCb, mWebApiBase, destCurrencyCode);
         ExchangeRateDisplayState bundlePriceTranslatorListener = new ExchangeRateDisplayState(
                 onExchangeRateBundlePriceListener, mBundlePrice);
         etBundlePrice.setOnFocusChangeListener(bundlePriceTranslatorListener);
@@ -523,7 +525,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
         ItemExchangeRateLoaderCallback currencyCodeLoaderCb = new ItemExchangeRateLoaderCallback
                 (this, translatedPrices);
         ExchangeRateDisplayState.OnExchangeRateListener onExchangeRateCurrencyCodeListener = new
-                OnExchangeRateListenerImpl(currencyCodeLoaderCb);
+                OnExchangeRateListenerImpl(currencyCodeLoaderCb, mWebApiBase, destCurrencyCode);
 
         CurrencyCodeChecker onFocusChangeCurrencyCodeListener =
                 new CurrencyCodeChecker(etCurrencyCode, mCountryCode, mUnitPrice, mBundlePrice,
@@ -924,36 +926,35 @@ public abstract class ItemActivity extends AppCompatActivity implements
         @Override
         public void onLoaderReset(Loader<Map<String, ExchangeRate>> loader)
         {
-
-        }
-
-        public List<PriceField> getPrices()
-        {
-            return mTranslatedPrices;
+            Log.d(LOG_TAG, "onLoaderReset");
+            mExchangeRate = null;
         }
     }
 
     protected class OnExchangeRateListenerImpl implements ExchangeRateDisplayState
             .OnExchangeRateListener
     {
-        private String baseEndPoint = "http://api.fixer.io/latest";
+        private String mDestCurrencyCode;
+        private String mBaseEndPoint;
         private ItemExchangeRateLoaderCallback mItemExchangeRateCallback;
         private final String LOG_TAG = OnExchangeRateListenerImpl.class.getSimpleName();
 
         public OnExchangeRateListenerImpl(ItemExchangeRateLoaderCallback
-                                                  itemExchangeRateCallback)
+                                                  itemExchangeRateCallback, String baseEndPoint,
+                                                    String destCurrencyCode)
         {
             mItemExchangeRateCallback = itemExchangeRateCallback;
+            mBaseEndPoint = baseEndPoint;
+            mDestCurrencyCode = destCurrencyCode;
         }
 
         @Override
         public void processExchangeRate(String foreignCurrencyCode, int loaderID)
         {
-            String logPrice = mItemExchangeRateCallback.getPrices().get(0).getPrice();
-            Log.d(LOG_TAG, ">>> processExchangeRate " + foreignCurrencyCode + " for " + logPrice);
             Bundle args = new Bundle();
+            args.putString(DESTINATION_CURRENCY_CODE, mDestCurrencyCode);
             args.putStringArray(FOREIGN_CURRENCY_CODES, new String[]{foreignCurrencyCode});
-            args.putString(FOREX_API_URL, baseEndPoint);
+            args.putString(FOREX_API_URL, mBaseEndPoint);
             getLoaderManager().initLoader(loaderID, args,
                     mItemExchangeRateCallback);
         }
@@ -962,8 +963,9 @@ public abstract class ItemActivity extends AppCompatActivity implements
         public void restartProcessExchangeRate(String newforeignCurrencyCode, int loaderId)
         {
             Bundle args = new Bundle();
+            args.putString(DESTINATION_CURRENCY_CODE, mDestCurrencyCode);
             args.putStringArray(FOREIGN_CURRENCY_CODES, new String[]{newforeignCurrencyCode});
-            args.putString(FOREX_API_URL, baseEndPoint);
+            args.putString(FOREX_API_URL, mBaseEndPoint);
             getLoaderManager().restartLoader(loaderId, args,
                     mItemExchangeRateCallback);
         }
