@@ -8,11 +8,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PicturesEntry;
@@ -41,7 +41,6 @@ public class ShoppingListAdapter extends CursorAdapter
     {
         super(context, cursor, 0);
         mOnFragmentInteractionListener = onFragmentInteractionListener;
-        //mImageResizer = imageResizer;
         mOnPictureRequestListener = onPictureRequestListener;
     }
 
@@ -55,8 +54,7 @@ public class ShoppingListAdapter extends CursorAdapter
         tag.tvItemName = (TextView) convertView.findViewById(R.id.item_name_row);
         tag.tvItemBrand = (TextView) convertView.findViewById(R.id.item_brand_row);
         tag.tvSelectedPrice = (TextView) convertView.findViewById(R.id.item_selected_price_row);
-        tag.tvItemQty = (TextView) convertView.findViewById(R.id.item_qty_row);
-        tag.checkItem = (CheckBox) convertView.findViewById(R.id.check_item);
+        tag.checkItem = (ToggleButton) convertView.findViewById(R.id.check_item);
 
         //Create a listener for checkbox checked events
         OnItemCheckedChangeListener onItemCheckedChangeListener =
@@ -110,18 +108,11 @@ public class ShoppingListAdapter extends CursorAdapter
         String currencyCode = cursor.getString(colCurrencyCodeIdx);
         int colSelectedPriceTagIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
         double priceTag = cursor.getDouble(colSelectedPriceTagIdx);
-//        String countryCode = PreferenceManager.getDefaultSharedPreferences(context).getString
-//                ("home_country_preference", null);
-//                                                                                priceTag / 100));
-//        tagViews.tvSelectedPrice.setText(FormatHelper.formatCountryCurrency(countryCode,
-//                currencyCode,
-//                priceTag / 100));
 
         setPrice(context, currencyCode, priceTag, tagViews.tvSelectedPrice);
 
         int colBuyItemQty = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);
-        tagViews.tvItemQty.setText(String.valueOf(cursor.getInt(colBuyItemQty)));
-        tagViews.tvItemQty.setFocusable(false);
+        tagViews.checkItem.setText(String.valueOf(cursor.getInt(colBuyItemQty)));
     }
 
 
@@ -167,7 +158,6 @@ public class ShoppingListAdapter extends CursorAdapter
             return;
         }
         mOnPictureRequestListener.onRequest(new Picture(pathPic), ivItem);
-        //mImageResizer.loadImage(new File(pathPic), ivItem);
     }
 
     public void setExchangeRates(Map<String, ExchangeRate> exchangeRates)
@@ -180,8 +170,7 @@ public class ShoppingListAdapter extends CursorAdapter
         ImageView ivItem;
         TextView tvItemName;
         TextView tvItemBrand;
-        TextView tvItemQty;
-        CheckBox checkItem;
+        ToggleButton checkItem;
         OnItemCheckedChangeListener onItemCheckedChangeListener;
         public TextView tvSelectedPrice;
     }

@@ -13,4 +13,10 @@
 
     <!-- Text color for the primary location of the earthquake in the list item -->
     <color name="textColorItemName">#2B3D4D</color>
+
+    <!-- Color used for item unchecked in shopping list -->
+    <color name="unchecked">#f44336</color>
+
+    <!-- Color used for item checked in shopping list -->
+    <color name="checked">#1b5e20</color>
 </resources>

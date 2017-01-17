@@ -26,6 +26,7 @@ Or else, the scaling is bypassed resulting in OutOfMemoryError
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/iv_item_pic_thb"
+        android:ellipsize="end"
         android:focusable="false"
         android:maxLines="@string/text_max_line"
         android:maxWidth="@dimen/tv_item_name_max_width"
@@ -33,9 +34,8 @@ Or else, the scaling is bypassed resulting in OutOfMemoryError
         android:paddingLeft="@dimen/keyline_1"
         android:paddingTop="@dimen/text_view_padding_top"
         android:textAppearance="?android:textAppearanceMedium"
-        android:textStyle="bold"
         android:textColor="@color/textColorItemName"
-        android:ellipsize="end"
+        android:textStyle="bold"
         tools:text="Sardine">
     </TextView>
 
@@ -46,82 +46,49 @@ Or else, the scaling is bypassed resulting in OutOfMemoryError
         android:layout_height="wrap_content"
         android:layout_below="@id/item_name_row"
         android:layout_toRightOf="@id/iv_item_pic_thb"
+        android:ellipsize="end"
         android:focusable="false"
+        android:fontFamily="sans-serif-medium"
         android:maxLines="@string/text_max_line"
         android:maxWidth="@dimen/tv_item_brand_max_width"
         android:paddingLeft="@dimen/keyline_1"
         android:textAppearance="?android:textAppearanceSmall"
         android:textColor="@color/textColorItemBrand"
-        android:fontFamily="sans-serif-medium"
-        android:ellipsize="end"
         tools:text="Selfridge"
         >
     </TextView>
 
-    <LinearLayout
-        android:layout_width="wrap_content"
+
+    <TextView
+        android:id="@+id/item_selected_price_row"
+        android:layout_width="@dimen/tv_item_price_max_width"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_below="@id/item_brand_row"
-        android:layout_toRightOf="@id/iv_item_pic_thb">
-
-        <TextView
-            android:id="@+id/item_selected_price_row"
-            android:layout_width="@dimen/tv_item_price_max_width"
-            android:layout_height="wrap_content"
-            android:focusable="false"
-            android:maxLines="@string/text_max_line"
-            android:paddingLeft="@dimen/keyline_1"
-            android:paddingTop="@dimen/summary_body_padding_top"
-            android:textAppearance="?android:textAppearanceSmall"
-            android:textColor="@color/textColorItemBrand"
-            tools:text="$199.55 (est)"
-            >
-        </TextView>
-
-        <TextView
-            android:id="@+id/label_qty_row"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:focusable="false"
-            android:maxLines="@string/text_max_line"
-            android:paddingLeft="@dimen/keyline_1"
-            android:paddingTop="@dimen/summary_body_padding_top"
-            android:text="@string/summary_qty_purchase"
-            android:textAppearance="?android:textAppearanceSmall"
-            android:textColor="@color/textColorItemBrand"
-            tools:text="Qty :"
-            >
-        </TextView>
+        android:layout_toRightOf="@id/iv_item_pic_thb"
+        android:focusable="false"
+        android:maxLines="@string/text_max_line"
+        android:paddingLeft="@dimen/keyline_1"
+        android:paddingTop="@dimen/summary_body_padding_top"
+        android:textAppearance="?android:textAppearanceSmall"
+        android:textColor="@color/textColorItemBrand"
+        tools:text="$199.55 (est)"
+        >
+    </TextView>
 
 
-        <TextView
-            android:id="@+id/item_qty_row"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:focusable="false"
-            android:maxLength="@string/text_item_buy_qty_max_length"
-            android:maxLines="@string/text_max_line"
-            android:paddingLeft="@dimen/text_padding_left"
-            android:paddingRight="@dimen/text_padding_right"
-            android:paddingTop="@dimen/summary_body_padding_top"
-            android:textAppearance="?android:textAppearanceSmall"
-            android:textColor="@color/textColorItemBrand"
-            tools:text="1234"
-            >
-        </TextView>
-    </LinearLayout>
-
-    <CheckBox
+    <ToggleButton
         android:id="@+id/check_item"
         android:layout_width="@dimen/touch_target_width"
-        android:layout_height="@dimen/touch_target_width"
+        android:layout_height="@dimen/touch_target_height"
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
-        android:layout_margin="0dp"
-        android:background="?android:attr/listChoiceIndicatorMultiple"
-        android:button="@null"
+        android:layout_marginRight="@dimen/keyline_1"
+        android:background="@drawable/toggle_circle"
         android:focusable="false"
-        android:padding="0dp"
+        android:textColor="@android:color/white"
+        android:textAppearance="?android:textAppearanceMedium"
+        android:textOff=""
+        android:textOn=""
+        tools:text="8"
         />
 </RelativeLayout>

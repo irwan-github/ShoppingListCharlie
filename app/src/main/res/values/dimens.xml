@@ -34,7 +34,7 @@
     <dimen name="image_summary_height">100dp</dimen>
     <dimen name="summary_body_padding_top">2dp</dimen>
     <dimen name="summary_header_padding_bottom">4dp</dimen>
-    <dimen name="tv_item_price_max_width">100dp</dimen>
+    <dimen name="tv_item_price_max_width">128dp</dimen>
 
     <dimen name="picture_item_detail_width">375dp</dimen>
     <dimen name="picture_item_detail_height">500dp</dimen>

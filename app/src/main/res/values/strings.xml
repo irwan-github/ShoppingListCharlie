@@ -75,4 +75,6 @@
     <string name="web_api_cat_pref">Web API</string>
     <string name="exchange_rate_dialog_pref">Changing the url may render the app or parts of it unworkable</string>
     <string name="country_code_dialog_pref">Country code determines the app\'s home currency</string>
+    <string name="invalid_price">Invalid price</string>
+    <string name="dialog_invalid_title">Invalid</string>
 </resources>
