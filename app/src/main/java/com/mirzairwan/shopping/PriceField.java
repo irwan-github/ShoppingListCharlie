@@ -42,6 +42,7 @@ public class PriceField
     {
         mProgressBar.setVisibility(View.INVISIBLE);
         //Unit price greater than 0.00
+
         boolean isPriceValid = !TextUtils.isEmpty(mEtPrice.getText()) &&
                 Double.parseDouble(mEtPrice.getText().toString()) > 0;
         if (isPriceValid && !mEtPrice.hasFocus())
@@ -153,7 +154,5 @@ public class PriceField
             return BUNDLE_PRICE_EXCHANGE_RATE_LOADER_ID;
         else
             throw new IllegalArgumentException("Loader not supported");
-
-
     }
 }

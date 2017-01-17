@@ -5,6 +5,7 @@ import android.database.Cursor;
 import com.mirzairwan.shopping.FormatHelper;
 import com.mirzairwan.shopping.data.Contract;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +15,7 @@ import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
 /**
  * PriceManager for handling the prices of one particular item
+ * It handles 2 price types: Unit Price and bundle price
  * Created by Mirza Irwan on 29/12/16.
  */
 
@@ -108,7 +110,7 @@ public class PriceMgr
         return FormatHelper.formatToTwoDecimalPlaces(mBundlePrice.getBundlePrice());
     }
 
-    public void setItemPricesForSaving(Item item, String unitPriceFromInputField, String bundlePriceFromInputField, String bundleQtyFromInputField)
+    public void setItemPricesForSaving(Item item, String unitPriceFromInputField, String bundlePriceFromInputField, String bundleQtyFromInputField) throws ParseException
     {
         if (item == null)
             throw new IllegalArgumentException("Item cannot be null");
@@ -116,8 +118,8 @@ public class PriceMgr
         //Clear the prices in the  object first before adding because it will accumulate identical prices types
         item.clearPrices();
 
-        mUnitPrice.setUnitPrice(Double.parseDouble(unitPriceFromInputField));
-        mBundlePrice.setBundlePrice(Double.parseDouble(bundlePriceFromInputField),
+        mUnitPrice.setUnitPrice(FormatHelper.parseTwoDecimalPlaces(unitPriceFromInputField));
+        mBundlePrice.setBundlePrice(FormatHelper.parseTwoDecimalPlaces(bundlePriceFromInputField),
                 Double.parseDouble(bundleQtyFromInputField));
 
         item.addPrice(mUnitPrice);

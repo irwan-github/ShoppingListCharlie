@@ -3,6 +3,7 @@ package com.mirzairwan.shopping;
 import org.junit.Test;
 
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Currency;
 import java.util.Locale;
 
@@ -111,6 +112,24 @@ public class FormatHelperTest
 
         symbol = getCurrencyCode("ZX");
         System.out.println(">> " + symbol);
+    }
+
+    @Test
+    public void testFormatDecimalPlace()
+    {
+        double valDbl = 4.99d;
+        System.out.println(FormatHelper.formatToTwoDecimalPlaces(valDbl));
+        System.out.println(FormatHelper.formatToTwoDecimalPlaces("SG", valDbl));
+    }
+
+    @Test
+    public void parseTwoDecimalPlaces() throws ParseException
+    {
+        System.out.println(FormatHelper.parseTwoDecimalPlaces("189.34"));
+        System.out.println(FormatHelper.parseTwoDecimalPlaces("3,189.34"));
+        System.out.println(FormatHelper.parseTwoDecimalPlaces("1,89.34"));
+        System.out.println(FormatHelper.parseTwoDecimalPlaces(",1,89.34"));
+        System.out.println(FormatHelper.parseTwoDecimalPlaces("189.3,4"));
     }
 
 }

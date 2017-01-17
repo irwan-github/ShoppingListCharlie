@@ -48,7 +48,7 @@ public class ShoppingListAdapter extends CursorAdapter
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent)
     {
-        View convertView = LayoutInflater.from(context).inflate(R.layout.row_buy_item2, parent,
+        View convertView = LayoutInflater.from(context).inflate(R.layout.row_buy_item, parent,
                 false);
         TagBuyItemViews tag = new TagBuyItemViews();
         tag.ivItem = (ImageView) convertView.findViewById(R.id.iv_item_pic_thb);
