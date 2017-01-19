@@ -2,7 +2,8 @@ package com.mirzairwan.shopping;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -15,5 +16,14 @@ public class ExampleUnitTest
     public void addition_isCorrect() throws Exception
     {
         assertEquals(4, 2 + 2);
+    }
+
+    @Test
+    public void checkZeroValue()
+    {
+        boolean result = Double.parseDouble("0") == 0;
+        System.out.println("result is " + result);
+        assertTrue("Zero value", result);
+
     }
 }

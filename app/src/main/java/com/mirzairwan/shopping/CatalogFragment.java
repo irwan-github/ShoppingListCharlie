@@ -206,9 +206,19 @@ public class CatalogFragment extends Fragment implements OnToggleCatalogItemList
         }
     }
 
+    /**
+     * Implemented by hosting activity to show an item detail when user clicks on an item in the
+     * shopping list
+     */
     public interface OnFragmentInteractionListener
     {
+        /**
+         *  Launches a ItemEditingActivity
+         * @param itemId Row id of item in table
+         * @param currencyCode 3-letter currency code
+         * @param isInShoppingList Flag for Editing activity to alert user that item in shopping
+         *                         list cannot be deleted from app.
+         */
         void onViewItemDetails(long itemId, String currencyCode, boolean isInShoppingList);
-
     }
 }

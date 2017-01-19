@@ -60,14 +60,15 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     private static final String SORT_COLUMN = "SORT_COLUMN";
     private Toolbar mShoppingListToolbar;
     private OnPictureRequestListener mOnPictureRequestListener;
-    //private ExchangeRateLoaderCallback mExchangeRateLoaderCallback;
+    private ExchangeRateLoaderCallback mExchangeRateLoaderCallback;
     private List<ForeignItem> mForeignItems = new ArrayList<>();
     private List<ForeignItem> mForeignItemsChecked = new ArrayList<>();
     private TextView mTvTotalValueAdded;
     private TextView mTvTotalValueChecked;
     private Double mTotalValueOfItemsAdded = 0.00d;
     private Double mTotalValueOfItemsChecked = 0.00d;
-    private Set<String> mForeignCurrencyCodes = new HashSet<>();
+    private Set<String> mSourceCurrencyCodes = new HashSet<>();
+    private Set<String> mPrevSourceCurrencyCodes = new HashSet<>();
     private View mLoadingIndicator;
     private View mShoppingListTotalsView;
     private ExchangeRateLoader mExchangeRateLoader;
@@ -87,17 +88,22 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         mCountryCode = sharedPreferences.getString(getString(R.string.user_country_pref), null);
     }
 
+    /**
+     * The system calls this when it's time for the fragment to draw its user interface for the
+     * first time. To draw a UI for your fragment, you must return a View from this method that is
+     * the root of your fragment's layout.
+     *
+     * @param inflater
+     * @param container
+     * @param savedInstanceState
+     * @return
+     */
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle
             savedInstanceState)
     {
-
-        if (savedInstanceState != null)
-        {
-            //Nothing was saved before because the data involved is huge and saving will be a
-            // complex task. So screen is going to query the database,
-        }
+        Log.d(LOG_TAG, ">>>>>>> onCreateView");
 
         View rootView = inflater.inflate(R.layout.fragment_shopping_list, container, false);
         mTvTotalValueAdded = (TextView) rootView.findViewById(R.id.tv_total_buy);
@@ -114,20 +120,46 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         PreferenceManager.setDefaultValues(getActivity(), preferences, false);
         PreferenceManager.getDefaultSharedPreferences(getActivity())
                 .registerOnSharedPreferenceChangeListener(this);
+
+
+        setupUserLocale();
+        mExchangeRateCallback = new ExchangeRateCallbackImpl();
+
+
+        if (savedInstanceState != null)
+        {
+            //Nothing was saved before because the data involved might be huge and saving to bundle
+            //will be a complex task. So let LoaderManager auto-query the database again,
+        }
+
+        return rootView;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState)
+    {
+        Log.d(LOG_TAG, ">>>>>>> onActivityCreated");
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity
                 ());
         Bundle args = new Bundle();
         args.putString(SORT_COLUMN, sharedPrefs.getString(getString(R.string.user_sort_pref),
                 null));
 
-        //Kick off the loader
+        //Kick off the loader. Note that kicking of the loader in the Resumed state prevents the
+        //CursorLoader from calling onLoadFinished twice.
+        Log.d(LOG_TAG, " >>>>>>> initLoader(LOADER_BUY_ITEM_ID)");
         getLoaderManager().initLoader(LOADER_BUY_ITEM_ID, args, this);
-        setupUserLocale();
-//        mExchangeRateLoaderCallback = new ExchangeRateLoaderCallback(getCurrencyCode
-//                (countryCode));
-        mExchangeRateCallback = new ExchangeRateCallbackImpl();
 
-        return rootView;
+        PreferenceManager.getDefaultSharedPreferences(getActivity()).
+                registerOnSharedPreferenceChangeListener(this);
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onResume()
+    {
+        Log.d(LOG_TAG, " >>>>>>> onResume");
+        super.onResume();
     }
 
     private void setupShoppingListToolbar(final Toolbar shoppingListToolbar)
@@ -180,19 +212,11 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onAttach(Activity activity)
     {
-        Log.d(LOG_TAG, "onAttach");
+        Log.d(LOG_TAG, ">>>>>>> onAttach");
         super.onAttach(activity);
         onFragmentInteractionListener = (OnFragmentInteractionListener) activity;
         mOnPictureRequestListener = (OnPictureRequestListener) activity;
-        mOnExchangeRateListener = (OnExchangeRateRequestListener)activity;
-    }
-
-    @Override
-    public void onResume()
-    {
-        super.onResume();
-        PreferenceManager.getDefaultSharedPreferences(getActivity()).
-                registerOnSharedPreferenceChangeListener(this);
+        mOnExchangeRateListener = (OnExchangeRateRequestListener) activity;
     }
 
     @Override
@@ -246,6 +270,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args)
     {
+        Log.d(LOG_TAG, ">>>>>>> onCreateLoader");
         String[] projection = new String[]{ToBuyItemsEntry._ID,
                 ToBuyItemsEntry.COLUMN_ITEM_ID,
                 ToBuyItemsEntry.COLUMN_QUANTITY,
@@ -283,26 +308,44 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
      * Prepare summary of items
      * Fetch exchange rates from the web if internet is UP.
      * If internet is down, show summary of local-priced items only.
+     *
      * @param loader
      * @param cursor
      */
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
     {
-        Log.d(LOG_TAG, ">>>>onLoadFinished");
-        mLoadingIndicator.setVisibility(View.VISIBLE);
-        mShoppingListTotalsView.setVisibility(View.INVISIBLE);
+        Log.d(LOG_TAG, ">>>>>>> onLoadFinished Cursor");
+
+        //updateSourceCurrencies();
         shoppingListAdapter.swapCursor(cursor);
 
         prepareSummaryOfItemsAdded();
         prepareSummaryOfItemsChecked();
 
-        if(PermissionHelper.isInternetUp(getActivity()) && !mForeignCurrencyCodes.isEmpty())
-            mOnExchangeRateListener.onRequest(mForeignCurrencyCodes, mExchangeRateCallback);
+        if (PermissionHelper.isInternetUp(getActivity()) && !mSourceCurrencyCodes.isEmpty())
+        {
+            //Call the hosting activity to fetch exchange rates. When hosting activity hasthe
+            //exchange rates, it will call back the fragment. At that future point, update shopping
+            //list summary and notify Cursor List to show translated prices.
+            mLoadingIndicator.setVisibility(View.VISIBLE); //Show work in progress
+            mShoppingListTotalsView.setVisibility(View.INVISIBLE);
+            //Log.d(LOG_TAG, ">>>>>>> foreign source currencies: " + mSourceCurrencyCodes.toString());
+            mOnExchangeRateListener.onRequest(mSourceCurrencyCodes, mExchangeRateCallback);
+
+        }
         else
         {
             setSummaryTotalsForLocalItems();
         }
+    }
+
+    private boolean isNewSourceCurrenciesInPrevious()
+    {
+        Log.d(LOG_TAG, ">>>>>>> Previous source currency: " + mPrevSourceCurrencyCodes.toString());
+        Log.d(LOG_TAG, ">>>>>>> New source currency: " + mPrevSourceCurrencyCodes.toString());
+
+        return mPrevSourceCurrencyCodes.containsAll(mSourceCurrencyCodes);
     }
 
     protected void setSummaryTotalsForLocalItems()
@@ -315,17 +358,19 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         String totalCostofItemsChecked = FormatHelper.formatCountryCurrency(mCountryCode,
                 currencyCode, mTotalValueOfItemsChecked);
 
-        setSummaryTotals(totalCostofItemsAdded, totalCostofItemsChecked);
+        displaySummaryTotals(totalCostofItemsAdded, totalCostofItemsChecked);
     }
 
     /**
      * Set the summary views showing the total cost added and total cost checked.
      * Next, it removes the progress indicator.
-     * @param totalCostAdded Cost of items added to shopping list
+     *
+     * @param totalCostAdded   Cost of items added to shopping list
      * @param totalCostChecked Cost of items added to shopping list and checked
      */
-    protected void setSummaryTotals(String totalCostAdded, String totalCostChecked)
+    protected void displaySummaryTotals(String totalCostAdded, String totalCostChecked)
     {
+        Log.d(LOG_TAG, ">>>>>>> displaySummaryTotals");
         mTvTotalValueAdded.setText(totalCostAdded);
         mTvTotalValueChecked.setText(totalCostChecked);
         mLoadingIndicator.setVisibility(View.INVISIBLE);
@@ -338,9 +383,17 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         shoppingListAdapter.swapCursor(null);
     }
 
+    /**
+     * The togglebutton in the shopping list will call this when there is a checked event.
+     * This will trigger Cursor loader to force load again and call onLoadFinished.
+     *
+     * @param isChecked
+     * @param mBuyItemPosition
+     */
     @Override
     public void onCheckBuyItem(boolean isChecked, int mBuyItemPosition)
     {
+        Log.d(LOG_TAG, ">>>>>>> onCheckBuyItem");
         //Save buy item check status
         Cursor cursor = (Cursor) shoppingListAdapter.getItem(mBuyItemPosition);
         int buyItemIdColIdx = cursor.getColumnIndex(ToBuyItemsEntry._ID);
@@ -353,10 +406,11 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     {
         if (key.equals(getString(R.string.user_country_pref)))
         {
+            Log.d(LOG_TAG, "onSharedPreferenceChanged Change in home country");
             mCountryCode = sharedPreferences.getString(key, null);
-            prepareSummaryOfItemsAdded();
-            prepareSummaryOfItemsChecked();
-            shoppingListAdapter.notifyDataSetChanged();
+//            prepareSummaryOfItemsAdded();
+//            prepareSummaryOfItemsChecked();
+//            shoppingListAdapter.notifyDataSetChanged();
         }
 
         if (key.equals(getString(R.string.user_sort_pref)))
@@ -364,10 +418,15 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
             String prefSort = sharedPreferences.getString(key, null);
             Bundle args = new Bundle();
             args.putString(SORT_COLUMN, prefSort);
+            Log.d(LOG_TAG, ">>>>>>> restartLoader(LOADER_BUY_ITEM_ID)");
             getLoaderManager().restartLoader(LOADER_BUY_ITEM_ID, args, this);
         }
     }
 
+    /**
+     * Hosting Activity implements this interface to respond to user click on shopping list
+     * to view item details.
+     */
     public interface OnFragmentInteractionListener
     {
         void onAdditem();
@@ -376,14 +435,14 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     }
 
     /**
-     * Add up total cost of local items added to shopping list
      * Populate the foreign currency codes list. This list will be used to fetch exchange rates
      * in the web.
+     * Add up total cost of local items added to shopping list
      * List the foreign items found in the shopping list.
      */
     public void prepareSummaryOfItemsAdded()
     {
-        mForeignCurrencyCodes.clear();
+        mSourceCurrencyCodes.clear();
         mForeignItems.clear();
         mTotalValueOfItemsAdded = 0.00d;
         String baseCurrencyCode = getCurrencyCode(mCountryCode);
@@ -410,7 +469,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
             }
             else
             {
-                mForeignCurrencyCodes.add(lCurrencyCode);
+                mSourceCurrencyCodes.add(lCurrencyCode);
                 ForeignItem val = new ForeignItem(cost / 100, lCurrencyCode, qtyPurchased);
                 mForeignItems.add(val);
             }
@@ -465,6 +524,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
     /**
      * Add cost of all local-priced and foreign-priced items in the shopping list
+     *
      * @param exchangeRates
      * @return total cost of all items in shopping list
      */
@@ -475,8 +535,12 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         //Apply the rate and add the foreign currency
         for (ForeignItem foreignItem : mForeignItems)
         {
-            ExchangeRate fc = exchangeRates.get(foreignItem.getSourceCurrencyCode());
-            totalForexCost += (fc.compute(foreignItem.getCost()) * foreignItem.getQuantity());
+            ExchangeRate exRate = exchangeRates.get(foreignItem.getSourceCurrencyCode());
+            if (exRate != null)
+            {
+                totalForexCost += (exRate.compute(foreignItem.getCost()) * foreignItem
+                        .getQuantity());
+            }
         }
 
         String currencyCode = FormatHelper.getCurrencyCode(mCountryCode);
@@ -487,6 +551,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
     /**
      * Add cost of all checked local-priced and foreign-priced items in the shopping list
+     *
      * @param exchangeRates
      * @return total cost of checked items in shopping list
      */
@@ -496,7 +561,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         for (ForeignItem foreignItemChecked : mForeignItemsChecked)
         {
             ExchangeRate fc = exchangeRates.get(foreignItemChecked.getSourceCurrencyCode());
-            totalCostForexItemChecked += (fc.compute(foreignItemChecked.getCost()) * foreignItemChecked.getQuantity());
+            totalCostForexItemChecked += (fc.compute(foreignItemChecked.getCost()) *
+                    foreignItemChecked.getQuantity());
         }
 
         String destCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
@@ -507,40 +573,52 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     }
 
 
+    /**
+     * Called by its container class, ShoppingActivity when ShoppingActivity has received the
+     * exchange rates. This class will then update the summary of the shopping list. In addition,
+     * it will update the cursor adapter with the exchange rates.
+     */
     private class ExchangeRateCallbackImpl implements ExchangeRateCallback
     {
         private final String LOG_TAG = ExchangeRateCallbackImpl.class.getSimpleName();
+
         @Override
         public void doCoversion(Map<String, ExchangeRate> exchangeRates)
         {
-            Log.d(LOG_TAG, ">>>>onLoadFinished()");
+            Log.d(LOG_TAG, ">>>>>>> doCoversion()");
+            Log.d(LOG_TAG, "Exchange rates: " + exchangeRates.toString());
 
             //if exchange rate is null, only add for local-priced items
-            if(exchangeRates == null)
+            if (exchangeRates == null)
+            {
                 setSummaryTotalsForLocalItems();
+            }
             else
             {
-                //set summary total costs of domestic and foreign items
-                String totalCostAdded = totalCostItemsAdded(exchangeRates);
-                String totalCostChecked = totalItemsChecked(exchangeRates);
-                setSummaryTotals(totalCostAdded, totalCostChecked);
+                //Set summary total costs of domestic and foreign items
+                setSummaryTotalsForLocalAndForeignItems(exchangeRates);
+
+                //Update the items in the shopping list with exchange rates
                 shoppingListAdapter.setExchangeRates(exchangeRates);
                 shoppingListAdapter.notifyDataSetChanged();
             }
         }
     }
 
+    private void setSummaryTotalsForLocalAndForeignItems(Map<String, ExchangeRate> exchangeRates)
+    {
+        Log.d(LOG_TAG, ">>>>>>> setSummaryTotalsForLocalAndForeignItems");
+        Log.d(LOG_TAG, ">>>>>>> setSummaryTotalsForLocalAndForeignItems: " + exchangeRates.toString());
+        String totalCostAdded = totalCostItemsAdded(exchangeRates);
+        String totalCostChecked = totalItemsChecked(exchangeRates);
+        displaySummaryTotals(totalCostAdded, totalCostChecked);
+    }
+
     private class ForeignItem
     {
         private int mQtyToBuy;
         private double mCost;
-        private String mSourceCurrencyCode; //Foreign currency
-
-//        public ForeignItem(double cost, String sourceCurrencyCode)
-//        {
-//            mCost = cost;
-//            mSourceCurrencyCode = sourceCurrencyCode;
-//        }
+        private String mSourceCurrencyCode;
 
         public ForeignItem(double cost, String sourceCurrencyCode, int qtyToBuy)
         {

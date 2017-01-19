@@ -15,12 +15,13 @@ public class PagerAdapter extends FragmentPagerAdapter
     public static final int BUY_LIST = 0;
     public static final int CATALOG = 1;
     private Context mContext;
+    private String[] mTitles;
 
 
-    public PagerAdapter(FragmentManager fm, Context context)
+    public PagerAdapter(FragmentManager fm, String[] titles)
     {
         super(fm);
-        mContext = context;
+        mTitles = titles;
     }
 
 
@@ -49,9 +50,9 @@ public class PagerAdapter extends FragmentPagerAdapter
 
         switch(position) {
             case BUY_LIST:
-                return mContext.getString(R.string.buy_list);
+                return mTitles[BUY_LIST];
             case CATALOG:
-                return mContext.getString(R.string.catalogue);
+                return mTitles[CATALOG];
             default:
                 return null;
         }

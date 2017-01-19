@@ -328,7 +328,8 @@ public class ShoppingListEditingActivity extends ItemActivity
             return;
         }
 
-        priceMgr.setCurrencyCode(etCurrencyCode.getText().toString());
+        String currencyCode = etCurrencyCode.getText().toString();
+        priceMgr.setCurrencyCode(currencyCode);
 
         String msg;
 

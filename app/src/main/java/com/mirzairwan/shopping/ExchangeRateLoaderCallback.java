@@ -36,7 +36,7 @@ public abstract class ExchangeRateLoaderCallback implements LoaderManager.Loader
     @Override
     public Loader<Map<String, ExchangeRate>> onCreateLoader(int id, Bundle args)
     {
-        Log.d(LOG_TAG, ">>>>onCreateLoader()");
+        Log.d(LOG_TAG, " >>>>>>> onCreateLoader() ExchangeRate");
         String destCurrencyCode = args.getString(DESTINATION_CURRENCY_CODE);
         String[] foreignCurrencyCodes = args.getStringArray(FOREIGN_CURRENCY_CODES);
         HashSet<String> sourceCurrencies = null;

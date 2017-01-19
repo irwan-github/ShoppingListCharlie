@@ -1,9 +1,10 @@
 package com.mirzairwan.shopping;
 
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+
+import java.text.ParseException;
 
 /**
  * Created by Mirza Irwan on 16/1/17.
@@ -11,21 +12,19 @@ import android.widget.EditText;
 
 public class ExchangeRateDisplayState implements View.OnFocusChangeListener
 {
-    private PriceField mTranslatedPrice;
+    private PriceField mPriceField;
     String mHomeCurrencyCode;
-    EditText mEtCurrencyCode;
     EditText mEtPrice;
-    OnExchangeRateListener mOnExchangeRateListener;
+    OnExchangeRateRequest mOnExchangeRateListener;
     CurrencyCodeObserver mCurrencyCodeObserver;
     private final String LOG_TAG = ExchangeRateDisplayState.class.getSimpleName();
 
-    public ExchangeRateDisplayState(OnExchangeRateListener onExchangeRateListener,
-                                    PriceField translatedPrice)
+    public ExchangeRateDisplayState(OnExchangeRateRequest onExchangeRateListener,
+                                    PriceField priceField)
     {
-        mHomeCurrencyCode = translatedPrice.getHomeCurrencyCode();
-        mEtCurrencyCode = translatedPrice.getCurrencyCodeView();
-        mEtPrice = translatedPrice.getEditTextSourcePrice();
-        mTranslatedPrice = translatedPrice;
+        mHomeCurrencyCode = priceField.getHomeCurrencyCode();
+        mEtPrice = priceField.getEditTextSourcePrice();
+        mPriceField = priceField;
         mOnExchangeRateListener = onExchangeRateListener;
     }
 
@@ -37,50 +36,55 @@ public class ExchangeRateDisplayState implements View.OnFocusChangeListener
     @Override
     public void onFocusChange(View v, boolean hasFocus)
     {
-        boolean isCodeSameAsHomeCode = mHomeCurrencyCode.equals(mEtCurrencyCode.getText().toString());
-        boolean isPriceEmpty = TextUtils.isEmpty(mEtPrice.getText());
+        boolean isPriceEmpty = false;
+        try
+        {
+            isPriceEmpty = MyTextUtils.isZeroValue(mEtPrice);
+        } catch (ParseException e)
+        {
+            e.printStackTrace();
+            return;
+        }
 
         if(!v.hasFocus() && !isPriceEmpty)
         {
-            if(!mEtCurrencyCode.hasFocus() && !isCodeSameAsHomeCode && !isPriceEmpty &&
-                    mCurrencyCodeObserver.isCurrecyCodeSameAsPrev())
+            if(!mCurrencyCodeObserver.hasFocus() &&
+                    !mCurrencyCodeObserver.isExistingCurrencySameAsHomeCurrency()
+                    && !isPriceEmpty)
             {
-                Log.d(LOG_TAG, ">>>> processExchangeRate");
-                mTranslatedPrice.getProgressBar().setVisibility(View.VISIBLE);
-                mOnExchangeRateListener.processExchangeRate(mEtCurrencyCode.getText().toString(),
-                        mTranslatedPrice.getLoaderId());
+                mPriceField.displayProgress();
+                if (mCurrencyCodeObserver.isCurrecyCodeSameAsPrev())
+                {
+                    Log.d(LOG_TAG, ">>>> processExchangeRate");
+                    mOnExchangeRateListener.doConversion(mCurrencyCodeObserver.getCurrencyCode(),
+                            mPriceField.getLoaderId(), false);
+                }
+                else
+                {
+                    Log.d(LOG_TAG, ">>>> restartProcessExchangeRate");
+                    mOnExchangeRateListener.doConversion(mCurrencyCodeObserver.getCurrencyCode(),
+                            mPriceField.getLoaderId(), true);
+                }
             }
-
-            if(!mEtCurrencyCode.hasFocus() && !isCodeSameAsHomeCode && !isPriceEmpty &&
-                    !mCurrencyCodeObserver.isCurrecyCodeSameAsPrev())
-            {
-                Log.d(LOG_TAG, ">>>> restartProcessExchangeRate");
-                mTranslatedPrice.getProgressBar().setVisibility(View.VISIBLE);
-                mOnExchangeRateListener.restartProcessExchangeRate(mEtCurrencyCode.getText().toString(),
-                        mTranslatedPrice.getLoaderId());
-            }
-
         }
         else if(!v.hasFocus())//Price is empty
         {
-            mTranslatedPrice.clear();
+            mPriceField.clear();
         }
-
-
     }
 
-    public interface OnExchangeRateListener
-    {
-        void processExchangeRate(String currencyCode, int loaderID);
-
-        void restartProcessExchangeRate(String newCurrencyCode, int loaderID);
-    }
-
+    /**
+     * Price field need observe currency code field to know whether to init or restart Loader process
+     */
     public interface CurrencyCodeObserver
     {
         boolean isCurrecyCodeSameAsPrev();
+
+        boolean isExistingCurrencySameAsHomeCurrency();
+
+        boolean hasFocus();
+
+        String getCurrencyCode();
     }
-
-
 
 }

@@ -32,43 +32,64 @@ import java.util.Set;
 class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
 {
     private static final String LOG_TAG = ExchangeRateLoader.class.getSimpleName();
-    private Context mContext;
     private String mDestCurrencyCode;
     private String mBaseUri;
+    private Set<String> mSourceCurrencies; //Input to fetch exchange rate
 
-    private Set<String> mSourceCurrencies;
-
-    ExchangeRateLoader(Context context, Set<String> sourceCurrencies, String baseUri, String destCurrencyCode)
+    ExchangeRateLoader(Context context, Set<String> sourceCurrencies, String baseUri, String
+            destCurrencyCode)
     {
         super(context);
+        Log.d(LOG_TAG, ">>>>>>> Construct ExchangeRateLoader()");
+        Log.d(LOG_TAG, ">>>>>>> base uri " + baseUri);
 
-        if(baseUri == null)
+        if (baseUri == null)
+        {
             throw new IllegalArgumentException("Web uri cannot be NULL");
+        }
 
-        if(destCurrencyCode == null)
+        if (destCurrencyCode == null)
+        {
             throw new IllegalArgumentException("Destination currency code cannot be NULL");
-
-        mContext = context;
+        }
         mSourceCurrencies = sourceCurrencies;
         mBaseUri = baseUri;
         mDestCurrencyCode = destCurrencyCode;
     }
 
+    /**
+     * Good place to cache the exchange rate. Just remember this is on the UI thread so nothing lengthy!
+     */
+    @Override
+    public void deliverResult(Map<String, ExchangeRate> exchangeRates)
+    {
+        //TODO: Cache the exchange rate
+        super.deliverResult(exchangeRates);
+    }
+
+
     @Override
     protected void onStartLoading()
     {
-        super.forceLoad();
+        Log.d(LOG_TAG, ">>>>>>> onStartLoading(): " + getId());
+
+        if (mSourceCurrencies == null || mSourceCurrencies.size() == 0)
+        {
+            Log.d(LOG_TAG, ">>>>>>> onStartLoading() source currency is empty. Abort");
+            deliverResult(null);
+        }
+        else
+        {
+            Log.d(LOG_TAG, ">>>>>>> source currency: " + getId() + " " + mSourceCurrencies);
+            forceLoad();
+        }
+
     }
 
     @Override
     public Map<String, ExchangeRate> loadInBackground()
     {
-        Log.d(LOG_TAG, mContext.getClass().getSimpleName() + " >>> loadInBackground()");
-
-        if (mSourceCurrencies == null || mSourceCurrencies.size() == 0)
-        {
-            return null;
-        }
+        Log.d(LOG_TAG, ">>>>>>> loadInBackground() start");
 
         String queryWeb = createQueryUri();
         String jsonResp = null;
@@ -79,10 +100,9 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
         } catch (IOException e)
         {
             e.printStackTrace();
-        }
-        catch(Exception ex)
+        } catch (Exception ex)
         {
-          return null;
+            return null;
         }
         if (jsonResp == null)
         {
@@ -98,6 +118,7 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
             e.printStackTrace();
         }
 
+        Log.d(LOG_TAG, ">>>>>>> loadInBackground() end");
         return rates;
     }
 
@@ -183,8 +204,8 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
     private String createQueryUri()
     {
         Uri.Builder builder = Uri.parse(mBaseUri).buildUpon().appendQueryParameter("base",
-                                                                                mDestCurrencyCode);
-        String symbols="";
+                mDestCurrencyCode);
+        String symbols = "";
         Iterator<String> iterator = mSourceCurrencies.iterator();
 
         while (iterator.hasNext())
@@ -202,8 +223,4 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
         return queryUri;
     }
 
-    public Set<String> getSourceCurrencies()
-    {
-        return mSourceCurrencies;
-    }
 }

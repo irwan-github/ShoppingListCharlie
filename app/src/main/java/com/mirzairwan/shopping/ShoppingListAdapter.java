@@ -116,27 +116,38 @@ public class ShoppingListAdapter extends CursorAdapter
     }
 
 
-    private void setPrice(Context context, String currencyCode, double priceTag, TextView tvSelectedPrice)
+    private void setPrice(Context context, String srcCurrencyCode, double priceTag, TextView tvSelectedPrice)
     {
         String countryCode = PreferenceManager.getDefaultSharedPreferences(context).getString
                 ("home_country_preference", null);
-        String sourceCurrencyCode = FormatHelper.getCurrencyCode(countryCode);
+        String destCurrencyCode = FormatHelper.getCurrencyCode(countryCode);
 
-        if(sourceCurrencyCode.equalsIgnoreCase(currencyCode) || mExchangeRates == null)
+        if(destCurrencyCode.equalsIgnoreCase(srcCurrencyCode))
         {
             tvSelectedPrice.setText(FormatHelper.formatCountryCurrency(countryCode,
-                    currencyCode,
+                    srcCurrencyCode,
                     priceTag / 100));
         }
-        else
+        else if(mExchangeRates != null)
         {
-            printExchangeRateLogs(mExchangeRates);
-            ExchangeRate exchangeRate = mExchangeRates.get(currencyCode);
-            double translatedDestVal = exchangeRate.compute(priceTag);
-            String text = FormatHelper.formatCountryCurrency(countryCode,
-                    FormatHelper.getCurrencyCode(countryCode),
-                    translatedDestVal / 100) + " (est)";
-            tvSelectedPrice.setText(text);
+            ExchangeRate exchangeRate = mExchangeRates.get(srcCurrencyCode);
+            //printExchangeRateLogs(mExchangeRates);
+            Log.d(LOG_TAG, ">>>>>>> Source Currency: " + srcCurrencyCode);
+            if(exchangeRate != null)
+            {
+                double translatedDestVal = exchangeRate.compute(priceTag);
+                String text = FormatHelper.formatCountryCurrency(countryCode,
+                        FormatHelper.getCurrencyCode(countryCode),
+                        translatedDestVal / 100) + " (" + srcCurrencyCode + "->" + destCurrencyCode + ")";
+
+                tvSelectedPrice.setText(text);
+            }
+            else
+            {
+                tvSelectedPrice.setText(FormatHelper.formatCountryCurrency(countryCode,
+                        srcCurrencyCode,
+                        priceTag / 100));
+            }
         }
 
     }

@@ -28,7 +28,7 @@ public class SettingsFragment extends PreferenceFragment implements Preference
         addPreferencesFromResource(R.xml.preferences);
 
         countryCodePref = findPreference(getString(R.string.user_country_pref));
-        InputFilterUtil.setAllCapsInputFilter(((EditTextPreference) countryCodePref).getEditText());
+        MyTextUtils.setAllCapsInputFilter(((EditTextPreference) countryCodePref).getEditText());
         countryCodePref.setOnPreferenceChangeListener(this);
 
         sortPref = findPreference(getString(R.string.key_user_sort_pref));

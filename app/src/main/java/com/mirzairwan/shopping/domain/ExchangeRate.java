@@ -89,5 +89,9 @@ public class ExchangeRate implements Parcelable
         dest.writeLong(mDate.getTime());
     }
 
-
+    @Override
+    public String toString()
+    {
+        return mSourceCurrencyCode + "->" + mDestCurrencyCode + " @ " + mRate;
+    }
 }

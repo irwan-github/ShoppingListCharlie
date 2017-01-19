@@ -15,15 +15,14 @@ public class CurrencyCodeChecker implements View.OnFocusChangeListener, Exchange
     private PriceField mBundlePrice;
     private PriceField mUnitPrice;
     private String mCountryCode;
-    private ExchangeRateDisplayState.OnExchangeRateListener mOnExchangeRateListener;
+    private OnExchangeRateRequest mOnExchangeRateListener;
     protected String mExistingCurrecyCode;
     protected String mPrevCurrecyCode;
     private EditText mEtCurrencyCode;
-    //private String newCurrencyCode;
 
     public CurrencyCodeChecker(EditText etCurrencyCode, String countryCode, PriceField unitPrice,
                                PriceField bundlePrice,
-                               ExchangeRateDisplayState.OnExchangeRateListener onExchangeRateListener)
+                               OnExchangeRateRequest onExchangeRateListener)
     {
         mEtCurrencyCode = etCurrencyCode;
         mExistingCurrecyCode = etCurrencyCode.getText().toString();
@@ -42,10 +41,6 @@ public class CurrencyCodeChecker implements View.OnFocusChangeListener, Exchange
         boolean isCurrencyCodeValid = !TextUtils.isEmpty(mEtCurrencyCode.getText()) &&
                 FormatHelper.isValidCurrencyCode(newCurrencyCode);
 
-        String homeCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
-
-        boolean isNewCodeIdenticalToHomeCode = homeCurrencyCode.equals(newCurrencyCode);
-
         //Check currency code and update the symbols of the price input fields
         if (isCurrencyCodeValid && !mEtCurrencyCode.hasFocus())
         {
@@ -55,31 +50,31 @@ public class CurrencyCodeChecker implements View.OnFocusChangeListener, Exchange
             {
                 mPrevCurrecyCode = mExistingCurrecyCode;
                 mExistingCurrecyCode = newCurrencyCode;
+
+                mUnitPrice.setCurrencySymbolInPriceHint(mExistingCurrecyCode);
+                mBundlePrice.setCurrencySymbolInPriceHint(mExistingCurrecyCode);
             }
 
-            mUnitPrice.setCurrencySymbolInPriceHint();
-
-            mBundlePrice.setCurrencySymbolInPriceHint();
-
-            boolean isAnyPriceExist = !mUnitPrice.isEmpty() ||
-                    !mBundlePrice.isEmpty();
-
-
-
-            if (isAnyPriceExist && !isNewCodeIdenticalToHomeCode)
+            if (!isExistingCurrencySameAsHomeCurrency())
             {
-                mUnitPrice.setTranslatedPricesVisibility(View.INVISIBLE);
-                mUnitPrice.getProgressBar().setVisibility(View.VISIBLE);
 
-                mBundlePrice.setTranslatedPricesVisibility(View.INVISIBLE);
-                mBundlePrice.getProgressBar().setVisibility(View.VISIBLE);
+                mUnitPrice.displayProgress();
+
+                mBundlePrice.displayProgress();
 
                 if (isNewCodeIdenticalToCurrentCode)
                 {
-                    mOnExchangeRateListener.processExchangeRate(newCurrencyCode, ITEM_EXCHANGE_RATE_LOADER_ID);
+                    mOnExchangeRateListener.doConversion(newCurrencyCode,
+                                                            ITEM_EXCHANGE_RATE_LOADER_ID, false);
                 }
                 else
-                    mOnExchangeRateListener.restartProcessExchangeRate(newCurrencyCode, ITEM_EXCHANGE_RATE_LOADER_ID);
+                    mOnExchangeRateListener.doConversion(newCurrencyCode,
+                                                            ITEM_EXCHANGE_RATE_LOADER_ID, true);
+            }
+            else //new price currency is same as home currency
+            {
+                mUnitPrice.setTranslatedPrice(null);
+                mBundlePrice.setTranslatedPrice(null);
             }
 
 
@@ -99,5 +94,25 @@ public class CurrencyCodeChecker implements View.OnFocusChangeListener, Exchange
     {
         boolean isNewCodeSameAsPrevCode = mExistingCurrecyCode.equals(mPrevCurrecyCode);
         return isNewCodeSameAsPrevCode;
+    }
+
+    @Override
+    public boolean isExistingCurrencySameAsHomeCurrency()
+    {
+        String newCurrencyCode = mEtCurrencyCode.getText().toString();
+        String homeCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
+        return homeCurrencyCode.equals(newCurrencyCode);
+    }
+
+    @Override
+    public boolean hasFocus()
+    {
+        return mEtCurrencyCode.hasFocus();
+    }
+
+    @Override
+    public String getCurrencyCode()
+    {
+        return mEtCurrencyCode.getText().toString();
     }
 }
