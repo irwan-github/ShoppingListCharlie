@@ -10,18 +10,17 @@ import java.util.Set;
 
 public class ExchangeRateInput extends Observable
 {
-    private Set<String> mSourceCurrencies = new HashSet<>();
+    private Set<String> mSourceCurrencies;
     private String mBaseCurrency = "";
 
-    public ExchangeRateInput(Set<String> sourceCurrencies, String baseCurrency)
+    public ExchangeRateInput()
     {
-        mSourceCurrencies = sourceCurrencies;
-        mBaseCurrency = baseCurrency;
+        Set<String> mSourceCurrencies = new HashSet<>();
     }
 
-    public void addSourceCurrency(String srcCurrency)
+    public void addSourceCurrency(String sourceCurrencies)
     {
-        boolean isChanged = mSourceCurrencies.add(srcCurrency);
+        boolean isChanged = mSourceCurrencies.add(sourceCurrencies);
         if(isChanged)
         {
             setChanged();
@@ -39,7 +38,6 @@ public class ExchangeRateInput extends Observable
 
     public void setBaseCurrency(String baseCurrency)
     {
-
         if(!mBaseCurrency.equals(baseCurrency))
         {
             mBaseCurrency = baseCurrency;

@@ -52,4 +52,5 @@ public abstract class ExchangeRateLoaderCallback implements LoaderManager.Loader
 
 
 
+
 }

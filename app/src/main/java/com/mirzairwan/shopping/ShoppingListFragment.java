@@ -316,11 +316,9 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     {
         Log.d(LOG_TAG, ">>>>>>> onLoadFinished Cursor");
 
-        //updateSourceCurrencies();
         shoppingListAdapter.swapCursor(cursor);
 
-        prepareSummaryOfItemsAdded();
-        prepareSummaryOfItemsChecked();
+        prepareSourceCurrencyCodes(cursor);
 
         if (PermissionHelper.isInternetUp(getActivity()) && !mSourceCurrencyCodes.isEmpty())
         {
@@ -342,14 +340,22 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
     private void prepareSourceCurrencyCodes(Cursor cursor)
     {
-    }
+        mSourceCurrencyCodes.clear();
+        String baseCurrencyCode = getCurrencyCode(mCountryCode);
 
-    private boolean isNewSourceCurrenciesInPrevious()
-    {
-        Log.d(LOG_TAG, ">>>>>>> Previous source currency: " + mPrevSourceCurrencyCodes.toString());
-        Log.d(LOG_TAG, ">>>>>>> New source currency: " + mPrevSourceCurrencyCodes.toString());
+        cursor.moveToPosition(-1); //Start at beginning
+        while (cursor.moveToNext())
+        {
 
-        return mPrevSourceCurrencyCodes.containsAll(mSourceCurrencyCodes);
+            int colCurrencyCode = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
+            String lCurrencyCode = cursor.getString(colCurrencyCode);
+
+            if (!lCurrencyCode.trim().equalsIgnoreCase(baseCurrencyCode))
+            {
+                mSourceCurrencyCodes.add(lCurrencyCode);
+
+            }
+        }
     }
 
     protected void setSummaryTotalsForLocalItems()
@@ -414,9 +420,9 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         {
             Log.d(LOG_TAG, "onSharedPreferenceChanged Change in home country");
             mCountryCode = sharedPreferences.getString(key, null);
-            prepareSummaryOfItemsAdded();
-            prepareSummaryOfItemsChecked();
-            shoppingListAdapter.notifyDataSetChanged();
+//            prepareSummaryOfItemsAdded();
+//            prepareSummaryOfItemsChecked();
+//            shoppingListAdapter.notifyDataSetChanged();
         }
 
         if (key.equals(getString(R.string.user_sort_pref)))
@@ -593,6 +599,9 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         {
             Log.d(LOG_TAG, ">>>>>>> doCoversion()");
             Log.d(LOG_TAG, "Exchange rates: " + exchangeRates.toString());
+
+            prepareSummaryOfItemsAdded();
+            prepareSummaryOfItemsChecked();
 
             //if exchange rate is null, only add for local-priced items
             if (exchangeRates == null)
