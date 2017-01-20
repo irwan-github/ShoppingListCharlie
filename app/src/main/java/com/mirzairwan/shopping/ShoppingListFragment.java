@@ -120,8 +120,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         PreferenceManager.setDefaultValues(getActivity(), preferences, false);
         PreferenceManager.getDefaultSharedPreferences(getActivity())
                 .registerOnSharedPreferenceChangeListener(this);
-
-
         setupUserLocale();
         mExchangeRateCallback = new ExchangeRateCallbackImpl();
 
@@ -139,6 +137,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     public void onActivityCreated(Bundle savedInstanceState)
     {
         Log.d(LOG_TAG, ">>>>>>> onActivityCreated");
+
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity
                 ());
         Bundle args = new Bundle();
@@ -325,12 +324,13 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
         if (PermissionHelper.isInternetUp(getActivity()) && !mSourceCurrencyCodes.isEmpty())
         {
-            //Call the hosting activity to fetch exchange rates. When hosting activity hasthe
-            //exchange rates, it will call back the fragment. At that future point, update shopping
+            //Call the hosting activity to fetch exchange rates. When hosting activity has the
+            //exchange rates, it will call back this fragment. At that future point, update shopping
             //list summary and notify Cursor List to show translated prices.
             mLoadingIndicator.setVisibility(View.VISIBLE); //Show work in progress
             mShoppingListTotalsView.setVisibility(View.INVISIBLE);
-            //Log.d(LOG_TAG, ">>>>>>> foreign source currencies: " + mSourceCurrencyCodes.toString());
+            //Log.d(LOG_TAG, ">>>>>>> foreign source currencies: " + mSourceCurrencyCodes
+            // .toString());
             mOnExchangeRateListener.onRequest(mSourceCurrencyCodes, mExchangeRateCallback);
 
         }
@@ -338,6 +338,10 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         {
             setSummaryTotalsForLocalItems();
         }
+    }
+
+    private void prepareSourceCurrencyCodes(Cursor cursor)
+    {
     }
 
     private boolean isNewSourceCurrenciesInPrevious()
@@ -404,13 +408,15 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
     {
-        if (key.equals(getString(R.string.user_country_pref)))
+        Log.d(LOG_TAG, ">>>>>>> onSharedPreferenceChanged");
+        if (key.equals(getString(R.string.user_country_pref)))  //if (key.equals(getString(R
+        // .string.user_country_pref)))
         {
             Log.d(LOG_TAG, "onSharedPreferenceChanged Change in home country");
             mCountryCode = sharedPreferences.getString(key, null);
-//            prepareSummaryOfItemsAdded();
-//            prepareSummaryOfItemsChecked();
-//            shoppingListAdapter.notifyDataSetChanged();
+            prepareSummaryOfItemsAdded();
+            prepareSummaryOfItemsChecked();
+            shoppingListAdapter.notifyDataSetChanged();
         }
 
         if (key.equals(getString(R.string.user_sort_pref)))
@@ -438,7 +444,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
      * Populate the foreign currency codes list. This list will be used to fetch exchange rates
      * in the web.
      * Add up total cost of local items added to shopping list
-     * List the foreign items found in the shopping list.
+     * List the foreign items found in the shopping list. This is where list of source currency
+     * codes is created before fetching foreign exchange rates
      */
     public void prepareSummaryOfItemsAdded()
     {
@@ -520,7 +527,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 setVisible(atLeastAnItemChecked == 1);
 
     }
-
 
     /**
      * Add cost of all local-priced and foreign-priced items in the shopping list
@@ -607,8 +613,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
     private void setSummaryTotalsForLocalAndForeignItems(Map<String, ExchangeRate> exchangeRates)
     {
-        Log.d(LOG_TAG, ">>>>>>> setSummaryTotalsForLocalAndForeignItems");
-        Log.d(LOG_TAG, ">>>>>>> setSummaryTotalsForLocalAndForeignItems: " + exchangeRates.toString());
+        Log.d(LOG_TAG, ">>>>>>> setSummaryTotalsForLocalAndForeignItems: " + exchangeRates
+                .toString());
         String totalCostAdded = totalCostItemsAdded(exchangeRates);
         String totalCostChecked = totalItemsChecked(exchangeRates);
         displaySummaryTotals(totalCostAdded, totalCostChecked);

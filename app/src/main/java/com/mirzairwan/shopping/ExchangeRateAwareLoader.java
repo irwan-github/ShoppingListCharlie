@@ -22,6 +22,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Set;
 
 /**
@@ -29,34 +31,37 @@ import java.util.Set;
  * It fetches ECB exchange rates using web API.
  */
 
-class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
+class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
 {
-    private static final String LOG_TAG = ExchangeRateLoader.class.getSimpleName();
+    private static final String LOG_TAG = ExchangeRateAwareLoader.class.getSimpleName();
+    private ExchangeRateInput mExchangeRateInput;
     private String mDestCurrencyCode;
     private String mBaseUri;
     private Set<String> mSourceCurrencies; //Input to fetch exchange rate
+    private Map<String, ExchangeRate> mExchangeRates;
 
-    ExchangeRateLoader(Context context, Set<String> sourceCurrencies, String baseUri, String
-            destCurrencyCode)
+    ExchangeRateAwareLoader(Context context, ExchangeRateInput exchangeRateInput,
+                            String baseUri)
     {
         super(context);
         Log.d(LOG_TAG, ">>>>>>> Construct ExchangeRateLoader()");
         Log.d(LOG_TAG, ">>>>>>> base uri " + baseUri);
-        Log.d(LOG_TAG, ">>>>>>> destCurrencyCode " + destCurrencyCode);
-        Log.d(LOG_TAG, ">>>>>>> sourceCurrencies " + sourceCurrencies);
+        //Log.d(LOG_TAG, ">>>>>>> destCurrencyCode " + destCurrencyCode);
+        //Log.d(LOG_TAG, ">>>>>>> sourceCurrencies " + sourceCurrencies);
 
         if (baseUri == null)
         {
             throw new IllegalArgumentException("Web uri cannot be NULL");
         }
 
-        if (destCurrencyCode == null)
-        {
-            throw new IllegalArgumentException("Destination currency code cannot be NULL");
-        }
-        mSourceCurrencies = sourceCurrencies;
+//        if (destCurrencyCode == null)
+//        {
+//            throw new IllegalArgumentException("Destination currency code cannot be NULL");
+//        }
+        mSourceCurrencies = exchangeRateInput.getSourceCurrencies();
         mBaseUri = baseUri;
-        mDestCurrencyCode = destCurrencyCode;
+        mExchangeRateInput = exchangeRateInput;
+        mDestCurrencyCode = exchangeRateInput.getBaseCurrency();
     }
 
     /**
@@ -65,6 +70,7 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
     @Override
     public void deliverResult(Map<String, ExchangeRate> exchangeRates)
     {
+        mExchangeRates = exchangeRates;
         //TODO: Cache the exchange rate
         super.deliverResult(exchangeRates);
     }
@@ -75,17 +81,40 @@ class ExchangeRateLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
     {
         Log.d(LOG_TAG, ">>>>>>> onStartLoading: " + getId());
 
-        if (mSourceCurrencies == null || mSourceCurrencies.size() == 0)
-        {
-            Log.d(LOG_TAG, ">>>>>>> onStartLoading source currency is empty. Abort");
-            deliverResult(null);
-        }
-        else
-        {
-            Log.d(LOG_TAG, ">>>>>>> source currency: " + getId() + " " + mSourceCurrencies);
+        Observer observer = new Observer() {
+            @Override
+            public void update(Observable o, Object arg)
+            {
+                if(o.hasChanged())
+                {
+                    // Notify the loader to reload the data
+                    onContentChanged();
+                    // If the loader is started, this will kick off
+                    // loadInBackground() immediately. Otherwise,
+                    // the fact that something changed will be cached
+                    // and can be later retrieved via takeContentChanged()
+                }
+            }
+        };
+
+        mExchangeRateInput.addObserver(observer);
+
+        if (takeContentChanged() || mExchangeRates == null) {
+            // Something has changed or we have no data,
+            // so kick off loading it
             forceLoad();
         }
+        else
+            deliverResult(mExchangeRates);
 
+    }
+
+    protected void onReset() {
+        // Stop watching for file changes
+        if (mExchangeRateInput != null) {
+            mExchangeRateInput.deleteObservers();
+            mExchangeRateInput = null;
+        }
     }
 
     @Override

@@ -87,6 +87,7 @@ Or else, the scaling is bypassed resulting in OutOfMemoryError
         android:focusable="false"
         android:textColor="@android:color/white"
         android:textAppearance="?android:textAppearanceMedium"
+        android:fontFamily="sans-serif-medium"
         android:textOff=""
         android:textOn=""
         tools:text="8"
