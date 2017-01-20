@@ -12,10 +12,11 @@ public class ExchangeRateInput extends Observable
 {
     private Set<String> mSourceCurrencies;
     private String mBaseCurrency = "";
+    private String mBaseUri = "";
 
     public ExchangeRateInput()
     {
-        Set<String> mSourceCurrencies = new HashSet<>();
+        mSourceCurrencies = new HashSet<>();
     }
 
     public void addSourceCurrency(String sourceCurrencies)
@@ -38,12 +39,26 @@ public class ExchangeRateInput extends Observable
 
     public void setBaseCurrency(String baseCurrency)
     {
+
         if(!mBaseCurrency.equals(baseCurrency))
         {
             mBaseCurrency = baseCurrency;
+            mSourceCurrencies.remove(baseCurrency);
             setChanged();
             notifyObservers(mBaseCurrency);
         }
+    }
+
+    public void setBaseWebApi(String baseWebApi)
+    {
+
+        if(!mBaseUri.equals(baseWebApi))
+        {
+            mBaseUri = baseWebApi;
+            setChanged();
+            notifyObservers(mBaseCurrency);
+        }
+
     }
 
     public Set<String> getSourceCurrencies()
@@ -54,5 +69,20 @@ public class ExchangeRateInput extends Observable
     public String getBaseCurrency()
     {
         return mBaseCurrency;
+    }
+
+    public String getBaseWebApi()
+    {
+        return mBaseUri;
+    }
+
+    public void removeSourceCurrency(String existingCountryCode)
+    {
+        boolean isChanged = mSourceCurrencies.remove(existingCountryCode);
+        if(isChanged)
+        {
+            setChanged();
+            notifyObservers(mSourceCurrencies);
+        }
     }
 }

@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Set;
 
 /**
  * Created by Mirza Irwan on 13/1/17.
@@ -35,37 +34,38 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
 {
     private static final String LOG_TAG = ExchangeRateAwareLoader.class.getSimpleName();
     private ExchangeRateInput mExchangeRateInput;
-    private String mDestCurrencyCode;
-    private String mBaseUri;
-    private Set<String> mSourceCurrencies; //Input to fetch exchange rate
+    //private String mDestCurrencyCode;
+    //private String mBaseUri;
+    //private Set<String> mSourceCurrencies; //Input to fetch exchange rate
     private Map<String, ExchangeRate> mExchangeRates;
+    private Observer mObserver;
 
-    ExchangeRateAwareLoader(Context context, ExchangeRateInput exchangeRateInput,
-                            String baseUri)
+    ExchangeRateAwareLoader(Context context, ExchangeRateInput exchangeRateInput)
     {
         super(context);
-        Log.d(LOG_TAG, ">>>>>>> Construct ExchangeRateLoader()");
-        Log.d(LOG_TAG, ">>>>>>> base uri " + baseUri);
+        Log.d(LOG_TAG, ">>>>>>> Construct ExchangeRateAwareLoader()");
+        //Log.d(LOG_TAG, ">>>>>>> base uri " + baseUri);
         //Log.d(LOG_TAG, ">>>>>>> destCurrencyCode " + destCurrencyCode);
         //Log.d(LOG_TAG, ">>>>>>> sourceCurrencies " + sourceCurrencies);
 
-        if (baseUri == null)
-        {
-            throw new IllegalArgumentException("Web uri cannot be NULL");
-        }
+//        if (baseUri == null)
+//        {
+//            throw new IllegalArgumentException("Web uri cannot be NULL");
+//        }
 
 //        if (destCurrencyCode == null)
 //        {
 //            throw new IllegalArgumentException("Destination currency code cannot be NULL");
 //        }
-        mSourceCurrencies = exchangeRateInput.getSourceCurrencies();
-        mBaseUri = baseUri;
+        //mSourceCurrencies = exchangeRateInput.getSourceCurrencies();
+        //mBaseUri = exchangeRateInput.getBaseWebApi();
         mExchangeRateInput = exchangeRateInput;
-        mDestCurrencyCode = exchangeRateInput.getBaseCurrency();
+        //mDestCurrencyCode = exchangeRateInput.getBaseCurrency();
     }
 
     /**
-     * Good place to cache the exchange rate. Just remember this is on the UI thread so nothing lengthy!
+     * Good place to cache the exchange rate. Just remember this is on the UI thread so nothing
+     * lengthy!
      */
     @Override
     public void deliverResult(Map<String, ExchangeRate> exchangeRates)
@@ -81,37 +81,56 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
     {
         Log.d(LOG_TAG, ">>>>>>> onStartLoading: " + getId());
 
-        Observer observer = new Observer() {
-            @Override
-            public void update(Observable o, Object arg)
+        if(mObserver == null)
+        {
+            mObserver = new Observer()
             {
-                if(o.hasChanged())
+                @Override
+                public void update(Observable o, Object arg)
                 {
-                    // Notify the loader to reload the data
-                    onContentChanged();
-                    // If the loader is started, this will kick off
-                    // loadInBackground() immediately. Otherwise,
-                    // the fact that something changed will be cached
-                    // and can be later retrieved via takeContentChanged()
+//                    if (o.hasChanged())
+//                    {
+                        // Notify the loader to reload the data
+                        onContentChanged();
+                        // If the loader is started, this will kick off
+                        // loadInBackground() immediately. Otherwise,
+                        // the fact that something changed will be cached
+                        // and can be later retrieved via takeContentChanged()
+//                    }
                 }
+            };
+
+            mExchangeRateInput.addObserver(mObserver);
+        }
+
+        // Something has changed
+        if (takeContentChanged())
+        {
+            //No source currencies, don't fetch
+            if (mExchangeRateInput.getSourceCurrencies() == null ||
+                    mExchangeRateInput.getSourceCurrencies().size() == 0)
+            {
+                Log.d(LOG_TAG, ">>>>>>> onStartLoading source currency is empty. Abort");
+                deliverResult(null);
             }
-        };
-
-        mExchangeRateInput.addObserver(observer);
-
-        if (takeContentChanged() || mExchangeRates == null) {
-            // Something has changed or we have no data,
-            // so kick off loading it
-            forceLoad();
+            else
+            {
+                //start fetching
+                forceLoad();
+            }
         }
         else
+        {
             deliverResult(mExchangeRates);
+        }
 
     }
 
-    protected void onReset() {
+    protected void onReset()
+    {
         // Stop watching for file changes
-        if (mExchangeRateInput != null) {
+        if (mExchangeRateInput != null)
+        {
             mExchangeRateInput.deleteObservers();
             mExchangeRateInput = null;
         }
@@ -162,7 +181,7 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
         String strDate = root.getString("date");
         Date date = FormatHelper.strToDate(strDate, "-");
         JSONObject rates = root.getJSONObject("rates");
-        for (String sourceCurrency : mSourceCurrencies)
+        for (String sourceCurrency : mExchangeRateInput.getSourceCurrencies())
         {
             double rateVal = rates.getDouble(sourceCurrency);
             ExchangeRate fc = new ExchangeRate(sourceCurrency, base, rateVal, date);
@@ -235,10 +254,10 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
 
     private String createQueryUri()
     {
-        Uri.Builder builder = Uri.parse(mBaseUri).buildUpon().appendQueryParameter("base",
-                mDestCurrencyCode);
+        Uri.Builder builder = Uri.parse(mExchangeRateInput.getBaseWebApi()).buildUpon().appendQueryParameter("base",
+                mExchangeRateInput.getBaseCurrency());
         String symbols = "";
-        Iterator<String> iterator = mSourceCurrencies.iterator();
+        Iterator<String> iterator = mExchangeRateInput.getSourceCurrencies().iterator();
 
         while (iterator.hasNext())
         {

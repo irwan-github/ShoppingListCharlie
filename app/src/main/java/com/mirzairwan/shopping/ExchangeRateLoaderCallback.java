@@ -25,6 +25,7 @@ public abstract class ExchangeRateLoaderCallback implements LoaderManager.Loader
         ExchangeRate>>
 {
     protected static final String LOG_TAG = ExchangeRateLoaderCallback.class.getSimpleName();
+    private ExchangeRateInput mExchangeRateInput;
     private Context mContext;
 
     ExchangeRateLoaderCallback(Context context)
@@ -33,7 +34,8 @@ public abstract class ExchangeRateLoaderCallback implements LoaderManager.Loader
         mContext = context;
     }
 
-    @Override
+
+
     public Loader<Map<String, ExchangeRate>> onCreateLoader(int id, Bundle args)
     {
         Log.d(LOG_TAG, " >>>>>>> onCreateLoader() ExchangeRate");

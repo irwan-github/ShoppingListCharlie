@@ -107,6 +107,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
         View rootView = inflater.inflate(R.layout.fragment_shopping_list, container, false);
         mTvTotalValueAdded = (TextView) rootView.findViewById(R.id.tv_total_buy);
+        mTvTotalValueChecked = (TextView) rootView.findViewById(R.id.tv_total_checked);
         mLoadingIndicator = rootView.findViewById(R.id.loading_indicator);
         mShoppingListTotalsView = rootView.findViewById(R.id.shopping_list_totals);
         mShoppingListTotalsView.setVisibility(View.INVISIBLE);
@@ -499,7 +500,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         mTotalValueOfItemsChecked = 0.00d;
         byte atLeastAnItemChecked = (byte) 0;
         String currencyCode = getCurrencyCode(mCountryCode);
-        mTvTotalValueChecked = (TextView) getActivity().findViewById(R.id.tv_total_checked);
+
 
         Cursor cursor = shoppingListAdapter.getCursor();
         cursor.moveToPosition(-1);

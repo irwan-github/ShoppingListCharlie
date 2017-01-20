@@ -1,5 +1,6 @@
 package com.mirzairwan.shopping;
 
+import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
@@ -65,6 +66,7 @@ public class ShoppingActivity extends AppCompatActivity implements
     private String mBaseEndPoint; //Web API for fetching exchange rates
     private Loader<Map<String, ExchangeRate>> loader;
     private ShoppingListExchangeRateLoaderCb mShoppingListExchangeRateLoaderCb;
+    private ExchangeRateInput mExchangeRateInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -118,9 +120,16 @@ public class ShoppingActivity extends AppCompatActivity implements
 
 
         //Initialize the exchange rate loader but do NOT let it fetch exchange rate now until
-        // shopping list fragment request for exchange rate. To achieve that, send in null
+        // shopping list fragment has finished fetching shopping list. Upon fetching the shopping list
+        // shopping list fragment will request to this activity class to fetch exchange rates.
+        // So to prevent this activity from fetching exchage rate now, send in null
         // mSourceCurrencies
-        mShoppingListExchangeRateLoaderCb  = new ShoppingListExchangeRateLoaderCb(this);
+
+        mExchangeRateInput = new ExchangeRateInput();
+        mExchangeRateInput.setBaseWebApi(mBaseEndPoint);
+        mExchangeRateInput.setBaseCurrency(FormatHelper.getCurrencyCode(mCountryCode));
+        mShoppingListExchangeRateLoaderCb  = new ShoppingListExchangeRateLoaderCb(this,
+                mExchangeRateInput);
 
         Bundle args = getBundleForExchangeRateLoader(null);
 
@@ -350,6 +359,28 @@ public class ShoppingActivity extends AppCompatActivity implements
         }
 
         mExchangeRateCallback = exchangeRateCallback; //Called by onLoadFinished
+        mExchangeRateInput.setSourceCurrencies(sourceCurrencies);
+        getLoaderManager().initLoader(EXCHANGE_RATES_SHOPPING_LIST_LOADER_ID,
+                null, mShoppingListExchangeRateLoaderCb);
+    }
+
+    /**
+     * Not working when device orientation changes
+     *
+     * @param sourceCurrencies
+     * @param exchangeRateCallback
+     */
+    public void onRequestbk(Set<String> sourceCurrencies,
+                          ExchangeRateCallback exchangeRateCallback)
+    {
+        Log.d(LOG_TAG, ">>>>>>> onRequest");
+
+        if (!PermissionHelper.isInternetUp(this))
+        {
+            return;
+        }
+
+        mExchangeRateCallback = exchangeRateCallback; //Called by onLoadFinished
 
         //If there is zero source currencies requested, don't fetch exchange rates
         if (sourceCurrencies != null)
@@ -428,19 +459,12 @@ public class ShoppingActivity extends AppCompatActivity implements
 
             //Add old user's preference country code to source currencies before assigning the new
             // country code because translation may be needed
-            mSourceCurrencies.add(FormatHelper.getCurrencyCode(mCountryCode));
-
-            String newCountryCode = sharedPreferences.getString(key, null);
-
-            //Remove newCountryCode from source currencies because translation is not needed
-            mSourceCurrencies.remove(FormatHelper.getCurrencyCode(newCountryCode));
+            mExchangeRateInput.addSourceCurrency(FormatHelper.getCurrencyCode(mCountryCode));
 
             //Assign new country code
-            mCountryCode = newCountryCode;
+            mCountryCode = sharedPreferences.getString(key, null);
 
-            //Restart loader because of change in currency exchange rate parameters
-            getLoaderManager().restartLoader(EXCHANGE_RATES_SHOPPING_LIST_LOADER_ID,
-                    getBundleForExchangeRateLoader(mSourceCurrencies), mShoppingListExchangeRateLoaderCb);
+            mExchangeRateInput.setBaseCurrency(FormatHelper.getCurrencyCode(mCountryCode));
         }
     }
 
@@ -455,14 +479,39 @@ public class ShoppingActivity extends AppCompatActivity implements
         }
     }
 
-    private class ShoppingListExchangeRateLoaderCb extends ExchangeRateLoaderCallback
+    private class ShoppingListExchangeRateLoaderCb implements LoaderManager.LoaderCallbacks<Map<String,
+        ExchangeRate>>
     {
         private final String LOG_TAG = ShoppingListExchangeRateLoaderCb.class.getSimpleName();
+        private ExchangeRateInput mExchangeRateInput;
+        private Context mContext;
 
-        ShoppingListExchangeRateLoaderCb(Context context)
+//        ShoppingListExchangeRateLoaderCb(Context context)
+//        {
+//            Log.d(LOG_TAG, " >>>>>>> ShoppingListExchangeRateLoaderCb()");
+//        }
+
+        ShoppingListExchangeRateLoaderCb(Context context, ExchangeRateInput exchangeRateInput)
         {
-            super(context);
-            Log.d(LOG_TAG, " >>>>>>> ShoppingListExchangeRateLoaderCb()");
+            //Log.d(LOG_TAG, "Construct");
+            mContext = context;
+            mExchangeRateInput = exchangeRateInput;
+        }
+
+        @Override
+        public Loader<Map<String, ExchangeRate>> onCreateLoader(int id, Bundle args)
+        {
+            Log.d(LOG_TAG, " >>>>>>> onCreateLoader() ExchangeRate");
+            //String destCurrencyCode = args.getString(DESTINATION_CURRENCY_CODE);
+            //String[] foreignCurrencyCodes = args.getStringArray(FOREIGN_CURRENCY_CODES);
+            //HashSet<String> sourceCurrencies = null;
+//            if (foreignCurrencyCodes != null && foreignCurrencyCodes.length > 0)
+//            {
+//                List<String> foreignCurrencies = Arrays.asList(foreignCurrencyCodes);
+//                sourceCurrencies = new HashSet<>(foreignCurrencies);
+//            }
+            return new ExchangeRateAwareLoader(mContext,
+                    mExchangeRateInput);
         }
 
         @Override
