@@ -94,7 +94,7 @@ public class ItemEditingActivity extends ItemActivity
 
         try
         {
-            priceMgr.setItemPricesForSaving(item, mUnitPrice.getPrice(), mBundlePrice.getPrice(),
+            priceMgr.setItemPricesForSaving(item, mUnitPriceEditField.getPrice(), mBundlePriceEditField.getPrice(),
                     bundleQtyFromInputField);
         } catch (ParseException e)
         {

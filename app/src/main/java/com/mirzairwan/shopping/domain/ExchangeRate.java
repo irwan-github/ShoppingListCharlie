@@ -3,6 +3,8 @@ package com.mirzairwan.shopping.domain;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.mirzairwan.shopping.FormatHelper;
+
 import java.util.Date;
 
 /**
@@ -11,8 +13,8 @@ import java.util.Date;
 public class ExchangeRate implements Parcelable
 {
     private String mSourceCurrencyCode; //source currency
-    private String mDestCurrencyCode;  //destination currency
-    private double mRate; //One unit of mDestCurrency = mRate units of mSourceCurrency
+    private String mDestCurrencyCode;  //destination currency or base currency
+    private double mRate; //One unit of mDestCurrency or mBaseCurrency = mRate X mSourceCurrency
     private Date mDate;
 
     public final static String FOREIGN_CURRENCY_CODES = "FOREIGN_CURRENCY_CODES";
@@ -36,10 +38,10 @@ public class ExchangeRate implements Parcelable
         mDate = new Date(in.readLong());
     }
 
-    public double compute(double sourceCurrencyVal)
-    {
-        return (1/mRate) * sourceCurrencyVal;
-    }
+//    public double compute(double sourceCurrencyVal)
+//    {
+//        return (1 / mRate) * sourceCurrencyVal;
+//    }
 
     public String getDestCurrencyCode()
     {
@@ -51,12 +53,25 @@ public class ExchangeRate implements Parcelable
         return mSourceCurrencyCode;
     }
 
+    /**
+     * Translate to equivalent value in destination currency.
+     * @param sourceCurrencyVal Value to be translated
+     * @param destCurrencyCode Currency code of destination currency
+     * @return Translated value. If source destination currency code is different from base
+     * currency, an IllegalArgumentException is thrown
+     */
     public double compute(double sourceCurrencyVal, String destCurrencyCode)
     {
-        if(!destCurrencyCode.equals(mDestCurrencyCode))
-            return (1/mRate) * sourceCurrencyVal;
+        if (destCurrencyCode.equals(mDestCurrencyCode))
+        {
+            return (1 / mRate) * sourceCurrencyVal;
+        }
         else
-            throw new IllegalArgumentException("Destination Currency code-> Expected: " + mDestCurrencyCode + " Actual :" + destCurrencyCode );
+        {
+            throw new IllegalArgumentException("Destination currency is " + destCurrencyCode +
+                                                " but base currency of exchange rate is " + mDestCurrencyCode);
+            //return sourceCurrencyVal;
+        }
     }
 
     public static final Creator<ExchangeRate> CREATOR = new Creator<ExchangeRate>()
@@ -92,6 +107,7 @@ public class ExchangeRate implements Parcelable
     @Override
     public String toString()
     {
-        return mSourceCurrencyCode + "->" + mDestCurrencyCode + " @ " + mRate;
+        return mDestCurrencyCode + " = "  + FormatHelper.formatToTwoDecimalPlaces(1/mRate)
+                                                            + " x " + mSourceCurrencyCode;
     }
 }

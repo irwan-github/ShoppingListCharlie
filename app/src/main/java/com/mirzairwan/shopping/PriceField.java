@@ -46,6 +46,7 @@ public class PriceField
     public void setTranslatedPrice(ExchangeRate exchangeRate)
     {
         mProgressBar.setVisibility(View.INVISIBLE);
+        String mBaseCurrencyCode = FormatHelper.getCurrencyCode(mHomeCountryCode);
 
         if(exchangeRate == null)
         {
@@ -64,7 +65,7 @@ public class PriceField
             double priceVal;
             setTranslatedPricesVisibility(View.VISIBLE);
             priceVal = Double.parseDouble(sUnitPx);
-            double translated = exchangeRate.compute(priceVal);
+            double translated = exchangeRate.compute(priceVal, mBaseCurrencyCode);
             mEtTranslatedPrice.setText(FormatHelper.formatToTwoDecimalPlaces(translated));
             clearHintInTranslatedPrice();
             setCurrencyCodeInTranslatedPriceHint(mTextHint, mHomeCountryCode);

@@ -14,8 +14,9 @@ import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
 /**
- * PriceManager for handling the prices of one particular item
- * It handles 2 price types: Unit Price and bundle price
+ * PriceManager handles the prices of one particular item
+ * It handles 2 price types: Unit price and bundle price.
+ * The cursor loader sends cursor data so that PriceMgr can create the 2 price object
  * Created by Mirza Irwan on 29/12/16.
  */
 
@@ -34,12 +35,11 @@ public class PriceMgr
         mBundlePrice = new Price(0.00d, 0.00d, FormatHelper.getCurrencyCode(countryCode), DEFAULT_SHOP_ID);
     }
 
-    public PriceMgr(long itemId, String countryCode)
-    {
-        mItemId = itemId;
-        mCountryCode = countryCode;
-    }
 
+    /**
+     * Create unit price object and bundle price object
+     * @param cursor
+     */
     public void createPrices(Cursor cursor)
     {
 
@@ -110,7 +110,10 @@ public class PriceMgr
         return FormatHelper.formatToTwoDecimalPlaces(mBundlePrice.getBundlePrice());
     }
 
-    public void setItemPricesForSaving(Item item, String unitPriceFromInputField, String bundlePriceFromInputField, String bundleQtyFromInputField) throws ParseException
+    public void setItemPricesForSaving(Item item,
+                                       String unitPriceFromInputField,
+                                       String bundlePriceFromInputField,
+                                       String bundleQtyFromInputField) throws ParseException
     {
         if (item == null)
             throw new IllegalArgumentException("Item cannot be null");

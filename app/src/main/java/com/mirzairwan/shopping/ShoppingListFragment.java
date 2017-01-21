@@ -56,7 +56,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     private static final int LOADER_EXCHANGE_RATES = 2;
     private OnFragmentInteractionListener onFragmentInteractionListener;
     private ShoppingListAdapter shoppingListAdapter;
-    private String mCountryCode;
+    private String mCountryCode; //User's home country code. Also used to determine default and base currency for translation
     private static final String SORT_COLUMN = "SORT_COLUMN";
     private Toolbar mShoppingListToolbar;
     private OnPictureRequestListener mOnPictureRequestListener;
@@ -306,7 +306,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     /**
      * Set the shopping list adapter with data
      * Prepare summary of items
-     * Fetch exchange rates from the web if internet is UP.
+     * Fetch exchange rates, if any from the web.
      * If internet is down, show summary of local-priced items only.
      *
      * @param loader
@@ -335,7 +335,9 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         }
         else
         {
-            setSummaryTotalsForLocalItems();
+            prepareSummaryOfItemsAdded();
+            prepareSummaryOfItemsChecked();
+            displaySummaryTotalsForLocalItems();
         }
     }
 
@@ -359,7 +361,21 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         }
     }
 
-    protected void setSummaryTotalsForLocalItems()
+    protected void displaySummaryTotalsForLocalItems()
+    {
+        String currencyCode = FormatHelper.getCurrencyCode(mCountryCode);
+
+        String totalCostofItemsAdded = formatCountryCurrency(mCountryCode,
+                currencyCode, mTotalValueOfItemsAdded);
+
+        String totalCostofItemsChecked = FormatHelper.formatCountryCurrency(mCountryCode,
+                currencyCode, mTotalValueOfItemsChecked);
+
+        displaySummaryTotals(totalCostofItemsAdded, totalCostofItemsChecked);
+    }
+
+    protected void displaySummaryTotalsForLocalItems(double mTotalValueOfItemsAdded,
+                                                     double mTotalValueOfItemsChecked)
     {
         String currencyCode = FormatHelper.getCurrencyCode(mCountryCode);
 
@@ -483,7 +499,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
             }
             else
             {
-                mSourceCurrencyCodes.add(lCurrencyCode);
+                //mSourceCurrencyCodes.add(lCurrencyCode);
                 ForeignItem val = new ForeignItem(cost / 100, lCurrencyCode, qtyPurchased);
                 mForeignItems.add(val);
             }
@@ -544,6 +560,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
     protected String totalCostItemsAdded(Map<String, ExchangeRate> exchangeRates)
     {
         double totalForexCost = 0;
+        String baseCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
 
         //Apply the rate and add the foreign currency
         for (ForeignItem foreignItem : mForeignItems)
@@ -551,7 +568,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
             ExchangeRate exRate = exchangeRates.get(foreignItem.getSourceCurrencyCode());
             if (exRate != null)
             {
-                totalForexCost += (exRate.compute(foreignItem.getCost()) * foreignItem
+                totalForexCost += (exRate.compute(foreignItem.getCost(), baseCurrencyCode) * foreignItem
                         .getQuantity());
             }
         }
@@ -570,15 +587,14 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
      */
     protected String totalItemsChecked(Map<String, ExchangeRate> exchangeRates)
     {
+        String destCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
         double totalCostForexItemChecked = 0;
         for (ForeignItem foreignItemChecked : mForeignItemsChecked)
         {
             ExchangeRate fc = exchangeRates.get(foreignItemChecked.getSourceCurrencyCode());
-            totalCostForexItemChecked += (fc.compute(foreignItemChecked.getCost()) *
+            totalCostForexItemChecked += (fc.compute(foreignItemChecked.getCost(), destCurrencyCode) *
                     foreignItemChecked.getQuantity());
         }
-
-        String destCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
 
         return formatCountryCurrency(mCountryCode,
                 destCurrencyCode,
@@ -607,7 +623,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
             //if exchange rate is null, only add for local-priced items
             if (exchangeRates == null)
             {
-                setSummaryTotalsForLocalItems();
+                displaySummaryTotalsForLocalItems();
             }
             else
             {

@@ -135,7 +135,7 @@ public class ShoppingListAdapter extends CursorAdapter
             Log.d(LOG_TAG, ">>>>>>> Source Currency: " + srcCurrencyCode);
             if(exchangeRate != null)
             {
-                double translatedDestVal = exchangeRate.compute(priceTag);
+                double translatedDestVal = exchangeRate.compute(priceTag, destCurrencyCode);
                 String text = FormatHelper.formatCountryCurrency(countryCode,
                         FormatHelper.getCurrencyCode(countryCode),
                         translatedDestVal / 100) + " (" + srcCurrencyCode + "->" + destCurrencyCode + ")";

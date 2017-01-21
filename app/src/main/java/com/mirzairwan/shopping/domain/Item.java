@@ -44,7 +44,6 @@ public class Item implements Parcelable {
         mCountryOrigin = country;
         mDescription = description;
         mLastUpdatedOn = lastUpdatedOn;
-
     }
 
     public long getId() {
@@ -133,28 +132,7 @@ public class Item implements Parcelable {
         return null;
     }
 
-    public List<Picture> getPictures()
-    {
-        return mPictures;
-    }
 
-    public void setPictures(List<Picture> pictures)
-    {
-        mPictures = pictures;
-    }
-
-    public void replacePicture(int position, Picture newPicture)
-    {
-        if(mPictures.size() > 0) {
-            Picture removedPicture = mPictures.set(position, newPicture);
-            mToBeDeletedPicture.add(removedPicture);
-        }
-    }
-
-    public List<Picture> getDiscardedPictures()
-    {
-        return mToBeDeletedPicture;
-    }
 
     public void setItemId(int id) {
         mId = id;

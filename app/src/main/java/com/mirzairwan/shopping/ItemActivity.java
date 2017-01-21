@@ -96,11 +96,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
     protected EditText etBrand;
     protected EditText etDescription;
     protected EditText etCountryOrigin;
-
     protected EditText etBundleQty;
-
     private ImageView mImgItemPic;
-
     protected View.OnTouchListener mOnTouchListener;
     protected boolean mItemHaveChanged = false;
 
@@ -115,8 +112,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
     private Bitmap mTargetBitmap;
     protected EditText etCurrencyCode;
     private ExchangeRate mExchangeRate;
-    protected PriceField mUnitPrice;
-    protected PriceField mBundlePrice;
+    protected PriceField mUnitPriceEditField;
+    protected PriceField mBundlePriceEditField;
     private String mWebApiBase;
 
     @Override
@@ -153,9 +150,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
         super.onRestoreInstanceState(savedInstanceState);
         Log.d(LOG_TAG, "onRestoreInstanceState");
         //Any translated price will be invisible when device orientates. So show it again
-        mUnitPrice.setTranslatedPricesVisibility(View.VISIBLE);
-        mBundlePrice.setTranslatedPricesVisibility(View.VISIBLE);
-
+        mUnitPriceEditField.setTranslatedPricesVisibility(View.VISIBLE);
+        mBundlePriceEditField.setTranslatedPricesVisibility(View.VISIBLE);
     }
 
     @Override
@@ -168,8 +164,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
 
         daoManager = Builder.getDaoManager(this);
         shoppingList = Builder.getShoppingList();
-
-
 
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         mCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
@@ -192,7 +186,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
             Log.d(LOG_TAG, "OnCreate with savedInstanceState");
             mPictureMgr = savedInstanceState.getParcelable(PICTURE_MANAGER);
         }
-
     }
 
     protected void setupViews()
@@ -209,9 +202,7 @@ public abstract class ItemActivity extends AppCompatActivity implements
         };
 
         etName = (EditText) findViewById(R.id.et_item_name);
-        //MyTextUtils.setInitialCapInputFilter(etName);
         etBrand = (EditText) findViewById(R.id.et_item_brand);
-        //MyTextUtils.setInitialCapInputFilter(etBrand);
         etDescription = (EditText) findViewById(R.id.et_item_description);
         etCountryOrigin = (EditText) findViewById(R.id.et_item_country_origin);
         mImgItemPic = (ImageView) findViewById(R.id.img_item);
@@ -221,23 +212,23 @@ public abstract class ItemActivity extends AppCompatActivity implements
         etDescription.setOnTouchListener(mOnTouchListener);
         etCountryOrigin.setOnTouchListener(mOnTouchListener);
 
-        etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
         //Set default currency code
+        etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
         etCurrencyCode.setText(FormatHelper.getCurrencyCode(mCountryCode));
 
         EditText etUnitPrice = (EditText) findViewById(R.id.et_unit_price);
         EditText etTranslatedUnitPrice = (EditText) findViewById(R.id.et_translated_unit_price);
         etUnitPrice.setOnTouchListener(mOnTouchListener);
         View pbUnitPx = findViewById(R.id.pb_translated_unit_px);
-        mUnitPrice = new PriceField(etUnitPrice, etTranslatedUnitPrice, pbUnitPx,
+        mUnitPriceEditField = new PriceField(etUnitPrice, etTranslatedUnitPrice, pbUnitPx,
                 mCountryCode, getString(R.string.unit_price_txt), Price.Type.UNIT_PRICE);
         ItemExchangeRateLoaderCallback unitPxExLoaderCb = new ItemExchangeRateLoaderCallback
-                (this, mUnitPrice);
+                (this, mUnitPriceEditField);
         OnExchangeRateRequest onExchangeRateUnitPriceListener = new
                 OnExchangeRateRequestImpl(unitPxExLoaderCb, mWebApiBase, destCurrencyCode,
                 getLoaderManager());
         ExchangeRateDisplayState unitPriceTranslatorListener = new ExchangeRateDisplayState(
-                onExchangeRateUnitPriceListener, mUnitPrice);
+                onExchangeRateUnitPriceListener, mUnitPriceEditField);
         etUnitPrice.setOnFocusChangeListener(unitPriceTranslatorListener);
 
 
@@ -245,28 +236,28 @@ public abstract class ItemActivity extends AppCompatActivity implements
         EditText etTranslatedBundlePrice = (EditText) findViewById(R.id.et_translated_bundle_price);
         etBundlePrice.setOnTouchListener(mOnTouchListener);
         View pbBundlePx = findViewById(R.id.pb_translated_bundle_px);
-        mBundlePrice = new PriceField(etBundlePrice, etTranslatedBundlePrice,
+        mBundlePriceEditField = new PriceField(etBundlePrice, etTranslatedBundlePrice,
                 pbBundlePx, mCountryCode, getString(R.string.bundle_price_txt), Price.Type.BUNDLE_PRICE);
 
         ItemExchangeRateLoaderCallback bundlePxExLoaderCb = new ItemExchangeRateLoaderCallback
-                (this, mBundlePrice);
+                (this, mBundlePriceEditField);
         OnExchangeRateRequest onExchangeRateBundlePriceListener = new
                 OnExchangeRateRequestImpl(bundlePxExLoaderCb, mWebApiBase, destCurrencyCode,
                 getLoaderManager());
         ExchangeRateDisplayState bundlePriceTranslatorListener = new ExchangeRateDisplayState(
-                onExchangeRateBundlePriceListener, mBundlePrice);
+                onExchangeRateBundlePriceListener, mBundlePriceEditField);
         etBundlePrice.setOnFocusChangeListener(bundlePriceTranslatorListener);
 
         List<PriceField> translatedPrices = new ArrayList<>();
-        translatedPrices.add(mUnitPrice);
-        translatedPrices.add(mBundlePrice);
+        translatedPrices.add(mUnitPriceEditField);
+        translatedPrices.add(mBundlePriceEditField);
         ItemExchangeRateLoaderCallback currencyCodeLoaderCb = new ItemExchangeRateLoaderCallback
                 (this, translatedPrices);
         OnExchangeRateRequest onExchangeRateRequest = new
                 OnExchangeRateRequestImpl(currencyCodeLoaderCb, mWebApiBase, destCurrencyCode, getLoaderManager());
 
         CurrencyCodeChecker onFocusChangeCurrencyCodeListener =
-                new CurrencyCodeChecker(etCurrencyCode, mCountryCode, mUnitPrice, mBundlePrice,
+                new CurrencyCodeChecker(etCurrencyCode, mCountryCode, mUnitPriceEditField, mBundlePriceEditField,
                         onExchangeRateRequest);
 
         MyTextUtils.setAllCapsInputFilter(etCurrencyCode);
@@ -508,8 +499,8 @@ public abstract class ItemActivity extends AppCompatActivity implements
                 switch (requestCode)
                 {
                     case REQUEST_SNAP_PICTURE:
-                        daoManager.cleanUpDiscardedPictures(mPictureMgr); //Original picture is
-                        // not deleted.
+                        //Delete existing file except original picture.
+                        daoManager.cleanUpDiscardedPictures(mPictureMgr);
                         setPictureView(mPictureMgr.getPictureForViewing());
                         break;
                     case REQUEST_PICK_PHOTO:
@@ -586,88 +577,6 @@ public abstract class ItemActivity extends AppCompatActivity implements
     @Override
     protected void onStart()
     {
-//        String destCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
-//        mOnTouchListener = new View.OnTouchListener()
-//        {
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event)
-//            {
-//                mItemHaveChanged = true;
-//                return false;
-//            }
-//        };
-//
-//        etName = (EditText) findViewById(R.id.et_item_name);
-//        //MyTextUtils.setInitialCapInputFilter(etName);
-//        etBrand = (EditText) findViewById(R.id.et_item_brand);
-//        //MyTextUtils.setInitialCapInputFilter(etBrand);
-//        etDescription = (EditText) findViewById(R.id.et_item_description);
-//        etCountryOrigin = (EditText) findViewById(R.id.et_item_country_origin);
-//        mImgItemPic = (ImageView) findViewById(R.id.img_item);
-//
-//        etName.setOnTouchListener(mOnTouchListener);
-//        etBrand.setOnTouchListener(mOnTouchListener);
-//        etDescription.setOnTouchListener(mOnTouchListener);
-//        etCountryOrigin.setOnTouchListener(mOnTouchListener);
-//
-//        etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
-//        //Set default currency code
-//        etCurrencyCode.setText(FormatHelper.getCurrencyCode(mCountryCode));
-//
-//        EditText etUnitPrice = (EditText) findViewById(R.id.et_unit_price);
-//        EditText etTranslatedUnitPrice = (EditText) findViewById(R.id.et_translated_unit_price);
-//        etUnitPrice.setOnTouchListener(mOnTouchListener);
-//        View pbUnitPx = findViewById(R.id.pb_translated_unit_px);
-//        mUnitPrice = new PriceField(etUnitPrice, etTranslatedUnitPrice, pbUnitPx,
-//                mCountryCode, getString(R.string.unit_price_txt), Price.Type.UNIT_PRICE);
-//        ItemExchangeRateLoaderCallback unitPxExLoaderCb = new ItemExchangeRateLoaderCallback
-//                (this, mUnitPrice);
-//        OnExchangeRateRequest onExchangeRateUnitPriceListener = new
-//                OnExchangeRateRequestImpl(unitPxExLoaderCb, mWebApiBase, destCurrencyCode,
-//                                            getLoaderManager());
-//        ExchangeRateDisplayState unitPriceTranslatorListener = new ExchangeRateDisplayState(
-//                onExchangeRateUnitPriceListener, mUnitPrice);
-//        etUnitPrice.setOnFocusChangeListener(unitPriceTranslatorListener);
-//
-//
-//        EditText etBundlePrice = (EditText) findViewById(R.id.et_bundle_price);
-//        EditText etTranslatedBundlePrice = (EditText) findViewById(R.id.et_translated_bundle_price);
-//        etBundlePrice.setOnTouchListener(mOnTouchListener);
-//        View pbBundlePx = findViewById(R.id.pb_translated_bundle_px);
-//        mBundlePrice = new PriceField(etBundlePrice, etTranslatedBundlePrice,
-//                pbBundlePx, mCountryCode, getString(R.string.bundle_price_txt), Price.Type.BUNDLE_PRICE);
-//
-//        ItemExchangeRateLoaderCallback bundlePxExLoaderCb = new ItemExchangeRateLoaderCallback
-//                (this, mBundlePrice);
-//        OnExchangeRateRequest onExchangeRateBundlePriceListener = new
-//                OnExchangeRateRequestImpl(bundlePxExLoaderCb, mWebApiBase, destCurrencyCode,
-//                                            getLoaderManager());
-//        ExchangeRateDisplayState bundlePriceTranslatorListener = new ExchangeRateDisplayState(
-//                onExchangeRateBundlePriceListener, mBundlePrice);
-//        etBundlePrice.setOnFocusChangeListener(bundlePriceTranslatorListener);
-//
-//        List<PriceField> translatedPrices = new ArrayList<>();
-//        translatedPrices.add(mUnitPrice);
-//        translatedPrices.add(mBundlePrice);
-//        ItemExchangeRateLoaderCallback currencyCodeLoaderCb = new ItemExchangeRateLoaderCallback
-//                (this, translatedPrices);
-//        OnExchangeRateRequest onExchangeRateRequest = new
-//                OnExchangeRateRequestImpl(currencyCodeLoaderCb, mWebApiBase, destCurrencyCode, getLoaderManager());
-//
-//        CurrencyCodeChecker onFocusChangeCurrencyCodeListener =
-//                new CurrencyCodeChecker(etCurrencyCode, mCountryCode, mUnitPrice, mBundlePrice,
-//                        onExchangeRateRequest);
-//
-//        MyTextUtils.setAllCapsInputFilter(etCurrencyCode);
-//        etCurrencyCode.setOnTouchListener(mOnTouchListener);
-//        etCurrencyCode.setOnFocusChangeListener(onFocusChangeCurrencyCodeListener);
-//
-//        unitPriceTranslatorListener.setCurrencyCodeObserver(onFocusChangeCurrencyCodeListener);
-//        bundlePriceTranslatorListener.setCurrencyCodeObserver(onFocusChangeCurrencyCodeListener);
-//
-//
-//        etBundleQty = (EditText) findViewById(R.id.et_bundle_qty);
-//        etBundleQty.setOnTouchListener(mOnTouchListener);
         super.onStart();
     }
 
@@ -870,21 +779,27 @@ public abstract class ItemActivity extends AppCompatActivity implements
     {
         String currencyCode = priceMgr.getUnitPrice().getCurrencyCode();
         etCurrencyCode.setText(currencyCode);
-        mUnitPrice.setFormattedPrice(priceMgr.getUnitPriceForDisplay(), currencyCode);
-        mBundlePrice.setFormattedPrice(priceMgr.getBundlePriceForDisplay(), currencyCode);
+        mUnitPriceEditField.setFormattedPrice(priceMgr.getUnitPriceForDisplay(), currencyCode);
+        mBundlePriceEditField.setFormattedPrice(priceMgr.getBundlePriceForDisplay(), currencyCode);
         etBundleQty.setText(FormatHelper.formatToTwoDecimalPlaces((priceMgr.getBundlePrice().getBundleQuantity())));
 
-        if (mExchangeRate != null)
+        if (!isItemLocalPriced(currencyCode))
         {
-            mUnitPrice.setTranslatedPrice(mExchangeRate);
-            mBundlePrice.setTranslatedPrice(mExchangeRate);
+            mUnitPriceEditField.setTranslatedPrice(mExchangeRate);
+            mBundlePriceEditField.setTranslatedPrice(mExchangeRate);
         }
+    }
+
+    private boolean isItemLocalPriced(String currencyCode)
+    {
+        String homeCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
+        return currencyCode.equalsIgnoreCase(homeCurrencyCode);
     }
 
     protected void clearPriceInputFields()
     {
-        mUnitPrice.clear();
-        mBundlePrice.clear();
+        mUnitPriceEditField.clear();
+        mBundlePriceEditField.clear();
         etBundleQty.setText("");
     }
 

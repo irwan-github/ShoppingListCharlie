@@ -319,8 +319,8 @@ public class ShoppingListEditingActivity extends ItemActivity
 
         try
         {
-            priceMgr.setItemPricesForSaving(item, mUnitPrice.getPrice(),
-                    mBundlePrice.getPrice(), getBundleQtyFromInputField());
+            priceMgr.setItemPricesForSaving(item, mUnitPriceEditField.getPrice(),
+                    mBundlePriceEditField.getPrice(), getBundleQtyFromInputField());
         } catch (ParseException e)
         {
             e.printStackTrace();

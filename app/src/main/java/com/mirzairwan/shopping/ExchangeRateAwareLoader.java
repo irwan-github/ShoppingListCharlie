@@ -34,9 +34,6 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
 {
     private static final String LOG_TAG = ExchangeRateAwareLoader.class.getSimpleName();
     private ExchangeRateInput mExchangeRateInput;
-    //private String mDestCurrencyCode;
-    //private String mBaseUri;
-    //private Set<String> mSourceCurrencies; //Input to fetch exchange rate
     private Map<String, ExchangeRate> mExchangeRates;
     private Observer mObserver;
 
@@ -44,23 +41,7 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
     {
         super(context);
         Log.d(LOG_TAG, ">>>>>>> Construct ExchangeRateAwareLoader()");
-        //Log.d(LOG_TAG, ">>>>>>> base uri " + baseUri);
-        //Log.d(LOG_TAG, ">>>>>>> destCurrencyCode " + destCurrencyCode);
-        //Log.d(LOG_TAG, ">>>>>>> sourceCurrencies " + sourceCurrencies);
-
-//        if (baseUri == null)
-//        {
-//            throw new IllegalArgumentException("Web uri cannot be NULL");
-//        }
-
-//        if (destCurrencyCode == null)
-//        {
-//            throw new IllegalArgumentException("Destination currency code cannot be NULL");
-//        }
-        //mSourceCurrencies = exchangeRateInput.getSourceCurrencies();
-        //mBaseUri = exchangeRateInput.getBaseWebApi();
         mExchangeRateInput = exchangeRateInput;
-        //mDestCurrencyCode = exchangeRateInput.getBaseCurrency();
     }
 
     /**
@@ -70,8 +51,8 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
     @Override
     public void deliverResult(Map<String, ExchangeRate> exchangeRates)
     {
+        Log.d(LOG_TAG, ">>>>>>> deliverResult: " + exchangeRates);
         mExchangeRates = exchangeRates;
-        //TODO: Cache the exchange rate
         super.deliverResult(exchangeRates);
     }
 
@@ -81,22 +62,20 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
     {
         Log.d(LOG_TAG, ">>>>>>> onStartLoading: " + getId());
 
-        if(mObserver == null)
+        if (mObserver == null)
         {
             mObserver = new Observer()
             {
                 @Override
                 public void update(Observable o, Object arg)
                 {
-//                    if (o.hasChanged())
-//                    {
-                        // Notify the loader to reload the data
-                        onContentChanged();
-                        // If the loader is started, this will kick off
-                        // loadInBackground() immediately. Otherwise,
-                        // the fact that something changed will be cached
-                        // and can be later retrieved via takeContentChanged()
-//                    }
+                    Log.d("Observer", ">>>>>>> update: " + arg.toString());
+                    // Notify the loader to reload the data
+                    onContentChanged();
+                    // If the loader is started, this will kick off
+                    // loadInBackground() immediately. Otherwise,
+                    // the fact that something changed will be cached
+                    // and can be later retrieved via takeContentChanged()
                 }
             };
 
@@ -106,22 +85,25 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
         // Something has changed
         if (takeContentChanged())
         {
-            //No source currencies, don't fetch
+            //No source currencies, don't fetch. Set null exchange rates
             if (mExchangeRateInput.getSourceCurrencies() == null ||
                     mExchangeRateInput.getSourceCurrencies().size() == 0)
             {
-                Log.d(LOG_TAG, ">>>>>>> onStartLoading source currency is empty. Abort");
+                Log.d(LOG_TAG, ">>>>>>> onStartLoading takeContentChanged BUT source currency is " +
+                        "empty. Deliver null");
                 deliverResult(null);
             }
             else
             {
+                Log.d(LOG_TAG, ">>>>>>> onStartLoading takeContentChanged & source currency is " +
+                        "NOT empty. Force load");
                 //start fetching
                 forceLoad();
             }
         }
         else
         {
-            deliverResult(mExchangeRates);
+            Log.d(LOG_TAG, ">>>>>>> onStartLoading takeContentChanged NOT. Do NOT deliver");
         }
 
     }
@@ -254,7 +236,8 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
 
     private String createQueryUri()
     {
-        Uri.Builder builder = Uri.parse(mExchangeRateInput.getBaseWebApi()).buildUpon().appendQueryParameter("base",
+        Uri.Builder builder = Uri.parse(mExchangeRateInput.getBaseWebApi()).buildUpon()
+                .appendQueryParameter("base",
                 mExchangeRateInput.getBaseCurrency());
         String symbols = "";
         Iterator<String> iterator = mExchangeRateInput.getSourceCurrencies().iterator();
