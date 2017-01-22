@@ -77,4 +77,8 @@
     <string name="country_code_dialog_pref">Country code determines the app\'s home currency</string>
     <string name="invalid_price">Invalid price</string>
     <string name="dialog_invalid_title">Invalid</string>
+    <string name="shopping_list_totals">Total</string>
+    <string name="added_to_shoppinglist">Added:\u0020 </string>
+    <string name="checked_to_shoppinglist">Checked:\u0020</string>
+    <string name="dismiss">Dismiss</string>
 </resources>

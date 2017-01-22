@@ -82,7 +82,6 @@ Or else, the scaling is bypassed resulting in OutOfMemoryError
         android:layout_height="@dimen/touch_target_height"
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
-        android:layout_marginRight="@dimen/keyline_1"
         android:background="@drawable/toggle_circle"
         android:focusable="false"
         android:textColor="@android:color/white"

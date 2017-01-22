@@ -8,5 +8,5 @@ import java.util.Set;
 
 public interface OnExchangeRateRequestListener
 {
-    void onRequest(Set<String> sourceCurrencies, ExchangeRateCallback exchangeRateCallback);
+    void onRequest(Set<String> sourceCurrencies);
 }

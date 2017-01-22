@@ -46,22 +46,22 @@ public class ShoppingActivity extends AppCompatActivity implements
         OnExchangeRateRequestListener, SharedPreferences.OnSharedPreferenceChangeListener
 {
     private static final String LOG_TAG = ShoppingActivity.class.getSimpleName();
-
     public static final String EXCHANGE_RATE = "EXCHANGE_RATE";
-
-
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
     private ImageResizer mImageResizer;
 
-    //ExchangeRates are cleared, populated and cached by ExchangeRateAwareLoader. Therefore
+    //ExchangeRates are cleared, populated and cached by ExchangeRateAwareLoader. Therefore,
     // do not persist exchange rate in onSavedInstanceState
     Map<String, ExchangeRate> mExchangeRates = new HashMap<>();
 
     private String mCountryCode;
     private ExchangeRateCallback mExchangeRateCallback;
-    private String mBaseEndPoint; //Web API for fetching exchange rates
+
+    //Web API for fetching exchange rates
+    private String mBaseEndPoint;
+
     private Loader<Map<String, ExchangeRate>> loader;
     private ShoppingListExchangeRateLoaderCb mShoppingListExchangeRateLoaderCb;
     private ExchangeRateInput mExchangeRateInput;
@@ -80,7 +80,8 @@ public class ShoppingActivity extends AppCompatActivity implements
                 registerOnSharedPreferenceChangeListener(this);
 
         //The following array order is important to display the proper page titles
-        String[] pageTitles = new String[]{getString(R.string.buy_list), getString(R.string.catalogue)};
+        String[] pageTitles = new String[]{getString(R.string.buy_list), getString(R.string
+                .catalogue)};
         PagerAdapter pagerAdapter = new PagerAdapter(getFragmentManager(), pageTitles);
         ViewPager viewPager = (ViewPager) findViewById(R.id.pager_shopping);
         viewPager.setAdapter(pagerAdapter);
@@ -108,14 +109,15 @@ public class ShoppingActivity extends AppCompatActivity implements
 
 
         //Initialize the exchange rate loader but do NOT let it fetch exchange rate until
-        //shopping list fragment has finished fetching shopping list. Upon fetching the shopping list
+        //shopping list fragment has finished fetching shopping list. Upon fetching the shopping
+        // list
         //shopping list fragment will request to this activity class to fetch exchange rates.
         //So to prevent this activity from fetching exchange rate now, set mSourceCurrencies to null
         mExchangeRateInput = new ExchangeRateInput();
         //Setting the following before initLoader will not notify exchange rate loader
         mExchangeRateInput.setBaseWebApi(mBaseEndPoint);
         mExchangeRateInput.setBaseCurrency(FormatHelper.getCurrencyCode(mCountryCode));
-        mShoppingListExchangeRateLoaderCb  = new ShoppingListExchangeRateLoaderCb(this,
+        mShoppingListExchangeRateLoaderCb = new ShoppingListExchangeRateLoaderCb(this,
                 mExchangeRateInput);
 
         Log.d(LOG_TAG, ">>>>>>> initLoader EXCHANGE_RATES");
@@ -244,7 +246,7 @@ public class ShoppingActivity extends AppCompatActivity implements
     /**
      * Called when user clicks on a shopping list item
      *
-     * @param itemId Part of URI to target activity.
+     * @param itemId       Part of URI to target activity.
      * @param currencyCode Belonging to price of item
      */
     @Override
@@ -256,11 +258,14 @@ public class ShoppingActivity extends AppCompatActivity implements
         uri = ContentUris.withAppendedId(uri, itemId);
         intentToViewItem.setData(uri);
         ExchangeRate exchangeRate = null;
-        if (mExchangeRates != null )
+        if (mExchangeRates != null)
         {
             String homeCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
-            if(!TextUtils.isEmpty(currencyCode) && !currencyCode.equalsIgnoreCase(homeCurrencyCode))
+            if (!TextUtils.isEmpty(currencyCode) && !currencyCode.equalsIgnoreCase
+                    (homeCurrencyCode))
+            {
                 exchangeRate = mExchangeRates.get(currencyCode);
+            }
         }
         intentToViewItem.putExtra(EXCHANGE_RATE, exchangeRate);
         startActivity(intentToViewItem);
@@ -328,27 +333,27 @@ public class ShoppingActivity extends AppCompatActivity implements
      * Not working when device orientation changes
      *
      * @param sourceCurrencies
-     * @param exchangeRateCallback
      */
     @Override
-    public void onRequest(Set<String> sourceCurrencies,
-                          ExchangeRateCallback exchangeRateCallback)
+    public void onRequest(Set<String> sourceCurrencies)
     {
         Log.d(LOG_TAG, ">>>>>>> onRequest");
 
-        if (!PermissionHelper.isInternetUp(this))
+        if (PermissionHelper.isInternetUp(this))
         {
-            return;
+            //The following will notify ExchangeRateAwareLoader that source currency has changed.
+            //Since ExchangeRateAwareLoader has started, this will kick off a thread by
+            // loadInBackground() immediately.
+            mExchangeRateInput.setSourceCurrencies(sourceCurrencies);
         }
+        else
+            mExchangeRateCallback.doCoversion(null);
+    }
 
-        //Will be called when onLoadFinished of ExchangeRateLoader
+    @Override
+    public void onInitialized(ExchangeRateCallback exchangeRateCallback)
+    {
         mExchangeRateCallback = exchangeRateCallback;
-
-        //The following will notify ExchangeRateAwareLoader that source currency has changed.
-        //Since ExchangeRateAwareLoader has started, this will kick off a thread by
-        // loadInBackground() immediately.
-        mExchangeRateInput.setSourceCurrencies(sourceCurrencies);
-
     }
 
     @Override
@@ -389,8 +394,9 @@ public class ShoppingActivity extends AppCompatActivity implements
         }
     }
 
-    private class ShoppingListExchangeRateLoaderCb implements LoaderManager.LoaderCallbacks<Map<String,
-        ExchangeRate>>
+    private class ShoppingListExchangeRateLoaderCb implements LoaderManager
+            .LoaderCallbacks<Map<String,
+            ExchangeRate>>
     {
         private final String LOG_TAG = ShoppingListExchangeRateLoaderCb.class.getSimpleName();
         private ExchangeRateInput mExchangeRateInput;
@@ -421,11 +427,9 @@ public class ShoppingActivity extends AppCompatActivity implements
             mExchangeRates = exchangeRates;
 
             //Do exchange rate conversion
-            if (mExchangeRateCallback != null)
-            {
-                Log.d(LOG_TAG, " >>>>>>> Calling doConversion");
-                mExchangeRateCallback.doCoversion(exchangeRates);
-            }
+
+            Log.d(LOG_TAG, " >>>>>>> Calling doConversion");
+            mExchangeRateCallback.doCoversion(exchangeRates);
         }
 
         @Override
@@ -435,4 +439,6 @@ public class ShoppingActivity extends AppCompatActivity implements
             mExchangeRates = null;
         }
     }
+
+
 }

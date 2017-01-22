@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/summary_totals"
+        android:title="@string/shopping_list_totals"
+        app:actionLayout="@layout/toolbar_summary_totals"
+        app:showAsAction="always"/>
+
     <item
         android:id="@+id/clear_checked_item"
         android:title="@string/clear_checked_item"
         app:actionLayout="@layout/toolbar_clear_checked"
         app:showAsAction="always"/>
+
+
 </menu>
