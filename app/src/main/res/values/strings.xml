@@ -81,4 +81,5 @@
     <string name="added_to_shoppinglist">Added:\u0020 </string>
     <string name="checked_to_shoppinglist">Checked:\u0020</string>
     <string name="dismiss">Dismiss</string>
+    <string name="internet_not_available_exchange_rate">Translation of prices is unavailable because internet is unavailable.</string>
 </resources>

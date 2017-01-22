@@ -6,7 +6,7 @@ import java.util.Set;
 
 /**
  * This object is observed by ExchangeRateAwareLoader for changes. ShoppingActivity will use this
- * class to make changes to this class as necessary.
+ * class to make changes to exchange rate inputs as necessary.
  * <p>
  * Created by Mirza Irwan on 20/1/17.
  */
@@ -32,15 +32,18 @@ public class ExchangeRateInput extends Observable
         }
     }
 
-    public void setSourceCurrencies(Set<String> sourceCurrencies)
+    public boolean setSourceCurrencies(Set<String> sourceCurrencies)
     {
-        mSourceCurrencies.clear();
-        boolean isChanged = mSourceCurrencies.addAll(sourceCurrencies);
-        if (isChanged)
+        boolean isAddAllChanged = mSourceCurrencies.addAll(sourceCurrencies);
+        sourceCurrencies.retainAll(mSourceCurrencies);
+        mSourceCurrencies = sourceCurrencies;
+
+        if (isAddAllChanged)
         {
             setChanged();
             notifyObservers(mSourceCurrencies);
         }
+        return isAddAllChanged;
     }
 
     public void setBaseCurrency(String baseCurrency)
@@ -81,11 +84,6 @@ public class ExchangeRateInput extends Observable
 
     public void removeSourceCurrency(String existingCountryCode)
     {
-        boolean isChanged = mSourceCurrencies.remove(existingCountryCode);
-        if (isChanged)
-        {
-            setChanged();
-            notifyObservers(mSourceCurrencies);
-        }
+        mSourceCurrencies.remove(existingCountryCode);
     }
 }

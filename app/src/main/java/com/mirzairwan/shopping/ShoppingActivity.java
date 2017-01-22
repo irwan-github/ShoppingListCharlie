@@ -339,15 +339,19 @@ public class ShoppingActivity extends AppCompatActivity implements
     {
         Log.d(LOG_TAG, ">>>>>>> onRequest");
 
-        if (PermissionHelper.isInternetUp(this))
+        boolean isInputChanged = mExchangeRateInput.setSourceCurrencies(sourceCurrencies);
+
+        //Loader will not fetch exchange rates if there is NO change in sourceCurrencies of
+        // mExchangeRateInput. However, to get it's cached exchange rate, we need to initialize
+        // ExchangeRateLoader again
+        if (!isInputChanged)
         {
-            //The following will notify ExchangeRateAwareLoader that source currency has changed.
-            //Since ExchangeRateAwareLoader has started, this will kick off a thread by
-            // loadInBackground() immediately.
-            mExchangeRateInput.setSourceCurrencies(sourceCurrencies);
+            Log.d(LOG_TAG, ">>>>>>> initLoader EXCHANGE_RATES");
+            getLoaderManager().initLoader
+                    (EXCHANGE_RATES_SHOPPING_LIST_LOADER_ID,
+                            null, mShoppingListExchangeRateLoaderCb);
         }
-        else
-            mExchangeRateCallback.doCoversion(null);
+
     }
 
     @Override
@@ -429,7 +433,10 @@ public class ShoppingActivity extends AppCompatActivity implements
             //Do exchange rate conversion
 
             Log.d(LOG_TAG, " >>>>>>> Calling doConversion");
-            mExchangeRateCallback.doCoversion(exchangeRates);
+            if (mExchangeRateCallback != null)
+            {
+                mExchangeRateCallback.doCoversion(exchangeRates);
+            }
         }
 
         @Override

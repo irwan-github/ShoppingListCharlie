@@ -42,9 +42,9 @@ public class PermissionHelper
                     Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
-    public static boolean isInternetUp(Activity activity)
+    public static boolean isInternetUp(Context context)
     {
-        ConnectivityManager connMgr = (ConnectivityManager) activity.getSystemService(Context
+        ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context
                 .CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
         return (networkInfo != null && networkInfo.isConnected());
