@@ -14,7 +14,7 @@
     <string name="cb_bundle_price">Bundle price</string>
     <string name="new_buy_item_title">New item</string>
     <string name="update_buy_item_title">Update Purchase details</string>
-    <string name="remove_item_from_shopping_list_ok">Remove item from shopping list : OK</string>
+    <string name="remove_item_from_shopping_list_ok">removed from shopping list : OK</string>
     <string name="empty_view_title_text">Empty shopping list</string>
     <string name="empty_view_subtitle_text">Click + or star in History</string>
 
@@ -52,9 +52,9 @@
     <string name="database_failed">Save : Error</string>
     <string name="filesystem_delete_discarded_ok">Delete discarded photo(s) : OK</string>
     <string name="filesystem_delete_discarded_failed">Delete discarded photo(s) : Failed</string>
-    <string name="added_to_shopping_list_ok">Add to shopping list : OK</string>
+    <string name="added_to_shopping_list_ok">added to shopping list : OK</string>
     <string name="added_to_shopping_list_error">Add to shopping list : Error</string>
-    <string name="remove_item_from_shopping_list_error">Remove item from shopping list : Error</string>
+    <string name="remove_item_from_shopping_list_error">remove from shopping list : Error</string>
     <string name="settings_screen">Settings</string>
     <string name="settings_catalogue">Shopping list</string>
     <string name="user_sort_pref">user_sort_pref</string>

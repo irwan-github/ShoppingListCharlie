@@ -105,7 +105,7 @@ public class PictureMgrTest
     @Before
     public void setUp() throws Exception
     {
-        pictureMgr = new PictureMgr(new Picture(new File("/home/irwan/original")), -1);
+        //pictureMgr = new PictureMgr(new Picture(new File("/home/irwan/original")), -1);
 
     }
 

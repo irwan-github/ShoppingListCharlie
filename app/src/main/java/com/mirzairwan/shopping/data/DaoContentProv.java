@@ -22,7 +22,7 @@ import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.domain.Price;
-import com.mirzairwan.shopping.domain.ToBuyItem;
+import com.mirzairwan.shopping.domain.ItemInShoppingList;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -57,7 +57,7 @@ public class DaoContentProv implements DaoManager
     }
 
     @Override
-    public long insert(ToBuyItem buyItem)
+    public long insert(ItemInShoppingList buyItem)
     {
         ContentValues values = getBuyItemContentValues(buyItem, new Date());
         ContentResolver contentResolver = mContext.getContentResolver();
@@ -66,7 +66,7 @@ public class DaoContentProv implements DaoManager
     }
 
     @Override
-    public String insert(ToBuyItem buyItem, Item item, List<Price> itemPrices, PictureMgr
+    public String insert(ItemInShoppingList buyItem, Item item, List<Price> itemPrices, PictureMgr
             pictureMgr)
     {
         Log.d(LOG_TAG, "Save domain object graph");
@@ -171,7 +171,7 @@ public class DaoContentProv implements DaoManager
     }
 
     @Override
-    public String update(ToBuyItem buyItem, Item item, List<Price> itemPrices, PictureMgr
+    public String update(ItemInShoppingList buyItem, Item item, List<Price> itemPrices, PictureMgr
             pictureMgr)
     {
         Log.d(LOG_TAG, "Save domain object graph");
@@ -497,7 +497,7 @@ public class DaoContentProv implements DaoManager
     }
 
     @Override
-    public int delete(ToBuyItem buyItem)
+    public int delete(ItemInShoppingList buyItem)
     {
         Uri uriDeleteBuyItem = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI,
                 buyItem.getId());
@@ -632,7 +632,7 @@ public class DaoContentProv implements DaoManager
         return priceValues;
     }
 
-    private ContentValues getBuyItemContentValues(ToBuyItem buyItem, Date updateTime)
+    private ContentValues getBuyItemContentValues(ItemInShoppingList buyItem, Date updateTime)
     {
         ContentValues buyItemValues = new ContentValues();
         if (buyItem.getItem().getId() > 0)

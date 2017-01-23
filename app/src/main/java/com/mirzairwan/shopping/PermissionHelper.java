@@ -17,38 +17,34 @@ import java.util.ArrayList;
 
 public class PermissionHelper
 {
-    private static final int PERMISSION_GIVE_ITEM_PICTURE = 32;
+        private static final int PERMISSION_GIVE_ITEM_PICTURE = 32;
 
-    public static void setupStorageReadPermission(Activity activity)
-    {
-        ArrayList<String> permissionRequests = new ArrayList<>();
-
-        if (!hasReadStoragePermission(activity))
+        public static void setupStorageReadPermission(Activity activity)
         {
-            permissionRequests.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+                ArrayList<String> permissionRequests = new ArrayList<>();
+
+                if (!hasReadStoragePermission(activity))
+                {
+                        permissionRequests.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+                }
+
+                if (permissionRequests.size() > 0)
+                {
+                        ActivityCompat.requestPermissions(activity, permissionRequests.toArray(new String[permissionRequests.size()]), PERMISSION_GIVE_ITEM_PICTURE);
+                }
         }
 
-        if (permissionRequests.size() > 0)
+        protected static boolean hasReadStoragePermission(Activity activity)
         {
-            ActivityCompat.requestPermissions(activity, permissionRequests.toArray(new
-                            String[permissionRequests.size()]),
-                    PERMISSION_GIVE_ITEM_PICTURE);
+                return ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
         }
-    }
 
-    protected static boolean hasReadStoragePermission(Activity activity)
-    {
-        return ContextCompat.checkSelfPermission(activity,
-                    Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    public static boolean isInternetUp(Context context)
-    {
-        ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context
-                .CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        return (networkInfo != null && networkInfo.isConnected());
-    }
+        public static boolean isInternetUp(Context context)
+        {
+                ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+                return (networkInfo != null && networkInfo.isConnected());
+        }
 
 
 }

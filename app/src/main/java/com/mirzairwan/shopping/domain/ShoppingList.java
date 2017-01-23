@@ -17,24 +17,24 @@ public interface ShoppingList
 //     * @param bundlePrice
 //     * @param bundleQty Quantity to buy. Value must at least be 1.
 //     * @param selectedPriceType
-//     * @return ToBuyItem item to buy
+//     * @return ItemInShoppingList item to buy
 //     */
-//    ToBuyItem addNewItem(String itemName, String itemBrand, String itemDescription, String countryOrigin, int quantityToBuy, String currencyCode, double unitPrice, double bundlePrice, double bundleQty, Price.Type selectedPriceType);
+//    ItemInShoppingList addNewItem(String itemName, String itemBrand, String itemDescription, String countryOrigin, int quantityToBuy, String currencyCode, double unitPrice, double bundlePrice, double bundleQty, Price.Type selectedPriceType);
 
-    public ToBuyItem addNewItem(Item item, int quantityToBuy, Price selectedPrice);
+    public ItemInShoppingList addNewItem(Item item, int quantityToBuy, Price selectedPrice);
 
     /**
      * Add item from catalogue to "shopping list"
      *
      * @param itemId of item in catalogue
      */
-    ToBuyItem buyItem(int itemId);
+    ItemInShoppingList buyItem(int itemId);
 
     /**
      * Remove item from shopping list
      * @param position
      * @return
      */
-    ToBuyItem removeItem(int position);
+    ItemInShoppingList removeItem(int position);
 
 }

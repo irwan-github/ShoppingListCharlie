@@ -13,77 +13,77 @@ import java.util.Set;
 
 public class ExchangeRateInput extends Observable
 {
-    private Set<String> mSourceCurrencies;
-    private String mBaseCurrency = "";
-    private String mBaseUri = "";
+        private Set<String> mSourceCurrencies;
+        private String mBaseCurrency = "";
+        private String mBaseUri = "";
 
-    public ExchangeRateInput()
-    {
-        mSourceCurrencies = new HashSet<>();
-    }
-
-    public void addSourceCurrency(String sourceCurrencies)
-    {
-        boolean isChanged = mSourceCurrencies.add(sourceCurrencies);
-        if (isChanged)
+        public ExchangeRateInput()
         {
-            setChanged();
-            notifyObservers(mSourceCurrencies);
+                mSourceCurrencies = new HashSet<>();
         }
-    }
 
-    public boolean setSourceCurrencies(Set<String> sourceCurrencies)
-    {
-        boolean isAddAllChanged = mSourceCurrencies.addAll(sourceCurrencies);
-        sourceCurrencies.retainAll(mSourceCurrencies);
-        mSourceCurrencies = sourceCurrencies;
-
-        if (isAddAllChanged)
+        public void addSourceCurrency(String sourceCurrencies)
         {
-            setChanged();
-            notifyObservers(mSourceCurrencies);
+                boolean isChanged = mSourceCurrencies.add(sourceCurrencies);
+                if (isChanged)
+                {
+                        setChanged();
+                        notifyObservers(mSourceCurrencies);
+                }
         }
-        return isAddAllChanged;
-    }
 
-    public void setBaseCurrency(String baseCurrency)
-    {
-        if (!mBaseCurrency.equals(baseCurrency))
+        public boolean setSourceCurrencies(Set<String> sourceCurrencies)
         {
-            mBaseCurrency = baseCurrency;
-            setChanged();
-            notifyObservers(mBaseCurrency);
-            removeSourceCurrency(baseCurrency);
-        }
-    }
+                boolean isAddAllChanged = mSourceCurrencies.addAll(sourceCurrencies);
+                sourceCurrencies.retainAll(mSourceCurrencies);
+                mSourceCurrencies = sourceCurrencies;
 
-    public void setBaseWebApi(String baseWebApi)
-    {
-        if (!mBaseUri.equals(baseWebApi))
+                if (isAddAllChanged)
+                {
+                        setChanged();
+                        notifyObservers(mSourceCurrencies);
+                }
+                return isAddAllChanged;
+        }
+
+        public void setBaseCurrency(String baseCurrency)
         {
-            mBaseUri = baseWebApi;
-            setChanged();
-            notifyObservers(mBaseCurrency);
+                if (!mBaseCurrency.equals(baseCurrency))
+                {
+                        mBaseCurrency = baseCurrency;
+                        setChanged();
+                        notifyObservers(mBaseCurrency);
+                        removeSourceCurrency(baseCurrency);
+                }
         }
-    }
 
-    public Set<String> getSourceCurrencies()
-    {
-        return mSourceCurrencies;
-    }
+        public void setBaseWebApi(String baseWebApi)
+        {
+                if (!mBaseUri.equals(baseWebApi))
+                {
+                        mBaseUri = baseWebApi;
+                        setChanged();
+                        notifyObservers(mBaseCurrency);
+                }
+        }
 
-    public String getBaseCurrency()
-    {
-        return mBaseCurrency;
-    }
+        public Set<String> getSourceCurrencies()
+        {
+                return mSourceCurrencies;
+        }
 
-    public String getBaseWebApi()
-    {
-        return mBaseUri;
-    }
+        public String getBaseCurrency()
+        {
+                return mBaseCurrency;
+        }
 
-    public void removeSourceCurrency(String existingCountryCode)
-    {
-        mSourceCurrencies.remove(existingCountryCode);
-    }
+        public String getBaseWebApi()
+        {
+                return mBaseUri;
+        }
+
+        public void removeSourceCurrency(String existingCountryCode)
+        {
+                mSourceCurrencies.remove(existingCountryCode);
+        }
 }

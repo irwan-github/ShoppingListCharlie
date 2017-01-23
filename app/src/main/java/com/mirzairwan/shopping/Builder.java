@@ -13,18 +13,19 @@ import com.mirzairwan.shopping.domain.ShoppingList;
 
 public class Builder
 {
-    static DaoManager getDaoManager(Context context)
-    {
-        return new DaoContentProv(context);
-    }
+        static DaoManager getDaoManager(Context context)
+        {
+                return new DaoContentProv(context);
+        }
 
-    public static ShoppingList getShoppingList(Cursor c)
-    {
-        return new ShoppingCursorList(c);
-    }
+        public static ShoppingCursorList getShoppingList(Cursor c)
+        {
+                return new ShoppingCursorList(c);
+        }
 
-    public static ShoppingList getShoppingList()
-    {
-        return new ShoppingCursorList();
-    }
+        public static ShoppingList getShoppingList()
+        {
+//                return new ShoppingCursorList();
+                return null;
+        }
 }

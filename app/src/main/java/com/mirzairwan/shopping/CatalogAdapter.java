@@ -39,7 +39,7 @@ public class CatalogAdapter extends CursorAdapter
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent)
     {
-        View convertView = LayoutInflater.from(context).inflate(R.layout.row_catalogue, parent,
+        View convertView = LayoutInflater.from(context).inflate(R.layout.row_history, parent,
                                                                         false);
         ImageView ivItem = (ImageView) convertView.findViewById(R.id.iv_history_pic_thb);
         TextView tvItemName = (TextView)convertView.findViewById(R.id.tv_all_item_name_row);

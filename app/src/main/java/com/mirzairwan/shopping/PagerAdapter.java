@@ -32,7 +32,7 @@ public class PagerAdapter extends FragmentPagerAdapter
             case BUY_LIST:
                   return ShoppingListFragment.newInstance();
             case CATALOG:
-                return CatalogFragment.newInstance();
+                return ShoppingHistoryFragment.newInstance();
             default:
                 return null;
         }

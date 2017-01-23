@@ -21,309 +21,293 @@ import java.util.List;
 
 public class PictureMgr implements Parcelable
 {
-    private Picture mPictureInDb; //Currently stored in database
-    private List<Picture> mTargetPictureForViewing = new ArrayList<>(); //Currently shown to the
-    // user. For this implementation, only one picture is allowed.
-    private List<Picture> mDiscardedPictures = new ArrayList<>(); //To be deleted from filesystem
-    private long mItemId = -1;
-    private static final String SHOPPING_LIST_PICS = "Item_";
-    private static String mAuthorityPackage = "Android/data/com.mirzairwan.shopping/files/Pictures";
-
-    public PictureMgr()
-    {
-
-    }
-
-    /**
-     * @param pictureInDb will be the picture used for viewing initially.
-     * @param itemId
-     */
-    public PictureMgr(Picture pictureInDb, long itemId)
-    {
-        mPictureInDb = pictureInDb;
-        mItemId = itemId;
-        setPictureForViewing(mPictureInDb);
-    }
-
-
-    public long getItemId()
-    {
-        return mItemId;
-    }
-
-    /**
-     * The current picture will replaced by the new picture.
-     * If the current picture is different from newPicture and if it's path is not associated with
-     * the item stored in database, the current picture will be put in the discarded list.
-     * Original file (exist in database records) will never be put in discarded list in this method
-     * because it is NOT known whether user want to save the new picture.
-     * If not different, the target picture will be ignored.
-     *
-     * @param newPictureFile
-     */
-    public void setPictureForViewing(File newPictureFile)
-    {
-        if (newPictureFile != null)
+        public static final Creator<PictureMgr> CREATOR = new Creator<PictureMgr>()
         {
-            setPictureForViewing(new Picture(newPictureFile));
-        }
-    }
+                public PictureMgr createFromParcel(Parcel in)
+                {
+                        return new PictureMgr(in);
+                }
 
-    /**
-     * The current picture will replaced by the new picture.
-     * If the current picture is different from newPicture and if it's path is not associated with
-     * the item stored in database, the current picture will be put in the discarded list.
-     * Original file (exist in database records) will never be put in discarded list in this method
-     * because it is NOT known whether user want to save the new picture.
-     *
-     * @param newPicture will be the picture to be used for viewing
-     */
-    public void setPictureForViewing(Picture newPicture)
-    {
-        if (newPicture == null)
+                public PictureMgr[] newArray(int size)
+                {
+                        return new PictureMgr[size];
+                }
+        };
+        private static final String SHOPPING_LIST_PICS = "Item_";
+        private static String mAuthorityPackage = "Android/data/com.mirzairwan.shopping/files/Pictures";
+        private Picture mPictureInDb; //Currently stored in database
+        private List<Picture> mTargetPictureForViewing = new ArrayList<>(); //Currently shown to the
+        // user. For this implementation, only one picture is allowed.
+        private List<Picture> mDiscardedPictures = new ArrayList<>(); //To be deleted from filesystem
+        private long mItemId = -1;
+
+        public PictureMgr()
         {
-            return;
+
         }
 
-        if (isSameAsCurrentViewedPicture(newPicture))
+        private PictureMgr(Parcel in)
         {
-            return;
+                mItemId = in.readLong();
+                in.readTypedList(mTargetPictureForViewing, Picture.CREATOR);
+                in.readTypedList(mDiscardedPictures, Picture.CREATOR);
+                mPictureInDb = in.readParcelable(getClass().getClassLoader());
+                mAuthorityPackage = in.readString();
         }
 
-        Picture discardedPic = null;
-
-        if (mTargetPictureForViewing.size() == 1)
+        public static File createFileHandle(File dirPictures) throws IOException
         {
-            discardedPic = mTargetPictureForViewing.set(0, newPicture);
+                String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
+                String picFilename = SHOPPING_LIST_PICS + "_" + timeStamp + "_";
+
+                //Get file handle
+                File filePicture = File.createTempFile(picFilename, ".jpg", dirPictures);
+
+                return filePicture;
         }
-        else
+
+        public static boolean isExternalFile(Picture picture)
         {
-            mTargetPictureForViewing.add(newPicture);
+                return !picture.getPath().contains(mAuthorityPackage);
         }
 
-        if (discardedPic != null && !isOriginalPicture(discardedPic))
+        public long getItemId()
         {
-            mDiscardedPictures.add(discardedPic);
+                return mItemId;
         }
-    }
 
-    private boolean isOriginalPicture(Picture discardedPic)
-    {
-        if (mPictureInDb != null && mPictureInDb.getPath().equals(discardedPic.getPath()))
+        public void setItemId(long id)
         {
-            return true;
+                mItemId = id;
         }
-        else
+
+        /**
+         * The current picture will replaced by the new picture.
+         * If the current picture is different from newPicture and if it's path is not associated with
+         * the item stored in database, the current picture will be put in the discarded list.
+         * Original file (exist in database records) will never be put in discarded list in this method
+         * because it is NOT known whether user want to save the new picture.
+         * If not different, the target picture will be ignored.
+         *
+         * @param newPictureFile
+         */
+        public void setPictureForViewing(File newPictureFile)
         {
-            return false;
+                if (newPictureFile != null)
+                {
+                        setPictureForViewing(new Picture(newPictureFile));
+                }
         }
-    }
 
-    private boolean isSameAsCurrentViewedPicture(Picture targetPicture)
-    {
-        Picture currentViewedPicture = null;
-        if (mTargetPictureForViewing.size() == 0)
+        private boolean isOriginalPicture(Picture discardedPic)
         {
-            return false;
+                if (mPictureInDb != null && mPictureInDb.getPath().equals(discardedPic.getPath()))
+                {
+                        return true;
+                }
+                else
+                {
+                        return false;
+                }
         }
-        else
+
+        private boolean isSameAsCurrentViewedPicture(Picture targetPicture)
         {
-            currentViewedPicture = mTargetPictureForViewing.get(0);
+                Picture currentViewedPicture = null;
+                if (mTargetPictureForViewing.size() == 0)
+                {
+                        return false;
+                }
+                else
+                {
+                        currentViewedPicture = mTargetPictureForViewing.get(0);
+                }
+
+                if (currentViewedPicture.getPath().equals(targetPicture.getPath()))
+                {
+                        return true;
+                }
+                else
+                {
+                        return false;
+                }
         }
 
-        if (currentViewedPicture.getPath().equals(targetPicture.getPath()))
+        public boolean hasDiscardedInternalPictures()
         {
-            return true;
+                Iterator<Picture> iteratorDiscardPics = mDiscardedPictures.iterator();
+                boolean hasInternalPic = false;
+                while (iteratorDiscardPics.hasNext())
+                {
+
+                        Picture discardedPicture = iteratorDiscardPics.next();
+
+                        if (!isExternalFile(discardedPicture) && discardedPicture.getFile() != null)
+                        {
+                                hasInternalPic = true;
+                                break;
+                        }
+                }
+                return hasInternalPic;
         }
-        else
+
+        /**
+         * Get picture for viewing. If target picture for viewing is empty, then original picture
+         * is used. However, if original picture was deleted, then null will be returned
+         *
+         * @return
+         */
+        public Picture getPictureForViewing()
         {
-            return false;
+                if (mTargetPictureForViewing.size() > 0)
+                {
+                        return mTargetPictureForViewing.get(0);
+                }
+                else
+                {
+                        return mPictureInDb;
+                }
         }
-    }
 
-    public boolean hasDiscardedInternalPictures()
-    {
-        Iterator<Picture> iteratorDiscardPics = mDiscardedPictures.iterator();
-        boolean hasInternalPic = false;
-        while (iteratorDiscardPics.hasNext()) {
-
-            Picture discardedPicture = iteratorDiscardPics.next();
-
-            if (!isExternalFile(discardedPicture) && discardedPicture.getFile() != null)
-            {
-                hasInternalPic = true;
-                break;
-            }
-        }
-        return hasInternalPic;
-    }
-
-
-    /**
-     * Get picture for viewing. If target picture for viewing is empty, then original picture
-     * is used. However, if original picture was deleted, then null will be returned
-     *
-     * @return
-     */
-    public Picture getPictureForViewing()
-    {
-        if (mTargetPictureForViewing.size() > 0)
+        /**
+         * The current picture will replaced by the new picture.
+         * If the current picture is different from newPicture and if it's path is not associated with
+         * the item stored in database, the current picture will be put in the discarded list.
+         * Original file (exist in database records) will never be put in discarded list in this method
+         * because it is NOT known whether user want to save the new picture.
+         *
+         * @param newPicture will be the picture to be used for viewing
+         */
+        public void setPictureForViewing(Picture newPicture)
         {
-            return mTargetPictureForViewing.get(0);
+                if (newPicture == null)
+                {
+                        return;
+                }
+
+                if (isSameAsCurrentViewedPicture(newPicture))
+                {
+                        return;
+                }
+
+                Picture discardedPic = null;
+
+                if (mTargetPictureForViewing.size() == 1)
+                {
+                        discardedPic = mTargetPictureForViewing.set(0, newPicture);
+                }
+                else
+                {
+                        mTargetPictureForViewing.add(newPicture);
+                }
+
+                if (discardedPic != null && !isOriginalPicture(discardedPic))
+                {
+                        mDiscardedPictures.add(discardedPic);
+                }
         }
-        else
+
+        public List<Picture> getPictureForSaving()
         {
-            return mPictureInDb;
+                return mTargetPictureForViewing;
         }
-    }
 
-    public List<Picture> getPictureForSaving()
-    {
-        return mTargetPictureForViewing;
-    }
-
-
-    public List<Picture> getDiscardedPictures()
-    {
-        return mDiscardedPictures;
-    }
-
-    /**
-     * @return Picture stored in database
-     */
-    public Picture getOriginalPicture()
-    {
-        return mPictureInDb;
-    }
-
-    /**
-     * Sets the original picture associated with the item and its path stored in database.
-     * It does not replace the picture for viewing.
-     * To use thid picture for viewng, call setViewOriginalPicture after calling this method.
-     *
-     * @param pictureInDb
-     */
-    public void setOriginalPicture(Picture pictureInDb)
-    {
-        mPictureInDb = pictureInDb;
-    }
-
-    /**
-     * Original picture, if exist,  wll be the pictute target picture and removed from discarded
-     * pile. The current target picture is put in discarded file.
-     */
-    public void setViewOriginalPicture()
-    {
-        if (mPictureInDb == null)
+        public List<Picture> getDiscardedPictures()
         {
-            return;
+                return mDiscardedPictures;
         }
-        setPictureForViewing(mPictureInDb);
-        if (mDiscardedPictures.contains(mPictureInDb))
+
+        /**
+         * @return Picture stored in database
+         */
+        public Picture getOriginalPicture()
         {
-            mDiscardedPictures.remove(mPictureInDb);
+                return mPictureInDb;
         }
-    }
 
-    public static File createFileHandle(File dirPictures) throws IOException
-    {
-        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
-        String picFilename = SHOPPING_LIST_PICS + "_" + timeStamp + "_";
-
-        //Get file handle
-        File filePicture = File.createTempFile(picFilename, ".jpg", dirPictures);
-
-        return filePicture;
-    }
-
-
-    public void setItemId(long id)
-    {
-        mItemId = id;
-    }
-
-    /**
-     * Move original picture (path stored in database) to discarded list if it was NOT already in.
-     * Remove original picture from current viewed picture
-     */
-    public void discardOriginalPicture()
-    {
-        if (mPictureInDb != null && !mDiscardedPictures.contains(mPictureInDb))
+        /**
+         * Sets the original picture associated with the item and its path stored in database.
+         * It does not replace the picture for viewing.
+         * To use thid picture for viewng, call setViewOriginalPicture after calling this method.
+         *
+         * @param pictureInDb
+         */
+        public void setOriginalPicture(Picture pictureInDb)
         {
-            mDiscardedPictures.add(mPictureInDb);
+                mPictureInDb = pictureInDb;
         }
-        if (mPictureInDb != null &&
-                mTargetPictureForViewing.contains(mPictureInDb))
+
+        /**
+         * Original picture, if exist,  wll be the pictute target picture and removed from discarded
+         * pile. The current target picture is put in discarded file.
+         */
+        public void setViewOriginalPicture()
         {
-            mTargetPictureForViewing.remove(mPictureInDb);
+                if (mPictureInDb == null)
+                {
+                        return;
+                }
+                setPictureForViewing(mPictureInDb);
+                if (mDiscardedPictures.contains(mPictureInDb))
+                {
+                        mDiscardedPictures.remove(mPictureInDb);
+                }
         }
-        mPictureInDb = null;
-    }
 
-    /**
-     * Invoked when user clicks on delete button in picture toolbar
-     * Move picture to discarded list if it was NOT already in, Original picture will also be
-     * put in the discarded list
-     * The current picture for viewing is removed.
-     * If current picture is original picture, then original picture will not exist anymore.
-     */
-    public Picture discardCurrentPictureInView()
-    {
-        Picture pictureForViewing = getPictureForViewing();
-        if (pictureForViewing != null && !mDiscardedPictures.contains(pictureForViewing)
-                && !isOriginalPicture(pictureForViewing))
+        /**
+         * Move original picture (path stored in database) to discarded list if it was NOT already in.
+         * Remove original picture from current viewed picture
+         */
+        public void discardOriginalPicture()
         {
-            mDiscardedPictures.add(pictureForViewing);
-            mTargetPictureForViewing.remove(pictureForViewing);
+                if (mPictureInDb != null && !mDiscardedPictures.contains(mPictureInDb))
+                {
+                        mDiscardedPictures.add(mPictureInDb);
+                }
+                if (mPictureInDb != null && mTargetPictureForViewing.contains(mPictureInDb))
+                {
+                        mTargetPictureForViewing.remove(mPictureInDb);
+                }
+                mPictureInDb = null;
         }
-        if(isOriginalPicture(pictureForViewing))
-            discardOriginalPicture();
 
-        return pictureForViewing;
-    }
-
-    public static boolean isExternalFile(Picture picture)
-    {
-        return !picture.getPath().contains(mAuthorityPackage);
-    }
-
-    @Override
-    public int describeContents()
-    {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags)
-    {
-        dest.writeLong(mItemId);
-        dest.writeTypedList(mTargetPictureForViewing);
-        dest.writeTypedList(mDiscardedPictures);
-        dest.writeParcelable(mPictureInDb, flags);
-        dest.writeString(mAuthorityPackage);
-    }
-
-    public static final Creator<PictureMgr> CREATOR
-            = new Creator<PictureMgr>()
-    {
-        public PictureMgr createFromParcel(Parcel in)
+        /**
+         * Invoked when user clicks on delete button in picture toolbar
+         * Move picture to discarded list if it was NOT already in, Original picture will also be
+         * put in the discarded list
+         * The current picture for viewing is removed.
+         * If current picture is original picture, then original picture will not exist anymore.
+         */
+        public Picture discardCurrentPictureInView()
         {
-            return new PictureMgr(in);
+                Picture pictureForViewing = getPictureForViewing();
+                if (pictureForViewing != null && !mDiscardedPictures.contains(pictureForViewing) && !isOriginalPicture(pictureForViewing))
+                {
+                        mDiscardedPictures.add(pictureForViewing);
+                        mTargetPictureForViewing.remove(pictureForViewing);
+                }
+                if (isOriginalPicture(pictureForViewing))
+                {
+                        discardOriginalPicture();
+                }
+
+                return pictureForViewing;
         }
 
-        public PictureMgr[] newArray(int size)
+        @Override
+        public int describeContents()
         {
-            return new PictureMgr[size];
+                return 0;
         }
-    };
 
-    private PictureMgr(Parcel in)
-    {
-        mItemId = in.readLong();
-        in.readTypedList(mTargetPictureForViewing, Picture.CREATOR);
-        in.readTypedList(mDiscardedPictures, Picture.CREATOR);
-        mPictureInDb = in.readParcelable(getClass().getClassLoader());
-        mAuthorityPackage = in.readString();
-    }
+        @Override
+        public void writeToParcel(Parcel dest, int flags)
+        {
+                dest.writeLong(mItemId);
+                dest.writeTypedList(mTargetPictureForViewing);
+                dest.writeTypedList(mDiscardedPictures);
+                dest.writeParcelable(mPictureInDb, flags);
+                dest.writeString(mAuthorityPackage);
+        }
 
 }

@@ -12,83 +12,83 @@ Or else, the scaling is bypassed resulting in OutOfMemoryError
                 android:layout_height="@dimen/image_summary_height"
                 android:gravity="center_vertical"
                 android:paddingRight="@dimen/keyline_1"
-    >
-
-    <ImageView
-        android:id="@+id/iv_item_pic_thb"
-        android:layout_width="@dimen/image_summary_width"
-        android:layout_height="@dimen/image_summary_height"
-        android:scaleType="centerCrop"
-        android:src="@drawable/empty_photo"/>
-
-    <TextView
-        android:id="@+id/item_name_row"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/iv_item_pic_thb"
-        android:ellipsize="end"
-        android:focusable="false"
-        android:maxLines="@string/text_max_line"
-        android:maxWidth="@dimen/tv_item_name_max_width"
-        android:paddingBottom="@dimen/summary_header_padding_bottom"
-        android:paddingLeft="@dimen/keyline_1"
-        android:paddingTop="@dimen/text_view_padding_top"
-        android:textAppearance="?android:textAppearanceMedium"
-        android:textColor="@color/textColorItemName"
-        android:textStyle="bold"
-        tools:text="Sardine">
-    </TextView>
-
-
-    <TextView
-        android:id="@+id/item_brand_row"
-        android:layout_width="@dimen/tv_item_brand_max_width"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/item_name_row"
-        android:layout_toRightOf="@id/iv_item_pic_thb"
-        android:ellipsize="end"
-        android:focusable="false"
-        android:fontFamily="sans-serif-medium"
-        android:maxLines="@string/text_max_line"
-        android:maxWidth="@dimen/tv_item_brand_max_width"
-        android:paddingLeft="@dimen/keyline_1"
-        android:textAppearance="?android:textAppearanceSmall"
-        android:textColor="@color/textColorItemBrand"
-        tools:text="Selfridge"
         >
-    </TextView>
+
+        <ImageView
+                android:id="@+id/iv_item_pic_thb"
+                android:layout_width="@dimen/image_summary_width"
+                android:layout_height="@dimen/image_summary_height"
+                android:scaleType="centerCrop"
+                android:src="@drawable/empty_photo"/>
+
+        <TextView
+                android:id="@+id/item_name_row"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/iv_item_pic_thb"
+                android:ellipsize="end"
+                android:focusable="false"
+                android:maxLines="@string/text_max_line"
+                android:maxWidth="@dimen/tv_item_name_max_width"
+                android:paddingBottom="@dimen/summary_header_padding_bottom"
+                android:paddingLeft="@dimen/keyline_1"
+                android:paddingTop="@dimen/text_view_padding_top"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:textColor="@color/textColorItemName"
+                android:textStyle="bold"
+                tools:text="Sardine">
+        </TextView>
 
 
-    <TextView
-        android:id="@+id/item_selected_price_row"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/item_brand_row"
-        android:layout_toRightOf="@id/iv_item_pic_thb"
-        android:focusable="false"
-        android:maxLines="@string/text_max_line"
-        android:paddingLeft="@dimen/keyline_1"
-        android:paddingTop="@dimen/summary_body_padding_top"
-        android:textAppearance="?android:textAppearanceSmall"
-        android:textColor="@color/textColorItemBrand"
-        tools:text="$199.55 (est)"
-        >
-    </TextView>
+        <TextView
+                android:id="@+id/item_brand_row"
+                android:layout_width="@dimen/tv_item_brand_max_width"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/item_name_row"
+                android:layout_toRightOf="@id/iv_item_pic_thb"
+                android:ellipsize="end"
+                android:focusable="false"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="@string/text_max_line"
+                android:maxWidth="@dimen/tv_item_brand_max_width"
+                android:paddingLeft="@dimen/keyline_1"
+                android:textAppearance="?android:textAppearanceSmall"
+                android:textColor="@color/textColorItemBrand"
+                tools:text="Selfridge"
+                >
+        </TextView>
 
 
-    <ToggleButton
-        android:id="@+id/check_item"
-        android:layout_width="@dimen/touch_target_width"
-        android:layout_height="@dimen/touch_target_height"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        android:background="@drawable/toggle_circle"
-        android:focusable="false"
-        android:textColor="@android:color/white"
-        android:textAppearance="?android:textAppearanceMedium"
-        android:fontFamily="sans-serif-medium"
-        android:textOff=""
-        android:textOn=""
-        tools:text="8"
-        />
+        <TextView
+                android:id="@+id/item_selected_price_row"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/item_brand_row"
+                android:layout_toRightOf="@id/iv_item_pic_thb"
+                android:focusable="false"
+                android:maxLines="@string/text_max_line"
+                android:paddingLeft="@dimen/keyline_1"
+                android:paddingTop="@dimen/summary_body_padding_top"
+                android:textAppearance="?android:textAppearanceSmall"
+                android:textColor="@color/textColorItemBrand"
+                tools:text="$199.55 (est)"
+                >
+        </TextView>
+
+
+        <ToggleButton
+                android:id="@+id/check_item"
+                android:layout_width="@dimen/touch_target_width"
+                android:layout_height="@dimen/touch_target_height"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/toggle_circle"
+                android:focusable="false"
+                android:fontFamily="sans-serif-medium"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:textColor="@android:color/white"
+                android:textOff=""
+                android:textOn=""
+                tools:text="8"
+                />
 </RelativeLayout>
