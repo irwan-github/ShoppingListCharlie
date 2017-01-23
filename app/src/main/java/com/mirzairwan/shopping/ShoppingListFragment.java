@@ -31,8 +31,6 @@ import com.mirzairwan.shopping.data.DaoManager;
 import com.mirzairwan.shopping.domain.ExchangeRate;
 
 import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Set;
 
 import static com.mirzairwan.shopping.Builder.getDaoManager;
@@ -177,19 +175,9 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                                                 daoMgr.deleteCheckedItems();
                                                 return true;
                                         case R.id.summary_totals:
-                                                java.util.Observer observer = new Observer()
-                                                {
-                                                        @Override
-                                                        public void update(Observable o, Object arg)
-                                                        {
-                                                                displaySummaryTotals(mExchangeRatesReturned.getExchangeRates());
-
-                                                                //Remove this observer after displaying so that it will not be notified of changes caused by other events like "Checking the item in shopping list"
-                                                                mExchangeRatesReturned.deleteObserver(this);
-                                                        }
-                                                };
-                                                mExchangeRatesReturned.addObserver(observer);
-                                                displayTranslatedPricesAndTotals();
+                                                mShoppingCursorList.listItemsAdded(mCountryCode);
+                                                mShoppingCursorList.listItemsChecked(mCountryCode);
+                                                displaySummaryTotals(mExchangeRatesReturned.getExchangeRates());
                                                 return true;
                                         default:
                                                 return false;
@@ -351,13 +339,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                         // update shopping list summary and notify CursorAdapter to show translated prices.
                         mOnExchangeRateListener.onRequest(sourceCurrencyCodes);
                 }
-                else
-                {
-                        mShoppingCursorList.listItemsAdded(mCountryCode);
-                        mShoppingCursorList.listItemsChecked(mCountryCode);
-                        //Set summary total costs of domestic and foreign items
-                        displaySummaryTotals(null);
-                }
         }
 
         @Override
@@ -428,7 +409,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                         public void onClick(View v)
                         {
                                 mSnackBar.dismiss();
-                                ;
                         }
                 });
                 mSnackBar.show();
@@ -473,9 +453,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                         //Set summary total costs of domestic and foreign items
                         mShoppingCursorList.listItemsAdded(mCountryCode);
                         mShoppingCursorList.listItemsChecked(mCountryCode);
-                        dismissSummaryTotalsView();
 
-                        //Not used for caching results. This object will be observed
+                        //Not used for caching results. This object is observable
                         mExchangeRatesReturned.setExchangeRates(exchangeRates);
 
                         //Update the items in the shopping list with exchange rates

@@ -37,8 +37,6 @@ public class Item implements Parcelable
         private boolean mIsInBuyList = false;
         private Date mLastUpdatedOn;
         private List<Price> mPrices = new ArrayList<>();
-        private List<Picture> mPictures = new ArrayList<>();
-        private List<Picture> mToBeDeletedPicture = new ArrayList<>();
 
         public Item()
         {

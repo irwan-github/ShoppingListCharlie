@@ -31,7 +31,7 @@ public class ShoppingCursorList
 
         public ShoppingCursorList(Cursor cursor)
         {
-                mCursor = cursor;
+                mCursor = cursor;;
         }
 
         /**
