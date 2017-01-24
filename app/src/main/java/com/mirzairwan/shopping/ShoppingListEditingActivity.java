@@ -57,6 +57,9 @@ public class ShoppingListEditingActivity extends ItemActivity
                 etQty = (EditText) findViewById(R.id.et_item_quantity);
                 etQty.setOnTouchListener(mOnTouchListener);
 
+                //Set default quantity to 1. If I set this in xml layout , it will jumble up the number and hint. This did not happen at SDK v24
+                etQty.setText("1");
+
                 //set touchListener for Radio Group
                 rgPriceTypeChoice = (RadioGroup) findViewById(R.id.price_type_choice);
                 rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);

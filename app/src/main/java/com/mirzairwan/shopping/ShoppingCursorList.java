@@ -46,6 +46,8 @@ public class ShoppingCursorList
                 mCursor.moveToPosition(-1);
                 while (mCursor.moveToNext())
                 {
+
+
                         int colSelectedPriceTag = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_PRICE);
 
                         int colCurrencyCode = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_CURRENCY_CODE);
@@ -75,6 +77,9 @@ public class ShoppingCursorList
          */
         public void listItemsChecked(String homeCountryCode)
         {
+                int colShoppingItemId = mCursor.getColumnIndex(Contract.ToBuyItemsEntry._ID);
+                long shoppingItemId = mCursor.getLong(colShoppingItemId);
+
                 mSummaryForeignItemsChecked.clear();
                 mSummaryLocalItemsChecked.clear();
                 byte atLeastAnItemChecked = (byte) 0;
@@ -99,12 +104,12 @@ public class ShoppingCursorList
                         {
                                 if (!lCurrencyCode.trim().equalsIgnoreCase(currencyCode))
                                 {
-                                        SummaryItem val = new SummaryItem(cost / 100, lCurrencyCode, qtyPurchased);
+                                        SummaryItem val = new SummaryItem(shoppingItemId, cost / 100, lCurrencyCode, qtyPurchased);
                                         mSummaryForeignItemsChecked.add(val);
                                 }
                                 else
                                 {
-                                        SummaryItem localValChecked = new SummaryItem(cost / 100, lCurrencyCode, qtyPurchased);
+                                        SummaryItem localValChecked = new SummaryItem(shoppingItemId, cost / 100, lCurrencyCode, qtyPurchased);
                                         mSummaryLocalItemsChecked.add(localValChecked);
                                 }
                         }
@@ -217,14 +222,38 @@ public class ShoppingCursorList
                 return itemInShoppingList;
         }
 
+        public HashSet<Long> getCheckedItems()
+        {
+                HashSet<Long> ids = new HashSet<>();
+                for(SummaryItem item : mSummaryForeignItemsChecked)
+                {
+                        ids.add(item.getItemInShoppingListId());
+                }
+
+                for(SummaryItem item : mSummaryLocalItemsChecked)
+                {
+                        ids.add(item.getItemInShoppingListId());
+                }
+                return ids;
+        }
+
         private class SummaryItem
         {
+                private long mId;
                 private int mQtyToBuy;
                 private double mCost;
                 private String mSourceCurrencyCode;
 
                 public SummaryItem(double cost, String sourceCurrencyCode, int qtyToBuy)
                 {
+                        mCost = cost;
+                        mSourceCurrencyCode = sourceCurrencyCode;
+                        mQtyToBuy = qtyToBuy;
+                }
+
+                public SummaryItem(long id, double cost, String sourceCurrencyCode, int qtyToBuy)
+                {
+                        mId = id;
                         mCost = cost;
                         mSourceCurrencyCode = sourceCurrencyCode;
                         mQtyToBuy = qtyToBuy;
@@ -243,6 +272,11 @@ public class ShoppingCursorList
                 public int getQuantity()
                 {
                         return mQtyToBuy;
+                }
+
+                public Long getItemInShoppingListId()
+                {
+                        return mId;
                 }
         }
 }

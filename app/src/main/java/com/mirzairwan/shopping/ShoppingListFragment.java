@@ -11,7 +11,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -30,6 +29,7 @@ import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import com.mirzairwan.shopping.data.DaoManager;
 import com.mirzairwan.shopping.domain.ExchangeRate;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -179,12 +179,18 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                                                 mShoppingCursorList.listItemsChecked(mCountryCode);
                                                 displaySummaryTotals(mExchangeRatesReturned.getExchangeRates());
                                                 return true;
+                                        case R.id.share_shopping_list:
+                                                share();
+                                                return true;
+                                        case R.id.add_to_shopping_list:
+                                                onFragmentInteractionListener.onAdditem();
+                                                return true;
                                         default:
                                                 return false;
                                 }
                         }
                 };
-
+                mShoppingListToolbar = shoppingListToolbar;
                 shoppingListToolbar.setOnMenuItemClickListener(onMenuItemClickListener);
 
                 final MenuItem menuItem = shoppingListToolbar.getMenu().findItem(R.id.clear_checked_item);
@@ -208,7 +214,37 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                                 onMenuItemClickListener.onMenuItemClick(menuItemTotals);
                         }
                 });
-                mShoppingListToolbar = shoppingListToolbar;
+
+
+                final MenuItem menuItemShare = shoppingListToolbar.getMenu().findItem(R.id.share_shopping_list);
+                View menuActionShare = menuItemShare.getActionView();
+                menuActionShare.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v)
+                        {
+                                onMenuItemClickListener.onMenuItemClick(menuItemShare);
+                        }
+                });
+
+                final MenuItem menuActionAddItem  = shoppingListToolbar.getMenu().findItem(R.id.add_to_shopping_list);
+                View addItemActionView = menuActionAddItem.getActionView();
+                addItemActionView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v)
+                        {
+                                onMenuItemClickListener.onMenuItemClick(menuActionAddItem);
+                        }
+                });
+
+        }
+
+        private void share()
+        {
+                //Get the shared ids
+                mShoppingCursorList.listItemsChecked(mCountryCode);
+                HashSet<Long> ids = mShoppingCursorList.getCheckedItems();
+
+                onFragmentInteractionListener.onFirebaseShareShoppingList(ids);
         }
 
         private void setupEmptyView(View rootView, ListView lvBuyItems)
@@ -264,15 +300,15 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
         private void setupFloatingActionButton(View view)
         {
-                FloatingActionButton btnAdd = (FloatingActionButton) view.findViewById(R.id.btn_add_item);
-                btnAdd.setOnClickListener(new View.OnClickListener()
-                {
-                        @Override
-                        public void onClick(View v)
-                        {
-                                onFragmentInteractionListener.onAdditem();
-                        }
-                });
+//                FloatingActionButton btnAdd = (FloatingActionButton) view.findViewById(R.id.btn_add_item);
+//                btnAdd.setOnClickListener(new View.OnClickListener()
+//                {
+//                        @Override
+//                        public void onClick(View v)
+//                        {
+//                                onFragmentInteractionListener.onAdditem();
+//                        }
+//                });
         }
 
         @Override
@@ -433,6 +469,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 void onViewBuyItem(long itemId, String currencyCode);
 
                 void onInitialized(ExchangeRateCallback exchangeRateCallback);
+
+                void onFirebaseShareShoppingList(HashSet<Long> ids);
         }
 
         /**

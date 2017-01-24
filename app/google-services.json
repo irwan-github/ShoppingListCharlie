@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "863380239018",
+    "firebase_url": "https://shopping-list-database-v-7b55d.firebaseio.com",
+    "project_id": "shopping-list-database-v-7b55d",
+    "storage_bucket": "shopping-list-database-v-7b55d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:863380239018:android:83a6bcad609f8887",
+        "android_client_info": {
+          "package_name": "com.mirzairwan.shopping"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "863380239018-8vm5aqcc6pfrh9r7bt8itg3lkr4n5ih4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mirzairwan.shopping",
+            "certificate_hash": "30BDEF4606917A2148A6AE4D9962B56E09E6E9E7"
+          }
+        },
+        {
+          "client_id": "863380239018-s45tlt1lm5suntte8s923vvkequvq8cn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnXOjTfGZwkNxcdqexGGGVYJXrZtCUNbg"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "863380239018-s45tlt1lm5suntte8s923vvkequvq8cn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

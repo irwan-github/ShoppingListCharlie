@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+        <android.support.design.widget.TextInputLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="@dimen/edit_text_padding_top"
+                android:layout_marginLeft="@dimen/keyline_1"
+                >
+
+                <android.support.design.widget.TextInputEditText
+                        android:layout_width="300dp"
+                        android:layout_height="wrap_content"
+                        android:hint="Share with user@email"
+                        />
+
+        </android.support.design.widget.TextInputLayout>
+
+        <ListView
+                android:id="@+id/lv_to_share_items"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+
+                android:divider="@android:color/darker_gray"
+                android:dividerHeight="4px">
+
+        </ListView>
+
+</LinearLayout>

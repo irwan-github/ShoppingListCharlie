@@ -1,42 +1,42 @@
 <resources>
 
-    <!-- Default screen margins, per the Android Design guidelines. -->
-    <dimen name="activity_horizontal_margin">16dp</dimen>
-    <dimen name="activity_vertical_margin">16dp</dimen>
-    <dimen name="keyline_1">16dp</dimen>
-    <dimen name="keyline_2">72dp</dimen>
-    <dimen name="touch_target_height">48dp</dimen>
-    <dimen name="touch_target_width">48dp</dimen>
-    <dimen name="summary_totals_height">48dp</dimen>
-    <dimen name="toolbar_height">56dp</dimen>
-    <dimen name="list_item_height">128dp</dimen>
-    <dimen name="edit_text_height">72dp</dimen>
-    <dimen name="edit_text_padding_top">8dp</dimen>
-    <dimen name="edit_text_padding_bottom">8dp</dimen>
+        <!-- Default screen margins, per the Android Design guidelines. -->
+        <dimen name="activity_horizontal_margin">16dp</dimen>
+        <dimen name="activity_vertical_margin">16dp</dimen>
+        <dimen name="keyline_1">16dp</dimen>
+        <dimen name="keyline_2">72dp</dimen>
+        <dimen name="touch_target_height">48dp</dimen>
+        <dimen name="touch_target_width">48dp</dimen>
+        <dimen name="summary_totals_height">48dp</dimen>
+        <dimen name="toolbar_height">56dp</dimen>
+        <dimen name="list_item_height">128dp</dimen>
+        <dimen name="edit_text_height">72dp</dimen>
+        <dimen name="edit_text_padding_top">8dp</dimen>
+        <dimen name="edit_text_padding_bottom">8dp</dimen>
 
-    <dimen name="edit_text_item_brand_min_width">200dp</dimen>
+        <dimen name="edit_text_item_brand_min_width">200dp</dimen>
 
-    <dimen name="radio_button_top_bottom_padding">8dp</dimen>
-    <dimen name="text_view_padding_top">8dp</dimen>
-    <dimen name="text_view_padding_bottom">8dp</dimen>
-    <dimen name="text_padding_right">8dp</dimen>
-    <dimen name="text_padding_left">8dp</dimen>
-    <dimen name="edit_text_item_name_min_width">300dp</dimen>
-    <dimen name="edit_text_item_quantity_min_width">150dp</dimen>
-    <dimen name="edit_text_price_min_width">150dp</dimen>
-    <dimen name="edit_text_bundle_qty_min_width">150dp</dimen>
-    <dimen name="tv_item_name_max_width">150dp</dimen>
-    <dimen name="tv_item_brand_max_width">150dp</dimen>
-    <dimen name="edit_surface_margin">8dp</dimen>
-    <dimen name="edit_text_item_description_min_width">300dp</dimen>
+        <dimen name="radio_button_top_bottom_padding">8dp</dimen>
+        <dimen name="text_view_padding_top">8dp</dimen>
+        <dimen name="text_view_padding_bottom">8dp</dimen>
+        <dimen name="text_padding_right">8dp</dimen>
+        <dimen name="text_padding_left">8dp</dimen>
+        <dimen name="edit_text_item_name_min_width">300dp</dimen>
+        <dimen name="edit_text_item_quantity_min_width">150dp</dimen>
+        <dimen name="edit_text_price_min_width">150dp</dimen>
+        <dimen name="edit_text_bundle_qty_min_width">150dp</dimen>
+        <dimen name="tv_item_name_max_width">150dp</dimen>
+        <dimen name="tv_item_brand_max_width">150dp</dimen>
+        <dimen name="edit_surface_margin">8dp</dimen>
+        <dimen name="edit_text_item_description_min_width">300dp</dimen>
 
-    <dimen name="image_summary_width">100dp</dimen>
-    <dimen name="image_summary_height">100dp</dimen>
-    <dimen name="summary_body_padding_top">2dp</dimen>
-    <dimen name="summary_header_padding_bottom">4dp</dimen>
-    <dimen name="tv_item_price_max_width">128dp</dimen>
+        <dimen name="image_summary_width">100dp</dimen>
+        <dimen name="image_summary_height">100dp</dimen>
+        <dimen name="summary_body_padding_top">2dp</dimen>
+        <dimen name="summary_header_padding_bottom">4dp</dimen>
+        <dimen name="tv_item_price_max_width">128dp</dimen>
 
-    <dimen name="picture_item_detail_width">375dp</dimen>
-    <dimen name="picture_item_detail_height">500dp</dimen>
+        <dimen name="picture_item_detail_width">375dp</dimen>
+        <dimen name="picture_item_detail_height">500dp</dimen>
 
 </resources>

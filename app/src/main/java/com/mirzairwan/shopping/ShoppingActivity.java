@@ -30,8 +30,11 @@ import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.domain.ExchangeRate;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
+import com.mirzairwan.shopping.firebase.MainFirebaseActivity;
+import com.mirzairwan.shopping.firebase.ShareFragment;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -361,6 +364,14 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
 
                         mExchangeRateInput.setBaseCurrency(FormatHelper.getCurrencyCode(mCountryCode));
                 }
+        }
+
+        @Override
+        public void onFirebaseShareShoppingList(HashSet<Long> ids)
+        {
+                Intent intent = new Intent(this, MainFirebaseActivity.class);
+                intent.putExtra(ShareFragment.ITEM_TO_SHARE, ids);
+                startActivity(intent);
         }
 
         private class DrawerItemClickListener implements ListView.OnItemClickListener

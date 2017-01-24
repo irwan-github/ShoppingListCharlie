@@ -19,8 +19,6 @@
         android:id="@+id/item_quantity_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/item_name_layout"
-        android:layout_toRightOf="@+id/item_brand_layout"
         android:layout_marginLeft="@dimen/keyline_1"
         android:layout_marginRight="@dimen/keyline_1"
         android:paddingBottom="@dimen/edit_text_padding_bottom"
@@ -31,13 +29,12 @@
             android:id="@+id/et_item_quantity"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:focusableInTouchMode="true"
             android:hint="@string/quantity_label"
             android:inputType="number"
             android:maxLength="@string/text_item_buy_qty_max_length"
             android:textAppearance="?android:textAppearanceMedium"
             android:minWidth="@dimen/edit_text_item_quantity_min_width"
-            android:focusableInTouchMode="true"
-            android:text="1"
             />
 
     </android.support.design.widget.TextInputLayout>
@@ -47,7 +44,6 @@
         android:id="@+id/price_type_query"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/bundle_qty_layout"
         android:text="@string/use_price_type"
         android:paddingBottom="@dimen/text_view_padding_bottom"
         android:paddingTop="@dimen/text_view_padding_top"
