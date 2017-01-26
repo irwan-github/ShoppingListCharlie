@@ -20,6 +20,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
@@ -218,7 +219,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
                 final MenuItem menuItemShare = shoppingListToolbar.getMenu().findItem(R.id.share_shopping_list);
                 View menuActionShare = menuItemShare.getActionView();
-                menuActionShare.setOnClickListener(new View.OnClickListener() {
+                menuActionShare.setOnClickListener(new View.OnClickListener()
+                {
                         @Override
                         public void onClick(View v)
                         {
@@ -226,9 +228,10 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                         }
                 });
 
-                final MenuItem menuActionAddItem  = shoppingListToolbar.getMenu().findItem(R.id.add_to_shopping_list);
+                final MenuItem menuActionAddItem = shoppingListToolbar.getMenu().findItem(R.id.add_to_shopping_list);
                 View addItemActionView = menuActionAddItem.getActionView();
-                addItemActionView.setOnClickListener(new View.OnClickListener() {
+                addItemActionView.setOnClickListener(new View.OnClickListener()
+                {
                         @Override
                         public void onClick(View v)
                         {
@@ -243,8 +246,14 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 //Get the shared ids
                 mShoppingCursorList.listItemsChecked(mCountryCode);
                 HashSet<Long> ids = mShoppingCursorList.getCheckedItems();
-
-                onFragmentInteractionListener.onFirebaseShareShoppingList(ids);
+                if (ids.size() > 0)
+                {
+                        onFragmentInteractionListener.onFirebaseShareShoppingList(ids);
+                }
+                else
+                {
+                        Toast.makeText(getActivity(), "Select item(s) before clicking share ", Toast.LENGTH_LONG).show();
+                }
         }
 
         private void setupEmptyView(View rootView, ListView lvBuyItems)

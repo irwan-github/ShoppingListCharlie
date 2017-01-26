@@ -38,5 +38,7 @@
 
         <dimen name="picture_item_detail_width">375dp</dimen>
         <dimen name="picture_item_detail_height">500dp</dimen>
+        <dimen name="nav_item_margin_top">32dp</dimen>
+        <dimen name ="nav_item_height">48dp</dimen>
 
 </resources>

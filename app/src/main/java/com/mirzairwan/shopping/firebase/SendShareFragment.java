@@ -8,18 +8,26 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.mirzairwan.shopping.OnPictureRequestListener;
 import com.mirzairwan.shopping.R;
@@ -27,30 +35,31 @@ import com.mirzairwan.shopping.ShoppingListAdapter;
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
-import com.mirzairwan.shopping.domain.User;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 /**
  * Created by Mirza Irwan on 25/1/17.
  */
 
-public class ShareFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>
+public class SendShareFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>
 {
         public static final String ITEM_TO_SHARE = "ITEM_TO_SHARE";
         private static final String SORT_COLUMN = "SORT_COLUMN";
-        private static final String LOG_TAG = ShareFragment.class.getSimpleName();
+        private static final String LOG_TAG = SendShareFragment.class.getSimpleName();
         private ShoppingListAdapter shoppingListAdapter;
         private OnPictureRequestListener mOnPictureRequestListener;
-        private DatabaseReference mDatabase;
+        private DatabaseReference mRootRef;
+        private EditText etShareWithUser;
+        private ArrayAdapter<String> mItemsToShareAdapter;
+        private FirebaseUser mFirebaserUser;
 
-        public static ShareFragment instantiate(HashSet<Long> ids)
+
+        public static SendShareFragment getInstance(HashSet<Long> ids)
         {
-                ShareFragment shareFragment = new ShareFragment();
+                SendShareFragment shareFragment = new SendShareFragment();
                 Bundle args = new Bundle();
                 args.putSerializable(ITEM_TO_SHARE, ids);
                 shareFragment.setArguments(args);
@@ -61,7 +70,8 @@ public class ShareFragment extends Fragment implements LoaderManager.LoaderCallb
         public void onCreate(Bundle savedInstanceState)
         {
                 super.onCreate(savedInstanceState);
-                mDatabase = FirebaseDatabase.getInstance().getReference();
+                mFirebaserUser = FirebaseAuth.getInstance().getCurrentUser();
+                mRootRef = FirebaseDatabase.getInstance().getReference();
         }
 
         @Nullable
@@ -70,15 +80,40 @@ public class ShareFragment extends Fragment implements LoaderManager.LoaderCallb
         {
                 View rootView = inflater.inflate(R.layout.fragment_share_shopping_list, container, false);
                 ListView lvShareItems = (ListView) rootView.findViewById(R.id.lv_to_share_items);
-                //setupListView(lvShareItems);
+                setupListView(lvShareItems);
+                etShareWithUser = (EditText) rootView.findViewById(R.id.share_with_user);
+                setHasOptionsMenu(true);
                 return rootView;
         }
 
+        @Override
+        public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
+        {
+                super.onCreateOptionsMenu(menu, inflater);
+                inflater.inflate(R.menu.firebase_share_shopping_list, menu);
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item)
+        {
+                Log.d(LOG_TAG, ">>> onOptionsItemSelected");
+                int menuItemId = item.getItemId();
+                switch (menuItemId)
+                {
+                        case R.id.share_shopping_list_with_user:
+                                submitShoppingList(etShareWithUser.getText().toString());
+                                return true;
+                        default:
+                                return super.onOptionsItemSelected(item);
+                }
+        }
+
+
         private void setupListView(ListView lvShareItems)
         {
-                shoppingListAdapter = new ShoppingListAdapter(getActivity(), null, null, mOnPictureRequestListener);
+                mItemsToShareAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1);
 
-                lvShareItems.setAdapter(shoppingListAdapter);
+                lvShareItems.setAdapter(mItemsToShareAdapter);
         }
 
         @Override
@@ -98,16 +133,12 @@ public class ShareFragment extends Fragment implements LoaderManager.LoaderCallb
                         .COLUMN_FILE_PATH, Contract.PricesEntry.COLUMN_PRICE_TYPE_ID, Contract.PricesEntry.COLUMN_PRICE, Contract.PricesEntry.COLUMN_CURRENCY_CODE};
 
                 Uri uri = Contract.ShoppingList.CONTENT_URI;
-
                 Set<Long> itemIds = (Set<Long>) getArguments().getSerializable(ITEM_TO_SHARE);
-
                 Iterator<Long> iterator = itemIds.iterator();
-
                 String subSelection = null;
                 if (itemIds.size() > 0)
                 {
                         subSelection = " IN (";
-
                         while (iterator.hasNext())
                         {
                                 iterator.next();
@@ -120,7 +151,6 @@ public class ShareFragment extends Fragment implements LoaderManager.LoaderCallb
                                 {
                                         subSelection += ",";
                                 }
-
                         }
                 }
 
@@ -144,7 +174,7 @@ public class ShareFragment extends Fragment implements LoaderManager.LoaderCallb
                         ++k;
                 }
 
-                return new CursorLoader(getActivity(), uri, projection, selection, selectionArgs, sortOrder);
+                return new CursorLoader(getActivity(), uri, projection, selection, selectionArgs, null);
         }
 
         @Override
@@ -153,6 +183,7 @@ public class ShareFragment extends Fragment implements LoaderManager.LoaderCallb
                 Log.d(LOG_TAG, ">>>>>>> onLoadFinished Cursor");
                 //shoppingListAdapter.swapCursor(cursor);
                 displaySharedItems(cursor);
+                etShareWithUser.setEnabled(true);
         }
 
         private void displaySharedItems(Cursor cursor)
@@ -160,6 +191,7 @@ public class ShareFragment extends Fragment implements LoaderManager.LoaderCallb
                 while (cursor.moveToNext())
                 {
                         String itemName = cursor.getString(cursor.getColumnIndex(ItemsEntry.COLUMN_NAME));
+                        mItemsToShareAdapter.add(itemName);
                         Log.d(LOG_TAG, "Item name = " + itemName);
                 }
         }
@@ -167,30 +199,58 @@ public class ShareFragment extends Fragment implements LoaderManager.LoaderCallb
         @Override
         public void onLoaderReset(Loader<Cursor> loader)
         {
-                shoppingListAdapter.swapCursor(null);
+                //shoppingListAdapter.swapCursor(null);
         }
 
-        public void submitShoppingListTitle()
+        private void submitShoppingList(String userEmail)
         {
-                final String uid = getUid();
-                mDatabase.child("users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+                Log.d(LOG_TAG, ">>> submitShoppingList");
+                // Create new shoppingList at shoppingLists/$shoppingListId simultaneously
+
+                Query userQuery = getTargetUser(userEmail);
+
+                userQuery.addListenerForSingleValueEvent(new ValueEventListener()
+                {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot)
                         {
-                                // Get user value
-                                User user = dataSnapshot.getValue(User.class);
+                                String key = dataSnapshot.getKey();
+                                Log.d(LOG_TAG, ">>> The key is  " + key);
+                                Log.d(LOG_TAG, ">>> The value is  " + dataSnapshot.getValue());
 
-                                // [START_EXCLUDE]
-                                if (user == null)
+                                Iterable<DataSnapshot> childen = dataSnapshot.getChildren();
+
+                                String shareeUserId = null;
+
+                                for (DataSnapshot data : childen)
                                 {
-                                        // User is null, error out
-                                        Log.e(LOG_TAG, "User " + uid + " is unexpectedly null");
-                                        Toast.makeText(getActivity(), "Error: could not fetch user.", Toast.LENGTH_SHORT).show();
+                                        Log.d(LOG_TAG, ">>> The children key  is  " + data.getKey()); //This is the key to json user object
+                                        shareeUserId = data.getKey();
+                                        Log.d(LOG_TAG, ">>> The children value  is  " + data.getValue());
+
+                                }
+
+                                if (!TextUtils.isEmpty(shareeUserId))
+                                {
+                                        DatabaseReference shoppingListShareWithRef = mRootRef.child("shopping_list_share_with").child(shareeUserId);
+
+                                        String email = mFirebaserUser.getEmail();
+                                        String uid = mFirebaserUser.getUid();
+
+                                        int countItemsToShare = mItemsToShareAdapter.getCount();
+
+                                        for (int j = 0; j < countItemsToShare; ++j)
+                                        {
+                                                Item item = new Item(email, uid, mItemsToShareAdapter.getItem(j));
+                                                // Push the item, it will appear in the list
+                                                shoppingListShareWithRef.push().setValue(item);
+
+                                                Log.d(LOG_TAG, ">>>First push key " + shoppingListShareWithRef.getKey());
+                                        }
                                 }
                                 else
                                 {
-                                        // Write new post
-                                        writeNewPost(uid, user.getUsername(), "Help me");
+                                        Toast.makeText(getActivity(), "This user does not have an account ", Toast.LENGTH_LONG).show();
                                 }
                         }
 
@@ -200,49 +260,37 @@ public class ShareFragment extends Fragment implements LoaderManager.LoaderCallb
 
                         }
                 });
+
+
+                //Create a share with the personsimultaneously
+                //childUpdates.put("/shoppingListsShareWithUser/" + mEmailOfOriginator + "/" + key, postValues);
+
+                //mRootRef.updateChildren(childUpdates);
         }
 
-        private void writeNewPost(String userId, String username, String title)
+        private Query getTargetUser(String userEmail)
         {
-                // Create new post at /user-posts/$userid/$postid and at
-                // /posts/$postid simultaneously
-                String key = mDatabase.child("shopping_lists").push().getKey();
-                ShoppingListShare post = new ShoppingListShare(userId, username, title);
-                Map<String, Object> postValues = post.toMap();
+                //Get RootRef
+                DatabaseReference rootRef = mRootRef;
 
-                Map<String, Object> childUpdates = new HashMap<>();
-                childUpdates.put("/posts/" + key, postValues);
-                childUpdates.put("/user-posts/" + userId + "/" + key, postValues);
+                //Nest down to users. So users is our parent key
+                DatabaseReference users = rootRef.child("users");
 
-                mDatabase.updateChildren(childUpdates);
+                Query usersQuery = users.orderByChild("email");
+
+                Query user = usersQuery.equalTo(userEmail).limitToFirst(1);
+                return user;
         }
 
-        public String getUid() {
+        public Query getQuery(DatabaseReference databaseReference)
+        {
+                // All my posts
+                return databaseReference.child("user-posts").child(getUid());
+        }
+
+        public String getUid()
+        {
                 return FirebaseAuth.getInstance().getCurrentUser().getUid();
         }
-
-        private class ShoppingListShare {
-
-                private String userId;
-                private String userName;
-                private String shoppingListTitle;
-
-                public ShoppingListShare(String userId, String userName, String shoppingListTitle)
-                {
-                        this.userId = userId;
-                        this.userName = userName;
-                        this.shoppingListTitle = shoppingListTitle;
-                }
-
-                public Map<String, Object> toMap()
-                {
-                        HashMap<String, Object> data = new HashMap<>();
-                        data.put("userid", userId);
-                        data.put("username", userName);
-                        data.put("title", shoppingListTitle);
-                        return data;
-                }
-        }
-
 
 }

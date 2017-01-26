@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string-array name="setting_sort_by_labels">
-        <item>@string/sort_by_name</item>
-        <item>@string/sort_by_brand</item>
-    </string-array>
-    <string-array name="setting_sort_by_values">
-        <item>Name</item>
-        <item>Brand</item>
-    </string-array>
+        <string-array name="setting_sort_by_labels">
+                <item>@string/sort_by_name</item>
+                <item>@string/sort_by_brand</item>
+        </string-array>
+        <string-array name="setting_sort_by_values">
+                <item>Name</item>
+                <item>Brand</item>
+        </string-array>
 
-    <string-array name="nav_drawer_items">
-        <item>Settings</item>
-    </string-array>
+        <array name="nav_drawer_items">
+                <item>@string/shared_shopping_list</item>
+                <item>@string/settings_screen</item>
+        </array>
 
-    <string name="sort_by_name">Name</string>
-    <string name="sort_by_brand">Brand</string>
+        <array name="nav_drawer_icons">
+                <item>@drawable/ic_cloud_download</item>
+                <item>@drawable/ic_settings</item>
+        </array>
+
+        <string name="sort_by_name">Name</string>
+        <string name="sort_by_brand">Brand</string>
+        <string name="shared_shopping_list">Shared shopping list</string>
 </resources>

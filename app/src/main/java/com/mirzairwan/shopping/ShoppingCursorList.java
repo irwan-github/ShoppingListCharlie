@@ -78,7 +78,10 @@ public class ShoppingCursorList
         public void listItemsChecked(String homeCountryCode)
         {
                 int colShoppingItemId = mCursor.getColumnIndex(Contract.ToBuyItemsEntry._ID);
-                long shoppingItemId = mCursor.getLong(colShoppingItemId);
+                int colSelectedPriceTag = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_PRICE);
+                int colIsItemChecked = mCursor.getColumnIndex(Contract.ToBuyItemsEntry.COLUMN_IS_CHECKED);
+                int colCurrencyCode = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_CURRENCY_CODE);
+                int colQtyPurchased = mCursor.getColumnIndex(Contract.ToBuyItemsEntry.COLUMN_QUANTITY);
 
                 mSummaryForeignItemsChecked.clear();
                 mSummaryLocalItemsChecked.clear();
@@ -88,12 +91,8 @@ public class ShoppingCursorList
                 mCursor.moveToPosition(-1);
                 while (mCursor.moveToNext())
                 {
-                        int colSelectedPriceTag = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_PRICE);
-                        int colIsItemChecked = mCursor.getColumnIndex(Contract.ToBuyItemsEntry.COLUMN_IS_CHECKED);
-                        int colCurrencyCode = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_CURRENCY_CODE);
-                        int colQtyPurchased = mCursor.getColumnIndex(Contract.ToBuyItemsEntry.COLUMN_QUANTITY);
+                        long shoppingItemId = mCursor.getLong(colShoppingItemId);
                         int qtyPurchased = mCursor.getInt(colQtyPurchased);
-
                         String lCurrencyCode = mCursor.getString(colCurrencyCode);
                         boolean isItemChecked = mCursor.getInt(colIsItemChecked) > 0;
                         atLeastAnItemChecked |= (byte) mCursor.getInt(colIsItemChecked);

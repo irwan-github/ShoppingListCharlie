@@ -3,7 +3,6 @@ package com.mirzairwan.shopping.firebase;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -18,6 +17,7 @@ public class MainFirebaseActivity extends AppCompatActivity implements SignInFra
 {
         private FirebaseAuth mAuth;
         private DatabaseReference mFireDatabase;
+        private String mUserId;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -30,7 +30,6 @@ public class MainFirebaseActivity extends AppCompatActivity implements SignInFra
                 //Get firebase authentication
                 mAuth = FirebaseAuth.getInstance();
 
-
         }
 
         @Override
@@ -40,6 +39,7 @@ public class MainFirebaseActivity extends AppCompatActivity implements SignInFra
                 //Check if user is authenticated
                 if (mAuth.getCurrentUser() != null)
                 {
+                        mUserId = mAuth.getCurrentUser().getUid();
                         onAuthenticationSuccess(mAuth.getCurrentUser());
                 }
                 else
@@ -52,17 +52,18 @@ public class MainFirebaseActivity extends AppCompatActivity implements SignInFra
 
         private void onAuthenticationSuccess(FirebaseUser currentUser)
         {
-                String userName = usernameFromEmail(currentUser.getEmail());
-
+                mUserId = currentUser.getUid();
                 //Write new iser
-                writeNewUser(currentUser.getUid(), userName, currentUser.getEmail());
+                writeNewUser(currentUser.getUid(), currentUser.getDisplayName(), currentUser.getEmail());
 
-                //Start activity to sharing items
-                Toast.makeText(this, "Start uploading", Toast.LENGTH_SHORT).show();
-                HashSet<Long> args = (HashSet<Long>)getIntent().getSerializableExtra(ShareFragment.ITEM_TO_SHARE);
+                startFragment();
+        }
 
+        protected void startFragment()
+        {
+                HashSet<Long> args = (HashSet<Long>)getIntent().getSerializableExtra(SendShareFragment.ITEM_TO_SHARE);
                 FragmentTransaction fragTxn = getFragmentManager().beginTransaction();
-                fragTxn = fragTxn.replace(R.id.activity_main_firebase_container, ShareFragment.instantiate(args)).addToBackStack(null);
+                fragTxn = fragTxn.replace(R.id.activity_main_firebase_container, SendShareFragment.getInstance(args)).addToBackStack(null);
                 fragTxn.commit();
         }
 

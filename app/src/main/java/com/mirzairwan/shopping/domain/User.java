@@ -9,6 +9,11 @@ public class User
         private String mUsername;
         private String mEmail;
 
+        public User()
+        {
+
+        }
+
         public User(String username, String email)
         {
                 mUsername = username;

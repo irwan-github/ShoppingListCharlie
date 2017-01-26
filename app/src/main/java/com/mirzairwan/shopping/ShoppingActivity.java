@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.content.res.TypedArray;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -31,7 +32,8 @@ import com.mirzairwan.shopping.domain.ExchangeRate;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.firebase.MainFirebaseActivity;
-import com.mirzairwan.shopping.firebase.ShareFragment;
+import com.mirzairwan.shopping.firebase.SendShareFragment;
+import com.mirzairwan.shopping.firebase.ShowSharedActivity;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -155,8 +157,17 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
                 mDrawerList = (ListView) findViewById(R.id.left_drawer);
 
+                TypedArray navItemsTxt = getResources().obtainTypedArray(R.array.nav_drawer_items);
+                TypedArray navItemIcons = getResources().obtainTypedArray(R.array.nav_drawer_icons);
+
+                NavItem[] navItems = new NavItem[navItemsTxt.length()];
                 // Set the adapter for the list view
-                NavDrawerArrayAdapter navDrawerAdapter = new NavDrawerArrayAdapter(this, R.layout.nav_drawer_row, new NavItem[]{new NavItem(R.string.settings_screen, R.drawable.ic_settings)});
+                for(int k = 0; k < navItemsTxt.length(); ++k)
+                {
+                        navItems[k] = new NavItem(navItemsTxt.getResourceId(k, 0), navItemIcons.getResourceId(k, R.drawable.ic_done));
+                }
+
+                NavDrawerArrayAdapter navDrawerAdapter = new NavDrawerArrayAdapter(this, R.layout.nav_drawer_row, navItems);
 
                 mDrawerList.setAdapter(navDrawerAdapter);
 
@@ -370,7 +381,7 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         public void onFirebaseShareShoppingList(HashSet<Long> ids)
         {
                 Intent intent = new Intent(this, MainFirebaseActivity.class);
-                intent.putExtra(ShareFragment.ITEM_TO_SHARE, ids);
+                intent.putExtra(SendShareFragment.ITEM_TO_SHARE, ids);
                 startActivity(intent);
         }
 
@@ -380,8 +391,16 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id)
                 {
                         mDrawerLayout.closeDrawer(mDrawerList);
-                        Intent intentSettings = new Intent(ShoppingActivity.this, SettingsActivity.class);
-                        startActivity(intentSettings);
+                        if(position == 0)
+                        {
+                                Intent intentViewSharedShoppingList = new Intent(ShoppingActivity.this, ShowSharedActivity.class);
+                                startActivity(intentViewSharedShoppingList);
+                        }
+                        else if(position == 1)
+                        {
+                                Intent intentSettings = new Intent(ShoppingActivity.this, SettingsActivity.class);
+                                startActivity(intentSettings);
+                        }
                 }
         }
 

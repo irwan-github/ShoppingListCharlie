@@ -45,11 +45,19 @@
                                 android:name="android.support.PARENT_ACTIVITY"
                                 android:value=".ShoppingActivity"/>
                 </activity>
-                <activity android:name=".firebase.MainFirebaseActivity"
-                          android:parentActivityName=".ShoppingActivity">
+                <activity
+                        android:name=".firebase.MainFirebaseActivity"
+                        android:parentActivityName=".ShoppingActivity">
                         <meta-data
                                 android:name="android.support.PARENT_ACTIVITY"
                                 android:value=".ShoppingActivity"/>
+                        <meta-data
+                                android:name="android.support.PARENT_ACTIVITY"
+                                android:value=".ShoppingActivity"/>
+                </activity>
+                <activity
+                        android:name=".firebase.ShowSharedActivity"
+                        android:parentActivityName=".ShoppingActivity">
                 </activity>
                 <provider
                         android:name=".data.ShoppingListProvider"
@@ -66,8 +74,6 @@
                                 android:resource="@xml/file_paths">
                         </meta-data>
                 </provider>
-
-
         </application>
 
 </manifest>

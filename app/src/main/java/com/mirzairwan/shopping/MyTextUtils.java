@@ -15,38 +15,45 @@ import java.util.Arrays;
 public class MyTextUtils
 {
 
-    public static void setAllCapsInputFilter(EditText et)
-    {
-        InputFilter[] prefFilters;
-        prefFilters = et.getFilters();
-        ArrayList<InputFilter> filters = new ArrayList<>(Arrays.asList(prefFilters));
-        filters.add(new InputFilter.AllCaps());
-        prefFilters = new InputFilter[filters.size()];
-        filters.toArray(prefFilters);
-        et.setFilters(prefFilters);
-    }
-
-    /**
-     * Check that text is null or does NOT contain String or has value 0.00
-     *
-     * @param editText
-     * @return true if text is null or does NOT contain String or has value 0.00
-     */
-    public static boolean isZeroValue(EditText editText) throws ParseException
-    {
-        boolean isEmpty = TextUtils.isEmpty(editText.getText());
-        boolean isZero = false;
-
-        if(isEmpty)
-            return isZero;
-        else
+        public static void setAllCapsInputFilter(EditText et)
         {
-            String val = editText.getText().toString();
-            int parsed = (int) FormatHelper.parseTwoDecimalPlaces(val);
-            isZero = parsed == 0;
+                InputFilter[] prefFilters;
+                prefFilters = et.getFilters();
+                ArrayList<InputFilter> filters = new ArrayList<>(Arrays.asList(prefFilters));
+                filters.add(new InputFilter.AllCaps());
+                prefFilters = new InputFilter[filters.size()];
+                filters.toArray(prefFilters);
+                et.setFilters(prefFilters);
         }
 
-        return isZero;
-    }
+        /**
+         * Check that text is null or does NOT contain String or has value 0.00
+         *
+         * @param editText
+         * @return true if text is null or does NOT contain String or has value 0.00
+         */
+        public static boolean isZeroValue(EditText editText) throws ParseException
+        {
+                boolean isEmpty = TextUtils.isEmpty(editText.getText());
+                boolean isZero = false;
+
+                if (isEmpty)
+                {
+                        return isZero;
+                }
+                else
+                {
+                        String val = editText.getText().toString();
+                        int parsed = (int) FormatHelper.parseTwoDecimalPlaces(val);
+                        isZero = parsed == 0;
+                }
+
+                return isZero;
+        }
+
+        public static String getUserNameFromEmailAddress(String userEmail)
+        {
+                return userEmail.split("@")[0];
+        }
 
 }
