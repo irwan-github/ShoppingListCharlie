@@ -1,22 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#FF5722</color>
-    <color name="colorPrimaryDark">#E64A19</color>
-    <color name="colorSecondary">#607d8b</color>
-    <color name="colorAccent">#304ffe</color>
-    <color name="tabTextColor">#FFFFFF</color>
-    <color name="segment_divider">#80b3ff</color>
-    <color name="shopping_list_toolbar">#F5F5F5</color>
+        <color name="colorPrimary">#FF5722</color>
+        <color name="colorPrimaryDark">#E64A19</color>
+        <color name="colorSecondary">#607d8b</color>
+        <color name="colorAccent">#304ffe</color>
+        <color name="tabTextColor">#FFFFFF</color>
+        <color name="segment_divider">#80b3ff</color>
+        <color name="shopping_list_toolbar">#F5F5F5</color>
 
-    <!-- Text color for the details of the earthquake in the list item -->
-    <color name="textColorItemBrand">#B4BAC0</color>
+        <!-- Text color for the details of the earthquake in the list item -->
+        <color name="textColorItemBrand">#B4BAC0</color>
 
-    <!-- Text color for the primary location of the earthquake in the list item -->
-    <color name="textColorItemName">#2B3D4D</color>
+        <!-- Text color for the primary location of the earthquake in the list item -->
+        <color name="textColorItemName">#2B3D4D</color>
 
-    <!-- Color used for item unchecked in shopping list -->
-    <color name="unchecked">#f44336</color>
+        <!-- Color used for item unchecked in shopping list -->
+        <color name="unchecked">#f44336</color>
 
-    <!-- Color used for item checked in shopping list -->
-    <color name="checked">#1b5e20</color>
+        <!-- Color used for item checked in shopping list -->
+        <color name="checked">#1b5e20</color>
+
+        <drawable name="checked_remote">#e0e0e0</drawable>
 </resources>
+
+

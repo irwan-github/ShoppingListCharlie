@@ -1,11 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
+<android.support.design.widget.CoordinatorLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/remote_shopping_list_coord_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-        <ListView
-                android:id="@+id/shared_cloud_shopping_list"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
-</LinearLayout>
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                      android:layout_width="match_parent"
+                      android:layout_height="match_parent"
+                      android:orientation="vertical">
+
+                <ListView
+                        android:id="@+id/shared_cloud_shopping_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:choiceMode="multipleChoiceModal"
+                        />
+        </LinearLayout>
+</android.support.design.widget.CoordinatorLayout>

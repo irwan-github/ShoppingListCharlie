@@ -13,7 +13,7 @@ import com.mirzairwan.shopping.domain.User;
 
 import java.util.HashSet;
 
-public class MainFirebaseActivity extends AppCompatActivity implements SignInFragment.onFragmentAuthentication
+public class MainFirebaseActivity extends AppCompatActivity implements EmailOAuthFragment.onFragmentAuthentication
 {
         private FirebaseAuth mAuth;
         private DatabaseReference mFireDatabase;
@@ -45,7 +45,7 @@ public class MainFirebaseActivity extends AppCompatActivity implements SignInFra
                 else
                 {
                         FragmentTransaction fragTxn = getFragmentManager().beginTransaction();
-                        fragTxn = fragTxn.add(R.id.activity_main_firebase_container, new SignInFragment()).addToBackStack(null);
+                        fragTxn = fragTxn.add(R.id.activity_main_firebase_container, new EmailOAuthFragment()).addToBackStack(null);
                         fragTxn.commit();
                 }
         }

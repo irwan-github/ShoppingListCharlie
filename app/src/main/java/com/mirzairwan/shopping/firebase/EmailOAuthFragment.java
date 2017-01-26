@@ -23,10 +23,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.mirzairwan.shopping.R;
 
-public class SignInFragment extends Fragment implements View.OnClickListener
+public class EmailOAuthFragment extends Fragment implements View.OnClickListener
 {
 
-        private static final String LOG_TAG = SignInFragment.class.getSimpleName();
+        private static final String LOG_TAG = EmailOAuthFragment.class.getSimpleName();
         private DatabaseReference mFireDatabase;
         private FirebaseAuth mAuth;
         private EditText mEmailField;
@@ -110,7 +110,7 @@ public class SignInFragment extends Fragment implements View.OnClickListener
                                 }
                                 else
                                 {
-                                        Toast.makeText(SignInFragment.this.getActivity(), "Sign Up Failed", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(EmailOAuthFragment.this.getActivity(), "Sign Up Failed", Toast.LENGTH_SHORT).show();
                                 }
                         }
                 });
@@ -145,7 +145,7 @@ public class SignInFragment extends Fragment implements View.OnClickListener
                                 }
                                 else
                                 {
-                                        Toast.makeText(SignInFragment.this.getActivity(), "Sign In Failed", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(EmailOAuthFragment.this.getActivity(), "Sign In Failed", Toast.LENGTH_SHORT).show();
                                 }
                         }
                 });
