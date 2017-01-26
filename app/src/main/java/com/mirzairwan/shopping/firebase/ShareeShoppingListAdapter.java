@@ -2,12 +2,17 @@ package com.mirzairwan.shopping.firebase;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.mirzairwan.shopping.R;
 
 import java.util.List;
@@ -18,10 +23,57 @@ import java.util.List;
 
 public class ShareeShoppingListAdapter extends ArrayAdapter<Item>
 {
-        public ShareeShoppingListAdapter(Context context, List<Item> items)
+        private static final String LOG_TAG = ShareeShoppingListAdapter.class.getSimpleName();
+        private List<Item> mItems;
+        private DatabaseReference mDatabaseRef;
+
+        public ShareeShoppingListAdapter(Context context, List<Item> items, DatabaseReference databaseReference)
         {
                 super(context, 0, items);
+                mItems = items;
+                mDatabaseRef = databaseReference;
+
+                ChildEventListener childEventListener = new ChildEventListener() {
+                        @Override
+                        public void onChildAdded(DataSnapshot itemSnapshot, String s)
+                        {
+                                Log.d(LOG_TAG, ">>>onChildAdded: " + itemSnapshot.getKey());
+                                Log.d(LOG_TAG, ">>>onChildAdded: " + itemSnapshot.getValue());
+                                Item sharedItem = itemSnapshot.getValue(Item.class);
+                                sharedItem.setKey(itemSnapshot.getKey());
+                                mItems.add(sharedItem);
+                                notifyDataSetChanged();
+                        }
+
+                        @Override
+                        public void onChildChanged(DataSnapshot dataSnapshot, String s)
+                        {
+                                Log.d(LOG_TAG, ">>>onChildChanged: " + dataSnapshot.getKey());
+                        }
+
+                        @Override
+                        public void onChildRemoved(DataSnapshot dataSnapshot)
+                        {
+                                Log.d(LOG_TAG, ">>>onChildRemoved: " + dataSnapshot.getKey());
+                        }
+
+                        @Override
+                        public void onChildMoved(DataSnapshot dataSnapshot, String s)
+                        {
+                                Log.d(LOG_TAG, ">>>onChildMoved: " + dataSnapshot.getKey());
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError)
+                        {
+                                Log.d(LOG_TAG, ">>>onCancelled");
+                        }
+                };
+
+                mDatabaseRef.addChildEventListener(childEventListener);
         }
+
+
 
         @NonNull
         @Override

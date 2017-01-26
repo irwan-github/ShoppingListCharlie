@@ -14,21 +14,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
 import com.mirzairwan.shopping.R;
 
 import java.util.ArrayList;
 
-import static com.mirzairwan.shopping.firebase.Constants.EMAIL_OF_ORIGINATOR;
 import static com.mirzairwan.shopping.firebase.Constants.SHARED_SHOPPING_LIST;
 
 /**
@@ -67,9 +62,10 @@ public class ShowSharedFragment extends Fragment
 
         private void setupListView()
         {
+                DatabaseReference sharedShoppingListRef = mRootRef.child(SHARED_SHOPPING_LIST).child(mDatabaseUser.getUid());
+
                 shoppingListView = (ListView) mRootView.findViewById(R.id.shared_cloud_shopping_list);
-                //mItemRows = new ArrayAdapter<>(getActivity(), R.layout.row_shared_shopping_item, R.id.remote_item_name);
-                mItemRows = new ShareeShoppingListAdapter(getActivity(), mItems);
+                mItemRows = new ShareeShoppingListAdapter(getActivity(), mItems, sharedShoppingListRef);
                 shoppingListView.setAdapter(mItemRows);
 
                 //Enable batch contextual action
@@ -158,44 +154,7 @@ public class ShowSharedFragment extends Fragment
         public void onResume()
         {
                 super.onResume();
-                Toast.makeText(getActivity(), "Show shared shopping list", Toast.LENGTH_LONG).show();
                 mRootRef = FirebaseDatabase.getInstance().getReference();
-                queryShoppingList();
         }
 
-        private void queryShoppingList()
-        {
-                DatabaseReference sharedShoppingListRef = mRootRef.child(SHARED_SHOPPING_LIST);
-                Query query = sharedShoppingListRef.child(mDatabaseUser.getUid()).orderByChild(EMAIL_OF_ORIGINATOR);
-
-                query.addListenerForSingleValueEvent(new ValueEventListener()
-                {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot)
-                        {
-                                Log.d(LOG_TAG, ">>> key " + dataSnapshot.getKey());
-                                Log.d(LOG_TAG, ">>> value " + dataSnapshot.getValue());
-
-                                for (DataSnapshot itemSnapshot : dataSnapshot.getChildren())
-                                {
-//                                        Log.d(LOG_TAG, ">>> item key " + itemSnapshot.getKey());
-//                                        Log.d(LOG_TAG, ">>> item value " + itemSnapshot.getValue());
-                                        Item sharedItem = itemSnapshot.getValue(Item.class);
-                                        sharedItem.setKey(itemSnapshot.getKey());
-
-                                        Log.d(LOG_TAG, ">>> item name " + sharedItem.getItem());
-                                        Log.d(LOG_TAG, ">>> item email " + sharedItem.getEmailOfOriginator());
-                                        Log.d(LOG_TAG, ">>> item uid " + sharedItem.getUidOfOriginator());
-                                        mItems.add(sharedItem);
-                                }
-                                ShowSharedFragment.this.mItemRows.notifyDataSetChanged();
-                        }
-
-                        @Override
-                        public void onCancelled(DatabaseError databaseError)
-                        {
-
-                        }
-                });
-        }
 }
