@@ -9,6 +9,7 @@ public class Item
         private String emailOfOriginator;
         private String item;
         private String uidOfOriginator;
+        private String mKey;
 
         public Item()
         {
@@ -53,5 +54,15 @@ public class Item
         {
                 this.uidOfOriginator = uidOfOriginator;
                 return this;
+        }
+
+        public void setKey(String key)
+        {
+                mKey = key;
+        }
+
+        public String getKey()
+        {
+                return mKey;
         }
 }

@@ -13,7 +13,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -31,20 +30,23 @@ import java.util.ArrayList;
 
 import static com.mirzairwan.shopping.firebase.Constants.EMAIL_OF_ORIGINATOR;
 import static com.mirzairwan.shopping.firebase.Constants.SHARED_SHOPPING_LIST;
+
 /**
  * Created by Mirza Irwan on 26/1/17.
  */
 
 public class ShowSharedFragment extends Fragment
 {
+        private static final String LOG_TAG = ShowSharedFragment.class.getSimpleName();
         private ListView shoppingListView;
         private DatabaseReference mRootRef;
         private FirebaseUser mDatabaseUser;
-        private static final String LOG_TAG =  ShowSharedFragment.class.getSimpleName();
-        private ArrayAdapter<String> mItemRows;
+        //private ArrayAdapter<String> mItemRows;
+
         private View mRootView;
-        private ViewGroup mContainer;
-        private boolean mItemSelected = false;
+        private ArrayList<Item> mItems = new ArrayList<>();
+        private ArrayList<Item> mItemsDelete = new ArrayList<>();
+        private ShareeShoppingListAdapter mItemRows;
 
         @Override
         public void onCreate(Bundle savedInstanceState)
@@ -59,32 +61,37 @@ public class ShowSharedFragment extends Fragment
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
                 mRootView = inflater.inflate(R.layout.fragment_show_shared, container, false);
-                mContainer = container;
                 setupListView();
-
                 return mRootView;
         }
 
         private void setupListView()
         {
-                shoppingListView = (ListView)mRootView.findViewById(R.id.shared_cloud_shopping_list);
-                mItemRows = new ArrayAdapter<>(getActivity(), R.layout.row_shared_shopping_item, R.id.remote_item_name);
+                shoppingListView = (ListView) mRootView.findViewById(R.id.shared_cloud_shopping_list);
+                //mItemRows = new ArrayAdapter<>(getActivity(), R.layout.row_shared_shopping_item, R.id.remote_item_name);
+                mItemRows = new ShareeShoppingListAdapter(getActivity(), mItems);
                 shoppingListView.setAdapter(mItemRows);
-
 
                 //Enable batch contextual action
                 shoppingListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
-                shoppingListView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
+                shoppingListView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener()
+                {
                         @Override
                         public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked)
                         {
                                 // Here you can do something when items are selected/de-selected,
                                 // such as update the title in the CAB
                                 mode.setTitle("Shared shopping list");
-                                shoppingListView.setSelection(position);
                                 Log.d(LOG_TAG, ">>> touch position " + position);
                                 Log.d(LOG_TAG, ">>> touch checked " + checked);
-                                mItemSelected = checked;
+                                if (checked)
+                                {
+                                        mItemsDelete.add(mItems.get(position));
+                                }
+                                else
+                                {
+                                        mItemsDelete.remove(mItems.get(position));
+                                }
                         }
 
                         @Override
@@ -105,7 +112,7 @@ public class ShowSharedFragment extends Fragment
                         @Override
                         public boolean onActionItemClicked(ActionMode mode, MenuItem item)
                         {
-                                switch(item.getItemId())
+                                switch (item.getItemId())
                                 {
                                         // Respond to clicks on the actions in the CAB
                                         case R.id.menu_delete_remote_item:
@@ -126,20 +133,25 @@ public class ShowSharedFragment extends Fragment
 
                         }
                 });
-
-//                shoppingListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//                        @Override
-//                        public void onItemClick(AdapterView<?> parent, View view, int position, long id)
-//                        {
-//                                view.setSelected(true);
-//                        }
-//                });
-
         }
 
         private void deleteRemoteItem()
         {
-                Snackbar.make(mRootView, "Deleted shared item", Snackbar.LENGTH_LONG).show();
+                for (final Item itemToDelete : mItemsDelete)
+                {
+                        mRootRef.child(SHARED_SHOPPING_LIST).child(mDatabaseUser.getUid()).child(itemToDelete.getKey()).
+                                removeValue(new DatabaseReference.CompletionListener()
+                                {
+                                        @Override
+                                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+                                        {
+                                                //mItems.remove(itemToDelete);
+                                                mItemsDelete.remove(itemToDelete);
+                                                mItemRows.remove(itemToDelete);
+                                        }
+                                });
+                }
+                Snackbar.make(mRootView, "Deleting shared item", Snackbar.LENGTH_LONG).show();
         }
 
         @Override
@@ -156,33 +168,27 @@ public class ShowSharedFragment extends Fragment
                 DatabaseReference sharedShoppingListRef = mRootRef.child(SHARED_SHOPPING_LIST);
                 Query query = sharedShoppingListRef.child(mDatabaseUser.getUid()).orderByChild(EMAIL_OF_ORIGINATOR);
 
-                query.addListenerForSingleValueEvent(new ValueEventListener() {
+                query.addListenerForSingleValueEvent(new ValueEventListener()
+                {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot)
                         {
                                 Log.d(LOG_TAG, ">>> key " + dataSnapshot.getKey());
                                 Log.d(LOG_TAG, ">>> value " + dataSnapshot.getValue());
 
-                                ArrayList<String> itemRows = null;
-                                if(dataSnapshot.hasChildren())
-                                        itemRows = new ArrayList<>();
-
-                                for(DataSnapshot itemSnapshot : dataSnapshot.getChildren())
+                                for (DataSnapshot itemSnapshot : dataSnapshot.getChildren())
                                 {
 //                                        Log.d(LOG_TAG, ">>> item key " + itemSnapshot.getKey());
 //                                        Log.d(LOG_TAG, ">>> item value " + itemSnapshot.getValue());
                                         Item sharedItem = itemSnapshot.getValue(Item.class);
-                                        //Item sharedItem = itemSnapshot.getValue();
+                                        sharedItem.setKey(itemSnapshot.getKey());
 
                                         Log.d(LOG_TAG, ">>> item name " + sharedItem.getItem());
-                                        Log.d(LOG_TAG, ">>> item email " +  sharedItem.getEmailOfOriginator());
-                                        Log.d(LOG_TAG, ">>> item uid " +  sharedItem.getUidOfOriginator());
-                                        itemRows.add(sharedItem.getItem());
+                                        Log.d(LOG_TAG, ">>> item email " + sharedItem.getEmailOfOriginator());
+                                        Log.d(LOG_TAG, ">>> item uid " + sharedItem.getUidOfOriginator());
+                                        mItems.add(sharedItem);
                                 }
-
-                                if(dataSnapshot.hasChildren())
-                                        mItemRows.addAll(itemRows);
-
+                                ShowSharedFragment.this.mItemRows.notifyDataSetChanged();
                         }
 
                         @Override
