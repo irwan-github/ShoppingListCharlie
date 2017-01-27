@@ -17,9 +17,13 @@ import android.widget.ListView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
 import com.mirzairwan.shopping.R;
 
 import java.util.ArrayList;
@@ -30,17 +34,13 @@ import static com.mirzairwan.shopping.firebase.Constants.SHARED_SHOPPING_LIST;
  * Created by Mirza Irwan on 26/1/17.
  */
 
-public class ShowSharedFragment extends Fragment
+public class ShareeShoppingListFragment extends Fragment
 {
-        private static final String LOG_TAG = ShowSharedFragment.class.getSimpleName();
-        private ListView shoppingListView;
+        private static final String LOG_TAG = ShareeShoppingListFragment.class.getSimpleName();
         private DatabaseReference mRootRef;
         private FirebaseUser mDatabaseUser;
-        //private ArrayAdapter<String> mItemRows;
-
         private View mRootView;
-        private ArrayList<Item> mItems = new ArrayList<>();
-        private ArrayList<Item> mItemsDelete = new ArrayList<>();
+        private ArrayList<Item> mItemsToDelete = new ArrayList<>();
         private ShareeShoppingListAdapter mItemRows;
 
         @Override
@@ -64,8 +64,8 @@ public class ShowSharedFragment extends Fragment
         {
                 DatabaseReference sharedShoppingListRef = mRootRef.child(SHARED_SHOPPING_LIST).child(mDatabaseUser.getUid());
 
-                shoppingListView = (ListView) mRootView.findViewById(R.id.shared_cloud_shopping_list);
-                mItemRows = new ShareeShoppingListAdapter(getActivity(), mItems, sharedShoppingListRef);
+                ListView shoppingListView = (ListView) mRootView.findViewById(R.id.shared_cloud_shopping_list);
+                mItemRows = new ShareeShoppingListAdapter(getActivity(), sharedShoppingListRef);
                 shoppingListView.setAdapter(mItemRows);
 
                 //Enable batch contextual action
@@ -82,11 +82,11 @@ public class ShowSharedFragment extends Fragment
                                 Log.d(LOG_TAG, ">>> touch checked " + checked);
                                 if (checked)
                                 {
-                                        mItemsDelete.add(mItems.get(position));
+                                        mItemsToDelete.add(mItemRows.getItem(position));
                                 }
                                 else
                                 {
-                                        mItemsDelete.remove(mItems.get(position));
+                                        mItemsToDelete.remove(mItemRows.getItem(position));
                                 }
                         }
 
@@ -112,15 +112,16 @@ public class ShowSharedFragment extends Fragment
                                 {
                                         // Respond to clicks on the actions in the CAB
                                         case R.id.menu_delete_remote_item:
-                                                deleteRemoteItem();
+
+                                                deleteRemoteItems();
 
                                                 // Action picked, so close the CAB
                                                 mode.finish();
                                                 return true;
+
                                         default:
                                                 return false;
                                 }
-
                         }
 
                         @Override
@@ -131,30 +132,43 @@ public class ShowSharedFragment extends Fragment
                 });
         }
 
-        private void deleteRemoteItem()
+        private void deleteRemoteItems()
         {
-                for (final Item itemToDelete : mItemsDelete)
-                {
-                        mRootRef.child(SHARED_SHOPPING_LIST).child(mDatabaseUser.getUid()).child(itemToDelete.getKey()).
-                                removeValue(new DatabaseReference.CompletionListener()
+                Log.d(LOG_TAG, ">>>deleteRemoteItem3");
+                mRootRef.child(SHARED_SHOPPING_LIST).child(mDatabaseUser.getUid()).runTransaction(new Transaction.Handler() {
+                        @Override
+                        public Transaction.Result doTransaction(MutableData mutableData)
+                        {
+                                for(Item itemToDelete : mItemsToDelete)
                                 {
-                                        @Override
-                                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+                                        try
                                         {
-                                                //mItems.remove(itemToDelete);
-                                                mItemsDelete.remove(itemToDelete);
-                                                mItemRows.remove(itemToDelete);
+                                                mutableData.child(itemToDelete.getKey()).setValue(null);
                                         }
-                                });
-                }
-                Snackbar.make(mRootView, "Deleting shared item", Snackbar.LENGTH_LONG).show();
-        }
+                                        catch(DatabaseException dbEx)
+                                        {
+                                                return Transaction.abort();
+                                        }
+                                }
 
-        @Override
-        public void onResume()
-        {
-                super.onResume();
-                mRootRef = FirebaseDatabase.getInstance().getReference();
-        }
+                                return Transaction.success(mutableData);
+                        }
 
+                        @Override
+                        public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot)
+                        {
+                                if (databaseError == null)
+                                {
+                                        mItemsToDelete.clear();
+                                        Snackbar.make(mRootView, "Shared item deleted: OK", Snackbar.LENGTH_LONG).show();
+                                }
+                                else
+                                {
+                                        Snackbar.make(mRootView, "Shared item deleted: Failed", Snackbar.LENGTH_LONG).show();
+                                        Log.e(LOG_TAG, databaseError.getDetails());
+                                }
+                        }
+                });
+
+        }
 }

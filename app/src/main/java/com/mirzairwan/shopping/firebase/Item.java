@@ -65,4 +65,28 @@ public class Item
         {
                 return mKey;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+                if (this == o)
+                {
+                        return true;
+                }
+                if (o == null || getClass() != o.getClass())
+                {
+                        return false;
+                }
+
+                Item item = (Item) o;
+
+                return mKey != null ? mKey.equals(item.mKey) : item.mKey == null;
+
+        }
+
+        @Override
+        public int hashCode()
+        {
+                return mKey != null ? mKey.hashCode() : 0;
+        }
 }

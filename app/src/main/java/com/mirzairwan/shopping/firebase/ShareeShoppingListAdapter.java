@@ -15,7 +15,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.mirzairwan.shopping.R;
 
-import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Created by Mirza Irwan on 27/1/17.
@@ -24,13 +24,11 @@ import java.util.List;
 public class ShareeShoppingListAdapter extends ArrayAdapter<Item>
 {
         private static final String LOG_TAG = ShareeShoppingListAdapter.class.getSimpleName();
-        private List<Item> mItems;
         private DatabaseReference mDatabaseRef;
 
-        public ShareeShoppingListAdapter(Context context, List<Item> items, DatabaseReference databaseReference)
+        public ShareeShoppingListAdapter(Context context, DatabaseReference databaseReference)
         {
-                super(context, 0, items);
-                mItems = items;
+                super(context, 0, new ArrayList<Item>());
                 mDatabaseRef = databaseReference;
 
                 ChildEventListener childEventListener = new ChildEventListener() {
@@ -41,8 +39,7 @@ public class ShareeShoppingListAdapter extends ArrayAdapter<Item>
                                 Log.d(LOG_TAG, ">>>onChildAdded: " + itemSnapshot.getValue());
                                 Item sharedItem = itemSnapshot.getValue(Item.class);
                                 sharedItem.setKey(itemSnapshot.getKey());
-                                mItems.add(sharedItem);
-                                notifyDataSetChanged();
+                                add(sharedItem);
                         }
 
                         @Override
@@ -52,9 +49,12 @@ public class ShareeShoppingListAdapter extends ArrayAdapter<Item>
                         }
 
                         @Override
-                        public void onChildRemoved(DataSnapshot dataSnapshot)
+                        public void onChildRemoved(DataSnapshot itemSnapshot)
                         {
-                                Log.d(LOG_TAG, ">>>onChildRemoved: " + dataSnapshot.getKey());
+                                Log.d(LOG_TAG, ">>>onChildRemoved: " + itemSnapshot.getKey());
+                                Item sharedItem = itemSnapshot.getValue(Item.class);
+                                sharedItem.setKey(itemSnapshot.getKey());
+                                remove(sharedItem);
                         }
 
                         @Override

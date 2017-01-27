@@ -22,7 +22,7 @@ public class ShowSharedActivity extends MainFirebaseActivity
         {
                 HashSet<Long> args = (HashSet<Long>)getIntent().getSerializableExtra(SendShareFragment.ITEM_TO_SHARE);
                 FragmentTransaction fragTxn = getFragmentManager().beginTransaction();
-                fragTxn = fragTxn.replace(R.id.activity_main_firebase_container, new ShowSharedFragment()).addToBackStack(null);
+                fragTxn = fragTxn.replace(R.id.activity_main_firebase_container, new ShareeShoppingListFragment()).addToBackStack(null);
                 fragTxn.commit();
         }
 }
