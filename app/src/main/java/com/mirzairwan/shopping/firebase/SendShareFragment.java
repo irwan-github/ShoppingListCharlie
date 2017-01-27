@@ -95,7 +95,7 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
         public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
         {
                 super.onCreateOptionsMenu(menu, inflater);
-                inflater.inflate(R.menu.firebase_share_shopping_list, menu);
+                inflater.inflate(R.menu.firebase_send_shopping_list, menu);
         }
 
         @Override

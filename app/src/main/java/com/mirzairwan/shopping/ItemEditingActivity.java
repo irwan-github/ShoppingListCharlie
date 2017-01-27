@@ -69,13 +69,13 @@ public class ItemEditingActivity extends ItemActivity
         @Override
         protected void delete()
         {
-                if (mItem.isInBuyList())
+                if (mItemManager.getItem().isInBuyList())
                 {
                         alertItemInShoppingList(R.string.item_is_in_shopping_list);
                         return;
                 }
 
-                String results = daoManager.delete(mItem, mPictureMgr);
+                String results = daoManager.delete(mItemManager.getItem(), mPictureMgr);
 
                 Toast.makeText(this, results, Toast.LENGTH_SHORT).show();
 

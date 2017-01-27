@@ -14,10 +14,13 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -66,6 +69,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         private ShoppingCursorList mShoppingCursorList;
         private ExchangeRatesReturned mExchangeRatesReturned;
         private Snackbar mSnackBar;
+        private HashSet<Long> shareShoppingItemIds = new HashSet<>();
 
         public static ShoppingListFragment newInstance()
         {
@@ -104,7 +108,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
                 rootView = inflater.inflate(R.layout.fragment_shopping_list, container, false);
                 ListView lvBuyItems = (ListView) rootView.findViewById(R.id.lv_to_buy_items);
-                setupFloatingActionButton(rootView);
+                //setupFloatingActionButton(rootView);
                 setupListView(lvBuyItems);
                 setupListItemListener(lvBuyItems);
                 setupEmptyView(rootView, lvBuyItems);
@@ -156,6 +160,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 {
                         Snackbar.make(rootView, R.string.internet_not_available_exchange_rate, Snackbar.LENGTH_LONG).show();
                 }
+                shareShoppingItemIds.clear();
                 super.onResume();
         }
 
@@ -179,9 +184,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                                                 mShoppingCursorList.listItemsAdded(mCountryCode);
                                                 mShoppingCursorList.listItemsChecked(mCountryCode);
                                                 displaySummaryTotals(mExchangeRatesReturned.getExchangeRates());
-                                                return true;
-                                        case R.id.share_shopping_list:
-                                                share();
                                                 return true;
                                         case R.id.add_to_shopping_list:
                                                 onFragmentInteractionListener.onAdditem();
@@ -216,18 +218,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                         }
                 });
 
-
-                final MenuItem menuItemShare = shoppingListToolbar.getMenu().findItem(R.id.share_shopping_list);
-                View menuActionShare = menuItemShare.getActionView();
-                menuActionShare.setOnClickListener(new View.OnClickListener()
-                {
-                        @Override
-                        public void onClick(View v)
-                        {
-                                onMenuItemClickListener.onMenuItemClick(menuItemShare);
-                        }
-                });
-
                 final MenuItem menuActionAddItem = shoppingListToolbar.getMenu().findItem(R.id.add_to_shopping_list);
                 View addItemActionView = menuActionAddItem.getActionView();
                 addItemActionView.setOnClickListener(new View.OnClickListener()
@@ -239,21 +229,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                         }
                 });
 
-        }
-
-        private void share()
-        {
-                //Get the shared ids
-                mShoppingCursorList.listItemsChecked(mCountryCode);
-                HashSet<Long> ids = mShoppingCursorList.getCheckedItems();
-                if (ids.size() > 0)
-                {
-                        onFragmentInteractionListener.onFirebaseShareShoppingList(ids);
-                }
-                else
-                {
-                        Toast.makeText(getActivity(), "Select item(s) before clicking share ", Toast.LENGTH_LONG).show();
-                }
         }
 
         private void setupEmptyView(View rootView, ListView lvBuyItems)
@@ -302,9 +277,63 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
         private void setupListView(ListView lvBuyItems)
         {
+                //Set up adapter
                 shoppingListAdapter = new ShoppingListAdapter(getActivity(), null, this, mOnPictureRequestListener);
-
                 lvBuyItems.setAdapter(shoppingListAdapter);
+
+                //Set up Contextual Action Bar
+                lvBuyItems.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+                lvBuyItems.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener()
+                {
+                        @Override
+                        public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked)
+                        {
+                                if (checked)
+                                {
+                                        shareShoppingItemIds.add(id);
+                                }
+                                else
+                                {
+                                        shareShoppingItemIds.remove(id);
+                                }
+                        }
+
+                        @Override
+                        public boolean onCreateActionMode(ActionMode mode, Menu menu)
+                        {
+                                mode.setTitle(getString(R.string.share_shopping_list_txt));
+                                mode.getMenuInflater().inflate(R.menu.firebase_share_shopping_list, menu);
+                                return true;
+                        }
+
+                        @Override
+                        public boolean onPrepareActionMode(ActionMode mode, Menu menu)
+                        {
+                                return false;
+                        }
+
+                        @Override
+                        public boolean onActionItemClicked(ActionMode mode, MenuItem item)
+                        {
+                                if (shareShoppingItemIds.size() > 0)
+                                {
+                                        onFragmentInteractionListener.onFirebaseShareShoppingList(shareShoppingItemIds);
+                                }
+                                else
+                                {
+                                        Toast.makeText(getActivity(), "Select item(s) before clicking share ", Toast.LENGTH_LONG).show();
+                                }
+                                mode.finish();
+                                return true;
+                        }
+
+                        @Override
+                        public void onDestroyActionMode(ActionMode mode)
+                        {
+                                Log.d(LOG_TAG, ">>> onDestroyActionMode");
+                                shareShoppingItemIds.clear();
+                        }
+                });
         }
 
         private void setupFloatingActionButton(View view)

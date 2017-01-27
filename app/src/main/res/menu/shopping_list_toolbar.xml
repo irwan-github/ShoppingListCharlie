@@ -19,12 +19,4 @@
                 android:title="@string/clear_checked_item"
                 app:actionLayout="@layout/toolbar_clear_checked"
                 app:showAsAction="always"/>
-
-        <item
-                android:id="@+id/share_shopping_list"
-                android:title="@string/share_shopping_list_txt"
-                app:actionLayout="@layout/toolbar_share_shopping_list"
-                app:showAsAction="always"/>
-
-
 </menu>

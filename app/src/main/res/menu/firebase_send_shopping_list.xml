@@ -2,8 +2,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
         <item
-                android:id="@+id/share_shopping_list"
-                android:title="@string/share_shopping_list_txt"
-                android:icon="@drawable/ic_action_share"
+                android:id="@+id/share_shopping_list_with_user"
+                android:title="@string/send_shopping_list"
+                android:icon="@drawable/ic_send"
                 app:showAsAction="always"/>
 </menu>

@@ -11,6 +11,7 @@ Or else, the scaling is bypassed resulting in OutOfMemoryError
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/image_summary_height"
                 android:gravity="center_vertical"
+                android:background="@drawable/selector_remote_item"
                 android:paddingRight="@dimen/keyline_1"
         >
 
