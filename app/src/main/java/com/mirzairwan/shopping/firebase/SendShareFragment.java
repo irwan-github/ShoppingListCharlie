@@ -25,17 +25,22 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 import com.mirzairwan.shopping.OnPictureRequestListener;
 import com.mirzairwan.shopping.R;
 import com.mirzairwan.shopping.ShoppingListAdapter;
 import com.mirzairwan.shopping.data.Contract;
+import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -55,7 +60,7 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
         private EditText etShareWithUser;
         private ArrayAdapter<String> mItemsToShareAdapter;
         private FirebaseUser mFirebaserUser;
-
+        private ArrayList<Item> mItemsToShare = new ArrayList<>();
 
         public static SendShareFragment getInstance(HashSet<Long> ids)
         {
@@ -191,7 +196,15 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
                 while (cursor.moveToNext())
                 {
                         String itemName = cursor.getString(cursor.getColumnIndex(ItemsEntry.COLUMN_NAME));
+                        String brand = cursor.getString(cursor.getColumnIndex(ItemsEntry.COLUMN_BRAND));
+                        int colSelectedPriceTagIdx = cursor.getColumnIndex(PricesEntry.COLUMN_PRICE);
+                        long priceTag = cursor.getLong(colSelectedPriceTagIdx);
+                        int colCurrencyCodeIdx = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
+                        String currencyCode = cursor.getString(colCurrencyCodeIdx);
+                        int colBuyItemQty = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);
+                        int qty = cursor.getInt(colBuyItemQty);
                         mItemsToShareAdapter.add(itemName);
+                        mItemsToShare.add(new Item(mFirebaserUser.getEmail(), mFirebaserUser.getUid(), itemName, brand, priceTag, currencyCode, qty));
                         Log.d(LOG_TAG, "Item name = " + itemName);
                 }
         }
@@ -232,21 +245,7 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
 
                                 if (!TextUtils.isEmpty(shareeUserId))
                                 {
-                                        DatabaseReference shoppingListShareWithRef = mRootRef.child("shopping_list_share_with").child(shareeUserId);
-
-                                        String email = mFirebaserUser.getEmail();
-                                        String uid = mFirebaserUser.getUid();
-
-                                        int countItemsToShare = mItemsToShareAdapter.getCount();
-
-                                        for (int j = 0; j < countItemsToShare; ++j)
-                                        {
-                                                Item item = new Item(email, uid, mItemsToShareAdapter.getItem(j));
-                                                // Push the item, it will appear in the list
-                                                shoppingListShareWithRef.push().setValue(item);
-
-                                                Log.d(LOG_TAG, ">>>First push key " + shoppingListShareWithRef.getKey());
-                                        }
+                                        saveToCloud(shareeUserId);
                                 }
                                 else
                                 {
@@ -260,12 +259,51 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
 
                         }
                 });
+        }
 
+        private void saveToCloud(String shareeUserId)
+        {
+                final DatabaseReference shoppingListShareWithRef = mRootRef.child("shopping_list_share_with").child(shareeUserId);
 
-                //Create a share with the personsimultaneously
-                //childUpdates.put("/shoppingListsShareWithUser/" + mEmailOfOriginator + "/" + key, postValues);
+                final int countItemsToShare = mItemsToShare.size();
 
-                //mRootRef.updateChildren(childUpdates);
+                if(countItemsToShare == 0)
+                        return;
+
+                shoppingListShareWithRef.runTransaction(new Transaction.Handler()
+                {
+                        @Override
+                        public Transaction.Result doTransaction(MutableData mutableData)
+                        {
+                                for (int j = 0; j < countItemsToShare; ++j)
+                                {
+                                        // Push the item, it will appear in the list
+                                        try
+                                        {
+                                                shoppingListShareWithRef.push().setValue(mItemsToShare.get(j));
+                                                Log.d(LOG_TAG, ">>>First push key " + shoppingListShareWithRef.getKey());
+                                        }
+                                        catch(DatabaseException dbEx)
+                                        {
+                                                return Transaction.abort();
+                                        }
+                                }
+                                return Transaction.success(mutableData);
+                        }
+
+                        @Override
+                        public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot)
+                        {
+                                if (databaseError == null)
+                                {
+                                        mItemsToShare.clear();
+                                }
+                                else
+                                {
+                                        Log.e(LOG_TAG, databaseError.getDetails());
+                                }
+                        }
+                });
         }
 
         private Query getTargetUser(String userEmail)

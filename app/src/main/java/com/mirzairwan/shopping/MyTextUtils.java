@@ -1,8 +1,11 @@
 package com.mirzairwan.shopping;
 
+import android.content.Context;
+import android.preference.PreferenceManager;
 import android.text.InputFilter;
 import android.text.TextUtils;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -49,6 +52,14 @@ public class MyTextUtils
                 }
 
                 return isZero;
+        }
+
+        public static void setPrice(Context context, String srcCurrencyCode, long priceTag, TextView tvSelectedPrice)
+        {
+                String countryCode = PreferenceManager.getDefaultSharedPreferences(context).getString("home_country_preference", null);
+                String destCurrencyCode = FormatHelper.getCurrencyCode(countryCode);
+                double value = (double)priceTag / 100;
+                tvSelectedPrice.setText(FormatHelper.formatCountryCurrency(countryCode, srcCurrencyCode, value));
         }
 
         public static String getUserNameFromEmailAddress(String userEmail)

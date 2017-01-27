@@ -7,7 +7,11 @@ package com.mirzairwan.shopping.firebase;
 public class Item
 {
         private String emailOfOriginator;
-        private String item;
+        private String name;
+        private String brand;
+        private long price; //Expressed in cents. Eg: $5.20 = 520
+        private String currencyCode;
+        private int quantity;
         private String uidOfOriginator;
         private String mKey;
 
@@ -16,11 +20,15 @@ public class Item
                 // Default constructor required for calls to DataSnapshot.getValue(Comment.class)
         }
 
-        public Item(String emailOfOriginator, String uidOfOriginator, String item)
+        public Item(String emailOfOriginator, String uidOfOriginator, String name, String brand, long price, String currencyCode, int quantity)
         {
                 this.emailOfOriginator = emailOfOriginator;
                 this.uidOfOriginator = uidOfOriginator;
-                this.item = item;
+                this.name = name;
+                this.brand = brand;
+                this.price = price;
+                this.currencyCode = currencyCode;
+                this.quantity = quantity;
         }
 
         public String getEmailOfOriginator()
@@ -28,21 +36,19 @@ public class Item
                 return emailOfOriginator;
         }
 
-        public Item setEmailOfOriginator(String emailOfOriginator)
+        public void setEmailOfOriginator(String emailOfOriginator)
         {
                 this.emailOfOriginator = emailOfOriginator;
-                return this;
         }
 
-        public String getItem()
+        public String getName()
         {
-                return item;
+                return name;
         }
 
-        public Item setItem(String item)
+        public void setName(String name)
         {
-                this.item = item;
-                return this;
+                this.name = name;
         }
 
         public String getUidOfOriginator()
@@ -50,10 +56,49 @@ public class Item
                 return uidOfOriginator;
         }
 
-        public Item setUidOfOriginator(String uidOfOriginator)
+        public void setUidOfOriginator(String uidOfOriginator)
         {
                 this.uidOfOriginator = uidOfOriginator;
-                return this;
+        }
+
+        public String getBrand()
+        {
+                return brand;
+        }
+
+        public void setBrand(String brand)
+        {
+                this.brand = brand;
+        }
+
+        public long getPrice()
+        {
+                return price;
+        }
+
+        public void setPrice(long price)
+        {
+                this.price = price;
+        }
+
+        public String getCurrencyCode()
+        {
+                return currencyCode;
+        }
+
+        public void setCurrencyCode(String currencyCode)
+        {
+                this.currencyCode = currencyCode;
+        }
+
+        public int getQuantity()
+        {
+                return quantity;
+        }
+
+        public void setQuantity(int quantity)
+        {
+                this.quantity = quantity;
         }
 
         public void setKey(String key)

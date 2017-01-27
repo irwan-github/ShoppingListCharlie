@@ -1,6 +1,7 @@
 package com.mirzairwan.shopping.firebase;
 
 import android.content.Context;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -8,11 +9,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.mirzairwan.shopping.MyTextUtils;
 import com.mirzairwan.shopping.R;
 
 import java.util.ArrayList;
@@ -24,11 +27,13 @@ import java.util.ArrayList;
 public class ShareeShoppingListAdapter extends ArrayAdapter<Item>
 {
         private static final String LOG_TAG = ShareeShoppingListAdapter.class.getSimpleName();
+        private final String mCountryCode;
         private DatabaseReference mDatabaseRef;
 
         public ShareeShoppingListAdapter(Context context, DatabaseReference databaseReference)
         {
                 super(context, 0, new ArrayList<Item>());
+                mCountryCode = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("home_country_preference", null);
                 mDatabaseRef = databaseReference;
 
                 ChildEventListener childEventListener = new ChildEventListener() {
@@ -83,17 +88,36 @@ public class ShareeShoppingListAdapter extends ArrayAdapter<Item>
                {
                        Tag tag = new Tag();
                        convertView = LayoutInflater.from(getContext()).inflate(R.layout.row_shared_shopping_item, parent, false);
-                       tag.tvItemName = (TextView)convertView.findViewById(R.id.remote_item_name);
+                       tag.tvItemName = (TextView)convertView.findViewById(R.id.item_name_row);
+                       tag.tvItemBrand = (TextView)convertView.findViewById(R.id.item_brand_row);
+                       tag.tvItemOriginator = (TextView)convertView.findViewById(R.id.item_originator) ;
+                       tag.tvSelectedPrice = (TextView)convertView.findViewById(R.id.item_selected_price_row);
+                       tag.checkItem = (ToggleButton) convertView.findViewById(R.id.check_item);
                        convertView.setTag(tag);
                }
 
                 Tag tag = (Tag)convertView.getTag();
-                tag.tvItemName.setText(getItem(position).getItem());
+                Item item = getItem(position);
+                tag.tvItemName.setText(item.getName());
+                tag.tvItemBrand.setText(item.getBrand());
+
+                tag.checkItem.setText(String.valueOf(item.getQuantity()));
+                tag.checkItem.setTextOn(String.valueOf(item.getQuantity()));
+                tag.checkItem.setTextOff(String.valueOf(item.getQuantity()));
+
+                MyTextUtils.setPrice(getContext(), item.getCurrencyCode(), item.getPrice(), tag.tvSelectedPrice);
+
+                String sharedBy = getContext().getString(R.string.item_shared_by) + " " + item.getEmailOfOriginator();
+                tag.tvItemOriginator.setText(sharedBy);
                 return convertView;
         }
 
         private static class Tag
         {
                 TextView tvItemName;
+                TextView tvItemBrand;
+                TextView tvItemOriginator;
+                TextView tvSelectedPrice;
+                ToggleButton checkItem;
         }
 }

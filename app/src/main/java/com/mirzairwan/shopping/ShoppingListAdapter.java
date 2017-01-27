@@ -89,16 +89,22 @@ public class ShoppingListAdapter extends CursorAdapter
                         tagViews.tvItemBrand.setText(R.string.default_brand_name);
                 }
 
-                tagViews.checkItem.setOnCheckedChangeListener(null); //Disable checkbox listener to
+                //Disable checkbox listener to
                 // disable firing pre-existing checked items on the buy list
-                int colIsChecked = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_IS_CHECKED);
-                tagViews.checkItem.setChecked(cursor.getInt(colIsChecked) == 1); //Now it is safe to
+                tagViews.checkItem.setOnCheckedChangeListener(null);
+
+                //Now it is safe to
                 // associate the 'checked' status of buy  with the checkbox
-                tagViews.onItemCheckedChangeListener.setCursorPosition(cursor.getPosition());
+                int colIsChecked = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_IS_CHECKED);
+                tagViews.checkItem.setChecked(cursor.getInt(colIsChecked) == 1);
+
                 //Associate
                 // the listener with the position on the shopping list
-                tagViews.checkItem.setOnCheckedChangeListener(tagViews.onItemCheckedChangeListener);
+                tagViews.onItemCheckedChangeListener.setCursorPosition(cursor.getPosition());
+
                 //Enable checkbox listener
+                tagViews.checkItem.setOnCheckedChangeListener(tagViews.onItemCheckedChangeListener);
+
                 tagViews.checkItem.setFocusable(false);
 
                 int colCurrencyCodeIdx = cursor.getColumnIndex(PricesEntry.COLUMN_CURRENCY_CODE);
@@ -147,7 +153,7 @@ public class ShoppingListAdapter extends CursorAdapter
 
         }
 
-        private void printExchangeRateLogs(Map<String, ExchangeRate> exchangeRates)
+        private void logExchangeRates(Map<String, ExchangeRate> exchangeRates)
         {
                 Set<String> keys = exchangeRates.keySet();
                 for (String key : keys)

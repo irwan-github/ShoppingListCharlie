@@ -89,4 +89,5 @@
         <string name="share_shopping_list_txt">Share shopping list</string>
         <string name="add_to_shopping_list_txt">Add to shopping list</string>
         <string name="send_shopping_list">Send shopping list</string>
+        <string name="item_shared_by">Shared by</string>
 </resources>
