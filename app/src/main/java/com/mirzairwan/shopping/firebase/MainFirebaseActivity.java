@@ -1,7 +1,9 @@
 package com.mirzairwan.shopping.firebase;
 
 import android.app.FragmentTransaction;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -54,8 +56,12 @@ public class MainFirebaseActivity extends AppCompatActivity implements EmailOAut
         {
                 mUserId = currentUser.getUid();
                 //Write new iser
-                writeNewUser(currentUser.getUid(), currentUser.getDisplayName(), currentUser.getEmail());
+                String emailCurrentUser = currentUser.getEmail();
+                writeNewUser(currentUser.getUid(), currentUser.getDisplayName(), emailCurrentUser);
 
+                SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+                editor.putString(getString(R.string.key_cloud_email), emailCurrentUser);
+                editor.commit();
                 startFragment();
         }
 

@@ -90,4 +90,9 @@
         <string name="add_to_shopping_list_txt">Add to shopping list</string>
         <string name="send_shopping_list">Send shopping list</string>
         <string name="item_shared_by">Shared by</string>
+        <string name="cloud_shopping_account">Cloud</string>
+        <string name="cloud_account_email_title">Email</string>
+        <string name="cloud_account_email_msg">Email used to authenticate </string>
+        <string name="cloud_pref_email_title">Cloud account</string>
+        <string name="key_cloud_email">key_cloud_email</string>
 </resources>

@@ -1,47 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory
-        android:title="@string/country_based_preferences">
+        <PreferenceCategory
+                android:title="@string/country_based_preferences">
+
+                <EditTextPreference
+                        android:defaultValue="SG"
+                        android:dialogMessage="@string/country_code_dialog_pref"
+                        android:dialogTitle="@string/dialog_title_home_country_preference"
+                        android:key="@string/user_country_pref"
+                        android:lines="1"
+                        android:maxLength="@string/max_country_code_len"
+                        android:selectAllOnFocus="true"
+                        android:title="@string/home_country_preference"
+                        />
+
+                <Preference
+                        android:title="Read two-letter country codes">
+                        <intent
+                                android:action="android.intent.action.VIEW"
+                                android:data="https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2"/>
+                </Preference>
+        </PreferenceCategory>
+
+        <PreferenceCategory
+                android:title="@string/settings_catalogue">
+                <ListPreference
+                        android:defaultValue="Name"
+                        android:entries="@array/setting_sort_by_labels"
+                        android:entryValues="@array/setting_sort_by_values"
+                        android:key="@string/key_user_sort_pref"
+                        android:title="@string/sort_desc"/>
+        </PreferenceCategory>
+
+        <PreferenceCategory
+                android:title="@string/web_api_cat_pref">
+                <EditTextPreference
+                        android:defaultValue="http://api.fixer.io/latest"
+                        android:dialogMessage="@string/exchange_rate_dialog_pref"
+                        android:dialogTitle="Fetch exchange rates"
+                        android:inputType="textUri"
+                        android:key="@string/key_forex_web_api_1"
+                        android:lines="1"
+                        android:title="@string/exchange_rate_title"
+                        />
+
+        </PreferenceCategory>
+
+        <PreferenceCategory
+                android:title="@string/cloud_shopping_account">
 
         <EditTextPreference
-            android:defaultValue="SG"
-            android:dialogTitle="@string/dialog_title_home_country_preference"
-            android:dialogMessage="@string/country_code_dialog_pref"
-            android:key="@string/user_country_pref"
-            android:lines="1"
-            android:maxLength="@string/max_country_code_len"
-            android:title="@string/home_country_preference"
-            android:selectAllOnFocus="true"
-            />
+                android:dialogMessage="@string/cloud_account_email_msg"
+                android:dialogTitle="@string/cloud_account_email_title"
+                android:inputType="textEmailAddress"
+                android:key="@string/key_cloud_email"
+                android:lines="1"
+                android:title="@string/cloud_pref_email_title"
+                />
 
-        <Preference
-            android:title="Read two-letter country codes" >
-                    <intent android:action="android.intent.action.VIEW"
-                            android:data="https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2" />
-        </Preference>
-    </PreferenceCategory>
+        </PreferenceCategory>
 
-    <PreferenceCategory
-        android:title="@string/settings_catalogue">
-        <ListPreference
-            android:key="@string/key_user_sort_pref"
-            android:entries="@array/setting_sort_by_labels"
-            android:entryValues="@array/setting_sort_by_values"
-            android:defaultValue="Name"
-            android:title="@string/sort_desc"/>
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        android:title="@string/web_api_cat_pref">
-    <EditTextPreference
-        android:defaultValue="http://api.fixer.io/latest"
-        android:dialogTitle="Fetch exchange rates"
-        android:dialogMessage="@string/exchange_rate_dialog_pref"
-        android:key="@string/key_forex_web_api_1"
-        android:lines="1"
-        android:inputType="textUri"
-        android:title="@string/exchange_rate_title"
-        />
-
-    </PreferenceCategory>
 </PreferenceScreen>

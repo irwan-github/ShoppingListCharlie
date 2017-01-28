@@ -294,14 +294,11 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
                         @Override
                         public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot)
                         {
-                                if (databaseError == null)
-                                {
-                                        mItemsToShare.clear();
-                                }
-                                else
-                                {
-                                        Log.e(LOG_TAG, databaseError.getDetails());
-                                }
+                                Log.d(LOG_TAG, ">>>  databaseError.getDetails  " + databaseError.getDetails());
+                                Log.d(LOG_TAG, ">>> databaseError.getMessage " + databaseError.getMessage());
+                                Log.d(LOG_TAG, ">>> databaseError.getCode " + databaseError.getCode());
+                                mItemsToShare.clear();
+                                SendShareFragment.this.getActivity().finish();
                         }
                 });
         }
