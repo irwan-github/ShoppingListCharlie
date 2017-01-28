@@ -44,6 +44,8 @@ import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static com.mirzairwan.shopping.ItemEditingActivity.ITEM_IS_IN_SHOPPING_LIST;
 import static com.mirzairwan.shopping.LoaderHelper.EXCHANGE_RATES_SHOPPING_LIST_LOADER_ID;
 import static com.mirzairwan.shopping.R.id.menu_database_shopping_list;
+import static com.mirzairwan.shopping.firebase.MainFirebaseActivity.FIREBASE_REQUEST_CODE;
+import static com.mirzairwan.shopping.firebase.MainFirebaseActivity.FIREBASE_SIGN_OUT;
 
 public class ShoppingActivity extends AppCompatActivity implements ShoppingListFragment.OnFragmentInteractionListener, ShoppingHistoryFragment.OnFragmentInteractionListener, OnPictureRequestListener, OnExchangeRateRequestListener, SharedPreferences.OnSharedPreferenceChangeListener
 {
@@ -162,7 +164,7 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
 
                 NavItem[] navItems = new NavItem[navItemsTxt.length()];
                 // Set the adapter for the list view
-                for(int k = 0; k < navItemsTxt.length(); ++k)
+                for (int k = 0; k < navItemsTxt.length(); ++k)
                 {
                         navItems[k] = new NavItem(navItemsTxt.getResourceId(k, 0), navItemIcons.getResourceId(k, R.drawable.ic_done));
                 }
@@ -391,12 +393,18 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id)
                 {
                         mDrawerLayout.closeDrawer(mDrawerList);
-                        if(position == 0)
+                        if (position == 0)
                         {
                                 Intent intentViewSharedShoppingList = new Intent(ShoppingActivity.this, ShowSharedActivity.class);
                                 startActivity(intentViewSharedShoppingList);
                         }
                         else if(position == 1)
+                        {
+                                Intent intentFirebaseActivity = new Intent(ShoppingActivity.this, MainFirebaseActivity.class);
+                                intentFirebaseActivity.putExtra(FIREBASE_REQUEST_CODE,  FIREBASE_SIGN_OUT);
+                                startActivity(intentFirebaseActivity);
+                        }
+                        else if (position == 2)
                         {
                                 Intent intentSettings = new Intent(ShoppingActivity.this, SettingsActivity.class);
                                 startActivity(intentSettings);

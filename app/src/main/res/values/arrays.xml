@@ -11,15 +11,18 @@
 
         <array name="nav_drawer_items">
                 <item>@string/shared_shopping_list</item>
+                <item>@string/cloud_sign_out</item>
                 <item>@string/settings_screen</item>
         </array>
 
         <array name="nav_drawer_icons">
                 <item>@drawable/ic_cloud_download</item>
+                <item>@drawable/ic_logout_white_24dp</item>
                 <item>@drawable/ic_settings</item>
         </array>
 
         <string name="sort_by_name">Name</string>
         <string name="sort_by_brand">Brand</string>
         <string name="shared_shopping_list">Shared shopping list</string>
+        <string name="cloud_sign_out">Cloud sign out</string>
 </resources>

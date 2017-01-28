@@ -7,6 +7,7 @@ import android.content.CursorLoader;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -22,6 +23,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -185,9 +187,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                                                 mShoppingCursorList.listItemsChecked(mCountryCode);
                                                 displaySummaryTotals(mExchangeRatesReturned.getExchangeRates());
                                                 return true;
-                                        case R.id.add_to_shopping_list:
-                                                onFragmentInteractionListener.onAdditem();
-                                                return true;
                                         default:
                                                 return false;
                                 }
@@ -218,14 +217,13 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                         }
                 });
 
-                final MenuItem menuActionAddItem = shoppingListToolbar.getMenu().findItem(R.id.add_to_shopping_list);
-                View addItemActionView = menuActionAddItem.getActionView();
-                addItemActionView.setOnClickListener(new View.OnClickListener()
+                Button btnAddItemToShoppingList = (Button) shoppingListToolbar.findViewById(R.id.shopping_list_add_item);
+                btnAddItemToShoppingList.setOnClickListener(new View.OnClickListener()
                 {
                         @Override
                         public void onClick(View v)
                         {
-                                onMenuItemClickListener.onMenuItemClick(menuActionAddItem);
+                                onFragmentInteractionListener.onAdditem();
                         }
                 });
 
@@ -392,8 +390,16 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 displayTranslatedPricesAndTotals();
 
                 //Show or hide the "Clear" action item
-                mShoppingListToolbar.getMenu().findItem(R.id.clear_checked_item).
-                        setVisible(mShoppingCursorList.atLeastAnItemChecked());
+                MenuItem clearItemsInShoppingList = mShoppingListToolbar.getMenu().findItem(R.id.clear_checked_item);
+                clearItemsInShoppingList.setEnabled(mShoppingCursorList.atLeastAnItemChecked());
+                if (mShoppingCursorList.atLeastAnItemChecked())
+                {
+                        clearItemsInShoppingList.getActionView().setAlpha(0.4f);
+                }
+                else
+                {
+                        clearItemsInShoppingList.getActionView().setAlpha(0.2f);
+                }
         }
 
         /**
@@ -485,6 +491,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                                 mSnackBar.dismiss();
                         }
                 });
+                mSnackBar.setActionTextColor(Color.LTGRAY);
                 mSnackBar.show();
         }
 

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="?android:actionBarSize"
+                                   android:id="@+id/shopping_list_toolbar"
+                                   android:background="#fff"
+                                   android:elevation="8dp"
+        >
+
+        <Button
+                android:id="@+id/shopping_list_add_item"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="Add item ...."
+                android:background="?android:attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:fontFamily="serif"
+                android:textColor="#A2AAB0"
+                android:textStyle="bold"
+                />
+
+</android.support.v7.widget.Toolbar>

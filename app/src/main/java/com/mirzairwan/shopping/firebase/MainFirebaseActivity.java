@@ -17,6 +17,8 @@ import java.util.HashSet;
 
 public class MainFirebaseActivity extends AppCompatActivity implements EmailOAuthFragment.onFragmentAuthentication
 {
+        public static final int FIREBASE_SIGN_OUT = 1;
+        public static final String FIREBASE_REQUEST_CODE = "FIREBASE_REQUEST_CODE";
         private FirebaseAuth mAuth;
         private DatabaseReference mFireDatabase;
         private String mUserId;
@@ -38,6 +40,13 @@ public class MainFirebaseActivity extends AppCompatActivity implements EmailOAut
         protected void onStart()
         {
                 super.onStart();
+
+                if (getIntent().getIntExtra(FIREBASE_REQUEST_CODE, 0) == FIREBASE_SIGN_OUT)
+                {
+                        mAuth.signOut();
+                        finish();
+                }
+
                 //Check if user is authenticated
                 if (mAuth.getCurrentUser() != null)
                 {
@@ -67,7 +76,7 @@ public class MainFirebaseActivity extends AppCompatActivity implements EmailOAut
 
         protected void startFragment()
         {
-                HashSet<Long> args = (HashSet<Long>)getIntent().getSerializableExtra(SendShareFragment.ITEM_TO_SHARE);
+                HashSet<Long> args = (HashSet<Long>) getIntent().getSerializableExtra(SendShareFragment.ITEM_TO_SHARE);
                 FragmentTransaction fragTxn = getFragmentManager().beginTransaction();
                 fragTxn = fragTxn.replace(R.id.activity_main_firebase_container, SendShareFragment.getInstance(args)).addToBackStack(null);
                 fragTxn.commit();

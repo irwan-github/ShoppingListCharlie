@@ -14,7 +14,7 @@
                 android:id="@+id/header"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Shopping list in the cloud"
+                android:text="@string/authentication_msg"
                 android:textAppearance="?android:textAppearanceLarge"
                 android:layout_centerHorizontal="true"
                 android:layout_marginBottom="50dp"/>

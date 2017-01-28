@@ -4,6 +4,6 @@
            android:layout_height="wrap_content"
            android:paddingRight="@dimen/keyline_1"
            android:src="@drawable/ic_account_balance"
+           android:alpha="0.4"
     >
-
 </ImageView>

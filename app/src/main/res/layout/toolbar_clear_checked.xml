@@ -4,6 +4,7 @@
            android:layout_height="wrap_content"
            android:src="@drawable/ic_delete_black"
            android:paddingRight="@dimen/keyline_1"
+           android:alpha="0.2"
     >
 
 </ImageView>

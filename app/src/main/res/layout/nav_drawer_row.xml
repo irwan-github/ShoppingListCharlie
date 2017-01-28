@@ -8,16 +8,18 @@
 
         <ImageView
                 android:id="@+id/iv_nav"
-                android:layout_width="wrap_content"
+                android:layout_width="24dp"
                 android:layout_height="wrap_content"
-                android:paddingLeft="@dimen/keyline_1"
-                android:paddingRight="@dimen/keyline_1"/>
-
+                android:layout_marginLeft="@dimen/keyline_1"
+                android:layout_marginRight="@dimen/keyline_1"
+                android:layout_gravity="center"/>
 
         <TextView
                 android:id="@+id/tv_nav"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:textAppearanceSmall"
-                android:textColor="@android:color/white"/>
+                android:textColor="@android:color/white"
+                android:layout_gravity="center"/>
+
 </LinearLayout>

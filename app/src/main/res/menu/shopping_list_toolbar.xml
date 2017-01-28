@@ -3,12 +3,6 @@
       xmlns:app="http://schemas.android.com/apk/res-auto">
 
         <item
-                android:id="@+id/add_to_shopping_list"
-                android:title="@string/add_to_shopping_list_txt"
-                app:actionLayout="@layout/toolbar_add_to_shopping_list"
-                app:showAsAction="always"/>
-
-        <item
                 android:id="@+id/summary_totals"
                 android:title="@string/shopping_list_totals"
                 app:actionLayout="@layout/toolbar_summary_totals"

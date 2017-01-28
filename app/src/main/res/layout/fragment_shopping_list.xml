@@ -77,16 +77,7 @@
 
                 </FrameLayout>
 
-                <android.support.v7.widget.Toolbar
-                        android:id="@+id/shopping_list_toolbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="?android:actionBarSize"
-                        android:background="#fff"
-                        android:elevation="8dp"
-                        android:focusable="true"
-                        android:gravity="center"
-                        >
-                </android.support.v7.widget.Toolbar>
+        <include layout="@layout/toolbar_shopping_list" />
 
 
         </LinearLayout>

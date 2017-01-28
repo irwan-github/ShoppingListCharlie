@@ -95,4 +95,5 @@
         <string name="cloud_account_email_msg">Email used to authenticate </string>
         <string name="cloud_pref_email_title">Cloud account</string>
         <string name="key_cloud_email">key_cloud_email</string>
+        <string name="authentication_msg">Access others shopping list</string>
 </resources>
