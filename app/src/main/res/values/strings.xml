@@ -82,7 +82,7 @@
         <string name="checked_to_shoppinglist">Checked:\u0020</string>
         <string name="dismiss">Dismiss</string>
         <string name="internet_not_available_exchange_rate">Translation of prices is unavailable because internet is unavailable.</string>
-        <string name="hint_email">Email</string>
+        <string name="hint_email">Enter Email</string>
         <string name="hint_password">Password</string>
         <string name="sign_in">Sign in</string>
         <string name="sign_up">Sign up</string>

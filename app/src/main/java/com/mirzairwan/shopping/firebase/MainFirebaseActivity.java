@@ -76,11 +76,22 @@ public class MainFirebaseActivity extends AppCompatActivity implements EmailOAut
 
         protected void startFragment()
         {
-                HashSet<Long> args = (HashSet<Long>) getIntent().getSerializableExtra(SendShareFragment.ITEM_TO_SHARE);
-                FragmentTransaction fragTxn = getFragmentManager().beginTransaction();
-                fragTxn = fragTxn.replace(R.id.activity_main_firebase_container, SendShareFragment.getInstance(args)).addToBackStack(null);
-                fragTxn.commit();
+                HashSet<Long> shoppingItemIds = (HashSet<Long>) getIntent().getSerializableExtra(SendShareFragment.ITEM_TO_SHARE);
+                String shareeEmail = getIntent().getStringExtra(SendShareFragment.SHAREE_EMAIL);
+//                FragmentTransaction fragTxn = getFragmentManager().beginTransaction();
+//                fragTxn = fragTxn.replace(R.id.activity_main_firebase_container, SendShareFragment2.getInstance(shoppingItemIds, shareeEmail)).addToBackStack(null);
+//                fragTxn.commit();
+
+                SendShareFragment send = SendShareFragment.getInstance(shoppingItemIds, shareeEmail);
+                send.show(getFragmentManager(), "Sharee");
         }
+
+//        void showDialog() {
+//                DialogFragment newFragment = MyAlertDialogFragment.newInstance(
+//                        R.string.alert_dialog_two_buttons_title);
+//                newFragment.show(getFragmentManager(), "dialog");
+//        }
+
 
         private void writeNewUser(String uid, String userName, String email)
         {

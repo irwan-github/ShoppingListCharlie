@@ -24,6 +24,7 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -299,7 +300,9 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                         @Override
                         public boolean onCreateActionMode(ActionMode mode, Menu menu)
                         {
-                                mode.setTitle(getString(R.string.share_shopping_list_txt));
+                                //mode.setTitle(getString(R.string.share_shopping_list_txt));
+                                EditText etShareeEmail = (EditText)LayoutInflater.from(ShoppingListFragment.this.getActivity()).inflate(R.layout.sharee_email_input, null, false);
+                                mode.setCustomView(etShareeEmail);
                                 mode.getMenuInflater().inflate(R.menu.firebase_share_shopping_list, menu);
                                 return true;
                         }
@@ -315,7 +318,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                         {
                                 if (shareShoppingItemIds.size() > 0)
                                 {
-                                        onFragmentInteractionListener.onFirebaseShareShoppingList(shareShoppingItemIds);
+                                        EditText etShareeEmail = (EditText)mode.getCustomView();
+                                        onFragmentInteractionListener.onFirebaseShareShoppingList(shareShoppingItemIds, etShareeEmail.getText().toString());
                                 }
                                 else
                                 {
@@ -515,7 +519,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
                 void onInitialized(ExchangeRateCallback exchangeRateCallback);
 
-                void onFirebaseShareShoppingList(HashSet<Long> ids);
+                void onFirebaseShareShoppingList(HashSet<Long> ids, String shareeEmail);
         }
 
         /**

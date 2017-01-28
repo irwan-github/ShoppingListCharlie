@@ -380,10 +380,11 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         }
 
         @Override
-        public void onFirebaseShareShoppingList(HashSet<Long> ids)
+        public void onFirebaseShareShoppingList(HashSet<Long> ids, String shareeEmail)
         {
                 Intent intent = new Intent(this, MainFirebaseActivity.class);
                 intent.putExtra(SendShareFragment.ITEM_TO_SHARE, ids);
+                intent.putExtra(SendShareFragment.SHAREE_EMAIL, shareeEmail);
                 startActivity(intent);
         }
 

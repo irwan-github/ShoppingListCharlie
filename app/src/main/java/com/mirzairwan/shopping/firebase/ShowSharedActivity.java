@@ -5,8 +5,6 @@ import android.os.Bundle;
 
 import com.mirzairwan.shopping.R;
 
-import java.util.HashSet;
-
 public class ShowSharedActivity extends MainFirebaseActivity
 {
 
@@ -20,7 +18,6 @@ public class ShowSharedActivity extends MainFirebaseActivity
         @Override
         protected void startFragment()
         {
-                HashSet<Long> args = (HashSet<Long>)getIntent().getSerializableExtra(SendShareFragment.ITEM_TO_SHARE);
                 FragmentTransaction fragTxn = getFragmentManager().beginTransaction();
                 fragTxn = fragTxn.replace(R.id.activity_main_firebase_container, new ShareeShoppingListFragment()).addToBackStack(null);
                 fragTxn.commit();
