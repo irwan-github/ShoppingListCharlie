@@ -16,5 +16,35 @@
                         android:layout_height="match_parent"
                         android:choiceMode="multipleChoiceModal"
                         />
+
+                <!-- Empty view for the list -->
+                <RelativeLayout
+                        android:id="@+id/empty_shared_shopping_list"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal|center_vertical"
+                        >
+
+                        <ImageView
+                                android:id="@+id/empty_shared_shopping_image"
+                                android:layout_width="200dp"
+                                android:layout_height="200dp"
+                                android:layout_centerHorizontal="true"
+                                android:src="@drawable/empty_shopping_list"
+                                />
+
+                        <TextView
+                                android:id="@+id/empty_title_text"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_below="@+id/empty_shared_shopping_image"
+                                android:layout_centerHorizontal="true"
+                                android:fontFamily="sans-serif-medium"
+                                android:paddingTop="16dp"
+                                android:text="@string/empty_shared_shopping_title_text"
+                                android:textAppearance="?android:textAppearanceMedium"
+                                android:textColor="#A2AAB0"/>
+                </RelativeLayout>
+
         </LinearLayout>
 </android.support.design.widget.CoordinatorLayout>

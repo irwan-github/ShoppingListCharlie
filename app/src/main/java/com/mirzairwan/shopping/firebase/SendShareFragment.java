@@ -25,6 +25,7 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 import com.mirzairwan.shopping.OnPictureRequestListener;
+import com.mirzairwan.shopping.R;
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
@@ -42,7 +43,6 @@ import java.util.Set;
 public class SendShareFragment extends DialogFragment implements LoaderManager.LoaderCallbacks<Cursor>
 {
         public static final String ITEM_TO_SHARE = "ITEM_TO_SHARE";
-        private static final String SORT_COLUMN = "SORT_COLUMN";
         private static final String LOG_TAG = SendShareFragment.class.getSimpleName();
         public static final String SHAREE_EMAIL = "SHAREE_EMAIL" ;
         private OnPictureRequestListener mOnPictureRequestListener;
@@ -74,7 +74,7 @@ public class SendShareFragment extends DialogFragment implements LoaderManager.L
         {
                 mProgressDialog = new ProgressDialog(getActivity());
                 mProgressDialog.setCancelable(false);
-                mProgressDialog.setMessage("Loading...");
+                mProgressDialog.setMessage(getString(R.string.progress_dialog_msg));
                 return mProgressDialog;
         }
 
@@ -84,7 +84,6 @@ public class SendShareFragment extends DialogFragment implements LoaderManager.L
         {
                 super.onActivityCreated(savedInstanceState);
                 getLoaderManager().initLoader(64, null, this);
-
         }
 
         @Override
@@ -120,13 +119,6 @@ public class SendShareFragment extends DialogFragment implements LoaderManager.L
                 String selection = PricesEntry.TABLE_NAME + "." + PricesEntry._ID + "=" +
                         ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID +
                         " AND " + ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry._ID + subSelection;
-
-                //String sortPref = args.getString(SORT_COLUMN);
-                String sortOrder = null;
-//                if (sortPref != null)
-//                {
-//                        sortOrder = sortPref.equalsIgnoreCase(Contract.ItemsEntry.COLUMN_NAME) ? Contract.ItemsEntry.TABLE_NAME + "." + Contract.ItemsEntry.COLUMN_NAME : Contract.ItemsEntry.TABLE_NAME + "." + Contract.ItemsEntry.COLUMN_BRAND;
-//                }
 
                 String[] selectionArgs = new String[itemIds.size()];
                 int k = 0;

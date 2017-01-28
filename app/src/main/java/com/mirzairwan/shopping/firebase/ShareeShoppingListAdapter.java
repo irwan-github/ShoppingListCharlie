@@ -90,7 +90,6 @@ public class ShareeShoppingListAdapter extends ArrayAdapter<Item>
                        convertView = LayoutInflater.from(getContext()).inflate(R.layout.row_shared_shopping_item, parent, false);
                        tag.tvItemName = (TextView)convertView.findViewById(R.id.item_name_row);
                        tag.tvItemBrand = (TextView)convertView.findViewById(R.id.item_brand_row);
-                       tag.tvItemOriginator = (TextView)convertView.findViewById(R.id.item_originator) ;
                        tag.tvSelectedPrice = (TextView)convertView.findViewById(R.id.item_selected_price_row);
                        tag.checkItem = (ToggleButton) convertView.findViewById(R.id.check_item);
                        convertView.setTag(tag);
@@ -107,8 +106,6 @@ public class ShareeShoppingListAdapter extends ArrayAdapter<Item>
 
                 MyTextUtils.setPrice(getContext(), item.getCurrencyCode(), item.getPrice(), tag.tvSelectedPrice);
 
-                String sharedBy = getContext().getString(R.string.item_shared_by) + " " + item.getEmailOfOriginator();
-                tag.tvItemOriginator.setText(sharedBy);
                 return convertView;
         }
 
@@ -116,7 +113,6 @@ public class ShareeShoppingListAdapter extends ArrayAdapter<Item>
         {
                 TextView tvItemName;
                 TextView tvItemBrand;
-                TextView tvItemOriginator;
                 TextView tvSelectedPrice;
                 ToggleButton checkItem;
         }

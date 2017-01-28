@@ -74,23 +74,6 @@ Or else, the scaling is bypassed resulting in OutOfMemoryError
                 >
         </TextView>
 
-        <TextView
-                android:id="@+id/item_originator"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/item_selected_price_row"
-                android:layout_toRightOf="@id/iv_item_pic_thb"
-                android:focusable="false"
-                android:maxLines="@string/text_max_line"
-                android:paddingLeft="@dimen/keyline_1"
-                android:paddingTop="@dimen/summary_body_padding_top"
-                android:textAppearance="?android:textAppearanceSmall"
-                android:textColor="@color/textColorItemBrand"
-                tools:text="hero@abc.com"
-                >
-        </TextView>
-
-
         <ToggleButton
                 android:id="@+id/check_item"
                 android:layout_width="@dimen/touch_target_width"

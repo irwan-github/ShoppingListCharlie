@@ -1,6 +1,10 @@
 package com.mirzairwan.shopping.firebase;
 
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.app.Fragment;
+import android.app.ProgressDialog;
+import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
@@ -13,7 +17,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -24,6 +30,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
+import com.google.firebase.database.ValueEventListener;
 import com.mirzairwan.shopping.R;
 
 import java.util.ArrayList;
@@ -42,6 +49,10 @@ public class ShareeShoppingListFragment extends Fragment
         private View mRootView;
         private ArrayList<Item> mItemsToDelete = new ArrayList<>();
         private ShareeShoppingListAdapter mItemRows;
+        private ListView mShoppingListView;
+        private View mEmptyView;
+        private DatabaseReference sharedShoppingListRef;
+        private ProgressDialogFragment progressDialog;
 
         @Override
         public void onCreate(Bundle savedInstanceState)
@@ -56,21 +67,54 @@ public class ShareeShoppingListFragment extends Fragment
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
                 mRootView = inflater.inflate(R.layout.fragment_show_shared, container, false);
+                mEmptyView = mRootView.findViewById(R.id.empty_shared_shopping_image);
+                progressDialog = new ProgressDialogFragment();
+                progressDialog.show(getFragmentManager(), "Getting");
+                sharedShoppingListRef = mRootRef.child(SHARED_SHOPPING_LIST).child(mDatabaseUser.getUid());
+                sharedShoppingListRef.orderByChild("name").addListenerForSingleValueEvent(new ValueEventListener()
+                {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot)
+                        {
+                                if (!dataSnapshot.hasChildren())
+                                {
+                                        progressDialog.dismiss();
+                                }
+
+                                mShoppingListView.setEmptyView(mEmptyView);
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError)
+                        {
+
+                        }
+                });
+
                 setupListView();
                 return mRootView;
         }
 
         private void setupListView()
         {
-                DatabaseReference sharedShoppingListRef = mRootRef.child(SHARED_SHOPPING_LIST).child(mDatabaseUser.getUid());
 
-                ListView shoppingListView = (ListView) mRootView.findViewById(R.id.shared_cloud_shopping_list);
+                mShoppingListView = (ListView) mRootView.findViewById(R.id.shared_cloud_shopping_list);
                 mItemRows = new ShareeShoppingListAdapter(getActivity(), sharedShoppingListRef);
-                shoppingListView.setAdapter(mItemRows);
+                mShoppingListView.setAdapter(mItemRows);
+
+                mShoppingListView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+                {
+                        @Override
+                        public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+                        {
+                                Item item = mItemRows.getItem(position);
+                                Toast.makeText(ShareeShoppingListFragment.this.getActivity(), "Shared by " + item.getEmailOfOriginator(), Toast.LENGTH_SHORT).show();
+                        }
+                });
 
                 //Enable batch contextual action
-                shoppingListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
-                shoppingListView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener()
+                mShoppingListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+                mShoppingListView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener()
                 {
                         @Override
                         public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked)
@@ -130,16 +174,27 @@ public class ShareeShoppingListFragment extends Fragment
 
                         }
                 });
+
+                mItemRows.registerDataSetObserver(new DataSetObserver()
+                {
+                        @Override
+                        public void onChanged()
+                        {
+                                progressDialog.dismiss();
+                        }
+                });
+
         }
 
         private void deleteRemoteItems()
         {
                 Log.d(LOG_TAG, ">>>deleteRemoteItem3");
-                mRootRef.child(SHARED_SHOPPING_LIST).child(mDatabaseUser.getUid()).runTransaction(new Transaction.Handler() {
+                mRootRef.child(SHARED_SHOPPING_LIST).child(mDatabaseUser.getUid()).runTransaction(new Transaction.Handler()
+                {
                         @Override
                         public Transaction.Result doTransaction(MutableData mutableData)
                         {
-                                for(Item itemToDelete : mItemsToDelete)
+                                for (Item itemToDelete : mItemsToDelete)
                                 {
                                         try
                                         {
@@ -170,5 +225,17 @@ public class ShareeShoppingListFragment extends Fragment
                         }
                 });
 
+        }
+
+        public static class ProgressDialogFragment extends DialogFragment
+        {
+                @Override
+                public Dialog onCreateDialog(Bundle savedInstanceState)
+                {
+                        ProgressDialog mProgressDialog = new ProgressDialog(getActivity());
+                        mProgressDialog.setCancelable(false);
+                        mProgressDialog.setMessage(getString(R.string.progress_dialog_msg));
+                        return mProgressDialog;
+                }
         }
 }
