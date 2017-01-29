@@ -82,7 +82,7 @@
         <string name="checked_to_shoppinglist">Checked:\u0020</string>
         <string name="dismiss">Dismiss</string>
         <string name="internet_not_available_exchange_rate">Translation of prices is unavailable because internet is unavailable.</string>
-        <string name="hint_email">Enter Email</string>
+        <string name="hint_email">Email</string>
         <string name="hint_password">Password</string>
         <string name="sign_in">Sign in</string>
         <string name="sign_up">Sign up</string>
@@ -98,4 +98,9 @@
         <string name="authentication_msg">Access others shopping list</string>
         <string name="empty_shared_shopping_title_text">No items is shared with you.</string>
         <string name="progress_dialog_msg">Working ...</string>
+        <string name="person_does_not_exist">does not exist</string>
+        <string name="cancel">Cancel</string>
+        <string name="create_account_msg">Create an account</string>
+        <string name="hint_password_confirm">Confirm password</string>
+        <string name="header_sign_in_msg">Sign in shopping list cloud</string>
 </resources>

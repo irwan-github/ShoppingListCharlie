@@ -68,6 +68,7 @@ public class ShareeShoppingListFragment extends Fragment
         {
                 mRootView = inflater.inflate(R.layout.fragment_show_shared, container, false);
                 mEmptyView = mRootView.findViewById(R.id.empty_shared_shopping_image);
+                getActivity().setTitle(R.string.share_shopping_list_txt);
                 progressDialog = new ProgressDialogFragment();
                 progressDialog.show(getFragmentManager(), "Getting");
                 sharedShoppingListRef = mRootRef.child(SHARED_SHOPPING_LIST).child(mDatabaseUser.getUid());

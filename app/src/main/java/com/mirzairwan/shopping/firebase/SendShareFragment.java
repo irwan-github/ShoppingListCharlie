@@ -1,17 +1,23 @@
 package com.mirzairwan.shopping.firebase;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.app.Fragment;
 import android.app.LoaderManager;
-import android.app.ProgressDialog;
 import android.content.CursorLoader;
+import android.content.DialogInterface;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -40,16 +46,18 @@ import java.util.Set;
  * Created by Mirza Irwan on 25/1/17.
  */
 
-public class SendShareFragment extends DialogFragment implements LoaderManager.LoaderCallbacks<Cursor>
+public class SendShareFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>
 {
         public static final String ITEM_TO_SHARE = "ITEM_TO_SHARE";
+        public static final String SHAREE_EMAIL = "SHAREE_EMAIL";
         private static final String LOG_TAG = SendShareFragment.class.getSimpleName();
-        public static final String SHAREE_EMAIL = "SHAREE_EMAIL" ;
         private OnPictureRequestListener mOnPictureRequestListener;
         private DatabaseReference mRootRef;
         private FirebaseUser mFirebaserUser;
         private ArrayList<Item> mItemsToShare = new ArrayList<>();
-        private ProgressDialog mProgressDialog;
+        //private ProgressDialog mProgressDialog;
+        private ProgressBar mProgressBar;
+        private String mShareeEmail;
 
         public static SendShareFragment getInstance(HashSet<Long> ids, String shareeEmail)
         {
@@ -69,15 +77,15 @@ public class SendShareFragment extends DialogFragment implements LoaderManager.L
                 mRootRef = FirebaseDatabase.getInstance().getReference();
         }
 
+        @Nullable
         @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState)
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-                mProgressDialog = new ProgressDialog(getActivity());
-                mProgressDialog.setCancelable(false);
-                mProgressDialog.setMessage(getString(R.string.progress_dialog_msg));
-                return mProgressDialog;
+                View rootView = inflater.inflate(R.layout.fragment_share_shopping_list, container, false);
+                mProgressBar = (ProgressBar) rootView.findViewById(R.id.progress_bar_sharee);
+                getActivity().setTitle("Sending shopping list items");
+                return rootView;
         }
-
 
         @Override
         public void onActivityCreated(Bundle savedInstanceState)
@@ -90,8 +98,8 @@ public class SendShareFragment extends DialogFragment implements LoaderManager.L
         public Loader<Cursor> onCreateLoader(int id, Bundle args)
         {
                 Log.d(LOG_TAG, ">>>>>>> onCreateLoader");
-                String[] projection = new String[]{ToBuyItemsEntry._ID, ToBuyItemsEntry.COLUMN_ITEM_ID, ToBuyItemsEntry.COLUMN_QUANTITY, ToBuyItemsEntry.COLUMN_IS_CHECKED, ItemsEntry.COLUMN_NAME, ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_COUNTRY_ORIGIN, ItemsEntry.COLUMN_DESCRIPTION, Contract.PicturesEntry
-                        .COLUMN_FILE_PATH, PricesEntry.COLUMN_PRICE_TYPE_ID, PricesEntry.COLUMN_PRICE, PricesEntry.COLUMN_CURRENCY_CODE};
+                String[] projection = new String[]{ToBuyItemsEntry._ID, ToBuyItemsEntry.COLUMN_ITEM_ID, ToBuyItemsEntry.COLUMN_QUANTITY, ToBuyItemsEntry.COLUMN_IS_CHECKED, ItemsEntry.COLUMN_NAME, ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_COUNTRY_ORIGIN, ItemsEntry.COLUMN_DESCRIPTION, Contract.PicturesEntry.COLUMN_FILE_PATH, PricesEntry
+                        .COLUMN_PRICE_TYPE_ID, PricesEntry.COLUMN_PRICE, PricesEntry.COLUMN_CURRENCY_CODE};
 
                 Uri uri = Contract.ShoppingList.CONTENT_URI;
                 Set<Long> itemIds = (Set<Long>) getArguments().getSerializable(ITEM_TO_SHARE);
@@ -136,8 +144,8 @@ public class SendShareFragment extends DialogFragment implements LoaderManager.L
         {
                 Log.d(LOG_TAG, ">>>>>>> onLoadFinished Cursor");
                 prepareSharedItems(cursor);
-                String shareeEmail = getArguments().getString(SHAREE_EMAIL);
-                submitShoppingList(shareeEmail);
+                mShareeEmail = getArguments().getString(SHAREE_EMAIL);
+                submitShoppingList(mShareeEmail);
         }
 
         private void prepareSharedItems(Cursor cursor)
@@ -152,7 +160,6 @@ public class SendShareFragment extends DialogFragment implements LoaderManager.L
                         String currencyCode = cursor.getString(colCurrencyCodeIdx);
                         int colBuyItemQty = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);
                         int qty = cursor.getInt(colBuyItemQty);
-                        //mItemsToShareAdapter.add(itemName);
                         mItemsToShare.add(new Item(mFirebaserUser.getEmail(), mFirebaserUser.getUid(), itemName, brand, priceTag, currencyCode, qty));
                         Log.d(LOG_TAG, "Item name = " + itemName);
                 }
@@ -197,7 +204,12 @@ public class SendShareFragment extends DialogFragment implements LoaderManager.L
                                 }
                                 else
                                 {
-                                        Toast.makeText(getActivity(), "This user does not have an account ", Toast.LENGTH_LONG).show();
+                                        mProgressBar.setVisibility(View.GONE);
+                                        //mTvShareeError.setVisibility(View.VISIBLE);
+                                        // Toast.makeText(getActivity(), "This user does not have an account ", Toast.LENGTH_LONG).show();
+                                        EmailDoesNotExistDialogFrag error = EmailDoesNotExistDialogFrag.newInstance(mShareeEmail);
+                                        error.show(getFragmentManager(), "email_error");
+
                                 }
                         }
 
@@ -215,8 +227,10 @@ public class SendShareFragment extends DialogFragment implements LoaderManager.L
 
                 final int countItemsToShare = mItemsToShare.size();
 
-                if(countItemsToShare == 0)
+                if (countItemsToShare == 0)
+                {
                         return;
+                }
 
                 shoppingListShareWithRef.runTransaction(new Transaction.Handler()
                 {
@@ -242,9 +256,9 @@ public class SendShareFragment extends DialogFragment implements LoaderManager.L
                         @Override
                         public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot)
                         {
-                                if(databaseError == null)
+                                if (databaseError == null)
                                 {
-                                        mProgressDialog.setMessage("Completed!");
+
                                 }
                                 else
                                 {
@@ -283,4 +297,33 @@ public class SendShareFragment extends DialogFragment implements LoaderManager.L
                 return FirebaseAuth.getInstance().getCurrentUser().getUid();
         }
 
+        public static class EmailDoesNotExistDialogFrag extends DialogFragment
+        {
+                public static EmailDoesNotExistDialogFrag newInstance(String email)
+                {
+                         Bundle args = new Bundle();
+                        args.putString(SHAREE_EMAIL, email );
+                         EmailDoesNotExistDialogFrag fragment = new EmailDoesNotExistDialogFrag();
+                        fragment.setArguments(args);
+                        return fragment;
+                }
+                @Override
+                public Dialog onCreateDialog(Bundle savedInstanceState)
+                {
+                        // Use the Builder class for convenient dialog construction
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                        String message = getArguments().getString(SHAREE_EMAIL) + " " + getString(R.string.person_does_not_exist);
+                        builder.setMessage(message).setPositiveButton("Dismiss", new DialogInterface.OnClickListener()
+                        {
+                                public void onClick(DialogInterface dialog, int id)
+                                {
+                                        dismiss();
+                                        getActivity().finish();
+                                }
+                        });
+
+
+                        return builder.create();
+                }
+        }
 }

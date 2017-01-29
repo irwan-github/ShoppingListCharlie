@@ -14,6 +14,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -142,9 +143,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 Bundle args = new Bundle();
                 args.putString(SORT_COLUMN, sharedPrefs.getString(getString(R.string.user_sort_pref), null));
 
-                //Kick off the loader. Note that kicking of the loader in the Resumed state
-                // prevents the
-                //CursorLoader from calling onLoadFinished twice.
+                //Kick off the loader.
                 Log.d(LOG_TAG, " >>>>>>> initLoader(LOADER_BUY_ITEM_ID)");
                 getLoaderManager().initLoader(LOADER_BUY_ITEM_ID, args, this);
 
@@ -301,7 +300,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                         public boolean onCreateActionMode(ActionMode mode, Menu menu)
                         {
                                 //mode.setTitle(getString(R.string.share_shopping_list_txt));
-                                EditText etShareeEmail = (EditText)LayoutInflater.from(ShoppingListFragment.this.getActivity()).inflate(R.layout.sharee_email_input, null, false);
+                                EditText etShareeEmail = (EditText) LayoutInflater.from(ShoppingListFragment.this.getActivity()).inflate(R.layout.sharee_email_input, null, false);
                                 mode.setCustomView(etShareeEmail);
                                 mode.getMenuInflater().inflate(R.menu.firebase_share_shopping_list, menu);
                                 return true;
@@ -318,14 +317,22 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                         {
                                 if (shareShoppingItemIds.size() > 0)
                                 {
-                                        EditText etShareeEmail = (EditText)mode.getCustomView();
-                                        onFragmentInteractionListener.onFirebaseShareShoppingList(shareShoppingItemIds, etShareeEmail.getText().toString());
+                                        EditText etShareeEmail = (EditText) mode.getCustomView();
+                                        if (!TextUtils.isEmpty(etShareeEmail.getText()))
+                                        {
+                                                onFragmentInteractionListener.onFirebaseShareShoppingList(shareShoppingItemIds, etShareeEmail.getText().toString());
+                                                mode.finish();
+                                        }
+                                        else
+                                        {
+                                                etShareeEmail.setError("Required");
+                                        }
                                 }
                                 else
                                 {
                                         Toast.makeText(getActivity(), "Select item(s) before clicking share ", Toast.LENGTH_LONG).show();
                                 }
-                                mode.finish();
+
                                 return true;
                         }
 
@@ -336,19 +343,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                                 shareShoppingItemIds.clear();
                         }
                 });
-        }
-
-        private void setupFloatingActionButton(View view)
-        {
-//                FloatingActionButton btnAdd = (FloatingActionButton) view.findViewById(R.id.btn_add_item);
-//                btnAdd.setOnClickListener(new View.OnClickListener()
-//                {
-//                        @Override
-//                        public void onClick(View v)
-//                        {
-//                                onFragmentInteractionListener.onAdditem();
-//                        }
-//                });
         }
 
         @Override

@@ -69,7 +69,7 @@ public class EmailOAuthFragment extends Fragment implements View.OnClickListener
         public void onAttach(Activity activity)
         {
                 super.onAttach(activity);
-                mOnFragmentAuthentication = (onFragmentAuthentication)activity;
+                mOnFragmentAuthentication = (onFragmentAuthentication) activity;
         }
 
 
@@ -82,39 +82,8 @@ public class EmailOAuthFragment extends Fragment implements View.OnClickListener
                 }
                 else if (v.getId() == R.id.button_sign_up)
                 {
-                        signUp();
+                        mOnFragmentAuthentication.onSignUp();
                 }
-        }
-
-        private void signUp()
-        {
-                Log.d(LOG_TAG, "sign up");
-                if (!areFieldsValid())
-                {
-                        return;
-                }
-                String email = mEmailField.getText().toString();
-                String password = mPasswordField.getText().toString();
-
-                Task<AuthResult> authResult = mAuth.createUserWithEmailAndPassword(email, password);
-                authResult.addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>()
-                {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task)
-                        {
-                                Log.d(LOG_TAG, "createUser:onComplete:" + task.isSuccessful());
-                                if (task.isSuccessful())
-                                {
-                                       // onAuthenticationSuccess(task.getResult().getUser());
-                                        mOnFragmentAuthentication.onAuthenticationOk(task.getResult().getUser());
-                                }
-                                else
-                                {
-                                        Toast.makeText(EmailOAuthFragment.this.getActivity(), "Sign Up Failed", Toast.LENGTH_SHORT).show();
-                                }
-                        }
-                });
-
         }
 
         private void signIn()
@@ -180,5 +149,7 @@ public class EmailOAuthFragment extends Fragment implements View.OnClickListener
         public interface onFragmentAuthentication
         {
                 void onAuthenticationOk(FirebaseUser firebaseUser);
+                void onSignUp();
         }
+
 }

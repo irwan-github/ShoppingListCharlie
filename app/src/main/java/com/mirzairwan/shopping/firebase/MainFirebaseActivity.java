@@ -15,7 +15,7 @@ import com.mirzairwan.shopping.domain.User;
 
 import java.util.HashSet;
 
-public class MainFirebaseActivity extends AppCompatActivity implements EmailOAuthFragment.onFragmentAuthentication
+public class MainFirebaseActivity extends AppCompatActivity implements OnFragmentAuthentication
 {
         public static final int FIREBASE_SIGN_OUT = 1;
         public static final String FIREBASE_REQUEST_CODE = "FIREBASE_REQUEST_CODE";
@@ -55,9 +55,8 @@ public class MainFirebaseActivity extends AppCompatActivity implements EmailOAut
                 }
                 else
                 {
-                        FragmentTransaction fragTxn = getFragmentManager().beginTransaction();
-                        fragTxn = fragTxn.add(R.id.activity_main_firebase_container, new EmailOAuthFragment()).addToBackStack(null);
-                        fragTxn.commit();
+                        SignInDialogFrag signInDialogFrag = new SignInDialogFrag();
+                        signInDialogFrag.show(getFragmentManager(), "SIGN_IN");
                 }
         }
 
@@ -74,24 +73,21 @@ public class MainFirebaseActivity extends AppCompatActivity implements EmailOAut
                 startFragment();
         }
 
+        @Override
+        public void onSignUp()
+        {
+                SignUpDialogFrag signUpDialogFrag = new SignUpDialogFrag();
+                signUpDialogFrag.show(getFragmentManager(), "SIGN_UP");
+        }
+
         protected void startFragment()
         {
                 HashSet<Long> shoppingItemIds = (HashSet<Long>) getIntent().getSerializableExtra(SendShareFragment.ITEM_TO_SHARE);
                 String shareeEmail = getIntent().getStringExtra(SendShareFragment.SHAREE_EMAIL);
-//                FragmentTransaction fragTxn = getFragmentManager().beginTransaction();
-//                fragTxn = fragTxn.replace(R.id.activity_main_firebase_container, SendShareFragment2.getInstance(shoppingItemIds, shareeEmail)).addToBackStack(null);
-//                fragTxn.commit();
-
-                SendShareFragment send = SendShareFragment.getInstance(shoppingItemIds, shareeEmail);
-                send.show(getFragmentManager(), "Sharee");
+                FragmentTransaction fragTxn = getFragmentManager().beginTransaction();
+                fragTxn = fragTxn.replace(R.id.activity_main_firebase_container, SendShareFragment.getInstance(shoppingItemIds, shareeEmail)).addToBackStack(null);
+                fragTxn.commit();
         }
-
-//        void showDialog() {
-//                DialogFragment newFragment = MyAlertDialogFragment.newInstance(
-//                        R.string.alert_dialog_two_buttons_title);
-//                newFragment.show(getFragmentManager(), "dialog");
-//        }
-
 
         private void writeNewUser(String uid, String userName, String email)
         {
