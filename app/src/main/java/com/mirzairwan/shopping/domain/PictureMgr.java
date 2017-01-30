@@ -1,7 +1,10 @@
 package com.mirzairwan.shopping.domain;
 
+import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import com.mirzairwan.shopping.PictureUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,8 +39,10 @@ public class PictureMgr implements Parcelable
         private static final String SHOPPING_LIST_PICS = "Item_";
         private static String mAuthorityPackage = "Android/data/com.mirzairwan.shopping/files/Pictures";
         private Picture mPictureInDb; //Currently stored in database
-        private List<Picture> mTargetPictureForViewing = new ArrayList<>(); //Currently shown to the
-        // user. For this implementation, only one picture is allowed.
+
+        //Currently shown to the user. For this implementation, only one picture is allowed.
+        private List<Picture> mTargetPictureForViewing = new ArrayList<>();
+
         private List<Picture> mDiscardedPictures = new ArrayList<>(); //To be deleted from filesystem
         private long mItemId = -1;
 
@@ -55,6 +60,12 @@ public class PictureMgr implements Parcelable
                 mAuthorityPackage = in.readString();
         }
 
+        /**
+         * Create a collision-resistant file name
+         * @param dirPictures
+         * @return
+         * @throws IOException
+         */
         public static File createFileHandle(File dirPictures) throws IOException
         {
                 String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
@@ -310,4 +321,9 @@ public class PictureMgr implements Parcelable
                 dest.writeString(mAuthorityPackage);
         }
 
+        public void rescalePictureInFilesystem(int reqWidth, int reqHeight)
+        {
+                Bitmap bitmap = PictureUtil.decodeSampledBitmapFile(getPictureForViewing().getPath(), reqWidth, reqHeight);
+
+        }
 }

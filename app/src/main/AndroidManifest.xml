@@ -2,9 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.mirzairwan.shopping">
 
-        <uses-feature android:name="android.hardware.camera"/>
+        <uses-feature
+                android:name="android.hardware.camera"
+                android:required="true"/>
 
+        <!-- android.system.ErrnoException: open failed: EACCES (Permission denied) -->
+        <!-- To pick image from public photo directory, this permission is needed. This permission is enforced starting in API level 19. -->
+        <!-- Without this permission, system will throw android.system.ErrnoException: open failed: EACCES (Permission denied) -->
         <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
+        <!-- This app retrieves exchange rate using a Web API and data using Firebase API. Therefore the following permissions are needed. -->
         <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
         <uses-permission android:name="android.permission.INTERNET"/>
 
@@ -19,7 +26,6 @@
                         android:launchMode="singleTop">
                         <intent-filter>
                                 <action android:name="android.intent.action.MAIN"/>
-
                                 <category android:name="android.intent.category.LAUNCHER"/>
                         </intent-filter>
                 </activity>
@@ -59,11 +65,16 @@
                         android:name=".firebase.ShowSharedActivity"
                         android:parentActivityName=".ShoppingActivity">
                 </activity>
+
                 <provider
                         android:name=".data.ShoppingListProvider"
                         android:authorities="com.mirzairwan.shopping"
                         android:exported="false">
                 </provider>
+
+                <!-- Grant permission to device's camera app to access my app's files -->
+                <!-- authorities attribute must match the second argument to getUriForFile(Context context, String authority, File file). -->
+                <!--In the meta-data section of the provider definition, the provider expects eligible paths to be configured in a dedicated resource file, res/xml/file_paths.xml -->
                 <provider
                         android:name="android.support.v4.content.FileProvider"
                         android:authorities="com.mirzairwan.shopping.fileprovider"

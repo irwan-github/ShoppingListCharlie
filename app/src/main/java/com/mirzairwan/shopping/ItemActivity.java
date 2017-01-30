@@ -11,7 +11,9 @@ import android.content.Loader;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -44,12 +46,14 @@ import com.mirzairwan.shopping.domain.PriceMgr;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_PICTURE_LOADER_ID;
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_PRICE_LOADER_ID;
+import static com.mirzairwan.shopping.ShoppingActivity.EXCHANGE_RATE;
 
 /**
  * This is a base class for subclasses to leverage on the following:
@@ -140,11 +144,13 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         @Override
         protected void onRestoreInstanceState(Bundle savedInstanceState)
         {
-                super.onRestoreInstanceState(savedInstanceState);
                 Log.d(LOG_TAG, "onRestoreInstanceState");
+                super.onRestoreInstanceState(savedInstanceState);
+
                 //Any translated price will be invisible when device orientates. So show it again
-                mUnitPriceEditField.setTranslatedPricesVisibility(View.VISIBLE);
-                mBundlePriceEditField.setTranslatedPricesVisibility(View.VISIBLE);
+                mExchangeRate = savedInstanceState.getParcelable(EXCHANGE_RATE);
+                mUnitPriceEditField.setTranslatedPrice(mExchangeRate);
+                mBundlePriceEditField.setTranslatedPrice(mExchangeRate);
         }
 
         @Override
@@ -164,7 +170,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 String webApiKeyPref = getString(R.string.key_forex_web_api_1);
                 mWebApiBase = sharedPrefs.getString(webApiKeyPref, null);
 
-                mExchangeRate = getIntent().getParcelableExtra(ShoppingActivity.EXCHANGE_RATE);
+                mExchangeRate = getIntent().getParcelableExtra(EXCHANGE_RATE);
 
                 setupViews();
 
@@ -279,7 +285,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                                 return true;
 
                                         case R.id.choose_picture:
-                                                if (PermissionHelper.hasReadStoragePermission(ItemActivity.this))
+                                                boolean hasReadStoragePermission = PermissionHelper.hasReadStoragePermission(ItemActivity.this);
+                                                if (hasReadStoragePermission)
                                                 {
                                                         startPickPictureActivity();
                                                 }
@@ -432,17 +439,27 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         {
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
+                /**
+                 * Performing this check is important because if you call startActivityForResult() using an intent that no app can handle, your app will crash.
+                 */
                 if (cameraIntent.resolveActivity(getPackageManager()) != null)
                 {
                         File itemPicFile = null;
+
+                        /**
+                         * This method returns a standard location for saving pictures and videos which are associated with your application.
+                         * If your application is uninstalled, any files saved in this location are removed.
+                         * Security is not enforced for files in this location and other applications may read, change and delete them.
+                         * However, DAC also states that beginning with Android 4.4, the permission is no longer required because the directory is not accessible by other apps ....
+                         * On Nexus 5, the storage directory returned is "/storage/emulated/0/Android/data/com.mirzairwan.shopping/files/Pictures"
+                         */
+                        File externalFilesDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+
                         try
                         {
-                                itemPicFile = PictureMgr.createFileHandle(getExternalFilesDir(Environment.DIRECTORY_PICTURES));
-                                mPictureMgr.setPictureForViewing(itemPicFile);
-                                Uri itemPicUri = FileProvider.getUriForFile(this, "com.mirzairwan.shopping" + ".fileprovider", itemPicFile);
-                                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, itemPicUri);
-                                startActivityForResult(cameraIntent, REQUEST_SNAP_PICTURE);
-
+                                //File for use with ACTION_VIEW intents.
+                                //File path is /storage/emulated/0/Android/data/com.mirzairwan.shopping/files/Pictures/Item__***_***_-***.jpg
+                                itemPicFile = PictureMgr.createFileHandle(externalFilesDir);
                         }
                         catch(IOException e)
                         {
@@ -451,6 +468,28 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                 return;
                         }
 
+                        if (itemPicFile != null)
+                        {
+                                mPictureMgr.setPictureForViewing(itemPicFile);
+
+                                /**
+                                 * Returns a content:// URI. For more recent apps targeting Android 7.0 (API level 24) and higher, passing a file:// URI across a package boundary causes a
+                                 * FileUriExposedException. Therefore, we now use a more generic way of storing images using a FileProvider.
+                                 * We need to configure the FileProvider. In app's manifest, add a provider to your application
+                                 *
+                                 * content://com.mirzairwan.shopping.fileprovider/item_images/Item__30012017_190919_-283901926.jpg
+                                 */
+                                String appPackage = getApplicationContext().getPackageName();
+                                Uri itemPicUri = FileProvider.getUriForFile(this, appPackage + ".fileprovider", itemPicFile);
+
+                                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, itemPicUri);
+                                startActivityForResult(cameraIntent, REQUEST_SNAP_PICTURE);
+                        }
+
+                }
+                else
+                {
+                        Toast.makeText(this, "No camera app(s) found. Aborting camera operation", Toast.LENGTH_SHORT).show();
                 }
         }
 
@@ -477,7 +516,9 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                         case REQUEST_SNAP_PICTURE:
                                                 //Delete existing file except original picture.
                                                 daoManager.cleanUpDiscardedPictures(mPictureMgr);
-                                                setPictureView(mPictureMgr.getPictureForViewing());
+                                                String picturePath = mPictureMgr.getPictureForViewing().getPicturePath();
+                                                ImageFsResizer imageFsResizer = new ImageFsResizer(mImgItemPic);
+                                                imageFsResizer.execute(picturePath);
                                                 break;
                                         case REQUEST_PICK_PHOTO:
                                                 setPictureView(data);
@@ -537,17 +578,17 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         return;
                 }
 
-                // Get the dimensions of the View
+                // Get the dimensions of the desired scale dimension
                 int targetW = getResources().getDimensionPixelSize(R.dimen.picture_item_detail_width);
                 int targetH = getResources().getDimensionPixelSize(R.dimen.picture_item_detail_height);
 
-                ImageResizer imageResizer = new ImageResizer(this, targetW, targetH);
-
+                //If picture is an external file, make sure read storage permission is granted
                 if (!PictureMgr.isExternalFile(picture) | PermissionHelper.hasReadStoragePermission(this))
                 {
+                        //Spin a background thread to display picture
+                        ImageResizer imageResizer = new ImageResizer(this, targetW, targetH);
                         imageResizer.loadImage(picture.getFile(), mImgItemPic);
                 }
-
         }
 
         @Override
@@ -857,6 +898,47 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 Log.d(LOG_TAG, "onSaveInstanceState");
                 super.onSaveInstanceState(outState);
                 outState.putParcelable(PICTURE_MANAGER, mPictureMgr);
+                outState.putParcelable(EXCHANGE_RATE, mExchangeRate );
+        }
+
+        class ImageFsResizer extends AsyncTask<String, Void, Bitmap>
+        {
+                private WeakReference<ImageView> imageViewReference;
+
+                public ImageFsResizer(ImageView imageView)
+                {
+                        imageViewReference = new WeakReference<ImageView>(imageView);
+                }
+
+                @Override
+                protected Bitmap doInBackground(String... picturePath)
+                {
+                        int width = getResources().getDimensionPixelSize(R.dimen.picture_item_detail_width);
+                        int height = getResources().getDimensionPixelSize(R.dimen.picture_item_detail_height);
+                        Bitmap resizedBitmap = PictureUtil.decodeSampledBitmapFile(picturePath[0], width, height);
+                        String appPackage = getApplicationContext().getPackageName();
+                        Uri itemPicUri = FileProvider.getUriForFile(ItemActivity.this, appPackage + ".fileprovider", mPictureMgr.getPictureForViewing().getFile());
+
+                        //Delete the big picture file
+                        int deleted = getContentResolver().delete(itemPicUri, null, null);
+
+                        //Save the resized image
+                        PictureUtil.savePictureInFilesystem(resizedBitmap, picturePath[0]);
+                        return resizedBitmap;
+                }
+
+                @Override
+                protected void onPostExecute(Bitmap bitmap)
+                {
+                        if (imageViewReference != null && bitmap != null)
+                        {
+                                ImageView imageView = imageViewReference.get();
+                                if (imageView != null)
+                                {
+                                        imageView.setImageBitmap(bitmap);
+                                }
+                        }
+                }
         }
 
         protected class ItemExchangeRateLoaderCallback extends ExchangeRateLoaderCallback

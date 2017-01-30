@@ -1,25 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:tools="http://schemas.android.com/tools"
-              android:orientation="vertical"
               android:layout_width="match_parent"
-              android:layout_height="match_parent">
-    <ImageView
-        android:id="@+id/img_item"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:layout_gravity="center"
-        />
+              android:layout_height="wrap_content"
+              android:orientation="vertical">
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/picture_toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?android:actionBarSize"
-        android:background="@color/colorAccent"
-        android:elevation="4dp"
-        android:gravity="center"
-        android:focusable="true"
-        >
-    </android.support.v7.widget.Toolbar>
+        <ImageView
+                android:id="@+id/img_item"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:adjustViewBounds="true"
+                android:scaleType="centerCrop"
+                />
+
+        <android.support.v7.widget.Toolbar
+                android:id="@+id/picture_toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?android:actionBarSize"
+                android:background="@color/colorAccent"
+                android:elevation="4dp"
+                android:focusable="true"
+                android:gravity="center"
+                >
+        </android.support.v7.widget.Toolbar>
 </LinearLayout>
