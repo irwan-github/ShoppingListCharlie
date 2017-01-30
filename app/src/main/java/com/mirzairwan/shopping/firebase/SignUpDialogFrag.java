@@ -184,7 +184,7 @@ public class SignUpDialogFrag extends DialogFragment
                                 {
                                         // onAuthenticationSuccess(task.getResult().getUser());
                                         SignUpDialogFrag.this.dismiss();
-                                        mOnFragmentAuthentication.onAuthenticationOk(task.getResult().getUser());
+                                        mOnFragmentAuthentication.onAuthenticationSuccess(task.getResult().getUser());
                                 }
                                 else
                                 {

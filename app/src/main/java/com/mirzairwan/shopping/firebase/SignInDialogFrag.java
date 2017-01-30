@@ -5,7 +5,9 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
@@ -35,24 +37,32 @@ public class SignInDialogFrag extends DialogFragment implements View.OnClickList
         private Button mSignUpPassword;
         private OnFragmentAuthentication mOnFragmentAuthentication;
         private TextView mTvErrorMsg;
+        private String mUserEmail;
 
         @Override
         public void onCreate(Bundle savedInstanceState)
         {
                 super.onCreate(savedInstanceState);
+
                 //Get the firebase database
                 mFireDatabase = FirebaseDatabase.getInstance().getReference();
 
                 //Get firebase authentication
                 mAuth = FirebaseAuth.getInstance();
+
+                //Get email account from prefererence
+                String keyEmail = getString(R.string.key_cloud_email);
+                SharedPreferences defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                mUserEmail = defaultSharedPreferences.getString(keyEmail, null);
         }
 
         @Override
         public void onStart()
         {
                 super.onStart();
-                AlertDialog d = (AlertDialog)getDialog();
-                d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                AlertDialog d = (AlertDialog) getDialog();
+                d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener()
+                {
                         @Override
                         public void onClick(View v)
                         {
@@ -66,29 +76,39 @@ public class SignInDialogFrag extends DialogFragment implements View.OnClickList
         {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 View rootView = getActivity().getLayoutInflater().inflate(R.layout.fragment_sign_in, null);
-                mTvErrorMsg = (TextView)rootView.findViewById(R.id.sign_in_error_msg);
+                mTvErrorMsg = (TextView) rootView.findViewById(R.id.sign_in_error_msg);
+
                 mEmailField = (EditText) rootView.findViewById(R.id.sign_in_email);
                 mPasswordField = (EditText) rootView.findViewById(R.id.sign_in_password);
-                builder.setView(rootView).setPositiveButton(R.string.sign_in, new DialogInterface.OnClickListener() {
+                builder.setView(rootView).setPositiveButton(R.string.sign_in, new DialogInterface.OnClickListener()
+                {
                         @Override
                         public void onClick(DialogInterface dialog, int which)
                         {
 
                         }
-                }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener()
+                {
                         @Override
                         public void onClick(DialogInterface dialog, int which)
                         {
                                 SignInDialogFrag.this.dismiss();
                                 getActivity().finish();
                         }
-                }).setNeutralButton(R.string.sign_up, new DialogInterface.OnClickListener(){
+                }).setNeutralButton(R.string.sign_up, new DialogInterface.OnClickListener()
+                {
                         @Override
                         public void onClick(DialogInterface dialog, int which)
                         {
                                 mOnFragmentAuthentication.onSignUp();
                         }
                 });
+
+                if (!TextUtils.isEmpty(mUserEmail))
+                {
+                        mEmailField.setText(mUserEmail);
+                        mPasswordField.requestFocus();
+                }
 
                 return builder.create();
         }
@@ -139,12 +159,13 @@ public class SignInDialogFrag extends DialogFragment implements View.OnClickList
                                 if (task.isSuccessful())
                                 {
                                         SignInDialogFrag.this.dismiss();
-                                        mOnFragmentAuthentication.onAuthenticationOk(task.getResult().getUser());
+                                        mOnFragmentAuthentication.onAuthenticationSuccess(task.getResult().getUser());
                                 }
                                 else
                                 {
                                         Log.d(LOG_TAG, ">>>signIn:onComplete: Unsuccessful");
-                                        task.addOnFailureListener(new OnFailureListener() {
+                                        task.addOnFailureListener(new OnFailureListener()
+                                        {
                                                 @Override
                                                 public void onFailure(@NonNull Exception e)
                                                 {

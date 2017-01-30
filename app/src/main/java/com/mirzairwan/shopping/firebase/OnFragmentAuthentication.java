@@ -8,6 +8,6 @@ import com.google.firebase.auth.FirebaseUser;
 
 public interface OnFragmentAuthentication
 {
-        void onAuthenticationOk(FirebaseUser firebaseUser);
+        void onAuthenticationSuccess(FirebaseUser firebaseUser);
         void onSignUp();
 }

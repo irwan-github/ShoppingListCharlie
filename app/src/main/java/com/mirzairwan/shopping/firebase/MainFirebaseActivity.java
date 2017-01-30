@@ -31,9 +31,9 @@ public class MainFirebaseActivity extends AppCompatActivity implements OnFragmen
 
                 //Get the firebase database
                 mFireDatabase = FirebaseDatabase.getInstance().getReference();
+
                 //Get firebase authentication
                 mAuth = FirebaseAuth.getInstance();
-
         }
 
         @Override
@@ -43,24 +43,32 @@ public class MainFirebaseActivity extends AppCompatActivity implements OnFragmen
 
                 if (getIntent().getIntExtra(FIREBASE_REQUEST_CODE, 0) == FIREBASE_SIGN_OUT)
                 {
-                        mAuth.signOut();
-                        finish();
-                }
-
-                //Check if user is authenticated
-                if (mAuth.getCurrentUser() != null)
-                {
-                        mUserId = mAuth.getCurrentUser().getUid();
-                        onAuthenticationSuccess(mAuth.getCurrentUser());
+                        SignOutDialogFrag signOutDialogFrag = new SignOutDialogFrag();
+                        signOutDialogFrag.show(getFragmentManager(), "SIGN_OUT");
                 }
                 else
                 {
-                        SignInDialogFrag signInDialogFrag = new SignInDialogFrag();
-                        signInDialogFrag.show(getFragmentManager(), "SIGN_IN");
+                        //Check if user is authenticated
+                        if (mAuth.getCurrentUser() != null)
+                        {
+                                mUserId = mAuth.getCurrentUser().getUid();
+                                onAuthenticationSuccess(mAuth.getCurrentUser());
+                        }
+                        else
+                        {
+                                SignInDialogFrag signInDialogFrag = new SignInDialogFrag();
+                                signInDialogFrag.show(getFragmentManager(), "SIGN_IN");
+                        }
                 }
         }
 
-        private void onAuthenticationSuccess(FirebaseUser currentUser)
+        /**
+         * Writes to shared preference.
+         * Writes user email under under branch in Firebase database.
+         * @param currentUser
+         */
+        @Override
+        public void onAuthenticationSuccess(FirebaseUser currentUser)
         {
                 mUserId = currentUser.getUid();
                 //Write new iser
@@ -105,11 +113,5 @@ public class MainFirebaseActivity extends AppCompatActivity implements OnFragmen
                 {
                         return email;
                 }
-        }
-
-        @Override
-        public void onAuthenticationOk(FirebaseUser firebaseUser)
-        {
-                onAuthenticationSuccess(firebaseUser);
         }
 }
