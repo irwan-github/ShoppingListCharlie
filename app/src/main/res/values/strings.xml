@@ -15,8 +15,8 @@
         <string name="new_buy_item_title">New item</string>
         <string name="update_buy_item_title">Update Purchase details</string>
         <string name="remove_item_from_shopping_list_ok">removed from shopping list : OK</string>
-        <string name="empty_view_title_text">Empty shopping list</string>
-        <string name="empty_view_subtitle_text">Click + or star in History</string>
+        <string name="empty_view_title_text">Empty </string>
+        <string name="empty_view_subtitle_text">Click "Add item" or star in History</string>
 
         <string name="text_item_brand_max_length">15</string>
         <string name="text_item_name_max_length">26</string>
@@ -104,4 +104,5 @@
         <string name="hint_password_confirm">Confirm password</string>
         <string name="header_sign_in_msg">Sign in shopping list cloud</string>
         <string name="sign_out_msg">Do you want to sign out from shopping list cloud?</string>
+        <string name="share_shopping_list_success">Sharing is successful.</string>
 </resources>

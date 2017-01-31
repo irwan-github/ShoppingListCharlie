@@ -49,7 +49,8 @@ import static com.mirzairwan.shopping.R.xml.preferences;
  * Created by Mirza Irwan on 19/11/16.
  */
 
-public class ShoppingListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, ShoppingListAdapter.OnCheckBuyItemListener, SharedPreferences.OnSharedPreferenceChangeListener
+public class ShoppingListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, ShoppingListAdapter.OnCheckBuyItemListener,
+        SharedPreferences.OnSharedPreferenceChangeListener
 
 {
         private static final String LOG_TAG = ShoppingListFragment.class.getSimpleName();
@@ -69,7 +70,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         //Handles conversion and display of translated prices
         private ExchangeRateCallback mExchangeRateCallback;
 
-        private View rootView;
+        private View mRootView;
         private ShoppingCursorList mShoppingCursorList;
         private ExchangeRatesReturned mExchangeRatesReturned;
         private Snackbar mSnackBar;
@@ -110,13 +111,13 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         {
                 Log.d(LOG_TAG, ">>>>>>> onCreateView");
 
-                rootView = inflater.inflate(R.layout.fragment_shopping_list, container, false);
-                ListView lvBuyItems = (ListView) rootView.findViewById(R.id.lv_to_buy_items);
-                //setupFloatingActionButton(rootView);
+                mRootView = inflater.inflate(R.layout.fragment_shopping_list, container, false);
+                ListView lvBuyItems = (ListView) mRootView.findViewById(R.id.lv_to_buy_items);
+                //setupFloatingActionButton(mRootView);
                 setupListView(lvBuyItems);
                 setupListItemListener(lvBuyItems);
-                setupEmptyView(rootView, lvBuyItems);
-                setupShoppingListToolbar((Toolbar) rootView.findViewById(R.id.shopping_list_toolbar));
+                setupEmptyView(mRootView, lvBuyItems);
+                setupShoppingListToolbar((Toolbar) mRootView.findViewById(R.id.shopping_list_toolbar));
 
                 PreferenceManager.setDefaultValues(getActivity(), preferences, false);
                 PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
@@ -125,13 +126,11 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
                 if (savedInstanceState != null)
                 {
-                        //Nothing was saved before because the data involved might be huge and
-                        // saving to bundle
-                        //will be a complex task. So let LoaderManager auto-query the database
-                        // again,
+                        //Nothing was saved before because the data involved might be huge and saving to bundle
+                        //will be a complex task. So let LoaderManager auto-query the database again,
                 }
 
-                return rootView;
+                return mRootView;
         }
 
         @Override
@@ -147,8 +146,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 Log.d(LOG_TAG, " >>>>>>> initLoader(LOADER_BUY_ITEM_ID)");
                 getLoaderManager().initLoader(LOADER_BUY_ITEM_ID, args, this);
 
-                PreferenceManager.getDefaultSharedPreferences(getActivity()).
-                        registerOnSharedPreferenceChangeListener(this);
+                PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
 
                 onFragmentInteractionListener.onInitialized(mExchangeRateCallback);
                 super.onActivityCreated(savedInstanceState);
@@ -160,7 +158,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 Log.d(LOG_TAG, " >>>>>>> onResume");
                 if (!PermissionHelper.isInternetUp(getActivity()))
                 {
-                        Snackbar.make(rootView, R.string.internet_not_available_exchange_rate, Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(mRootView, R.string.internet_not_available_exchange_rate, Snackbar.LENGTH_LONG).show();
                 }
                 shareShoppingItemIds.clear();
                 super.onResume();
@@ -299,7 +297,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                         @Override
                         public boolean onCreateActionMode(ActionMode mode, Menu menu)
                         {
-                                //mode.setTitle(getString(R.string.share_shopping_list_txt));
                                 EditText etShareeEmail = (EditText) LayoutInflater.from(ShoppingListFragment.this.getActivity()).inflate(R.layout.sharee_email_input, null, false);
                                 mode.setCustomView(etShareeEmail);
                                 mode.getMenuInflater().inflate(R.menu.firebase_share_shopping_list, menu);
@@ -320,7 +317,17 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                                         EditText etShareeEmail = (EditText) mode.getCustomView();
                                         if (!TextUtils.isEmpty(etShareeEmail.getText()))
                                         {
-                                                onFragmentInteractionListener.onFirebaseShareShoppingList(shareShoppingItemIds, etShareeEmail.getText().toString());
+                                                String shareeEmail = etShareeEmail.getText().toString();
+                                                onFragmentInteractionListener.onFirebaseShareShoppingList(shareShoppingItemIds, shareeEmail, new ShoppingActivity.OnShareShoppingListCompletion() {
+                                                        @Override
+                                                        public void onComplete(boolean isShareSuccess)
+                                                        {
+                                                                if (isShareSuccess)
+                                                                {
+                                                                        Snackbar.make(mRootView, R.string.share_shopping_list_success, Snackbar.LENGTH_SHORT).show();
+                                                                }
+                                                        }
+                                                });
                                                 mode.finish();
                                         }
                                         else
@@ -480,7 +487,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 String info = getString(R.string.added_to_shoppinglist) + costAdded +
                         " | " + getString(R.string.checked_to_shoppinglist) + costChecked;
 
-                mSnackBar = Snackbar.make(rootView, info, Snackbar.LENGTH_INDEFINITE);
+                mSnackBar = Snackbar.make(mRootView, info, Snackbar.LENGTH_INDEFINITE);
                 mSnackBar.setAction(R.string.dismiss, new View.OnClickListener()
                 {
                         @Override
@@ -501,6 +508,15 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 }
         }
 
+//        @Override
+//        public void onComplete(boolean isShareSuccess)
+//        {
+//                if (isShareSuccess)
+//                {
+//                        Snackbar.make(mRootView, R.string.share_shopping_list_success, Snackbar.LENGTH_SHORT).show();
+//                }
+//        }
+
         /**
          * Hosting Activity implements this interface to respond to user click on shopping list
          * to view item details.
@@ -513,7 +529,8 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
                 void onInitialized(ExchangeRateCallback exchangeRateCallback);
 
-                void onFirebaseShareShoppingList(HashSet<Long> ids, String shareeEmail);
+                void onFirebaseShareShoppingList(HashSet<Long> ids, String shareeEmail, ShoppingActivity.OnShareShoppingListCompletion onShareShoppingListCompletion);
+
         }
 
         /**

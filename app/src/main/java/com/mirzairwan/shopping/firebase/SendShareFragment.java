@@ -1,5 +1,6 @@
 package com.mirzairwan.shopping.firebase;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -7,10 +8,12 @@ import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
@@ -19,16 +22,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Query;
-import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 import com.mirzairwan.shopping.OnPictureRequestListener;
 import com.mirzairwan.shopping.R;
@@ -55,9 +57,9 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
         private DatabaseReference mRootRef;
         private FirebaseUser mFirebaserUser;
         private ArrayList<Item> mItemsToShare = new ArrayList<>();
-        //private ProgressDialog mProgressDialog;
         private ProgressBar mProgressBar;
         private String mShareeEmail;
+        private int mItemSaveShareCount;
 
         public static SendShareFragment getInstance(HashSet<Long> ids, String shareeEmail)
         {
@@ -173,8 +175,6 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
         private void submitShoppingList(String userEmail)
         {
                 Log.d(LOG_TAG, ">>> submitShoppingList");
-                // Create new shoppingList at shoppingLists/$shoppingListId simultaneously
-
                 Query userQuery = getTargetUser(userEmail);
 
                 userQuery.addListenerForSingleValueEvent(new ValueEventListener()
@@ -195,7 +195,6 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
                                         Log.d(LOG_TAG, ">>> The children key  is  " + data.getKey()); //This is the key to json user object
                                         shareeUserId = data.getKey();
                                         Log.d(LOG_TAG, ">>> The children value  is  " + data.getValue());
-
                                 }
 
                                 if (!TextUtils.isEmpty(shareeUserId))
@@ -205,11 +204,8 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
                                 else
                                 {
                                         mProgressBar.setVisibility(View.GONE);
-                                        //mTvShareeError.setVisibility(View.VISIBLE);
-                                        // Toast.makeText(getActivity(), "This user does not have an account ", Toast.LENGTH_LONG).show();
                                         EmailDoesNotExistDialogFrag error = EmailDoesNotExistDialogFrag.newInstance(mShareeEmail);
                                         error.show(getFragmentManager(), "email_error");
-
                                 }
                         }
 
@@ -221,55 +217,44 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
                 });
         }
 
-        private void saveToCloud(String shareeUserId)
+        private void saveToCloud(final String shareeUserId)
         {
-                final DatabaseReference shoppingListShareWithRef = mRootRef.child("shopping_list_share_with").child(shareeUserId);
+                DatabaseReference shoppingListShareWithRef = mRootRef.child("shopping_list_share_with").child(shareeUserId);
 
-                final int countItemsToShare = mItemsToShare.size();
+                int countItemsToShare = mItemsToShare.size();
+
+                final Intent intentResult = new Intent();
 
                 if (countItemsToShare == 0)
                 {
-                        return;
+                        SendShareFragment.this.getActivity().finish();
                 }
 
-                shoppingListShareWithRef.runTransaction(new Transaction.Handler()
+                for (int j = 0; j < countItemsToShare; ++j)
                 {
-                        @Override
-                        public Transaction.Result doTransaction(MutableData mutableData)
+                        // Push the item, it will appear in the list
+                        shoppingListShareWithRef.push().setValue(mItemsToShare.get(j)).addOnSuccessListener(new OnSuccessListener<Void>()
                         {
-                                for (int j = 0; j < countItemsToShare; ++j)
+                                @Override
+                                public void onSuccess(Void aVoid)
                                 {
-                                        // Push the item, it will appear in the list
-                                        try
-                                        {
-                                                shoppingListShareWithRef.push().setValue(mItemsToShare.get(j));
-                                                Log.d(LOG_TAG, ">>>First push key " + shoppingListShareWithRef.getKey());
-                                        }
-                                        catch(DatabaseException dbEx)
-                                        {
-                                                return Transaction.abort();
-                                        }
+                                        Log.d(LOG_TAG, ">>>  saveToCloud  onSuccess");
                                 }
-                                return Transaction.success(mutableData);
-                        }
-
-                        @Override
-                        public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot)
+                        }).addOnFailureListener(new OnFailureListener()
                         {
-                                if (databaseError == null)
+                                @Override
+                                public void onFailure(@NonNull Exception e)
                                 {
+                                        Log.d(LOG_TAG, ">>>  saveToCloud  onFailure " + e.getMessage());
+                                }
+                        });
+                        Log.d(LOG_TAG, ">>>First push key " + shoppingListShareWithRef.getKey());
 
-                                }
-                                else
-                                {
-                                        Log.d(LOG_TAG, ">>>  databaseError.getDetails  " + databaseError.getDetails());
-                                        Log.d(LOG_TAG, ">>> databaseError.getMessage " + databaseError.getMessage());
-                                        Log.d(LOG_TAG, ">>> databaseError.getCode " + databaseError.getCode());
-                                }
-                                mItemsToShare.clear();
-                                SendShareFragment.this.getActivity().finish();
-                        }
-                });
+                }
+
+                getActivity().setResult(Activity.RESULT_OK, intentResult);
+                mItemsToShare.clear();
+                getActivity().finish();
         }
 
         private Query getTargetUser(String userEmail)
@@ -301,12 +286,13 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
         {
                 public static EmailDoesNotExistDialogFrag newInstance(String email)
                 {
-                         Bundle args = new Bundle();
-                        args.putString(SHAREE_EMAIL, email );
-                         EmailDoesNotExistDialogFrag fragment = new EmailDoesNotExistDialogFrag();
+                        Bundle args = new Bundle();
+                        args.putString(SHAREE_EMAIL, email);
+                        EmailDoesNotExistDialogFrag fragment = new EmailDoesNotExistDialogFrag();
                         fragment.setArguments(args);
                         return fragment;
                 }
+
                 @Override
                 public Dialog onCreateDialog(Bundle savedInstanceState)
                 {

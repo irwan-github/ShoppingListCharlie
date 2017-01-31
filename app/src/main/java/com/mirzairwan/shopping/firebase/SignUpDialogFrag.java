@@ -173,8 +173,8 @@ public class SignUpDialogFrag extends DialogFragment
         {
                 Log.d(LOG_TAG, ">>>sign up");
 
-                Task<AuthResult> authResult = mAuth.createUserWithEmailAndPassword(email, password);
-                authResult.addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>()
+                Task<AuthResult> authTask = mAuth.createUserWithEmailAndPassword(email, password);
+                authTask.addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>()
                 {
                         @Override
                         public void onComplete(@NonNull final Task<AuthResult> task)

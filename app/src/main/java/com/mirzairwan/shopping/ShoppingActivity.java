@@ -1,5 +1,6 @@
 package com.mirzairwan.shopping;
 
+import android.app.Activity;
 import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.Context;
@@ -33,6 +34,7 @@ import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.firebase.MainFirebaseActivity;
 import com.mirzairwan.shopping.firebase.SendShareFragment;
+import com.mirzairwan.shopping.firebase.SendSharedActivity;
 import com.mirzairwan.shopping.firebase.ShowSharedActivity;
 
 import java.util.HashMap;
@@ -51,9 +53,11 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
 {
         public static final String EXCHANGE_RATE = "EXCHANGE_RATE";
         private static final String LOG_TAG = ShoppingActivity.class.getSimpleName();
-        //ExchangeRates are cleared, populated and cached by ExchangeRateAwareLoader. Therefore,
-        // do not persist exchange rate in onSavedInstanceState
+        private static final int SEND_SHARE_SHOPPING_ITEMS = 15;
+
+        //ExchangeRates are cleared, populated and cached by ExchangeRateAwareLoader. Do not persist exchange rate in onSavedInstanceState
         Map<String, ExchangeRate> mExchangeRates = new HashMap<>();
+
         private DrawerLayout mDrawerLayout;
         private ListView mDrawerList;
         private ActionBarDrawerToggle mDrawerToggle;
@@ -67,6 +71,7 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         private Loader<Map<String, ExchangeRate>> loader;
         private ShoppingListExchangeRateLoaderCb mShoppingListExchangeRateLoaderCb;
         private ExchangeRateInput mExchangeRateInput;
+        private OnShareShoppingListCompletion mOnShareShoppingListCompletion;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -106,11 +111,11 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
 
 
                 //Initialize the exchange rate loader but do NOT let it fetch exchange rate until
-                //shopping list fragment has finished fetching shopping list. Upon fetching the shopping
-                // list
+                //shopping list fragment has finished fetching shopping list. Upon fetching the shopping list
                 //shopping list fragment will request to this activity class to fetch exchange rates.
                 //So to prevent this activity from fetching exchange rate now, set mSourceCurrencies to null
                 mExchangeRateInput = new ExchangeRateInput();
+
                 //Setting the following before initLoader will not notify exchange rate loader
                 mExchangeRateInput.setBaseWebApi(mBaseEndPoint);
                 mExchangeRateInput.setBaseCurrency(FormatHelper.getCurrencyCode(mCountryCode));
@@ -270,6 +275,21 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         protected void onActivityResult(int requestCode, int resultCode, Intent data)
         {
                 //Do nothing for now
+                switch (requestCode)
+                {
+                        case SEND_SHARE_SHOPPING_ITEMS:
+                                if (resultCode == Activity.RESULT_OK)
+                                {
+                                        mOnShareShoppingListCompletion.onComplete(true);
+                                }
+                                else
+                                {
+                                        mOnShareShoppingListCompletion.onComplete(false);
+                                }
+                                mOnShareShoppingListCompletion = null;
+                                break;
+                        default:
+                }
         }
 
         /**
@@ -380,12 +400,20 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         }
 
         @Override
-        public void onFirebaseShareShoppingList(HashSet<Long> ids, String shareeEmail)
+        public void onFirebaseShareShoppingList(HashSet<Long> ids, String shareeEmail, OnShareShoppingListCompletion onShareShoppingListCompletion)
         {
-                Intent intent = new Intent(this, MainFirebaseActivity.class);
+                Intent intent = new Intent(this, SendSharedActivity.class);
                 intent.putExtra(SendShareFragment.ITEM_TO_SHARE, ids);
                 intent.putExtra(SendShareFragment.SHAREE_EMAIL, shareeEmail);
-                startActivity(intent);
+                //startActivity(intent);
+                startActivityForResult(intent, SEND_SHARE_SHOPPING_ITEMS);
+                mOnShareShoppingListCompletion = onShareShoppingListCompletion;
+        }
+
+
+        public interface OnShareShoppingListCompletion
+        {
+                void onComplete(boolean isShareSuccess);
         }
 
         private class DrawerItemClickListener implements ListView.OnItemClickListener
@@ -399,10 +427,10 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                                 Intent intentViewSharedShoppingList = new Intent(ShoppingActivity.this, ShowSharedActivity.class);
                                 startActivity(intentViewSharedShoppingList);
                         }
-                        else if(position == 1)
+                        else if (position == 1)
                         {
                                 Intent intentFirebaseActivity = new Intent(ShoppingActivity.this, MainFirebaseActivity.class);
-                                intentFirebaseActivity.putExtra(FIREBASE_REQUEST_CODE,  FIREBASE_SIGN_OUT);
+                                intentFirebaseActivity.putExtra(FIREBASE_REQUEST_CODE, FIREBASE_SIGN_OUT);
                                 startActivity(intentFirebaseActivity);
                         }
                         else if (position == 2)
@@ -457,6 +485,4 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                         mExchangeRates = null;
                 }
         }
-
-
 }

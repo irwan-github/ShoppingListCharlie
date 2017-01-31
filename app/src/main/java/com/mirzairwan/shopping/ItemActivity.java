@@ -110,7 +110,11 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected PriceField mBundlePriceEditField;
         private ImageView mImgItemPic;
         private long itemId;
+
+        //However during orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance state
+        //and restore when device orientates to landscape.
         private ExchangeRate mExchangeRate;
+
         private String mWebApiBase;
 
         @Override
@@ -230,7 +234,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 etBundlePrice.setOnTouchListener(mOnTouchListener);
                 View pbBundlePx = findViewById(R.id.pb_translated_bundle_px);
                 mBundlePriceEditField = new PriceField(etBundlePrice, etTranslatedBundlePrice, pbBundlePx, mCountryCode, getString(R.string.bundle_price_txt), Price.Type.BUNDLE_PRICE);
-
                 ItemExchangeRateLoaderCallback bundlePxExLoaderCb = new ItemExchangeRateLoaderCallback(this, mBundlePriceEditField);
                 OnExchangeRateRequest onExchangeRateBundlePriceListener = new OnExchangeRateRequestImpl(bundlePxExLoaderCb, mWebApiBase, destCurrencyCode, getLoaderManager());
                 ExchangeRateDisplayState bundlePriceTranslatorListener = new ExchangeRateDisplayState(onExchangeRateBundlePriceListener, mBundlePriceEditField);

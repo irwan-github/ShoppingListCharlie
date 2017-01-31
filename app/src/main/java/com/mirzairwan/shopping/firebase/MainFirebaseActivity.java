@@ -1,6 +1,5 @@
 package com.mirzairwan.shopping.firebase;
 
-import android.app.FragmentTransaction;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -13,9 +12,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.mirzairwan.shopping.R;
 import com.mirzairwan.shopping.domain.User;
 
-import java.util.HashSet;
-
-public class MainFirebaseActivity extends AppCompatActivity implements OnFragmentAuthentication
+public abstract class MainFirebaseActivity extends AppCompatActivity implements OnFragmentAuthentication
 {
         public static final int FIREBASE_SIGN_OUT = 1;
         public static final String FIREBASE_REQUEST_CODE = "FIREBASE_REQUEST_CODE";
@@ -34,12 +31,6 @@ public class MainFirebaseActivity extends AppCompatActivity implements OnFragmen
 
                 //Get firebase authentication
                 mAuth = FirebaseAuth.getInstance();
-        }
-
-        @Override
-        protected void onStart()
-        {
-                super.onStart();
 
                 if (getIntent().getIntExtra(FIREBASE_REQUEST_CODE, 0) == FIREBASE_SIGN_OUT)
                 {
@@ -62,6 +53,12 @@ public class MainFirebaseActivity extends AppCompatActivity implements OnFragmen
                 }
         }
 
+        @Override
+        protected void onStart()
+        {
+                super.onStart();
+        }
+
         /**
          * Writes to shared preference.
          * Writes user email under under branch in Firebase database.
@@ -75,6 +72,7 @@ public class MainFirebaseActivity extends AppCompatActivity implements OnFragmen
                 String emailCurrentUser = currentUser.getEmail();
                 writeNewUser(currentUser.getUid(), currentUser.getDisplayName(), emailCurrentUser);
 
+                //Update shared preference
                 SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
                 editor.putString(getString(R.string.key_cloud_email), emailCurrentUser);
                 editor.commit();
@@ -88,14 +86,17 @@ public class MainFirebaseActivity extends AppCompatActivity implements OnFragmen
                 signUpDialogFrag.show(getFragmentManager(), "SIGN_UP");
         }
 
-        protected void startFragment()
-        {
-                HashSet<Long> shoppingItemIds = (HashSet<Long>) getIntent().getSerializableExtra(SendShareFragment.ITEM_TO_SHARE);
-                String shareeEmail = getIntent().getStringExtra(SendShareFragment.SHAREE_EMAIL);
-                FragmentTransaction fragTxn = getFragmentManager().beginTransaction();
-                fragTxn = fragTxn.replace(R.id.activity_main_firebase_container, SendShareFragment.getInstance(shoppingItemIds, shareeEmail)).addToBackStack(null);
-                fragTxn.commit();
-        }
+//        protected void startFragment()
+//        {
+//                HashSet<Long> shoppingItemIds = (HashSet<Long>) getIntent().getSerializableExtra(SendShareFragment.ITEM_TO_SHARE);
+//                String shareeEmail = getIntent().getStringExtra(SendShareFragment.SHAREE_EMAIL);
+//                FragmentTransaction fragTxn = getFragmentManager().beginTransaction();
+//                SendShareFragment sendShareFragment = SendShareFragment.getInstance(shoppingItemIds, shareeEmail);
+//                fragTxn = fragTxn.replace(R.id.activity_main_firebase_container, sendShareFragment).addToBackStack(null);
+//                fragTxn.commit();
+//        }
+
+        protected abstract  void startFragment();
 
         private void writeNewUser(String uid, String userName, String email)
         {
