@@ -1,6 +1,5 @@
 package com.mirzairwan.shopping;
 
-import android.app.Activity;
 import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.Context;
@@ -71,7 +70,6 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         private Loader<Map<String, ExchangeRate>> loader;
         private ShoppingListExchangeRateLoaderCb mShoppingListExchangeRateLoaderCb;
         private ExchangeRateInput mExchangeRateInput;
-        private OnShareShoppingListCompletion mOnShareShoppingListCompletion;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -275,21 +273,6 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         protected void onActivityResult(int requestCode, int resultCode, Intent data)
         {
                 //Do nothing for now
-                switch (requestCode)
-                {
-                        case SEND_SHARE_SHOPPING_ITEMS:
-                                if (resultCode == Activity.RESULT_OK)
-                                {
-                                        mOnShareShoppingListCompletion.onComplete(true);
-                                }
-                                else
-                                {
-                                        mOnShareShoppingListCompletion.onComplete(false);
-                                }
-                                mOnShareShoppingListCompletion = null;
-                                break;
-                        default:
-                }
         }
 
         /**
@@ -400,14 +383,13 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         }
 
         @Override
-        public void onFirebaseShareShoppingList(HashSet<Long> ids, String shareeEmail, OnShareShoppingListCompletion onShareShoppingListCompletion)
+        public void onFirebaseShareShoppingList(HashSet<Long> ids, String shareeEmail)
         {
                 Intent intent = new Intent(this, SendSharedActivity.class);
                 intent.putExtra(SendShareFragment.ITEM_TO_SHARE, ids);
                 intent.putExtra(SendShareFragment.SHAREE_EMAIL, shareeEmail);
                 //startActivity(intent);
-                startActivityForResult(intent, SEND_SHARE_SHOPPING_ITEMS);
-                mOnShareShoppingListCompletion = onShareShoppingListCompletion;
+                startActivity(intent);
         }
 
 

@@ -1,20 +1,21 @@
 package com.mirzairwan.shopping.firebase;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.LoaderManager;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -60,6 +61,8 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
         private ProgressBar mProgressBar;
         private String mShareeEmail;
         private int mItemSaveShareCount;
+        private NotificationManager mNotificationManager;
+        private NotificationCompat.Builder mNotificationBuilder;
 
         public static SendShareFragment getInstance(HashSet<Long> ids, String shareeEmail)
         {
@@ -223,22 +226,25 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
 
                 int countItemsToShare = mItemsToShare.size();
 
-                final Intent intentResult = new Intent();
+                final NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+                mNotificationManager = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
 
-                if (countItemsToShare == 0)
-                {
-                        SendShareFragment.this.getActivity().finish();
-                }
+                mNotificationBuilder = new NotificationCompat.Builder(getActivity());
+                mNotificationBuilder.setContentTitle("Shopping item(s) shared").setSmallIcon(android.R.drawable.stat_notify_chat);
 
                 for (int j = 0; j < countItemsToShare; ++j)
                 {
                         // Push the item, it will appear in the list
-                        shoppingListShareWithRef.push().setValue(mItemsToShare.get(j)).addOnSuccessListener(new OnSuccessListener<Void>()
+                        final Item item = mItemsToShare.get(j);
+                        shoppingListShareWithRef.push().setValue(item).addOnSuccessListener(new OnSuccessListener<Void>()
                         {
                                 @Override
                                 public void onSuccess(Void aVoid)
                                 {
                                         Log.d(LOG_TAG, ">>>  saveToCloud  onSuccess");
+
+                                        mNotificationBuilder.setStyle(inboxStyle.addLine(item.getName() + " OK")).setGroupSummary(true);
+                                        mNotificationManager.notify(1,  mNotificationBuilder.build());
                                 }
                         }).addOnFailureListener(new OnFailureListener()
                         {
@@ -246,13 +252,12 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
                                 public void onFailure(@NonNull Exception e)
                                 {
                                         Log.d(LOG_TAG, ">>>  saveToCloud  onFailure " + e.getMessage());
+                                        mNotificationBuilder.setStyle(inboxStyle.addLine(item.getName() + " failed")).setGroupSummary(true);
+                                        mNotificationManager.notify(1,  mNotificationBuilder.build());
                                 }
                         });
-                        Log.d(LOG_TAG, ">>>First push key " + shoppingListShareWithRef.getKey());
-
                 }
 
-                getActivity().setResult(Activity.RESULT_OK, intentResult);
                 mItemsToShare.clear();
                 getActivity().finish();
         }

@@ -1,13 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
-        <ProgressBar
-                android:id="@+id/progress_bar_sharee"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+        <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                style="@android:style/Widget.ProgressBar.Large"
-                />
+                android:orientation="horizontal"
+                >
 
+                <ProgressBar
+                        android:id="@+id/progress_bar_sharee"
+                        style="@android:style/Widget.ProgressBar.Large"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        />
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="@string/progress_dialog_msg"
+                        android:textAppearance="?android:textAppearanceLarge"
+                        android:gravity="center"
+                        android:paddingLeft="@dimen/text_padding_left"
+                        />
+        </LinearLayout>
 </RelativeLayout>

@@ -318,16 +318,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                                         if (!TextUtils.isEmpty(etShareeEmail.getText()))
                                         {
                                                 String shareeEmail = etShareeEmail.getText().toString();
-                                                onFragmentInteractionListener.onFirebaseShareShoppingList(shareShoppingItemIds, shareeEmail, new ShoppingActivity.OnShareShoppingListCompletion() {
-                                                        @Override
-                                                        public void onComplete(boolean isShareSuccess)
-                                                        {
-                                                                if (isShareSuccess)
-                                                                {
-                                                                        Snackbar.make(mRootView, R.string.share_shopping_list_success, Snackbar.LENGTH_SHORT).show();
-                                                                }
-                                                        }
-                                                });
+                                                onFragmentInteractionListener.onFirebaseShareShoppingList(shareShoppingItemIds, shareeEmail);
                                                 mode.finish();
                                         }
                                         else
@@ -529,7 +520,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
                 void onInitialized(ExchangeRateCallback exchangeRateCallback);
 
-                void onFirebaseShareShoppingList(HashSet<Long> ids, String shareeEmail, ShoppingActivity.OnShareShoppingListCompletion onShareShoppingListCompletion);
+                void onFirebaseShareShoppingList(HashSet<Long> ids, String shareeEmail);
 
         }
 
