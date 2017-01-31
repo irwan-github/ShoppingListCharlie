@@ -68,6 +68,7 @@ public abstract class MainFirebaseActivity extends AppCompatActivity implements 
         public void onAuthenticationSuccess(FirebaseUser currentUser)
         {
                 mUserId = currentUser.getUid();
+
                 //Write new iser
                 String emailCurrentUser = currentUser.getEmail();
                 writeNewUser(currentUser.getUid(), currentUser.getDisplayName(), emailCurrentUser);
@@ -86,33 +87,11 @@ public abstract class MainFirebaseActivity extends AppCompatActivity implements 
                 signUpDialogFrag.show(getFragmentManager(), "SIGN_UP");
         }
 
-//        protected void startFragment()
-//        {
-//                HashSet<Long> shoppingItemIds = (HashSet<Long>) getIntent().getSerializableExtra(SendShareFragment.ITEM_TO_SHARE);
-//                String shareeEmail = getIntent().getStringExtra(SendShareFragment.SHAREE_EMAIL);
-//                FragmentTransaction fragTxn = getFragmentManager().beginTransaction();
-//                SendShareFragment sendShareFragment = SendShareFragment.getInstance(shoppingItemIds, shareeEmail);
-//                fragTxn = fragTxn.replace(R.id.activity_main_firebase_container, sendShareFragment).addToBackStack(null);
-//                fragTxn.commit();
-//        }
-
         protected abstract  void startFragment();
 
         private void writeNewUser(String uid, String userName, String email)
         {
                 User user = new User(userName, email);
                 mFireDatabase.child("users").child(uid).setValue(user);
-        }
-
-        private String usernameFromEmail(String email)
-        {
-                if (email.contains("@"))
-                {
-                        return email.split("@")[0];
-                }
-                else
-                {
-                        return email;
-                }
         }
 }

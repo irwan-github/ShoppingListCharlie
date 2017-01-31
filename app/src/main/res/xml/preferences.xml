@@ -44,19 +44,14 @@
                         android:title="@string/exchange_rate_title"
                         />
 
-        </PreferenceCategory>
-
-        <PreferenceCategory
-                android:title="@string/cloud_shopping_account">
-
-        <EditTextPreference
-                android:dialogMessage="@string/cloud_account_email_msg"
-                android:dialogTitle="@string/cloud_account_email_title"
-                android:inputType="textEmailAddress"
-                android:key="@string/key_cloud_email"
-                android:lines="1"
-                android:title="@string/cloud_pref_email_title"
-                />
+                <EditTextPreference
+                        android:dialogMessage="@string/cloud_account_email_msg"
+                        android:dialogTitle="@string/cloud_account_email_title"
+                        android:inputType="textEmailAddress"
+                        android:key="@string/key_cloud_email"
+                        android:lines="1"
+                        android:title="@string/cloud_pref_email_title"
+                        />
 
         </PreferenceCategory>
 
