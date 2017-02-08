@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2017, Mirza Irwan Bin Osman , All rights reserved. -->
+<!-- Contact owner at mirza.irwan.osman@gmail.com -->
+
+
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
         <PreferenceCategory
                 android:title="@string/country_based_preferences">

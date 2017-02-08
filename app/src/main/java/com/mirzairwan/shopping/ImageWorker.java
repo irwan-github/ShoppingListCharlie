@@ -14,7 +14,10 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 
 /**
- * Created by Mirza Irwan on 4/1/17.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
+ *
  * Performs the following long running task:
  * 1. Spawn a new thread
  * 2. Setting a placeholder image for given bitmap.

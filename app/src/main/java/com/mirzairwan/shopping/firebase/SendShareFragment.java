@@ -46,7 +46,9 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Created by Mirza Irwan on 25/1/17.
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class SendShareFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>

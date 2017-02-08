@@ -1,7 +1,11 @@
 //add your package name here example: package com.example.dbm;
 package com.mirzairwan.shopping.data;
 
-//all required import files
+/**
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
+ */
 
 import android.app.Activity;
 import android.app.AlertDialog;

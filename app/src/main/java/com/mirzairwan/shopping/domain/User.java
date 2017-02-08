@@ -1,7 +1,9 @@
 package com.mirzairwan.shopping.domain;
 
 /**
- * Created by Mirza Irwan on 24/1/17.
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class User

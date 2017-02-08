@@ -7,7 +7,9 @@ import android.widget.EditText;
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_EXCHANGE_RATE_LOADER_ID;
 
 /**
- * Created by Mirza Irwan on 17/1/17.
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class CurrencyCodeChecker implements View.OnFocusChangeListener, ExchangeRateDisplayState.CurrencyCodeObserver

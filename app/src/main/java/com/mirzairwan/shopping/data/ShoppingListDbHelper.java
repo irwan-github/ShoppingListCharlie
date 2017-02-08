@@ -16,7 +16,9 @@ import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import java.util.ArrayList;
 
 /**
- * Created by Mirza Irwan on 9/12/16.
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class ShoppingListDbHelper extends SQLiteOpenHelper

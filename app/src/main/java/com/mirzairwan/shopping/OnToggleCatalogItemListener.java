@@ -1,7 +1,10 @@
 package com.mirzairwan.shopping;
 
 /**
- * Created by Mirza Irwan on 6/12/16.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
+ *
  * Handles shopping items checked/unchecked events
  */
 public interface OnToggleCatalogItemListener

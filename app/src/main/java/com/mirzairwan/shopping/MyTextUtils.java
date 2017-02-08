@@ -12,7 +12,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Created by Mirza Irwan on 8/1/17.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class MyTextUtils

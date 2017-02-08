@@ -6,7 +6,9 @@ import android.content.Context;
 import android.support.v13.app.FragmentPagerAdapter;
 
 /**
- * Created by Mirza Irwan on 22/11/16.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class PagerAdapter extends FragmentPagerAdapter

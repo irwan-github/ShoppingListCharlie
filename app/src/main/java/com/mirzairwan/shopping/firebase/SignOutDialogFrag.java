@@ -10,7 +10,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.mirzairwan.shopping.R;
 
 /**
- * Created by Mirza Irwan on 29/1/17.
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class SignOutDialogFrag extends DialogFragment

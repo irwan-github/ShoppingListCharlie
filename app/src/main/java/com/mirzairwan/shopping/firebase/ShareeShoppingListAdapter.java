@@ -21,7 +21,9 @@ import com.mirzairwan.shopping.R;
 import java.util.ArrayList;
 
 /**
- * Created by Mirza Irwan on 27/1/17.
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class ShareeShoppingListAdapter extends ArrayAdapter<Item>

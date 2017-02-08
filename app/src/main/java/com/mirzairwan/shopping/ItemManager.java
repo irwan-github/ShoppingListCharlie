@@ -6,7 +6,9 @@ import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.domain.Item;
 
 /**
- * Created by Mirza Irwan on 23/1/17.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class ItemManager

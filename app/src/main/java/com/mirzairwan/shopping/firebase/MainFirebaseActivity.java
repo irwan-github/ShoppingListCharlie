@@ -12,7 +12,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.mirzairwan.shopping.R;
 import com.mirzairwan.shopping.domain.User;
 
-public abstract class MainFirebaseActivity extends AppCompatActivity implements OnFragmentAuthentication
+/**
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
+ */
+
+public class MainFirebaseActivity extends AppCompatActivity implements OnFragmentAuthentication
 {
         public static final int FIREBASE_SIGN_OUT = 1;
         public static final String FIREBASE_REQUEST_CODE = "FIREBASE_REQUEST_CODE";
@@ -87,7 +93,8 @@ public abstract class MainFirebaseActivity extends AppCompatActivity implements 
                 signUpDialogFrag.show(getFragmentManager(), "SIGN_UP");
         }
 
-        protected abstract  void startFragment();
+        protected  void startFragment()
+        {}
 
         private void writeNewUser(String uid, String userName, String email)
         {

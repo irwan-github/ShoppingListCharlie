@@ -9,6 +9,10 @@ import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
 /**
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
+ *
  * Price information of item added to Shopping List. This class in independent of quantity.
  * Created by Mirza Irwan on 17/11/16.
  */

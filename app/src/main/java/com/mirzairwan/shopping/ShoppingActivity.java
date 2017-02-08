@@ -48,6 +48,12 @@ import static com.mirzairwan.shopping.R.id.menu_database_shopping_list;
 import static com.mirzairwan.shopping.firebase.MainFirebaseActivity.FIREBASE_REQUEST_CODE;
 import static com.mirzairwan.shopping.firebase.MainFirebaseActivity.FIREBASE_SIGN_OUT;
 
+/**
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
+ */
+
 public class ShoppingActivity extends AppCompatActivity implements ShoppingListFragment.OnFragmentInteractionListener, ShoppingHistoryFragment.OnFragmentInteractionListener, OnPictureRequestListener, OnExchangeRateRequestListener, SharedPreferences.OnSharedPreferenceChangeListener
 {
         public static final String EXCHANGE_RATE = "EXCHANGE_RATE";
@@ -390,12 +396,6 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 intent.putExtra(SendShareFragment.SHAREE_EMAIL, shareeEmail);
                 //startActivity(intent);
                 startActivity(intent);
-        }
-
-
-        public interface OnShareShoppingListCompletion
-        {
-                void onComplete(boolean isShareSuccess);
         }
 
         private class DrawerItemClickListener implements ListView.OnItemClickListener

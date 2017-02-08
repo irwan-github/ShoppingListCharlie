@@ -7,11 +7,14 @@ import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
+ *
  * Responsible for storing item, quantity and chosen price.
  * A default unit price and bundle price of value $0.00 will be assigned if price is not given.
  * Price type is defaulted to unit price
  * The buy item has a checked status in which the item is item is ina check or uncheck,
- * Created by Mirza Irwan on 17/11/16.
  */
 
 public class ItemInShoppingList implements Parcelable

@@ -9,9 +9,12 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
+ *
  * Item added to shopping list
  * Every item currently will and must have 2 price objects
- * Created by Mirza Irwan on 17/11/16.
  */
 public class Item implements Parcelable
 {

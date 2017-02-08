@@ -7,7 +7,9 @@ import android.widget.EditText;
 import java.text.ParseException;
 
 /**
- * Created by Mirza Irwan on 16/1/17.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class ExchangeRateDisplayState implements View.OnFocusChangeListener

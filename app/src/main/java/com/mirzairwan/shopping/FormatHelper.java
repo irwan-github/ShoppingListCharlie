@@ -9,7 +9,9 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Created by Mirza Irwan on 7/12/16.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class FormatHelper

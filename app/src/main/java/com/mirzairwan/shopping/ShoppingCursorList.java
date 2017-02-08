@@ -18,7 +18,9 @@ import static com.mirzairwan.shopping.FormatHelper.formatCountryCurrency;
 import static com.mirzairwan.shopping.FormatHelper.getCurrencyCode;
 
 /**
- * Created by Mirza Irwan on 17/12/16.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class ShoppingCursorList
@@ -164,7 +166,7 @@ public class ShoppingCursorList
 
                 for (SummaryItem localItem : mSummaryLocalItemsChecked)
                 {
-                        totalValueOfItemsChecked += localItem.getCost();
+                        totalValueOfItemsChecked += localItem.getCost() * localItem.getQuantity();
                 }
 
                 if (exchangeRates != null)
@@ -194,7 +196,7 @@ public class ShoppingCursorList
 
                 for (SummaryItem localItem : mSummaryLocalItemsAdded)
                 {
-                        totalValueOfItemsAdded += localItem.getCost();
+                        totalValueOfItemsAdded += localItem.getCost() * localItem.getQuantity();
                 }
 
                 if (exchangeRates != null)

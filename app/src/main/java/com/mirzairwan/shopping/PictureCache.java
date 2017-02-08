@@ -4,7 +4,9 @@ import android.graphics.Bitmap;
 import android.support.v4.util.LruCache;
 
 /**
- * Created by Mirza Irwan on 7/1/17.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class PictureCache

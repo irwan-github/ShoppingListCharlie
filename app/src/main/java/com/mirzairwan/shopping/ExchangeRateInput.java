@@ -5,10 +5,13 @@ import java.util.Observable;
 import java.util.Set;
 
 /**
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
+ *
  * This object is observed by ExchangeRateAwareLoader for changes. ShoppingActivity will use this
  * class to make changes to exchange rate inputs as necessary.
  * <p>
- * Created by Mirza Irwan on 20/1/17.
  */
 
 public class ExchangeRateInput extends Observable

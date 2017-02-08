@@ -10,7 +10,9 @@ import com.mirzairwan.shopping.domain.ItemInShoppingList;
 import com.mirzairwan.shopping.domain.Price;
 
 /**
- * Created by Mirza Irwan on 23/1/17.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 public class ShoppingHistoryCursorList
 {

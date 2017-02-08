@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2017, Mirza Irwan Bin Osman , All rights reserved. -->
+<!-- Contact owner at mirza.irwan.osman@gmail.com -->
+
+
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
         <!-- getExternalFilesDir() returns "/storage/emulated/0/Android/data/com.mirzairwan.shopping/files/Pictures" -->
         <!-- The path component corresponds to the subset of the path that is returned by getExternalFilesDir()-->

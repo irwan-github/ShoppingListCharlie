@@ -15,7 +15,9 @@ import java.text.ParseException;
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
 
 /**
- * Created by Mirza Irwan on 2/1/17.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class ItemEditingActivity extends ItemActivity

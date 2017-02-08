@@ -8,7 +8,9 @@ import static com.mirzairwan.shopping.domain.ExchangeRate.FOREIGN_CURRENCY_CODES
 import static com.mirzairwan.shopping.domain.ExchangeRate.FOREX_API_URL;
 
 /**
- * Created by Mirza Irwan on 18/1/17.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class OnExchangeRateRequestImpl implements OnExchangeRateRequest

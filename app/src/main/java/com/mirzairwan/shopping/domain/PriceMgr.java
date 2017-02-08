@@ -14,10 +14,13 @@ import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
 /**
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
+ *
  * PriceManager handles the prices of one particular item
  * It handles 2 price types: Unit price and bundle price.
  * The cursor loader sends cursor data so that PriceMgr can create the 2 price object
- * Created by Mirza Irwan on 29/12/16.
  */
 
 public class PriceMgr

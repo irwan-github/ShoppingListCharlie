@@ -6,8 +6,11 @@ import android.os.Parcelable;
 import java.io.File;
 
 /**
+ *  * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
+ *
  * A picture must have a file path and a File object associated with it.
- * Created by Mirza Irwan on 27/12/16.
  */
 
 public class Picture implements Parcelable

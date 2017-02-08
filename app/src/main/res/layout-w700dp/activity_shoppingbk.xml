@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2017, Mirza Irwan Bin Osman , All rights reserved. -->
+<!-- Contact owner at mirza.irwan.osman@gmail.com -->
+
+
 <!--
 This is the parent screen that pages the 2 child views:
 1. To-buy list view (managed by BuyListFragment

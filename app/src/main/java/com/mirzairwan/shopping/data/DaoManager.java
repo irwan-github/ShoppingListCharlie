@@ -8,7 +8,9 @@ import com.mirzairwan.shopping.domain.ItemInShoppingList;
 import java.util.List;
 
 /**
- * Created by Mirza Irwan on 17/12/16.
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public interface DaoManager

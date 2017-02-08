@@ -15,7 +15,9 @@ import static com.mirzairwan.shopping.LoaderHelper.BUNDLE_PRICE_EXCHANGE_RATE_LO
 import static com.mirzairwan.shopping.LoaderHelper.UNIT_PRICE_EXCHANGE_RATE_LOADER_ID;
 
 /**
- * Created by Mirza Irwan on 16/1/17.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class PriceField

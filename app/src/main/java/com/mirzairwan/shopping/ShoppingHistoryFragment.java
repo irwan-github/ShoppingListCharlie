@@ -33,7 +33,9 @@ import static com.mirzairwan.shopping.R.xml.preferences;
 
 
 /**
- * Created by Mirza Irwan on 22/11/16.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalogItemListener, LoaderManager.LoaderCallbacks<Cursor>, AdapterView.OnItemClickListener, SharedPreferences.OnSharedPreferenceChangeListener

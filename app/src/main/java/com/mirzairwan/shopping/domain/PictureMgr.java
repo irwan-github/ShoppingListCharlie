@@ -15,7 +15,9 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Created by Mirza Irwan on 29/12/16.
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  * <p>
  * Helper class to track all the pictures taken for an item.
  * Use the class to decide which pictures to delete and which one to save on the database

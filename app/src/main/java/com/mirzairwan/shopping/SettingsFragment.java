@@ -10,7 +10,9 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.AlertDialog;
 
 /**
- * Created by Mirza Irwan on 24/12/16.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class SettingsFragment extends PreferenceFragment implements Preference.OnPreferenceChangeListener

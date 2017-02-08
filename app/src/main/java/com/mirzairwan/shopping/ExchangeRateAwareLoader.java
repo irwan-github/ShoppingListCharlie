@@ -27,6 +27,8 @@ import java.util.Observer;
 
 /**
  * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  * It fetches ECB exchange rates using web API.
  */
 

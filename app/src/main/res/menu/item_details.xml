@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2017, Mirza Irwan Bin Osman , All rights reserved. -->
+<!-- Contact owner at mirza.irwan.osman@gmail.com -->
+
+
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item
-        android:id="@+id/save_item_details"
-        android:icon="@drawable/ic_done"
-        android:title="Save Item"
-        app:showAsAction="always">
-    </item>
-    <item
-        android:id="@+id/menu_remove_item_from_list"
-        android:icon="@drawable/ic_delete"
-        android:title="@string/menu_remove_item_from_shopping_list"
-        app:showAsAction="ifRoom">
-    </item>
+        <item
+                android:id="@+id/save_item_details"
+                android:icon="@drawable/ic_done"
+                android:title="Save Item"
+                app:showAsAction="always">
+        </item>
+        <item
+                android:id="@+id/menu_remove_item_from_list"
+                android:icon="@drawable/ic_delete"
+                android:title="@string/menu_remove_item_from_shopping_list"
+                app:showAsAction="ifRoom">
+        </item>
 </menu>

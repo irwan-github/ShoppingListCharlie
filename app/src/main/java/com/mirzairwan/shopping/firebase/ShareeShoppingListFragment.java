@@ -38,7 +38,9 @@ import java.util.ArrayList;
 import static com.mirzairwan.shopping.firebase.Constants.SHARED_SHOPPING_LIST;
 
 /**
- * Created by Mirza Irwan on 26/1/17.
+ * Created by Mirza Irwan on 18/12/16.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class ShareeShoppingListFragment extends Fragment

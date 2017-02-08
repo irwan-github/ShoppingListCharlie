@@ -12,7 +12,9 @@ import android.support.v4.content.ContextCompat;
 import java.util.ArrayList;
 
 /**
- * Created by Mirza Irwan on 14/1/17.
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
  */
 
 public class PermissionHelper

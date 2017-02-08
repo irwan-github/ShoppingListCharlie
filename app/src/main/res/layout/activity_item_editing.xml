@@ -1,47 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2017, Mirza Irwan Bin Osman , All rights reserved. -->
+<!-- Contact owner at mirza.irwan.osman@gmail.com -->
+
 <ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    >
-
-    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:focusableInTouchMode="true">
+        android:layout_height="match_parent"
+        >
 
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/edit_surface_margin"
-            android:background="#fff"
-            android:elevation="4dp"
-            >
-            <include layout="@layout/item_image_editor" />
-        </FrameLayout>
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:focusableInTouchMode="true"
+                android:orientation="vertical">
 
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/edit_surface_margin"
-            android:background="#fff"
-            android:elevation="4dp"
-            >
-            <include layout="@layout/item_editing" />
-        </FrameLayout>
-        <FrameLayout
-            android:id="@+id/price_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/edit_surface_margin"
-            android:layout_marginTop="@dimen/edit_surface_margin"
-            android:background="#fff"
-            android:elevation="4dp"
-            >
-            <include layout="@layout/price_editing"/>
-        </FrameLayout>
-    </LinearLayout>
+                <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/edit_surface_margin"
+                        android:background="#fff"
+                        android:elevation="4dp"
+                        >
+
+                        <include layout="@layout/item_image_editor"/>
+                </FrameLayout>
+
+                <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/edit_surface_margin"
+                        android:background="#fff"
+                        android:elevation="4dp"
+                        >
+
+                        <include layout="@layout/item_editing"/>
+                </FrameLayout>
+
+                <FrameLayout
+                        android:id="@+id/price_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/edit_surface_margin"
+                        android:layout_marginTop="@dimen/edit_surface_margin"
+                        android:background="#fff"
+                        android:elevation="4dp"
+                        >
+
+                        <include layout="@layout/price_editing"/>
+                </FrameLayout>
+        </LinearLayout>
 
 </ScrollView>

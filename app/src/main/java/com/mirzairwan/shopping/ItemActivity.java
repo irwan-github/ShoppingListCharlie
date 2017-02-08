@@ -56,6 +56,10 @@ import static com.mirzairwan.shopping.LoaderHelper.ITEM_PRICE_LOADER_ID;
 import static com.mirzairwan.shopping.ShoppingActivity.EXCHANGE_RATE;
 
 /**
+ * Created by Mirza Irwan on 13/1/17.
+ * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
+ * Contact owner at mirza.irwan.osman@gmail.com
+ *
  * This is a base class for subclasses to leverage on the following:
  * <p>
  * Loader for Prices table. Subclass just need to call initLoader with the correct loader id.
