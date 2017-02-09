@@ -4,9 +4,6 @@ import android.database.Cursor;
 
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.domain.ExchangeRate;
-import com.mirzairwan.shopping.domain.Item;
-import com.mirzairwan.shopping.domain.ItemInShoppingList;
-import com.mirzairwan.shopping.domain.Price;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -215,27 +212,6 @@ public class ShoppingCursorList
                 totalValueOfItemsAdded = totalValueOfItemsAdded + totalForexCost;
                 String totalCostofItemsAdded = formatCountryCurrency(homeCountryCode, currencyCode, totalValueOfItemsAdded);
                 return totalCostofItemsAdded;
-        }
-
-        public ItemInShoppingList addNewItem(Item item, int qtyToBuy, Price price)
-        {
-                ItemInShoppingList itemInShoppingList = new ItemInShoppingList(item, qtyToBuy, price);
-                return itemInShoppingList;
-        }
-
-        public HashSet<Long> getCheckedItems()
-        {
-                HashSet<Long> ids = new HashSet<>();
-                for(SummaryItem item : mSummaryForeignItemsChecked)
-                {
-                        ids.add(item.getItemInShoppingListId());
-                }
-
-                for(SummaryItem item : mSummaryLocalItemsChecked)
-                {
-                        ids.add(item.getItemInShoppingListId());
-                }
-                return ids;
         }
 
         private class SummaryItem

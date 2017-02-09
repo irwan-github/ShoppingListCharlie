@@ -59,15 +59,38 @@ public class DaoContentProv implements DaoManager
                 return mContext.getContentResolver().update(updateBuyItemUri, values, null, null);
         }
 
+        /**
+         * Create an item in the shopping list.
+         * Pre-condition: Item and prices must already exist in the history.
+         * @param itemId
+         * @param priceId
+         * @return
+         */
         @Override
-        public long insert(ItemInShoppingList buyItem)
+        public long insert(long itemId, long priceId)
         {
-                ContentValues values = getBuyItemContentValues(buyItem, new Date());
+                ContentValues buyItemValues = new ContentValues();
+                buyItemValues.put(ToBuyItemsEntry.COLUMN_ITEM_ID, itemId);
+                buyItemValues.put(ToBuyItemsEntry.COLUMN_QUANTITY, 1);
+                buyItemValues.put(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID, priceId);
+                buyItemValues.put(ToBuyItemsEntry.COLUMN_IS_CHECKED, false);
+                Date updateTime = new Date();
+                buyItemValues.put(ToBuyItemsEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
                 ContentResolver contentResolver = mContext.getContentResolver();
-                Uri result = contentResolver.insert(ToBuyItemsEntry.CONTENT_URI, values);
+                Uri result = contentResolver.insert(ToBuyItemsEntry.CONTENT_URI, buyItemValues);
                 return ContentUris.parseId(result);
         }
 
+        /**
+         * Insert the state of the objects  into the database.
+         * The above changes is an atomic transaction which means all database operations must be committed in same transaction.
+         *
+         * @param buyItem    item in the shopping list
+         * @param item       Details of the item
+         * @param itemPrices Prices of the item
+         * @param pictureMgr Pictures associated with the item
+         * @return message
+         */
         @Override
         public String insert(ItemInShoppingList buyItem, Item item, List<Price> itemPrices, PictureMgr pictureMgr)
         {
@@ -116,7 +139,20 @@ public class DaoContentProv implements DaoManager
                         {
                                 ContentProviderOperation.Builder buyItemBuilder = ContentProviderOperation.newInsert(ToBuyItemsEntry.CONTENT_URI);
 
-                                buyItemBuilder = buyItemBuilder.withValues(getBuyItemContentValues(buyItem, updateTime)).withValueBackReference(ToBuyItemsEntry.COLUMN_ITEM_ID, 0);
+                                ContentValues buyItemValues = new ContentValues();
+                                if (item.getId() > 0)
+                                {
+                                        buyItemValues.put(ToBuyItemsEntry.COLUMN_ITEM_ID, item.getId());
+                                }
+                                buyItemValues.put(ToBuyItemsEntry.COLUMN_QUANTITY, buyItem.getQuantity());
+                                if (buyItem.getSelectedPrice().getId() > 0)
+                                {
+                                        buyItemValues.put(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID, buyItem.getSelectedPrice().getId());
+                                }
+                                buyItemValues.put(ToBuyItemsEntry.COLUMN_IS_CHECKED, buyItem.isChecked());
+                                buyItemValues.put(ToBuyItemsEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
+
+                                buyItemBuilder = buyItemBuilder.withValues(buyItemValues).withValueBackReference(ToBuyItemsEntry.COLUMN_ITEM_ID, 0);
 
                                 buyItemBuilder = buyItemBuilder.withValueBackReference(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID, ops.size() - 1);
 
@@ -197,7 +233,22 @@ public class DaoContentProv implements DaoManager
                 Uri updateBuyItemUri = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItem.getId());
                 ContentProviderOperation.Builder buyItemBuilder = ContentProviderOperation.newUpdate(updateBuyItemUri);
 
-                buyItemBuilder = buyItemBuilder.withValues(getBuyItemContentValues(buyItem, updateTime));
+                //
+                ContentValues buyItemValues = new ContentValues();
+                if (item.getId() > 0)
+                {
+                        buyItemValues.put(ToBuyItemsEntry.COLUMN_ITEM_ID, item.getId());
+                }
+                buyItemValues.put(ToBuyItemsEntry.COLUMN_QUANTITY, buyItem.getQuantity());
+                if (buyItem.getSelectedPrice().getId() > 0)
+                {
+                        buyItemValues.put(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID, buyItem.getSelectedPrice().getId());
+                }
+                buyItemValues.put(ToBuyItemsEntry.COLUMN_IS_CHECKED, buyItem.isChecked());
+                buyItemValues.put(ToBuyItemsEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
+                //
+
+                buyItemBuilder = buyItemBuilder.withValues(buyItemValues);
 
                 ContentProviderOperation opBuyItem = buyItemBuilder.build();
                 ops.add(opBuyItem);
@@ -468,6 +519,13 @@ public class DaoContentProv implements DaoManager
                 return mContext.getContentResolver().delete(uriDeleteBuyItem, null, null);
         }
 
+        @Override
+        public int delete(long shoppingListItemId)
+        {
+                Uri uriDeleteBuyItem = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, shoppingListItemId);
+                return mContext.getContentResolver().delete(uriDeleteBuyItem, null, null);
+        }
+
         /**
          * Delete records in the following sequence:
          * 1. The Item's picture
@@ -588,23 +646,6 @@ public class DaoContentProv implements DaoManager
 
                 priceValues.put(PricesEntry.COLUMN_CURRENCY_CODE, price.getCurrencyCode());
                 return priceValues;
-        }
-
-        private ContentValues getBuyItemContentValues(ItemInShoppingList buyItem, Date updateTime)
-        {
-                ContentValues buyItemValues = new ContentValues();
-                if (buyItem.getItem().getId() > 0)
-                {
-                        buyItemValues.put(ToBuyItemsEntry.COLUMN_ITEM_ID, buyItem.getItem().getId());
-                }
-                buyItemValues.put(ToBuyItemsEntry.COLUMN_QUANTITY, buyItem.getQuantity());
-                if (buyItem.getSelectedPrice().getId() > 0)
-                {
-                        buyItemValues.put(ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID, buyItem.getSelectedPrice().getId());
-                }
-                buyItemValues.put(ToBuyItemsEntry.COLUMN_IS_CHECKED, buyItem.isChecked());
-                buyItemValues.put(ToBuyItemsEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
-                return buyItemValues;
         }
 
         @Override

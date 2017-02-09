@@ -261,7 +261,10 @@ public class ShoppingListEditingActivity extends ItemActivity
                         return;
                 }
 
-                mPurchaseManager.getItemInShoppingList().selectPrice(defaultShopId, getSelectedPriceType());
+                //Get selected price
+                Price.Type selectedPriceType = getSelectedPriceType();
+                Price selectedPrice = priceMgr.getSelectedPrice(selectedPriceType);
+                mPurchaseManager.getItemInShoppingList().setSelectedPrice(selectedPrice);
 
                 String msg;
 

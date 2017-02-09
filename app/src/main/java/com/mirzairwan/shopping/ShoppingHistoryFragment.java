@@ -26,8 +26,8 @@ import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import com.mirzairwan.shopping.data.DaoContentProv;
 import com.mirzairwan.shopping.data.DaoManager;
+import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Price;
-import com.mirzairwan.shopping.domain.ItemInShoppingList;
 
 import static com.mirzairwan.shopping.R.xml.preferences;
 
@@ -48,10 +48,16 @@ public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalog
         private OnFragmentInteractionListener mOnFragmentInteractionListener;
         private OnPictureRequestListener mOnPictureRequestListener;
         private ShoppingHistoryCursorList mShoppingHistoryList;
+        private PurchaseManager mPurchaseManager;
 
         public static ShoppingHistoryFragment newInstance()
         {
                 return new ShoppingHistoryFragment();
+        }
+
+        public ShoppingHistoryFragment()
+        {
+                mPurchaseManager = new PurchaseManager();
         }
 
         @Override
@@ -110,23 +116,41 @@ public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalog
                 lvAllItems.setOnItemClickListener(this);
         }
 
+        /**
+         * Add/remove an item into/from shopping list when user clicks on the toggle button.
+         * @param isItemChecked Toggle button is filled.
+         * @param position the current cursor position.
+         */
         @Override
         public void onToggleItem(boolean isItemChecked, int position)
         {
                 String msg;
                 if (isItemChecked)
                 {
-                        ItemInShoppingList buyItem = mShoppingHistoryList.addToShoopingList(position);
-                        msg = daoManager.insert(buyItem) > 0 ? buyItem.getItem().getName() + " " + getString(R.string.added_to_shopping_list_ok) : buyItem.getItem().getName() + " " + getString(R.string.added_to_shopping_list_error);
+                        Item item = mShoppingHistoryList.getItem(position);
+                        long itemId = mShoppingHistoryList.getItemId(position);
+                        String itemName = mShoppingHistoryList.getItemName(position);
+                        long defaultPriceId = mShoppingHistoryList.getPriceId(position);
+                        long rowId = daoManager.insert(itemId, defaultPriceId);
+                        msg = rowId > 0? itemName+ " " + getString(R.string.added_to_shopping_list_ok) : itemName+ " " + getString(R.string.added_to_shopping_list_error);
                 }
                 else
                 {
-                        ItemInShoppingList buyItem = mShoppingHistoryList.removeFromShoppingList(position);
-                        msg = daoManager.delete(buyItem) > 0 ? buyItem.getItem().getName() + " " + getString(R.string.remove_item_from_shopping_list_ok) : buyItem.getItem().getName() + " " + getString(R.string.remove_item_from_shopping_list_error);
+                        //ItemInShoppingList buyItem = mShoppingHistoryList.removeFromShoppingList(position);
+                        long shoppingListItemId = mShoppingHistoryList.getShoppingListItemId(position);
+                        String itemName = mShoppingHistoryList.getItemName(position);
+                        //msg = daoManager.delete(buyItem) > 0 ? buyItem.getItem().getName() + " " + getString(R.string.remove_item_from_shopping_list_ok) : buyItem.getItem().getName() + " " + getString(R.string.remove_item_from_shopping_list_error);
+                        msg = daoManager.delete(shoppingListItemId) > 0 ? itemName+ " " + getString(R.string.remove_item_from_shopping_list_ok) : itemName + " " + getString(R.string.remove_item_from_shopping_list_error);
                 }
                 Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
         }
 
+        /**
+         * Join tables: items, shopping list, prices and pictures. Only unit price type record is selected from prices table.
+         * @param loaderId
+         * @param args
+         * @return
+         */
         @Override
         public Loader<Cursor> onCreateLoader(int loaderId, Bundle args)
         {
@@ -135,7 +159,14 @@ public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalog
                 {
                         case LOADER_CATALOG_ID:
                                 Uri uriCatalogue = Catalogue.CONTENT_URI;
-                                String[] projection = new String[]{ItemsEntry._ID, ItemsEntry.COLUMN_NAME, ItemsEntry.COLUMN_BRAND, ToBuyItemsEntry.ALIAS_ID, PricesEntry.ALIAS_ID, PricesEntry.COLUMN_CURRENCY_CODE, PicturesEntry.COLUMN_FILE_PATH};
+                                String[] projection = new String[]{ItemsEntry._ID,
+                                                                   ItemsEntry.COLUMN_NAME,
+                                                                   ItemsEntry.COLUMN_BRAND,
+                                                                   ToBuyItemsEntry.ALIAS_ID,
+                                                                   PricesEntry.ALIAS_ID,
+                                                                   PricesEntry.COLUMN_CURRENCY_CODE,
+                                                                   PicturesEntry.COLUMN_FILE_PATH};
+
                                 String selection = PricesEntry.COLUMN_PRICE_TYPE_ID + "=?";
 
                                 String[] selectionArgs = new String[]{String.valueOf(Price.Type.UNIT_PRICE.getType())};

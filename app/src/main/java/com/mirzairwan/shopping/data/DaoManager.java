@@ -15,23 +15,23 @@ import java.util.List;
 
 public interface DaoManager
 {
-        /**
-         * Create a purchase item listed in the catalog.
-         * Pre-condition: Item and prices must already exist in the database.
-         *
-         * @param buyItem
-         * @return long primary key of item in shopping list
+         /**
+         *  Create a purchase item listed in the catalog.
+         * Pre-condition: Item and prices must already exist in the history.
+         * @param itemId
+         * @param priceId
+         * @return
          */
-        long insert(ItemInShoppingList buyItem);
+        long insert(long itemId, long priceId);
 
         /**
-         * Insert the state of the entire objects that is referenced
-         * by the BuyItem object in the domain object graph into the database.
-         * The above changes is an atomic transaction so must be committed in same transaction.
+         * Insert the state of the objects  into the database.
+         * The above changes is an atomic transaction which means all database operations must be committed in same transaction.
          *
          * @param buyItem    item in the shopping list
          * @param item       Details of the item
          * @param itemPrices Prices of the item
+         * @param pictureMgr Pictures associated with the item
          * @return message
          */
         String insert(ItemInShoppingList buyItem, Item item, List<Price> itemPrices, PictureMgr pictureMgr);
@@ -43,6 +43,14 @@ public interface DaoManager
          * @return The number of rows deleted.
          */
         int delete(ItemInShoppingList buyItem);
+
+        /**
+         * Delete item in the shopping list. Item, pictures and prices  are NOT deleted.
+         *
+         * @param buyItem
+         * @return The number of rows deleted.
+         */
+        int delete(long buyItem);
 
         /**
          * Update purchase, item, picture and prices details
@@ -98,4 +106,6 @@ public interface DaoManager
         int deletePicture(long itemId);
 
         int deletePicture(PictureMgr pictureMgr);
+
+
 }

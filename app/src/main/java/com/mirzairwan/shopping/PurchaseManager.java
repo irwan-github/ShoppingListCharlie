@@ -11,6 +11,8 @@ import com.mirzairwan.shopping.domain.Price;
  * Created by Mirza Irwan on 13/1/17.
  * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
  * Contact owner at mirza.irwan.osman@gmail.com
+ *
+ * Manages only one item placed or to-be placed into shopping list
  */
 
 public class PurchaseManager
@@ -18,6 +20,7 @@ public class PurchaseManager
         private Cursor mCursor;
         private Item mItem;
         private ItemInShoppingList mItemInShoppingList;
+        private Price mSelectedPrice;
 
         public PurchaseManager()
         {
@@ -25,16 +28,16 @@ public class PurchaseManager
                 addNewItemInShoppingList();
         }
 
-        private void addNewItemInShoppingList()
-        {
-                mItemInShoppingList = new ItemInShoppingList(mItem);
-        }
-
         public PurchaseManager(Cursor cursor)
         {
                 mCursor = cursor;
                 createExistingItem();
-                createItemInShoppingList();
+                addExistingItemInShoppingList();
+        }
+
+        private void addNewItemInShoppingList()
+        {
+                mItemInShoppingList = new ItemInShoppingList();
         }
 
         private void createNewItem()
@@ -74,7 +77,7 @@ public class PurchaseManager
                 mItem.setInBuyList(true);
         }
 
-        private void createItemInShoppingList()
+        private void addExistingItemInShoppingList()
         {
                 mCursor.moveToFirst();
                 long buyItemId = mCursor.getLong(mCursor.getColumnIndex(Contract.ToBuyItemsEntry._ID));
@@ -100,23 +103,22 @@ public class PurchaseManager
                 int colShopIdIdx = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_SHOP_ID);
                 long shopId = mCursor.getLong(colShopIdIdx);
 
-                Price price = null;
+                mSelectedPrice = null;
                 int colPriceIdx = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_PRICE);
 
                 double priceDbl = mCursor.getDouble(colPriceIdx) / 100;
 
                 if (priceTypeVal == Price.Type.UNIT_PRICE.getType())
                 {
-                        price = new Price(priceId, priceDbl, currencyCode, shopId, null);
+                        mSelectedPrice = new Price(priceId, priceDbl, currencyCode, shopId, null);
                 }
 
                 if (priceTypeVal == Price.Type.BUNDLE_PRICE.getType())
                 {
-                        price = new Price(priceId, priceDbl, bundleQty, currencyCode, shopId, null);
+                        mSelectedPrice = new Price(priceId, priceDbl, bundleQty, currencyCode, shopId, null);
                 }
 
-
-                mItemInShoppingList = new ItemInShoppingList(buyItemId, buyQty, price, mItem, null);
+                mItemInShoppingList = new ItemInShoppingList(buyItemId, buyQty, mSelectedPrice, null);
                 mItemInShoppingList.setCheck(isItemChecked);
 
         }
@@ -129,5 +131,15 @@ public class PurchaseManager
         public ItemInShoppingList getItemInShoppingList()
         {
                 return mItemInShoppingList;
+        }
+
+        public void setItem(Item item)
+        {
+                mItem = item;
+        }
+
+        public void setSelectedPrice(Price defaultPrice)
+        {
+                mSelectedPrice = defaultPrice;
         }
 }
