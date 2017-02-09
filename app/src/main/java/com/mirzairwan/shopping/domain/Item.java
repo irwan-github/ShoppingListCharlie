@@ -1,10 +1,6 @@
 package com.mirzairwan.shopping.domain;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by Mirza Irwan on 18/12/16.
@@ -14,21 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Item added to shopping list
  * Every item currently will and must have 2 price objects
  */
-public class Item implements Parcelable
+public class Item
 {
-        public static final Creator<Item> CREATOR = new Creator<Item>()
-        {
-                public Item createFromParcel(Parcel in)
-                {
-                        return new Item(in);
-                }
-
-                public Item[] newArray(int size)
-                {
-                        return new Item[size];
-                }
-        };
-        static AtomicInteger nextId = new AtomicInteger(0);
         private long _id; //Assigned and used by SQLite and Android
         private String mItemName;
         private String mBrand;
@@ -36,21 +19,10 @@ public class Item implements Parcelable
         private String mCountryOrigin;
         private boolean mIsInBuyList = false;
         private Date mLastUpdatedOn;
-        //private List<Price> mPrices = new ArrayList<>();
 
         public Item()
         {
 
-        }
-
-        public Item(String itemName)
-        {
-                mItemName = itemName;
-        }
-
-        public Item(long itemId)
-        {
-                _id = itemId;
         }
 
         public Item(long id, String itemName, String brand, String country, String description, Date lastUpdatedOn)
@@ -65,17 +37,6 @@ public class Item implements Parcelable
                 mCountryOrigin = country;
                 mDescription = description;
                 mLastUpdatedOn = lastUpdatedOn;
-        }
-
-        private Item(Parcel in)
-        {
-                _id = in.readLong();
-                mItemName = in.readString();
-                mBrand = in.readString();
-                mDescription = in.readString();
-                mCountryOrigin = in.readString();
-                mIsInBuyList = in.readByte() != 0;
-                mLastUpdatedOn = new Date(in.readLong());
         }
 
         public long getId()
@@ -147,28 +108,5 @@ public class Item implements Parcelable
         {
                 mLastUpdatedOn = timeOfUpdate;
         }
-
-        @Override
-        public int describeContents()
-        {
-                return 0;
-        }
-
-        @Override
-        public void writeToParcel(Parcel dest, int flags)
-        {
-                dest.writeLong(_id);
-
-                dest.writeString(mItemName);
-                dest.writeString(mBrand);
-                dest.writeString(mDescription);
-                dest.writeString(mCountryOrigin);
-                dest.writeByte((byte) (mIsInBuyList ? 1 : 0));
-                if (mLastUpdatedOn != null)
-                {
-                        dest.writeLong(mLastUpdatedOn.getTime());
-                }
-        }
-
 
 }

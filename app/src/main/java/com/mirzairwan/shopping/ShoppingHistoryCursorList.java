@@ -5,7 +5,6 @@ import android.database.Cursor;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
-import com.mirzairwan.shopping.domain.Item;
 
 /**
  * Created by Mirza Irwan on 13/1/17.
@@ -21,22 +20,6 @@ public class ShoppingHistoryCursorList
         public ShoppingHistoryCursorList(Cursor cursor)
         {
                 mCursor = cursor;
-        }
-
-        /**
-         * Get item in history to the shopping list.
-         * @param position Refers to position of item in the history of items which is position of cursor.
-         * @return Item to be added to shopping list.
-         */
-        public Item getItem(int position)
-        {
-                mCursor.moveToPosition(position);
-                long itemid = mCursor.getLong(mCursor.getColumnIndex(ItemsEntry._ID));
-                int colItemName = mCursor.getColumnIndex(ItemsEntry.COLUMN_NAME);
-                String itemName = mCursor.getString(colItemName);
-                Item item = new Item(itemid);
-                item.setName(itemName);
-                return item;
         }
 
         /**

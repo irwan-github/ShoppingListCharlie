@@ -7,23 +7,22 @@ import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.content.res.TypedArray;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ImageView;
-import android.widget.ListView;
 
 import com.mirzairwan.shopping.data.AndroidDatabaseManager;
 import com.mirzairwan.shopping.data.Contract;
@@ -54,7 +53,11 @@ import static com.mirzairwan.shopping.firebase.MainFirebaseActivity.FIREBASE_SIG
  * Contact owner at mirza.irwan.osman@gmail.com
  */
 
-public class ShoppingActivity extends AppCompatActivity implements ShoppingListFragment.OnFragmentInteractionListener, ShoppingHistoryFragment.OnFragmentInteractionListener, OnPictureRequestListener, OnExchangeRateRequestListener, SharedPreferences.OnSharedPreferenceChangeListener
+public class ShoppingActivity extends AppCompatActivity implements ShoppingListFragment.OnFragmentInteractionListener,
+                                                                   ShoppingHistoryFragment.OnFragmentInteractionListener,
+                                                                   OnPictureRequestListener,
+                                                                   OnExchangeRateRequestListener,
+                                                                   SharedPreferences.OnSharedPreferenceChangeListener
 {
         public static final String EXCHANGE_RATE = "EXCHANGE_RATE";
         private static final String LOG_TAG = ShoppingActivity.class.getSimpleName();
@@ -64,7 +67,6 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         Map<String, ExchangeRate> mExchangeRates = new HashMap<>();
 
         private DrawerLayout mDrawerLayout;
-        private ListView mDrawerList;
         private ActionBarDrawerToggle mDrawerToggle;
         private ImageResizer mImageResizer;
         private String mCountryCode;
@@ -76,6 +78,8 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         private Loader<Map<String, ExchangeRate>> loader;
         private ShoppingListExchangeRateLoaderCb mShoppingListExchangeRateLoaderCb;
         private ExchangeRateInput mExchangeRateInput;
+        private NavigationView mNavDrawer;
+        private Toolbar mToolbar;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -91,10 +95,15 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                         registerOnSharedPreferenceChangeListener(this);
 
                 //The following array order is important to display the proper page titles
-                String[] pageTitles = new String[]{getString(R.string.buy_list), getString(R.string.catalogue)};
+                String[] pageTitles = new String[]{getString(R.string.buy_list),
+                                                   getString(R.string.catalogue)};
                 PagerAdapter pagerAdapter = new PagerAdapter(getFragmentManager(), pageTitles);
                 ViewPager viewPager = (ViewPager) findViewById(R.id.pager_shopping);
                 viewPager.setAdapter(pagerAdapter);
+
+                // Set a Toolbar to replace the ActionBar.
+                mToolbar = (Toolbar) findViewById(R.id.toolbar);
+                setSupportActionBar(mToolbar);
 
                 setUpNavDrawer();
 
@@ -165,30 +174,56 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
 
         private void setUpNavDrawer()
         {
+                //Find drawer layout
                 mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-                mDrawerList = (ListView) findViewById(R.id.left_drawer);
 
-                TypedArray navItemsTxt = getResources().obtainTypedArray(R.array.nav_drawer_items);
-                TypedArray navItemIcons = getResources().obtainTypedArray(R.array.nav_drawer_icons);
-
-                NavItem[] navItems = new NavItem[navItemsTxt.length()];
-                // Set the adapter for the list view
-                for (int k = 0; k < navItemsTxt.length(); ++k)
+                //Find navigation drawer view
+                mNavDrawer = (NavigationView) findViewById(R.id.nav_drawer);
+                mNavDrawer.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener()
                 {
-                        navItems[k] = new NavItem(navItemsTxt.getResourceId(k, 0), navItemIcons.getResourceId(k, R.drawable.ic_done));
-                }
+                        @Override
+                        public boolean onNavigationItemSelected(@NonNull MenuItem item)
+                        {
+                                selectDrawerItem(item);
+                                return false;
+                        }
+                });
 
-                NavDrawerArrayAdapter navDrawerAdapter = new NavDrawerArrayAdapter(this, R.layout.nav_drawer_row, navItems);
-
-                mDrawerList.setAdapter(navDrawerAdapter);
-
-                // Set the list's click listener
-                mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
-
-                mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.drawer_open, R.string.drawer_close);
+                mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, mToolbar, R.string.drawer_open, R.string.drawer_close);
 
                 mDrawerLayout.addDrawerListener(mDrawerToggle);
-                getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_HOME_AS_UP | ActionBar.DISPLAY_SHOW_TITLE);
+                //getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_HOME_AS_UP | ActionBar.DISPLAY_SHOW_TITLE);
+        }
+
+        private void selectDrawerItem(MenuItem menuItem)
+        {
+                int itemId = menuItem.getItemId();
+                switch (itemId)
+                {
+                        case R.id.nav_shared_shopping_list:
+                        {
+                                Intent intentViewSharedShoppingList = new Intent(ShoppingActivity.this, ShowSharedActivity.class);
+                                startActivity(intentViewSharedShoppingList);
+                                break;
+                        }
+                        case R.id.nav_cloud_sign_out:
+                        {
+                                Intent intentFirebaseActivity = new Intent(ShoppingActivity.this, MainFirebaseActivity.class);
+                                intentFirebaseActivity.putExtra(FIREBASE_REQUEST_CODE, FIREBASE_SIGN_OUT);
+                                startActivity(intentFirebaseActivity);
+                                break;
+                        }
+                        case R.id.nav_settings_screen:
+                        {
+                                Intent intentSettings = new Intent(ShoppingActivity.this, SettingsActivity.class);
+                                startActivity(intentSettings);
+                                break;
+                        }
+                }
+                // Highlight the selected item has been done by NavigationView
+                menuItem.setChecked(true);
+
+                mDrawerLayout.closeDrawers();
         }
 
         @Override
@@ -226,17 +261,11 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                                 Intent intentDb = new Intent(this, AndroidDatabaseManager.class);
                                 startActivity(intentDb);
                                 return true;
+                        case android.R.id.home:
+                                mDrawerLayout.openDrawer(GravityCompat.START);
+                                return true;
                         default:
-                                // Pass the event to ActionBarDrawerToggle, if it returns
-                                // true, then it has handled the app icon touch event
-                                if (mDrawerToggle.onOptionsItemSelected(menuItem))
-                                {
-                                        return true;
-                                }
-                                else
-                                {
-                                        return super.onOptionsItemSelected(menuItem);
-                                }
+                                return super.onOptionsItemSelected(menuItem);
                 }
         }
 
@@ -398,30 +427,30 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 startActivity(intent);
         }
 
-        private class DrawerItemClickListener implements ListView.OnItemClickListener
-        {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id)
-                {
-                        mDrawerLayout.closeDrawer(mDrawerList);
-                        if (position == 0)
-                        {
-                                Intent intentViewSharedShoppingList = new Intent(ShoppingActivity.this, ShowSharedActivity.class);
-                                startActivity(intentViewSharedShoppingList);
-                        }
-                        else if (position == 1)
-                        {
-                                Intent intentFirebaseActivity = new Intent(ShoppingActivity.this, MainFirebaseActivity.class);
-                                intentFirebaseActivity.putExtra(FIREBASE_REQUEST_CODE, FIREBASE_SIGN_OUT);
-                                startActivity(intentFirebaseActivity);
-                        }
-                        else if (position == 2)
-                        {
-                                Intent intentSettings = new Intent(ShoppingActivity.this, SettingsActivity.class);
-                                startActivity(intentSettings);
-                        }
-                }
-        }
+//        private class DrawerItemClickListener implements ListView.OnItemClickListener
+//        {
+//                @Override
+//                public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+//                {
+//                        mDrawerLayout.closeDrawer(mDrawerList);
+//                        if (position == 0)
+//                        {
+//                                Intent intentViewSharedShoppingList = new Intent(ShoppingActivity.this, ShowSharedActivity.class);
+//                                startActivity(intentViewSharedShoppingList);
+//                        }
+//                        else if (position == 1)
+//                        {
+//                                Intent intentFirebaseActivity = new Intent(ShoppingActivity.this, MainFirebaseActivity.class);
+//                                intentFirebaseActivity.putExtra(FIREBASE_REQUEST_CODE, FIREBASE_SIGN_OUT);
+//                                startActivity(intentFirebaseActivity);
+//                        }
+//                        else if (position == 2)
+//                        {
+//                                Intent intentSettings = new Intent(ShoppingActivity.this, SettingsActivity.class);
+//                                startActivity(intentSettings);
+//                        }
+//                }
+//        }
 
         private class ShoppingListExchangeRateLoaderCb implements LoaderManager.LoaderCallbacks<Map<String, ExchangeRate>>
         {

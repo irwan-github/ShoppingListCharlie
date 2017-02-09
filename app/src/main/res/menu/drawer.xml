@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+        <group android:checkableBehavior="single">
+                <item
+                        android:id="@+id/nav_shared_shopping_list"
+                        android:icon="@drawable/ic_cloud_download"
+                        android:title="@string/shared_shopping_list" />
+                <item
+                        android:id="@+id/nav_cloud_sign_out"
+                        android:icon="@drawable/ic_logout_white_24dp"
+                        android:title="@string/cloud_sign_out" />
+                <item
+                        android:id="@+id/nav_settings_screen"
+                        android:icon="@drawable/ic_settings"
+                        android:title="@string/settings_screen" />
+
+        </group>
+</menu>

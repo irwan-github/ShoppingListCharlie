@@ -24,8 +24,8 @@ public class PurchaseManager
 
         public PurchaseManager()
         {
-                createNewItem();
-                addNewItemInShoppingList();
+                mItem = new Item();
+                mItemInShoppingList = new ItemInShoppingList();
         }
 
         public PurchaseManager(Cursor cursor)
@@ -33,16 +33,6 @@ public class PurchaseManager
                 mCursor = cursor;
                 createExistingItem();
                 addExistingItemInShoppingList();
-        }
-
-        private void addNewItemInShoppingList()
-        {
-                mItemInShoppingList = new ItemInShoppingList();
-        }
-
-        private void createNewItem()
-        {
-                mItem = new Item();
         }
 
         /**

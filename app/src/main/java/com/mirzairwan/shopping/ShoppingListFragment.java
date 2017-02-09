@@ -388,17 +388,11 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
                 displayTranslatedPricesAndTotals();
 
-                //Show or hide the "Clear" action item
-                MenuItem clearItemsInShoppingList = mShoppingListToolbar.getMenu().findItem(R.id.clear_checked_item);
-                clearItemsInShoppingList.setEnabled(mShoppingCursorList.atLeastAnItemChecked());
-                if (mShoppingCursorList.atLeastAnItemChecked())
-                {
-                        clearItemsInShoppingList.getActionView().setAlpha(0.4f);
-                }
-                else
-                {
-                        clearItemsInShoppingList.getActionView().setAlpha(0.2f);
-                }
+                //Material Design Guide:
+                // The action bar should show only those actions that are available to the user. If an action is unavailable in the current context, hide it. Do not show it as disabled.
+                //Ref: https://developer.android.com/design/patterns/actionbar.html
+                MenuItem clearMenuItem = mShoppingListToolbar.getMenu().findItem(R.id.clear_checked_item);
+                clearMenuItem.setVisible(mShoppingCursorList.atLeastAnItemChecked());
         }
 
         /**

@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -25,12 +26,16 @@ public class MainFirebaseActivity extends AppCompatActivity implements OnFragmen
         private FirebaseAuth mAuth;
         private DatabaseReference mFireDatabase;
         private String mUserId;
+        private Toolbar mToolbar;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
         {
                 super.onCreate(savedInstanceState);
                 setContentView(R.layout.activity_main_firebase);
+                mToolbar = (Toolbar)findViewById(R.id.toolbar);
+                setSupportActionBar(mToolbar);
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
                 //Get the firebase database
                 mFireDatabase = FirebaseDatabase.getInstance().getReference();
