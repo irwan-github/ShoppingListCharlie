@@ -1,5 +1,6 @@
 package com.mirzairwan.shopping;
 
+import android.app.FragmentTransaction;
 import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.Context;
@@ -13,7 +14,6 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
-import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
@@ -30,10 +30,10 @@ import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.domain.ExchangeRate;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
-import com.mirzairwan.shopping.firebase.MainFirebaseActivity;
 import com.mirzairwan.shopping.firebase.SendShareFragment;
 import com.mirzairwan.shopping.firebase.SendSharedActivity;
 import com.mirzairwan.shopping.firebase.ShowSharedActivity;
+import com.mirzairwan.shopping.firebase.SignOutDialogFrag;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,13 +44,13 @@ import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static com.mirzairwan.shopping.ItemEditingActivity.ITEM_IS_IN_SHOPPING_LIST;
 import static com.mirzairwan.shopping.LoaderHelper.EXCHANGE_RATES_SHOPPING_LIST_LOADER_ID;
 import static com.mirzairwan.shopping.R.id.menu_database_shopping_list;
-import static com.mirzairwan.shopping.firebase.MainFirebaseActivity.FIREBASE_REQUEST_CODE;
-import static com.mirzairwan.shopping.firebase.MainFirebaseActivity.FIREBASE_SIGN_OUT;
 
 /**
  * Created by Mirza Irwan on 13/1/17.
  * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
  * Contact owner at mirza.irwan.osman@gmail.com
+ *
+ * The main activity
  */
 
 public class ShoppingActivity extends AppCompatActivity implements ShoppingListFragment.OnFragmentInteractionListener,
@@ -61,7 +61,6 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
 {
         public static final String EXCHANGE_RATE = "EXCHANGE_RATE";
         private static final String LOG_TAG = ShoppingActivity.class.getSimpleName();
-        private static final int SEND_SHARE_SHOPPING_ITEMS = 15;
 
         //ExchangeRates are cleared, populated and cached by ExchangeRateAwareLoader. Do not persist exchange rate in onSavedInstanceState
         Map<String, ExchangeRate> mExchangeRates = new HashMap<>();
@@ -75,7 +74,6 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         //Web API for fetching exchange rates
         private String mBaseEndPoint;
 
-        private Loader<Map<String, ExchangeRate>> loader;
         private ShoppingListExchangeRateLoaderCb mShoppingListExchangeRateLoaderCb;
         private ExchangeRateInput mExchangeRateInput;
         private NavigationView mNavDrawer;
@@ -94,12 +92,8 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 PreferenceManager.getDefaultSharedPreferences(this).
                         registerOnSharedPreferenceChangeListener(this);
 
-                //The following array order is important to display the proper page titles
-                String[] pageTitles = new String[]{getString(R.string.buy_list),
-                                                   getString(R.string.catalogue)};
-                PagerAdapter pagerAdapter = new PagerAdapter(getFragmentManager(), pageTitles);
-                ViewPager viewPager = (ViewPager) findViewById(R.id.pager_shopping);
-                viewPager.setAdapter(pagerAdapter);
+                FragmentTransaction txn = getFragmentManager().beginTransaction();
+                txn.add(R.id.frag_container, ShoppingListFragment.newInstance()).commit();
 
                 // Set a Toolbar to replace the ActionBar.
                 mToolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -126,7 +120,6 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 //Initialize the exchange rate loader but do NOT let it fetch exchange rate until
                 //shopping list fragment has finished fetching shopping list. Upon fetching the shopping list
                 //shopping list fragment will request to this activity class to fetch exchange rates.
-                //So to prevent this activity from fetching exchange rate now, set mSourceCurrencies to null
                 mExchangeRateInput = new ExchangeRateInput();
 
                 //Setting the following before initLoader will not notify exchange rate loader
@@ -185,43 +178,45 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                         public boolean onNavigationItemSelected(@NonNull MenuItem item)
                         {
                                 selectDrawerItem(item);
-                                return false;
+                                return true;
                         }
                 });
 
                 mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, mToolbar, R.string.drawer_open, R.string.drawer_close);
 
                 mDrawerLayout.addDrawerListener(mDrawerToggle);
-                //getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_HOME_AS_UP | ActionBar.DISPLAY_SHOW_TITLE);
+
         }
 
         private void selectDrawerItem(MenuItem menuItem)
         {
                 int itemId = menuItem.getItemId();
+
+                // Highlight the selected item has been done by NavigationView
+                menuItem.setChecked(true);
+
                 switch (itemId)
                 {
+                        case R.id.nav_shopping_list:
+                                getFragmentManager().beginTransaction().replace(R.id.frag_container, ShoppingListFragment.newInstance()).commit();
+                                break;
                         case R.id.nav_shared_shopping_list:
-                        {
                                 Intent intentViewSharedShoppingList = new Intent(ShoppingActivity.this, ShowSharedActivity.class);
                                 startActivity(intentViewSharedShoppingList);
                                 break;
-                        }
                         case R.id.nav_cloud_sign_out:
-                        {
-                                Intent intentFirebaseActivity = new Intent(ShoppingActivity.this, MainFirebaseActivity.class);
-                                intentFirebaseActivity.putExtra(FIREBASE_REQUEST_CODE, FIREBASE_SIGN_OUT);
-                                startActivity(intentFirebaseActivity);
+                                SignOutDialogFrag signOutDialogFrag = new SignOutDialogFrag();
+                                signOutDialogFrag.show(getFragmentManager(), "SIGN_OUT");
                                 break;
-                        }
                         case R.id.nav_settings_screen:
-                        {
-                                Intent intentSettings = new Intent(ShoppingActivity.this, SettingsActivity.class);
-                                startActivity(intentSettings);
+                                getFragmentManager().beginTransaction().replace(R.id.frag_container, new SettingsFragment()).commit();
                                 break;
-                        }
+                        case R.id.nav_history:
+                                getFragmentManager().beginTransaction().replace(R.id.frag_container, ShoppingHistoryFragment.newInstance()).commit();
+                                break;
+                        default:
+                                menuItem.setChecked(false);
                 }
-                // Highlight the selected item has been done by NavigationView
-                menuItem.setChecked(true);
 
                 mDrawerLayout.closeDrawers();
         }
@@ -426,31 +421,6 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 //startActivity(intent);
                 startActivity(intent);
         }
-
-//        private class DrawerItemClickListener implements ListView.OnItemClickListener
-//        {
-//                @Override
-//                public void onItemClick(AdapterView<?> parent, View view, int position, long id)
-//                {
-//                        mDrawerLayout.closeDrawer(mDrawerList);
-//                        if (position == 0)
-//                        {
-//                                Intent intentViewSharedShoppingList = new Intent(ShoppingActivity.this, ShowSharedActivity.class);
-//                                startActivity(intentViewSharedShoppingList);
-//                        }
-//                        else if (position == 1)
-//                        {
-//                                Intent intentFirebaseActivity = new Intent(ShoppingActivity.this, MainFirebaseActivity.class);
-//                                intentFirebaseActivity.putExtra(FIREBASE_REQUEST_CODE, FIREBASE_SIGN_OUT);
-//                                startActivity(intentFirebaseActivity);
-//                        }
-//                        else if (position == 2)
-//                        {
-//                                Intent intentSettings = new Intent(ShoppingActivity.this, SettingsActivity.class);
-//                                startActivity(intentSettings);
-//                        }
-//                }
-//        }
 
         private class ShoppingListExchangeRateLoaderCb implements LoaderManager.LoaderCallbacks<Map<String, ExchangeRate>>
         {

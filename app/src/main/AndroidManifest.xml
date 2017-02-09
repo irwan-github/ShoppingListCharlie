@@ -45,13 +45,6 @@
                 </activity>
                 <activity android:name=".data.AndroidDatabaseManager"/>
                 <activity
-                        android:name=".SettingsActivity"
-                        android:parentActivityName=".ShoppingActivity">
-                        <meta-data
-                                android:name="android.support.PARENT_ACTIVITY"
-                                android:value=".ShoppingActivity"/>
-                </activity>
-                <activity
                         android:name=".firebase.MainFirebaseActivity"
                         android:parentActivityName=".ShoppingActivity">
                         <meta-data

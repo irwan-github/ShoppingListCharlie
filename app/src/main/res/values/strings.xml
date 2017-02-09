@@ -105,4 +105,6 @@
         <string name="header_sign_in_msg">Sign in shopping list cloud</string>
         <string name="sign_out_msg">Do you want to sign out from shopping list cloud?</string>
         <string name="share_shopping_list_success">Sharing is successful.</string>
+        <string name="history">History</string>
+        <string name="shopping_list">Shopping list</string>
 </resources>

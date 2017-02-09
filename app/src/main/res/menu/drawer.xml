@@ -3,6 +3,11 @@
 
         <group android:checkableBehavior="single">
                 <item
+                        android:id="@+id/nav_shopping_list"
+                        android:icon="@drawable/ic_shopping_basket"
+                        android:title="@string/shopping_list"
+                        />
+                <item
                         android:id="@+id/nav_shared_shopping_list"
                         android:icon="@drawable/ic_cloud_download"
                         android:title="@string/shared_shopping_list" />
@@ -14,6 +19,11 @@
                         android:id="@+id/nav_settings_screen"
                         android:icon="@drawable/ic_settings"
                         android:title="@string/settings_screen" />
+
+                <item
+                        android:id="@+id/nav_history"
+                        android:icon="@drawable/ic_stat_name"
+                        android:title="@string/history" />
 
         </group>
 </menu>
