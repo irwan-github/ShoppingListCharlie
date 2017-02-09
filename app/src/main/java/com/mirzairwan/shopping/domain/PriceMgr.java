@@ -121,15 +121,12 @@ public class PriceMgr
         if (item == null)
             throw new IllegalArgumentException("Item cannot be null");
 
-        //Clear the prices in the  object first before adding because it will accumulate identical prices types
-        item.clearPrices();
-
         mUnitPrice.setUnitPrice(FormatHelper.parseTwoDecimalPlaces(unitPriceFromInputField));
         mBundlePrice.setBundlePrice(FormatHelper.parseTwoDecimalPlaces(bundlePriceFromInputField),
                 Double.parseDouble(bundleQtyFromInputField));
 
-        item.addPrice(mUnitPrice);
-        item.addPrice(mBundlePrice);
+//        item.addPrice(mUnitPrice);
+//        item.addPrice(mBundlePrice);
 
     }
 

@@ -26,7 +26,6 @@ import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import com.mirzairwan.shopping.data.DaoContentProv;
 import com.mirzairwan.shopping.data.DaoManager;
-import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Price;
 
 import static com.mirzairwan.shopping.R.xml.preferences;
@@ -127,7 +126,6 @@ public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalog
                 String msg;
                 if (isItemChecked)
                 {
-                        Item item = mShoppingHistoryList.getItem(position);
                         long itemId = mShoppingHistoryList.getItemId(position);
                         String itemName = mShoppingHistoryList.getItemName(position);
                         long defaultPriceId = mShoppingHistoryList.getPriceId(position);
@@ -136,10 +134,8 @@ public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalog
                 }
                 else
                 {
-                        //ItemInShoppingList buyItem = mShoppingHistoryList.removeFromShoppingList(position);
                         long shoppingListItemId = mShoppingHistoryList.getShoppingListItemId(position);
                         String itemName = mShoppingHistoryList.getItemName(position);
-                        //msg = daoManager.delete(buyItem) > 0 ? buyItem.getItem().getName() + " " + getString(R.string.remove_item_from_shopping_list_ok) : buyItem.getItem().getName() + " " + getString(R.string.remove_item_from_shopping_list_error);
                         msg = daoManager.delete(shoppingListItemId) > 0 ? itemName+ " " + getString(R.string.remove_item_from_shopping_list_ok) : itemName + " " + getString(R.string.remove_item_from_shopping_list_error);
                 }
                 Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();

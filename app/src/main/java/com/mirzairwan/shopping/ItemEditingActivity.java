@@ -111,7 +111,8 @@ public class ItemEditingActivity extends ItemActivity
                         return;
                 }
 
-                String msg = daoManager.update(mItemManager.getItem(), mItemManager.getItem().getPrices(), mPictureMgr);
+                //String msg = daoManager.update(mItemManager.getItem(), mItemManager.getItem().getPrices(), mPictureMgr);
+                String msg = daoManager.update(mItemManager.getItem(), priceMgr.getPrices(), mPictureMgr);
 
                 Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
 

@@ -270,13 +270,11 @@ public class ShoppingListEditingActivity extends ItemActivity
 
                 if (actionMode == CREATE_BUY_ITEM_MODE)
                 {
-
-                        msg = daoManager.insert(mPurchaseManager.getItemInShoppingList(), mPurchaseManager.getitem(), mPurchaseManager.getitem().getPrices(), mPictureMgr);
-
+                        msg = daoManager.insert(mPurchaseManager.getItemInShoppingList(), mPurchaseManager.getitem(), priceMgr.getPrices(), mPictureMgr);
                 }
                 else //Existing item in the shopping list
                 {
-                        msg = daoManager.update(mPurchaseManager.getItemInShoppingList(), mPurchaseManager.getitem(), mPurchaseManager.getitem().getPrices(), mPictureMgr);
+                        msg = daoManager.update(mPurchaseManager.getItemInShoppingList(), mPurchaseManager.getitem(), priceMgr.getPrices(), mPictureMgr);
                 }
 
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();

@@ -1,10 +1,7 @@
 package com.mirzairwan.shopping.domain;
 
-import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
-
-import com.mirzairwan.shopping.PictureUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -321,11 +318,5 @@ public class PictureMgr implements Parcelable
                 dest.writeTypedList(mDiscardedPictures);
                 dest.writeParcelable(mPictureInDb, flags);
                 dest.writeString(mAuthorityPackage);
-        }
-
-        public void rescalePictureInFilesystem(int reqWidth, int reqHeight)
-        {
-                Bitmap bitmap = PictureUtil.decodeSampledBitmapFile(getPictureForViewing().getPath(), reqWidth, reqHeight);
-
         }
 }

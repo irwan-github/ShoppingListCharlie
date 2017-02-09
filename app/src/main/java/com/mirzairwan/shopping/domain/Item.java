@@ -3,9 +3,7 @@ package com.mirzairwan.shopping.domain;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -32,14 +30,13 @@ public class Item implements Parcelable
         };
         static AtomicInteger nextId = new AtomicInteger(0);
         private long _id; //Assigned and used by SQLite and Android
-        private int mId; //Domain id. For in-memory use only. Not persisted in database.
         private String mItemName;
         private String mBrand;
         private String mDescription;
         private String mCountryOrigin;
         private boolean mIsInBuyList = false;
         private Date mLastUpdatedOn;
-        private List<Price> mPrices = new ArrayList<>();
+        //private List<Price> mPrices = new ArrayList<>();
 
         public Item()
         {
@@ -62,7 +59,6 @@ public class Item implements Parcelable
                 {
                         throw new IllegalArgumentException("Item name cannot empty");
                 }
-                mId = nextId.incrementAndGet();
                 _id = id;
                 mItemName = itemName;
                 mBrand = brand;
@@ -74,14 +70,12 @@ public class Item implements Parcelable
         private Item(Parcel in)
         {
                 _id = in.readLong();
-                mId = in.readInt();
                 mItemName = in.readString();
                 mBrand = in.readString();
                 mDescription = in.readString();
                 mCountryOrigin = in.readString();
                 mIsInBuyList = in.readByte() != 0;
                 mLastUpdatedOn = new Date(in.readLong());
-                in.readTypedList(mPrices, Price.CREATOR);
         }
 
         public long getId()
@@ -144,60 +138,6 @@ public class Item implements Parcelable
                 mIsInBuyList = inBuyList;
         }
 
-        /**
-         * Make this package access so that only PriceMgr can access
-         *
-         * @param price
-         */
-        void addPrice(Price price)
-        {
-                if (price == null)
-                {
-                        throw new IllegalArgumentException("Price cannot be bull");
-                }
-                mPrices.add(price);
-        }
-
-        public void clearPrices()
-        {
-                mPrices.clear();
-        }
-
-        public List<Price> getPrices()
-        {
-                return mPrices;
-        }
-
-        int getItemId()
-        {
-                return mId;
-        }
-
-        public void setItemId(int id)
-        {
-                mId = id;
-        }
-
-        Price getItemPrice(long shopId, Price.Type selectedPriceType)
-        {
-                for (Price price : mPrices)
-                {
-                        if (price.getShopId() == shopId)
-                        {
-
-                                int typePrice = price.getPriceType().getType();
-                                int typeCriteria = selectedPriceType.getType();
-
-                                if (typePrice == typeCriteria)
-                                {
-                                        return price;
-                                }
-                        }
-
-                }
-                return null;
-        }
-
         public Date getLastUpdateOn()
         {
                 return mLastUpdatedOn;
@@ -218,7 +158,7 @@ public class Item implements Parcelable
         public void writeToParcel(Parcel dest, int flags)
         {
                 dest.writeLong(_id);
-                dest.writeInt(mId);
+
                 dest.writeString(mItemName);
                 dest.writeString(mBrand);
                 dest.writeString(mDescription);
@@ -228,7 +168,6 @@ public class Item implements Parcelable
                 {
                         dest.writeLong(mLastUpdatedOn.getTime());
                 }
-                dest.writeTypedList(mPrices);
         }
 
 

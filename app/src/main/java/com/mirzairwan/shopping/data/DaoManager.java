@@ -16,7 +16,7 @@ import java.util.List;
 public interface DaoManager
 {
          /**
-         *  Create a purchase item listed in the catalog.
+         *  Create a purchase item listed in the history.
          * Pre-condition: Item and prices must already exist in the history.
          * @param itemId
          * @param priceId
@@ -37,20 +37,12 @@ public interface DaoManager
         String insert(ItemInShoppingList buyItem, Item item, List<Price> itemPrices, PictureMgr pictureMgr);
 
         /**
-         * Delete item in the shopping list. Item, pictures and prices in catalogue is NOT deleted.
-         *
-         * @param buyItem
-         * @return The number of rows deleted.
-         */
-        int delete(ItemInShoppingList buyItem);
-
-        /**
          * Delete item in the shopping list. Item, pictures and prices  are NOT deleted.
          *
-         * @param buyItem
+         * @param buyItemId
          * @return The number of rows deleted.
          */
-        int delete(long buyItem);
+        int delete(long buyItemId);
 
         /**
          * Update purchase, item, picture and prices details
@@ -104,8 +96,5 @@ public interface DaoManager
         String deleteCheckedItems();
 
         int deletePicture(long itemId);
-
-        int deletePicture(PictureMgr pictureMgr);
-
 
 }

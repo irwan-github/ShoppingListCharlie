@@ -295,23 +295,6 @@ public class DaoContentProv implements DaoManager
                 return deletePictureFile;
         }
 
-
-        @Override
-        public int deletePicture(PictureMgr pictureMgr)
-        {
-                List<Picture> discardedPictures = pictureMgr.getDiscardedPictures();
-                if (discardedPictures.size() == 0)
-                {
-                        return 0;
-                }
-                int deleted = deleteFileFromFilesystem(discardedPictures.get(0).getFile());
-                if (deleted > 0)
-                {
-                        pictureMgr.getDiscardedPictures().clear();
-                }
-                return deleted;
-        }
-
         private void logDeleteDiscardedFileFromFilesystem(int deletedFiles, String prefix)
         {
                 String msg = prefix + " : " + (deletedFiles > 0 ? "OK" : "Failed");
@@ -510,13 +493,6 @@ public class DaoContentProv implements DaoManager
 
                 Log.d(LOG_TAG, dbLog);
 
-        }
-
-        @Override
-        public int delete(ItemInShoppingList buyItem)
-        {
-                Uri uriDeleteBuyItem = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItem.getId());
-                return mContext.getContentResolver().delete(uriDeleteBuyItem, null, null);
         }
 
         @Override

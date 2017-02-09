@@ -1,8 +1,5 @@
 package com.mirzairwan.shopping.domain;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-
 import java.util.Date;
 
 /**
@@ -14,21 +11,8 @@ import java.util.Date;
  * The buy item has a checked status in which the item is item is a check or uncheck,
  */
 
-public class ItemInShoppingList implements Parcelable
+public class ItemInShoppingList
 {
-        public static final Creator<ItemInShoppingList> CREATOR = new Creator<ItemInShoppingList>()
-        {
-                public ItemInShoppingList createFromParcel(Parcel in)
-                {
-                        return new ItemInShoppingList(in);
-                }
-
-                public ItemInShoppingList[] newArray(int size)
-                {
-                        return new ItemInShoppingList[size];
-                }
-        };
-
         private long _id; //sqlite id
         private int mQuantity; //Refers to single unit or bundle units
         private boolean mIsChecked = false; //Checked/Unchecked state in the buy list
@@ -53,16 +37,6 @@ public class ItemInShoppingList implements Parcelable
                 mQuantity = quantity;
                 mSelectedPrice = selectedPrice;
                 mLastUpdatedOn = lastUpdatedOn;
-        }
-
-
-        public ItemInShoppingList(Parcel in)
-        {
-                _id = in.readLong();
-                mQuantity = in.readInt();
-                mSelectedPrice = in.readParcelable(getClass().getClassLoader());
-                mIsChecked = in.readInt() == 1;
-                mLastUpdatedOn = in.readLong() > 0 ? new Date(in.readLong()) : null;
         }
 
         public ItemInShoppingList()
@@ -118,25 +92,6 @@ public class ItemInShoppingList implements Parcelable
         public void setLastUpdatedOn(Date updateTime)
         {
                 mLastUpdatedOn = updateTime;
-        }
-
-        @Override
-        public int describeContents()
-        {
-                return 0;
-        }
-
-        @Override
-        public void writeToParcel(Parcel dest, int flags)
-        {
-                dest.writeLong(_id);
-                dest.writeInt(mQuantity);
-                dest.writeParcelable(mSelectedPrice, flags);
-                dest.writeInt(mIsChecked ? 1 : 0);
-                if (mLastUpdatedOn != null)
-                {
-                        dest.writeLong(mLastUpdatedOn.getTime());
-                }
         }
 
 
