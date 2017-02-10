@@ -1,9 +1,10 @@
 package com.mirzairwan.shopping.firebase;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.app.Fragment;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -35,6 +36,7 @@ import com.mirzairwan.shopping.R;
 
 import java.util.ArrayList;
 
+import static com.mirzairwan.shopping.firebase.AuthenticationDialogFrag.REQUEST_LOGIN_CODE;
 import static com.mirzairwan.shopping.firebase.Constants.SHARED_SHOPPING_LIST;
 
 /**
@@ -43,7 +45,7 @@ import static com.mirzairwan.shopping.firebase.Constants.SHARED_SHOPPING_LIST;
  * Contact owner at mirza.irwan.osman@gmail.com
  */
 
-public class ShareeShoppingListFragment extends Fragment
+public class ShareeShoppingListFragment extends BaseFragment
 {
         private static final String LOG_TAG = ShareeShoppingListFragment.class.getSimpleName();
         private DatabaseReference mRootRef;
@@ -59,20 +61,77 @@ public class ShareeShoppingListFragment extends Fragment
         @Override
         public void onCreate(Bundle savedInstanceState)
         {
+                Log.d(LOG_TAG, ">>> onCreate");
                 super.onCreate(savedInstanceState);
-                mRootRef = FirebaseDatabase.getInstance().getReference();
-                mDatabaseUser = FirebaseAuth.getInstance().getCurrentUser();
         }
 
         @Nullable
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
+                Log.d(LOG_TAG, ">>> onCreateView");
                 mRootView = inflater.inflate(R.layout.fragment_show_shared, container, false);
                 mEmptyView = mRootView.findViewById(R.id.empty_shared_shopping_image);
+                mShoppingListView = (ListView) mRootView.findViewById(R.id.shared_cloud_shopping_list);
                 getActivity().setTitle(R.string.share_shopping_list_txt);
+                return mRootView;
+        }
+
+        @Override
+        public void onResume()
+        {
+                Log.d(LOG_TAG, ">>> onResume");
+                super.onResume();
+                if (mAuth.getCurrentUser() != null)
+                {
+                        mUserId = mAuth.getCurrentUser().getUid();
+                        onAuthenticationSuccess(mAuth.getCurrentUser());
+                        processSocialShoppingList();
+                }
+                else
+                {
+                        AuthenticationDialogFrag authenticationFrag = new AuthenticationDialogFrag();
+                        authenticationFrag.setTargetFragment(this, REQUEST_LOGIN_CODE);
+                        authenticationFrag.show(getFragmentManager(), "SIGN_IN");
+                }
+        }
+
+        protected void processSocialShoppingList()
+        {
                 progressDialog = new ProgressDialogFragment();
                 progressDialog.show(getFragmentManager(), "Getting");
+                setupFirebaseRoot();
+                setupListView();
+        }
+
+        @Override
+        public void onPause()
+        {
+                Log.d(LOG_TAG, ">>> onPause");
+                super.onPause();
+        }
+
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent data)
+        {
+                if (requestCode == REQUEST_LOGIN_CODE)
+                {
+                        if (resultCode == Activity.RESULT_OK)
+                        {
+                                processSocialShoppingList();
+                        }
+                        else if (resultCode == Activity.RESULT_CANCELED)
+                        {
+                                getFragmentManager().popBackStack();
+                        }
+                }
+        }
+
+        private void setupFirebaseRoot()
+        {
+                mRootRef = FirebaseDatabase.getInstance().getReference();
+                mDatabaseUser = FirebaseAuth.getInstance().getCurrentUser();
+
                 sharedShoppingListRef = mRootRef.child(SHARED_SHOPPING_LIST).child(mDatabaseUser.getUid());
                 sharedShoppingListRef.orderByChild("name").addListenerForSingleValueEvent(new ValueEventListener()
                 {
@@ -94,14 +153,10 @@ public class ShareeShoppingListFragment extends Fragment
                         }
                 });
 
-                setupListView();
-                return mRootView;
         }
 
         private void setupListView()
         {
-
-                mShoppingListView = (ListView) mRootView.findViewById(R.id.shared_cloud_shopping_list);
                 mItemRows = new ShareeShoppingListAdapter(getActivity(), sharedShoppingListRef);
                 mShoppingListView.setAdapter(mItemRows);
 

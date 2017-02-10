@@ -82,6 +82,7 @@ public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalog
                 ListView allItemsListView = (ListView) rootView.findViewById(R.id.lv_all_items);
                 setupListView(allItemsListView);
                 setEmptyView(rootView, allItemsListView);
+                getActivity().setTitle(R.string.history);
 
                 PreferenceManager.setDefaultValues(getActivity(), preferences, false);
                 PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);

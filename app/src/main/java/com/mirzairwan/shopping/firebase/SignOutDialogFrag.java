@@ -1,8 +1,10 @@
 package com.mirzairwan.shopping.firebase;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
@@ -18,6 +20,7 @@ import com.mirzairwan.shopping.R;
 public class SignOutDialogFrag extends DialogFragment
 {
         private FirebaseAuth mAuth;
+        private OnSignOutListener mOnSignOutListener;
 
         @Override
         public void onCreate(Bundle savedInstanceState)
@@ -37,6 +40,7 @@ public class SignOutDialogFrag extends DialogFragment
                         {
                                 mAuth.signOut();
                                 SignOutDialogFrag.this.dismiss();
+                                mOnSignOutListener.onSignOut();
                         }
                 }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                         @Override
@@ -47,5 +51,23 @@ public class SignOutDialogFrag extends DialogFragment
                 });
 
                 return builder.create();
+        }
+
+        @Override
+        public void onAttach(Context context)
+        {
+                super.onAttach(context);
+        }
+
+        @Override
+        public void onAttach(Activity activity)
+        {
+                super.onAttach(activity);
+                mOnSignOutListener = (OnSignOutListener)activity;
+        }
+
+        public  interface OnSignOutListener
+        {
+                void onSignOut();
         }
 }

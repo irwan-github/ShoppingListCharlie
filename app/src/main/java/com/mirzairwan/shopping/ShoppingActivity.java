@@ -1,5 +1,6 @@
 package com.mirzairwan.shopping;
 
+import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.LoaderManager;
 import android.content.ContentUris;
@@ -32,7 +33,7 @@ import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.firebase.SendShareFragment;
 import com.mirzairwan.shopping.firebase.SendSharedActivity;
-import com.mirzairwan.shopping.firebase.ShowSharedActivity;
+import com.mirzairwan.shopping.firebase.ShareeShoppingListFragment;
 import com.mirzairwan.shopping.firebase.SignOutDialogFrag;
 
 import java.util.HashMap;
@@ -49,7 +50,7 @@ import static com.mirzairwan.shopping.R.id.menu_database_shopping_list;
  * Created by Mirza Irwan on 13/1/17.
  * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
  * Contact owner at mirza.irwan.osman@gmail.com
- *
+ * <p>
  * The main activity
  */
 
@@ -57,7 +58,8 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                                                                    ShoppingHistoryFragment.OnFragmentInteractionListener,
                                                                    OnPictureRequestListener,
                                                                    OnExchangeRateRequestListener,
-                                                                   SharedPreferences.OnSharedPreferenceChangeListener
+                                                                   SharedPreferences.OnSharedPreferenceChangeListener,
+                                                                   SignOutDialogFrag.OnSignOutListener
 {
         public static final String EXCHANGE_RATE = "EXCHANGE_RATE";
         private static final String LOG_TAG = ShoppingActivity.class.getSimpleName();
@@ -93,7 +95,9 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                         registerOnSharedPreferenceChangeListener(this);
 
                 FragmentTransaction txn = getFragmentManager().beginTransaction();
-                txn.add(R.id.frag_container, ShoppingListFragment.newInstance()).commit();
+                FragmentTransaction fragmentTransaction = txn.add(R.id.frag_container, ShoppingListFragment.newInstance());
+                fragmentTransaction.addToBackStack(getString(R.string.shopping_list));
+                fragmentTransaction.commit();
 
                 // Set a Toolbar to replace the ActionBar.
                 mToolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -198,27 +202,56 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 switch (itemId)
                 {
                         case R.id.nav_shopping_list:
-                                getFragmentManager().beginTransaction().replace(R.id.frag_container, ShoppingListFragment.newInstance()).commit();
+                                getFragmentManager().popBackStack(getString(R.string.shopping_list), 0);
                                 break;
                         case R.id.nav_shared_shopping_list:
-                                Intent intentViewSharedShoppingList = new Intent(ShoppingActivity.this, ShowSharedActivity.class);
-                                startActivity(intentViewSharedShoppingList);
+                                FragmentTransaction socialShoppingListTxn = getFragmentManager().beginTransaction().replace(R.id.frag_container, new ShareeShoppingListFragment());
+                                socialShoppingListTxn.addToBackStack(getString((R.string.share_shopping_list_txt))).commit();
                                 break;
                         case R.id.nav_cloud_sign_out:
                                 SignOutDialogFrag signOutDialogFrag = new SignOutDialogFrag();
                                 signOutDialogFrag.show(getFragmentManager(), "SIGN_OUT");
                                 break;
                         case R.id.nav_settings_screen:
-                                getFragmentManager().beginTransaction().replace(R.id.frag_container, new SettingsFragment()).commit();
+                                FragmentTransaction settingTxn = getFragmentManager().beginTransaction().replace(R.id.frag_container, new SettingsFragment());
+                                settingTxn.addToBackStack(getString(R.string.settings_screen)).commit();
                                 break;
                         case R.id.nav_history:
-                                getFragmentManager().beginTransaction().replace(R.id.frag_container, ShoppingHistoryFragment.newInstance()).commit();
+                                FragmentTransaction historyTxn = getFragmentManager().beginTransaction().replace(R.id.frag_container, ShoppingHistoryFragment.newInstance());
+                                historyTxn.addToBackStack(getString(R.string.history)).commit();
                                 break;
                         default:
                                 menuItem.setChecked(false);
                 }
 
                 mDrawerLayout.closeDrawers();
+        }
+
+        @Override
+        public void onBackPressed()
+        {
+                FragmentManager fragmentManager = getFragmentManager();
+                int backStackEntryCount = fragmentManager.getBackStackEntryCount();
+                if (backStackEntryCount > 0)
+                {
+                        int index = backStackEntryCount - 1;
+                        fragmentManager.popBackStack();
+                        --index;
+                        FragmentManager.BackStackEntry backStackEntryAt = fragmentManager.getBackStackEntryAt(index);
+                        String name = backStackEntryAt.getName();
+                        Log.d(LOG_TAG, ">>> name of backstactentry " + name);
+                        setTitle(name);
+                }
+                else
+                {
+                        super.onBackPressed();
+                }
+        }
+
+        @Override
+        public void onSignOut()
+        {
+                getFragmentManager().popBackStack("SHOPPING_LIST", 0);
         }
 
         @Override
