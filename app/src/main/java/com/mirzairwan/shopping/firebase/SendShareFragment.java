@@ -3,7 +3,6 @@ package com.mirzairwan.shopping.firebase;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.app.Fragment;
 import android.app.LoaderManager;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -14,14 +13,9 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ProgressBar;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -43,7 +37,6 @@ import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 
 /**
  * Created by Mirza Irwan on 18/12/16.
@@ -51,26 +44,30 @@ import java.util.Set;
  * Contact owner at mirza.irwan.osman@gmail.com
  */
 
-public class SendShareFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>
+public class SendShareFragment extends BaseFragment implements LoaderManager.LoaderCallbacks<Cursor>
 {
         public static final String ITEM_TO_SHARE = "ITEM_TO_SHARE";
         public static final String SHAREE_EMAIL = "SHAREE_EMAIL";
         private static final String LOG_TAG = SendShareFragment.class.getSimpleName();
         private OnPictureRequestListener mOnPictureRequestListener;
         private DatabaseReference mRootRef;
-        private FirebaseUser mFirebaserUser;
         private ArrayList<Item> mItemsToShare = new ArrayList<>();
-        private ProgressBar mProgressBar;
         private String mShareeEmail;
         private int mItemSaveShareCount;
         private NotificationManager mNotificationManager;
         private NotificationCompat.Builder mNotificationBuilder;
+        private NotificationCompat.InboxStyle inboxStyle;
 
-        public static SendShareFragment getInstance(HashSet<Long> ids, String shareeEmail)
+        public static SendShareFragment getInstance(Long[] ids, String shareeEmail)
         {
                 SendShareFragment shareFragment = new SendShareFragment();
                 Bundle args = new Bundle();
-                args.putSerializable(ITEM_TO_SHARE, ids);
+                long[] ide = new long[ids.length];
+                for (int k = 0; k < ids.length; ++k)
+                {
+                        ide[k] = ids[k];
+                }
+                args.putLongArray(ITEM_TO_SHARE, ide);
                 args.putString(SHAREE_EMAIL, shareeEmail);
                 shareFragment.setArguments(args);
                 return shareFragment;
@@ -80,36 +77,50 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
         public void onCreate(Bundle savedInstanceState)
         {
                 super.onCreate(savedInstanceState);
-                mFirebaserUser = FirebaseAuth.getInstance().getCurrentUser();
                 mRootRef = FirebaseDatabase.getInstance().getReference();
+                String email = getArguments().getString(SHAREE_EMAIL);
+                long[] ids = getArguments().getLongArray(ITEM_TO_SHARE);
+
+                inboxStyle = new NotificationCompat.InboxStyle();
+                mNotificationManager = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+
+                mNotificationBuilder = new NotificationCompat.Builder(getActivity());
+                mNotificationBuilder.setContentTitle("Shopping item(s) shared:").setSmallIcon(android.R.drawable.stat_notify_chat);
         }
 
-        @Nullable
         @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        protected void processSocialShoppingList()
         {
-                View rootView = inflater.inflate(R.layout.fragment_share_shopping_list, container, false);
-                mProgressBar = (ProgressBar) rootView.findViewById(R.id.progress_bar_sharee);
-                getActivity().setTitle("Sending shopping list items");
-                return rootView;
+                getLoaderManager().initLoader(64, null, this);
         }
 
         @Override
         public void onActivityCreated(Bundle savedInstanceState)
         {
                 super.onActivityCreated(savedInstanceState);
-                getLoaderManager().initLoader(64, null, this);
         }
 
-        @Override
-        public Loader<Cursor> onCreateLoader(int id, Bundle args)
+
+        public Loader<Cursor> onCreateLoader2(int id, Bundle args)
         {
                 Log.d(LOG_TAG, ">>>>>>> onCreateLoader");
-                String[] projection = new String[]{ToBuyItemsEntry._ID, ToBuyItemsEntry.COLUMN_ITEM_ID, ToBuyItemsEntry.COLUMN_QUANTITY, ToBuyItemsEntry.COLUMN_IS_CHECKED, ItemsEntry.COLUMN_NAME, ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_COUNTRY_ORIGIN, ItemsEntry.COLUMN_DESCRIPTION, Contract.PicturesEntry.COLUMN_FILE_PATH, PricesEntry
-                        .COLUMN_PRICE_TYPE_ID, PricesEntry.COLUMN_PRICE, PricesEntry.COLUMN_CURRENCY_CODE};
+                String[] projection = new String[]{ToBuyItemsEntry._ID,
+                                                   ToBuyItemsEntry.COLUMN_ITEM_ID,
+                                                   ToBuyItemsEntry.COLUMN_QUANTITY,
+                                                   ToBuyItemsEntry.COLUMN_IS_CHECKED,
+                                                   ItemsEntry.COLUMN_NAME,
+                                                   ItemsEntry.COLUMN_BRAND,
+                                                   ItemsEntry.COLUMN_COUNTRY_ORIGIN,
+                                                   ItemsEntry.COLUMN_DESCRIPTION,
+                                                   Contract.PicturesEntry.COLUMN_FILE_PATH,
+                                                   PricesEntry.COLUMN_PRICE_TYPE_ID,
+                                                   PricesEntry.COLUMN_PRICE,
+                                                   PricesEntry.COLUMN_CURRENCY_CODE};
 
                 Uri uri = Contract.ShoppingList.CONTENT_URI;
-                Set<Long> itemIds = (Set<Long>) getArguments().getSerializable(ITEM_TO_SHARE);
+                Bundle arguments = getArguments();
+                HashSet<Long> itemIds = (HashSet<Long>) arguments.getSerializable(ITEM_TO_SHARE);
+
                 Iterator<Long> iterator = itemIds.iterator();
                 String subSelection = null;
                 if (itemIds.size() > 0)
@@ -147,6 +158,62 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
         }
 
         @Override
+        public Loader<Cursor> onCreateLoader(int id, Bundle args)
+        {
+                Log.d(LOG_TAG, ">>>>>>> onCreateLoader");
+                String[] projection = new String[]{ToBuyItemsEntry._ID,
+                                                   ToBuyItemsEntry.COLUMN_ITEM_ID,
+                                                   ToBuyItemsEntry.COLUMN_QUANTITY,
+                                                   ToBuyItemsEntry.COLUMN_IS_CHECKED,
+                                                   ItemsEntry.COLUMN_NAME,
+                                                   ItemsEntry.COLUMN_BRAND,
+                                                   ItemsEntry.COLUMN_COUNTRY_ORIGIN,
+                                                   ItemsEntry.COLUMN_DESCRIPTION,
+                                                   Contract.PicturesEntry.COLUMN_FILE_PATH,
+                                                   PricesEntry.COLUMN_PRICE_TYPE_ID,
+                                                   PricesEntry.COLUMN_PRICE,
+                                                   PricesEntry.COLUMN_CURRENCY_CODE};
+
+                Uri uri = Contract.ShoppingList.CONTENT_URI;
+                Bundle arguments = getArguments();
+                long[] itemIds = arguments.getLongArray(ITEM_TO_SHARE);
+                int k = 0;
+                String subSelection = null;
+                if (itemIds.length > 0)
+                {
+                        subSelection = " IN (";
+                        while (k < itemIds.length)
+                        {
+                                ++k;
+                                subSelection += "?";
+                                if (k == itemIds.length)
+                                {
+                                        subSelection += ")";
+                                }
+                                else
+                                {
+                                        subSelection += ",";
+                                }
+                        }
+                }
+
+                //Summary screen shows only selected price
+                String selection = PricesEntry.TABLE_NAME + "." + PricesEntry._ID + "=" +
+                        ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID +
+                        " AND " + ToBuyItemsEntry.TABLE_NAME + "." + ToBuyItemsEntry._ID + subSelection;
+
+                String[] selectionArgs = new String[itemIds.length];
+                int q = 0;
+                for (Long idt : itemIds)
+                {
+                        selectionArgs[q] = String.valueOf(idt);
+                        ++q;
+                }
+
+                return new CursorLoader(getActivity(), uri, projection, selection, selectionArgs, null);
+        }
+
+        @Override
         public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
         {
                 Log.d(LOG_TAG, ">>>>>>> onLoadFinished Cursor");
@@ -157,6 +224,7 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
 
         private void prepareSharedItems(Cursor cursor)
         {
+                FirebaseUser firebaserUser = mAuth.getCurrentUser();
                 while (cursor.moveToNext())
                 {
                         String itemName = cursor.getString(cursor.getColumnIndex(ItemsEntry.COLUMN_NAME));
@@ -167,7 +235,7 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
                         String currencyCode = cursor.getString(colCurrencyCodeIdx);
                         int colBuyItemQty = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_QUANTITY);
                         int qty = cursor.getInt(colBuyItemQty);
-                        mItemsToShare.add(new Item(mFirebaserUser.getEmail(), mFirebaserUser.getUid(), itemName, brand, priceTag, currencyCode, qty));
+                        mItemsToShare.add(new Item(firebaserUser.getEmail(), firebaserUser.getUid(), itemName, brand, priceTag, currencyCode, qty));
                         Log.d(LOG_TAG, "Item name = " + itemName);
                 }
         }
@@ -205,10 +273,11 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
                                 if (!TextUtils.isEmpty(shareeUserId))
                                 {
                                         saveToCloud(shareeUserId);
+                                        getFragmentManager().popBackStack(getString(R.string.shopping_list), 0);
                                 }
                                 else
                                 {
-                                        mProgressBar.setVisibility(View.GONE);
+                                        //mProgressBar.setVisibility(View.GONE);
                                         EmailDoesNotExistDialogFrag error = EmailDoesNotExistDialogFrag.newInstance(mShareeEmail);
                                         error.show(getFragmentManager(), "email_error");
                                 }
@@ -225,28 +294,28 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
         private void saveToCloud(final String shareeUserId)
         {
                 DatabaseReference shoppingListShareWithRef = mRootRef.child("shopping_list_share_with").child(shareeUserId);
-
-                int countItemsToShare = mItemsToShare.size();
-
-                final NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
-                mNotificationManager = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
-
-                mNotificationBuilder = new NotificationCompat.Builder(getActivity());
-                mNotificationBuilder.setContentTitle("Shopping item(s) shared").setSmallIcon(android.R.drawable.stat_notify_chat);
-
+                final int countItemsToShare = mItemsToShare.size();
                 for (int j = 0; j < countItemsToShare; ++j)
                 {
                         // Push the item, it will appear in the list
-                        final Item item = mItemsToShare.get(j);
+                        Item item = mItemsToShare.get(j);
+                        final String itemName = item.getName();
                         shoppingListShareWithRef.push().setValue(item).addOnSuccessListener(new OnSuccessListener<Void>()
                         {
                                 @Override
                                 public void onSuccess(Void aVoid)
                                 {
                                         Log.d(LOG_TAG, ">>>  saveToCloud  onSuccess");
+                                        if (countItemsToShare == 1)
+                                        {
+                                                mNotificationBuilder.setContentText(itemName + " OK");
+                                        }
+                                        else
+                                        {
+                                                mNotificationBuilder.setStyle(inboxStyle.addLine(itemName + " OK"));
+                                        }
 
-                                        mNotificationBuilder.setStyle(inboxStyle.addLine(item.getName() + " OK")).setGroupSummary(true);
-                                        mNotificationManager.notify(1,  mNotificationBuilder.build());
+                                        mNotificationManager.notify(1, mNotificationBuilder.build());
                                 }
                         }).addOnFailureListener(new OnFailureListener()
                         {
@@ -254,14 +323,20 @@ public class SendShareFragment extends Fragment implements LoaderManager.LoaderC
                                 public void onFailure(@NonNull Exception e)
                                 {
                                         Log.d(LOG_TAG, ">>>  saveToCloud  onFailure " + e.getMessage());
-                                        mNotificationBuilder.setStyle(inboxStyle.addLine(item.getName() + " failed")).setGroupSummary(true);
-                                        mNotificationManager.notify(1,  mNotificationBuilder.build());
+                                        if (countItemsToShare == 1)
+                                        {
+                                                mNotificationBuilder.setContentText(itemName + " Failed");
+                                        }
+                                        else
+                                        {
+                                                mNotificationBuilder.setStyle(inboxStyle.addLine(itemName + " Failed"));
+                                        }
+                                        mNotificationManager.notify(1, mNotificationBuilder.build());
                                 }
                         });
                 }
 
                 mItemsToShare.clear();
-                getActivity().finish();
         }
 
         private Query getTargetUser(String userEmail)

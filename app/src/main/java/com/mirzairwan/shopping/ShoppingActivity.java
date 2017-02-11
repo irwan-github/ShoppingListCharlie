@@ -32,7 +32,6 @@ import com.mirzairwan.shopping.domain.ExchangeRate;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.firebase.SendShareFragment;
-import com.mirzairwan.shopping.firebase.SendSharedActivity;
 import com.mirzairwan.shopping.firebase.ShareeShoppingListFragment;
 import com.mirzairwan.shopping.firebase.SignOutDialogFrag;
 
@@ -251,7 +250,7 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         @Override
         public void onSignOut()
         {
-                getFragmentManager().popBackStack("SHOPPING_LIST", 0);
+                getFragmentManager().popBackStack(getString(R.string.shopping_list), 0);
         }
 
         @Override
@@ -448,11 +447,11 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         @Override
         public void onFirebaseShareShoppingList(HashSet<Long> ids, String shareeEmail)
         {
-                Intent intent = new Intent(this, SendSharedActivity.class);
-                intent.putExtra(SendShareFragment.ITEM_TO_SHARE, ids);
-                intent.putExtra(SendShareFragment.SHAREE_EMAIL, shareeEmail);
-                //startActivity(intent);
-                startActivity(intent);
+                Long[] idd = new Long[ids.size()];
+                idd = ids.toArray(idd);
+                SendShareFragment sendItemsFragment = SendShareFragment.getInstance(idd, shareeEmail);
+                FragmentTransaction sendTxn = getFragmentManager().beginTransaction();
+                sendTxn.add(sendItemsFragment, "SEND ITEMS").addToBackStack("SEND ITEM STACK").commit();
         }
 
         private class ShoppingListExchangeRateLoaderCb implements LoaderManager.LoaderCallbacks<Map<String, ExchangeRate>>

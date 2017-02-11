@@ -77,25 +77,6 @@ public class ShareeShoppingListFragment extends BaseFragment
                 return mRootView;
         }
 
-        @Override
-        public void onResume()
-        {
-                Log.d(LOG_TAG, ">>> onResume");
-                super.onResume();
-                if (mAuth.getCurrentUser() != null)
-                {
-                        mUserId = mAuth.getCurrentUser().getUid();
-                        onAuthenticationSuccess(mAuth.getCurrentUser());
-                        processSocialShoppingList();
-                }
-                else
-                {
-                        AuthenticationDialogFrag authenticationFrag = new AuthenticationDialogFrag();
-                        authenticationFrag.setTargetFragment(this, REQUEST_LOGIN_CODE);
-                        authenticationFrag.show(getFragmentManager(), "SIGN_IN");
-                }
-        }
-
         protected void processSocialShoppingList()
         {
                 progressDialog = new ProgressDialogFragment();

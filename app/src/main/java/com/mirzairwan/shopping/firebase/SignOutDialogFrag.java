@@ -39,8 +39,8 @@ public class SignOutDialogFrag extends DialogFragment
                         public void onClick(DialogInterface dialog, int which)
                         {
                                 mAuth.signOut();
-                                SignOutDialogFrag.this.dismiss();
                                 mOnSignOutListener.onSignOut();
+                                SignOutDialogFrag.this.dismiss();
                         }
                 }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                         @Override

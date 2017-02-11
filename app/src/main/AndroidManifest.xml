@@ -61,13 +61,6 @@
                                 android:name="android.support.PARENT_ACTIVITY"
                                 android:value=".ShoppingActivity"/>
                 </activity>
-                <activity
-                        android:name=".firebase.SendSharedActivity"
-                        android:parentActivityName=".ShoppingActivity">
-                        <meta-data
-                                android:name="android.support.PARENT_ACTIVITY"
-                                android:value=".ShoppingActivity"/>
-                </activity>
                 <provider
                         android:name=".data.ShoppingListProvider"
                         android:authorities="com.mirzairwan.shopping"

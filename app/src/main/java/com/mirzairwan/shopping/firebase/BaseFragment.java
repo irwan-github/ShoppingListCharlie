@@ -11,16 +11,17 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.mirzairwan.shopping.R;
 
+import static com.mirzairwan.shopping.firebase.AuthenticationDialogFrag.REQUEST_LOGIN_CODE;
+
 /**
  * Created by Mirza Irwan on 10/2/17.
  */
 
-public class BaseFragment extends Fragment
+public abstract class BaseFragment extends Fragment
 {
-
-        private DatabaseReference mFireDatabase;
         protected FirebaseAuth mAuth;
         protected String mUserId;
+        private DatabaseReference mFireDatabase;
 
         @Override
         public void onCreate(Bundle savedInstanceState)
@@ -44,8 +45,21 @@ public class BaseFragment extends Fragment
         public void onResume()
         {
                 super.onResume();
-
+                if (mAuth.getCurrentUser() != null)
+                {
+                        mUserId = mAuth.getCurrentUser().getUid();
+                        onAuthenticationSuccess(mAuth.getCurrentUser());
+                        processSocialShoppingList();
+                }
+                else
+                {
+                        AuthenticationDialogFrag authenticationFrag = new AuthenticationDialogFrag();
+                        authenticationFrag.setTargetFragment(this, REQUEST_LOGIN_CODE);
+                        authenticationFrag.show(getFragmentManager(), "SIGN_IN");
+                }
         }
+
+        protected abstract void processSocialShoppingList();
 
         public void onAuthenticationSuccess(FirebaseUser currentUser)
         {
