@@ -78,8 +78,6 @@ public class SendShareFragment extends BaseFragment implements LoaderManager.Loa
         {
                 super.onCreate(savedInstanceState);
                 mRootRef = FirebaseDatabase.getInstance().getReference();
-                String email = getArguments().getString(SHAREE_EMAIL);
-                long[] ids = getArguments().getLongArray(ITEM_TO_SHARE);
 
                 inboxStyle = new NotificationCompat.InboxStyle();
                 mNotificationManager = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);

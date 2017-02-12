@@ -30,6 +30,14 @@
                         </intent-filter>
                 </activity>
                 <activity
+                        android:name=".SettingsActivity"
+                        android:launchMode="singleTop"
+                        android:parentActivityName=".ShoppingActivity">
+                        <meta-data
+                                android:name="android.support.PARENT_ACTIVITY"
+                                android:value=".ShoppingActivity"/>
+                </activity>
+                <activity
                         android:name=".ShoppingListEditingActivity"
                         android:parentActivityName=".ShoppingActivity">
                         <meta-data

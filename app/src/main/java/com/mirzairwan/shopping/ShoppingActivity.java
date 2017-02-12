@@ -212,8 +212,8 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                                 signOutDialogFrag.show(getFragmentManager(), "SIGN_OUT");
                                 break;
                         case R.id.nav_settings_screen:
-                                FragmentTransaction settingTxn = getFragmentManager().beginTransaction().replace(R.id.frag_container, new SettingsFragment());
-                                settingTxn.addToBackStack(getString(R.string.settings_screen)).commit();
+                                Intent settingIntent = new Intent(this, SettingsActivity.class);
+                                startActivity(settingIntent);
                                 break;
                         case R.id.nav_history:
                                 FragmentTransaction historyTxn = getFragmentManager().beginTransaction().replace(R.id.frag_container, ShoppingHistoryFragment.newInstance());
@@ -433,8 +433,7 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 {
                         Log.d(LOG_TAG, ">>>>>>> onSharedPreferenceChanged Change in home country");
 
-                        //Add old user's preference country code to source currencies before assigning the new
-                        // country code because translation may be needed
+                        //Add old user's preference country code to source currencies before assigning the new country code because translation may be needed
                         mExchangeRateInput.addSourceCurrency(FormatHelper.getCurrencyCode(mCountryCode));
 
                         //Assign new country code

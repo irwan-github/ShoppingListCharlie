@@ -211,6 +211,11 @@ public class FormatHelper
                 return original.substring(0, 1).toUpperCase() + original.substring(1);
         }
 
+        /**
+         * Checks the validity of a currency code.
+         * @param currencyCode
+         * @return true if valid
+         */
         public static boolean isValidCurrencyCode(String currencyCode)
         {
                 if (currencyCode.equalsIgnoreCase("XXX")) //This is a valid currency code used for testing. But not accepted so as not to confuse users.

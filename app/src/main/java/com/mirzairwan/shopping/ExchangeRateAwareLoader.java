@@ -29,7 +29,8 @@ import java.util.Observer;
  * Created by Mirza Irwan on 13/1/17.
  * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
  * Contact owner at mirza.irwan.osman@gmail.com
- * It fetches ECB exchange rates using web API.
+ *
+ * It fetches exchange rates using web API.
  */
 
 class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
@@ -54,8 +55,8 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
         public void deliverResult(Map<String, ExchangeRate> exchangeRates)
         {
                 Log.d(LOG_TAG, ">>>>>>> deliverResult: " + exchangeRates);
-                //Cache the exchange rate. We can deliver the cached exchange rate during configuration
-                //changes.
+                Log.d("CurrencyCode", ">>>>>>> deliverResult: " + exchangeRates);
+                //Cache the exchange rate. We can deliver the cached exchange rate during configuration changes.
                 mExchangeRates = exchangeRates;
                 super.deliverResult(exchangeRates);
         }
@@ -74,6 +75,7 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
                                 public void update(Observable o, Object arg)
                                 {
                                         Log.d("Observer", ">>>>>>> update: " + arg.toString());
+                                        Log.d("CurrencyCode", "Observer " + ">>>>>>> update: " + arg.toString());
                                         // Notify the loader to reload the data
                                         onContentChanged();
                                         // If the loader is started, this will kick off
@@ -87,16 +89,19 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
                 }
 
                 // Something has changed or we have no exchange rates
-                if (takeContentChanged() || mExchangeRates == null)
+                boolean takeContentChanged = takeContentChanged();
+                if (takeContentChanged || mExchangeRates == null)
                 {
                         //No source currencies, don't fetch. Deliver null exchange rates
                         if (mExchangeRateInput.getSourceCurrencies() == null || mExchangeRateInput.getSourceCurrencies().size() == 0)
                         {
                                 Log.d(LOG_TAG, ">>>>>>> onStartLoading takeContentChanged BUT source currency is " + "empty. Do NOT fetch and/or deliver");
+                                Log.d("CurrencyCode", ">>>>>>> onStartLoading takeContentChanged BUT source currency is " + "empty. Do NOT fetch and/or deliver");
                         }
                         else
                         {
                                 Log.d(LOG_TAG, ">>>>>>> onStartLoading takeContentChanged & source currency is " + "NOT empty. Force load");
+                                Log.d("CurrencyCode", ">>>>>>> onStartLoading takeContentChanged BUT source currency is " + "NOT empty. Force load");
                                 //start fetching
                                 forceLoad();
                         }
@@ -117,6 +122,7 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
         public Map<String, ExchangeRate> loadInBackground()
         {
                 Log.d(LOG_TAG, ">>>>>>> loadInBackground start");
+                Log.d("CurrencyCode", ">>>>>>> loadInBackground");
 
                 if (!PermissionHelper.isInternetUp(getContext()))
                 {

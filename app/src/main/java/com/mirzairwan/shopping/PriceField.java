@@ -7,36 +7,102 @@ import android.view.ViewParent;
 import android.widget.EditText;
 
 import com.mirzairwan.shopping.domain.ExchangeRate;
-import com.mirzairwan.shopping.domain.Price;
 
 import java.text.ParseException;
-
-import static com.mirzairwan.shopping.LoaderHelper.BUNDLE_PRICE_EXCHANGE_RATE_LOADER_ID;
-import static com.mirzairwan.shopping.LoaderHelper.UNIT_PRICE_EXCHANGE_RATE_LOADER_ID;
 
 /**
  * Created by Mirza Irwan on 13/1/17.
  * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
  * Contact owner at mirza.irwan.osman@gmail.com
+ * <p>
+ * Manages the item's base price field and translated price field.
+ * The currency the item is priced in is ignored. Caller of this class must supply an exchange rate in order for this class to display the conversion in the translated price field.
+ * <p>
+ * When user change the currency code of the item, the following are affected:
+ * Translated price field.
+ * <p>
+ * In order to display translated price field, the following must known:
+ * <p>
+ * Home currency of the app so that it can display the correct hint.
+ * Exchange rate of item's currency  to home currency.
  */
 
-public class PriceField
+public class PriceField implements View.OnFocusChangeListener
 {
-        private final Price.Type mPriceType;
-        private View mProgressBar;
-        private String mHomeCountryCode;
+        double mCurrentPrice = 0.00;
         private EditText mEtPrice;
         private EditText mEtTranslatedPrice;
         private String mTextHint;
+        private View mProgressBar;
+        private String mHomeCountryCode;
+        private ExchangeRate mExchangeRate;
 
-        public PriceField(EditText etPrice, EditText etTranslatedPrice, View progressBar, String homeCountryCode, String textHint, Price.Type priceType)
+        public PriceField(EditText etPrice,
+                          EditText etTranslatedPrice,
+                          View progressBar,
+                          String homeCountryCode,
+                          String textHint)
         {
                 mEtPrice = etPrice;
+                mEtPrice.setOnFocusChangeListener(this);
                 mEtTranslatedPrice = etTranslatedPrice;
                 mProgressBar = progressBar;
                 mHomeCountryCode = homeCountryCode;
                 mTextHint = textHint;
-                mPriceType = priceType;
+                try
+                {
+                        String value = mEtPrice.getText().toString();
+                        if (!TextUtils.isEmpty(value))
+                        {
+                                mCurrentPrice = FormatHelper.parseTwoDecimalPlaces(value);
+                        }
+                }
+                catch(ParseException e)
+                {
+                        e.printStackTrace();
+                }
+        }
+
+        @Override
+        public void onFocusChange(View v,
+                                  boolean hasFocus)
+        {
+                boolean isPriceEmpty = false;
+                try
+                {
+                        isPriceEmpty = MyTextUtils.isZeroValue(mEtPrice);
+                }
+                catch(ParseException e)
+                {
+                        e.printStackTrace();
+                        return;
+                }
+                if (!v.hasFocus() && !isPriceEmpty)
+                {
+                        if(isPriceChange() && mExchangeRate != null)
+                                setTranslatedPrice(mExchangeRate);
+                }
+                else if(!v.hasFocus())//Price is empty
+                {
+                        clear();
+                }
+        }
+
+        private boolean isPriceChange()
+        {
+                double newPrice = 0.00;
+                try
+                {
+                        newPrice =  FormatHelper.parseTwoDecimalPlaces(mEtPrice.getText().toString());
+                }
+                catch(ParseException e)
+                {
+                        e.printStackTrace();
+                }
+                if(newPrice != mCurrentPrice)
+                        return true;
+                else
+                        return false;
         }
 
         /**
@@ -47,6 +113,7 @@ public class PriceField
          */
         public void setTranslatedPrice(ExchangeRate exchangeRate)
         {
+                mExchangeRate = exchangeRate;
                 mProgressBar.setVisibility(View.INVISIBLE);
                 String mBaseCurrencyCode = FormatHelper.getCurrencyCode(mHomeCountryCode);
 
@@ -58,6 +125,7 @@ public class PriceField
                 }
 
                 //Unit price greater than 0.00
+                setCurrencySymbolInPriceHint(exchangeRate.getSourceCurrencyCode());
 
                 boolean isPriceValid = !TextUtils.isEmpty(mEtPrice.getText()) && Double.parseDouble(mEtPrice.getText().toString()) > 0;
                 if (isPriceValid && !mEtPrice.hasFocus())
@@ -73,11 +141,6 @@ public class PriceField
                 }
         }
 
-        protected View getProgressBar()
-        {
-                return mProgressBar;
-        }
-
         private void clearHintInTranslatedPrice()
         {
                 ViewParent viewParent = mEtTranslatedPrice.getParent();
@@ -85,7 +148,8 @@ public class PriceField
                 etLayout.setHint("");
         }
 
-        private void setCurrencyCodeInTranslatedPriceHint(String hint, String homeCountryCode)
+        private void setCurrencyCodeInTranslatedPriceHint(String hint,
+                                                          String homeCountryCode)
         {
                 String currencyCode = FormatHelper.getCurrencyCode(homeCountryCode);
                 String hintPx = hint + " (" + currencyCode + ")";
@@ -140,14 +204,16 @@ public class PriceField
                 setCurrencyCodeInTranslatedPriceHint(mTextHint, mHomeCountryCode);
         }
 
-        public EditText getEditTextSourcePrice()
+        /**
+         * Set price of item
+         *
+         * @param formattedPrice
+         * @param currencyCode
+         */
+        public void setPrice(String currencyCode,
+                             String formattedPrice)
         {
-                return mEtPrice;
-        }
-
-        public void setFormattedPrice(String priceForDisplay, String currencyCode)
-        {
-                mEtPrice.setText(priceForDisplay);
+                mEtPrice.setText(formattedPrice);
                 setCurrencySymbolInPriceHint(currencyCode);
         }
 
@@ -180,28 +246,6 @@ public class PriceField
                 setTranslatedPricesVisibility(View.INVISIBLE);
         }
 
-        public String getHomeCurrencyCode()
-        {
-                return mHomeCountryCode;
-        }
-
-        public int getLoaderId()
-        {
-                if (mPriceType == Price.Type.UNIT_PRICE)
-                {
-                        return UNIT_PRICE_EXCHANGE_RATE_LOADER_ID;
-                }
-
-                else if (mPriceType == Price.Type.BUNDLE_PRICE)
-                {
-                        return BUNDLE_PRICE_EXCHANGE_RATE_LOADER_ID;
-                }
-                else
-                {
-                        throw new IllegalArgumentException("Loader not supported");
-                }
-        }
-
         public void displayProgress()
         {
                 try
@@ -218,10 +262,5 @@ public class PriceField
                 {
                         e.printStackTrace();
                 }
-        }
-
-        public Price.Type getPriceType()
-        {
-                return mPriceType;
         }
 }

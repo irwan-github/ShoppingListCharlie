@@ -41,7 +41,6 @@ import com.mirzairwan.shopping.domain.ExchangeRate;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
-import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.PriceMgr;
 
 import java.io.File;
@@ -59,7 +58,7 @@ import static com.mirzairwan.shopping.ShoppingActivity.EXCHANGE_RATE;
  * Created by Mirza Irwan on 13/1/17.
  * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
  * Contact owner at mirza.irwan.osman@gmail.com
- *
+ * <p>
  * This is a base class for subclasses to leverage on the following:
  * <p>
  * Loader for Prices table. Subclass just need to call initLoader with the correct loader id.
@@ -114,8 +113,9 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected PriceField mBundlePriceEditField;
         private ImageView mImgItemPic;
         private long itemId;
+        private ExchangeRateInput mExchangeRateInput;
 
-        //However during orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance state
+        //During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance state
         //and restore when device orientates to landscape.
         private ExchangeRate mExchangeRate;
 
@@ -177,8 +177,15 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
                 String webApiKeyPref = getString(R.string.key_forex_web_api_1);
                 mWebApiBase = sharedPrefs.getString(webApiKeyPref, null);
+                mExchangeRateInput = new ExchangeRateInput();
+                mExchangeRateInput.setBaseWebApi(mWebApiBase);
+                mExchangeRateInput.setBaseCurrency(FormatHelper.getCurrencyCode(mCountryCode));
 
                 mExchangeRate = getIntent().getParcelableExtra(EXCHANGE_RATE);
+                if (mExchangeRate != null)
+                {
+                        mExchangeRateInput.addSourceCurrency(mExchangeRate.getSourceCurrencyCode());
+                }
 
                 setupViews();
 
@@ -196,11 +203,11 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
         protected void setupViews()
         {
-                String destCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
                 mOnTouchListener = new View.OnTouchListener()
                 {
                         @Override
-                        public boolean onTouch(View v, MotionEvent event)
+                        public boolean onTouch(View v,
+                                               MotionEvent event)
                         {
                                 mItemHaveChanged = true;
                                 return false;
@@ -226,37 +233,20 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 EditText etTranslatedUnitPrice = (EditText) findViewById(R.id.et_translated_unit_price);
                 etUnitPrice.setOnTouchListener(mOnTouchListener);
                 View pbUnitPx = findViewById(R.id.pb_translated_unit_px);
-                mUnitPriceEditField = new PriceField(etUnitPrice, etTranslatedUnitPrice, pbUnitPx, mCountryCode, getString(R.string.unit_price_txt), Price.Type.UNIT_PRICE);
-                ItemExchangeRateLoaderCallback unitPxExLoaderCb = new ItemExchangeRateLoaderCallback(this, mUnitPriceEditField);
-                OnExchangeRateRequest onExchangeRateUnitPriceListener = new OnExchangeRateRequestImpl(unitPxExLoaderCb, mWebApiBase, destCurrencyCode, getLoaderManager());
-                ExchangeRateDisplayState unitPriceTranslatorListener = new ExchangeRateDisplayState(onExchangeRateUnitPriceListener, mUnitPriceEditField);
-                etUnitPrice.setOnFocusChangeListener(unitPriceTranslatorListener);
-
+                mUnitPriceEditField = new PriceField(etUnitPrice, etTranslatedUnitPrice, pbUnitPx, mCountryCode, getString(R.string.unit_price_txt));
 
                 EditText etBundlePrice = (EditText) findViewById(R.id.et_bundle_price);
                 EditText etTranslatedBundlePrice = (EditText) findViewById(R.id.et_translated_bundle_price);
                 etBundlePrice.setOnTouchListener(mOnTouchListener);
                 View pbBundlePx = findViewById(R.id.pb_translated_bundle_px);
-                mBundlePriceEditField = new PriceField(etBundlePrice, etTranslatedBundlePrice, pbBundlePx, mCountryCode, getString(R.string.bundle_price_txt), Price.Type.BUNDLE_PRICE);
-                ItemExchangeRateLoaderCallback bundlePxExLoaderCb = new ItemExchangeRateLoaderCallback(this, mBundlePriceEditField);
-                OnExchangeRateRequest onExchangeRateBundlePriceListener = new OnExchangeRateRequestImpl(bundlePxExLoaderCb, mWebApiBase, destCurrencyCode, getLoaderManager());
-                ExchangeRateDisplayState bundlePriceTranslatorListener = new ExchangeRateDisplayState(onExchangeRateBundlePriceListener, mBundlePriceEditField);
-                etBundlePrice.setOnFocusChangeListener(bundlePriceTranslatorListener);
+                mBundlePriceEditField = new PriceField(etBundlePrice, etTranslatedBundlePrice, pbBundlePx, mCountryCode, getString(R.string.bundle_price_txt));
 
-                List<PriceField> translatedPrices = new ArrayList<>();
-                translatedPrices.add(mUnitPriceEditField);
-                translatedPrices.add(mBundlePriceEditField);
-                ItemExchangeRateLoaderCallback currencyCodeLoaderCb = new ItemExchangeRateLoaderCallback(this, translatedPrices);
-                OnExchangeRateRequest onExchangeRateRequest = new OnExchangeRateRequestImpl(currencyCodeLoaderCb, mWebApiBase, destCurrencyCode, getLoaderManager());
-
-                CurrencyCodeChecker onFocusChangeCurrencyCodeListener = new CurrencyCodeChecker(etCurrencyCode, mCountryCode, mUnitPriceEditField, mBundlePriceEditField, onExchangeRateRequest);
-
+                OnCurrencyCodeChange onCurrencyCodeChange = new OnCurrencyCodeChange(this, etCurrencyCode, mCountryCode, mUnitPriceEditField, mBundlePriceEditField, mExchangeRateInput);
                 MyTextUtils.setAllCapsInputFilter(etCurrencyCode);
                 etCurrencyCode.setOnTouchListener(mOnTouchListener);
-                etCurrencyCode.setOnFocusChangeListener(onFocusChangeCurrencyCodeListener);
-
-                unitPriceTranslatorListener.setCurrencyCodeObserver(onFocusChangeCurrencyCodeListener);
-                bundlePriceTranslatorListener.setCurrencyCodeObserver(onFocusChangeCurrencyCodeListener);
+                etCurrencyCode.setOnFocusChangeListener(onCurrencyCodeChange);
+                ItemExchangeRateLoaderCallback pxExLoaderCb = new ItemExchangeRateLoaderCallback(this);
+                getLoaderManager().initLoader(78, null, pxExLoaderCb);
 
                 etBundleQty = (EditText) findViewById(R.id.et_bundle_qty);
                 etBundleQty.setOnTouchListener(mOnTouchListener);
@@ -315,7 +305,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 PermissionHelper.setupStorageReadPermission(this);
         }
 
-        protected void initPriceLoader(Uri uri, LoaderManager.LoaderCallbacks<Cursor> callback)
+        protected void initPriceLoader(Uri uri,
+                                       LoaderManager.LoaderCallbacks<Cursor> callback)
         {
                 if (ContentUris.parseId(uri) == -1)
                 {
@@ -327,7 +318,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 getLoaderManager().initLoader(ITEM_PRICE_LOADER_ID, arg, callback);
         }
 
-        protected void initPictureLoader(Uri uri, LoaderManager.LoaderCallbacks<Cursor> callback)
+        protected void initPictureLoader(Uri uri,
+                                         LoaderManager.LoaderCallbacks<Cursor> callback)
         {
                 if (ContentUris.parseId(uri) == -1)
                 {
@@ -367,7 +359,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                         showUnsavedDialog(new DialogInterface.OnClickListener()
                                         {
                                                 @Override
-                                                public void onClick(DialogInterface dialog, int which)
+                                                public void onClick(DialogInterface dialog,
+                                                                    int which)
                                                 {
                                                         NavUtils.navigateUpFromSameTask(ItemActivity.this);
                                                 }
@@ -401,7 +394,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 {
                         mPictureMgr.setViewOriginalPicture();
                         String msg = daoManager.cleanUpDiscardedPictures(mPictureMgr);
-//            Toast.makeText(ItemActivity.this, msg, Toast.LENGTH_LONG).show();
+                        //            Toast.makeText(ItemActivity.this, msg, Toast.LENGTH_LONG).show();
                 }
 
         }
@@ -513,7 +506,9 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         }
 
         @Override
-        protected void onActivityResult(int requestCode, int resultCode, Intent data)
+        protected void onActivityResult(int requestCode,
+                                        int resultCode,
+                                        Intent data)
         {
                 switch (resultCode)
                 {
@@ -612,7 +607,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         showUnsavedDialog(new DialogInterface.OnClickListener()
                         {
                                 @Override
-                                public void onClick(DialogInterface dialog, int which)
+                                public void onClick(DialogInterface dialog,
+                                                    int which)
                                 {
                                         removeUnwantedPicturesFromApp();
                                         finish();
@@ -634,7 +630,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 builder.setNegativeButton(R.string.keep_editing, new DialogInterface.OnClickListener()
                 {
                         @Override
-                        public void onClick(DialogInterface dialog, int which)
+                        public void onClick(DialogInterface dialog,
+                                            int which)
                         {
                                 dialog.dismiss();
                         }
@@ -642,7 +639,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 builder.show();
         }
 
-        protected void alertRequiredField(int titleId, int messageId)
+        protected void alertRequiredField(int titleId,
+                                          int messageId)
         {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle(titleId);
@@ -650,7 +648,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
                 {
                         @Override
-                        public void onClick(DialogInterface dialog, int which)
+                        public void onClick(DialogInterface dialog,
+                                            int which)
                         {
                                 dialog.dismiss();
                         }
@@ -666,7 +665,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
                 {
                         @Override
-                        public void onClick(DialogInterface dialog, int which)
+                        public void onClick(DialogInterface dialog,
+                                            int which)
                         {
                                 dialog.dismiss();
                         }
@@ -756,8 +756,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         {
                 String currencyCode = priceMgr.getUnitPrice().getCurrencyCode();
                 etCurrencyCode.setText(currencyCode);
-                mUnitPriceEditField.setFormattedPrice(priceMgr.getUnitPriceForDisplay(), currencyCode);
-                mBundlePriceEditField.setFormattedPrice(priceMgr.getBundlePriceForDisplay(), currencyCode);
+                mUnitPriceEditField.setPrice(currencyCode, priceMgr.getUnitPriceForDisplay());
+                mBundlePriceEditField.setPrice(currencyCode, priceMgr.getBundlePriceForDisplay());
                 etBundleQty.setText(FormatHelper.formatToTwoDecimalPlaces((priceMgr.getBundlePrice().getBundleQuantity())));
 
                 if (!isItemLocalPriced(currencyCode))
@@ -790,7 +790,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
          * @return
          */
         @Override
-        public Loader<Cursor> onCreateLoader(int loaderId, Bundle args)
+        public Loader<Cursor> onCreateLoader(int loaderId,
+                                             Bundle args)
         {
                 String[] projection = null;
                 Uri uri = args.getParcelable(ITEM_URI);
@@ -802,7 +803,13 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 switch (loaderId)
                 {
                         case ITEM_PRICE_LOADER_ID:
-                                projection = new String[]{PricesEntry._ID, PricesEntry.COLUMN_ITEM_ID, PricesEntry.COLUMN_PRICE_TYPE_ID, PricesEntry.COLUMN_PRICE, PricesEntry.COLUMN_BUNDLE_QTY, PricesEntry.COLUMN_CURRENCY_CODE, PricesEntry.COLUMN_SHOP_ID};
+                                projection = new String[]{PricesEntry._ID,
+                                                          PricesEntry.COLUMN_ITEM_ID,
+                                                          PricesEntry.COLUMN_PRICE_TYPE_ID,
+                                                          PricesEntry.COLUMN_PRICE,
+                                                          PricesEntry.COLUMN_BUNDLE_QTY,
+                                                          PricesEntry.COLUMN_CURRENCY_CODE,
+                                                          PricesEntry.COLUMN_SHOP_ID};
                                 itemId = ContentUris.parseId(uri);
                                 if (itemId == -1)
                                 {
@@ -815,7 +822,9 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                 break;
 
                         case ITEM_PICTURE_LOADER_ID:
-                                projection = new String[]{PicturesEntry._ID, PicturesEntry.COLUMN_FILE_PATH, PicturesEntry.COLUMN_ITEM_ID};
+                                projection = new String[]{PicturesEntry._ID,
+                                                          PicturesEntry.COLUMN_FILE_PATH,
+                                                          PicturesEntry.COLUMN_ITEM_ID};
                                 itemId = ContentUris.parseId(uri);
                                 if (itemId == -1)
                                 {
@@ -835,7 +844,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         }
 
         @Override
-        public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
+        public void onLoadFinished(Loader<Cursor> loader,
+                                   Cursor cursor)
         {
                 if (cursor == null || cursor.getCount() < 1)
                 {
@@ -905,7 +915,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 Log.d(LOG_TAG, "onSaveInstanceState");
                 super.onSaveInstanceState(outState);
                 outState.putParcelable(PICTURE_MANAGER, mPictureMgr);
-                outState.putParcelable(EXCHANGE_RATE, mExchangeRate );
+                outState.putParcelable(EXCHANGE_RATE, mExchangeRate);
         }
 
         class ImageFsResizer extends AsyncTask<String, Void, Bitmap>
@@ -953,39 +963,30 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 private final String LOG_TAG = ItemExchangeRateLoaderCallback.class.getSimpleName();
                 private List<PriceField> priceFields = new ArrayList<>();
 
-                ItemExchangeRateLoaderCallback(Context context, PriceField priceField)
+                ItemExchangeRateLoaderCallback(Context context)
                 {
-                        super(context);
-                        priceFields.add(priceField);
-                        Log.d(LOG_TAG, ">>> Construct " + priceField.getPriceType() + " " + priceField.getPrice());
-                }
-
-                ItemExchangeRateLoaderCallback(Context context, List<PriceField> translatedPrices)
-                {
-                        super(context);
-                        priceFields = translatedPrices;
-                        Log.d(LOG_TAG, "Construct");
+                        super(context, mExchangeRateInput);
                 }
 
                 @Override
-                public void onLoadFinished(Loader<Map<String, ExchangeRate>> loader, Map<String, ExchangeRate> exchangeRates)
+                public void onLoadFinished(Loader<Map<String, ExchangeRate>> loader,
+                                           Map<String, ExchangeRate> exchangeRates)
                 {
                         Log.d(LOG_TAG, "onLoadFinished");
                         Log.d(LOG_TAG, ">>> Loader id: " + loader.getId());
+                        Log.d("CurrencyCode", "onLoadFinished");
                         if (exchangeRates != null)
                         {
                                 String sourceCurrencyCode = etCurrencyCode.getText().toString();
                                 mExchangeRate = exchangeRates.get(sourceCurrencyCode);
-
-                                for (PriceField px : priceFields)
-                                {
-                                        Log.d(LOG_TAG, ">>> onLoadFinished " + px.getPrice());
-                                        px.setTranslatedPrice(mExchangeRate);
-                                }
+                                mUnitPriceEditField.setTranslatedPrice(mExchangeRate);
+                                mBundlePriceEditField.setTranslatedPrice(mExchangeRate);
                         }
                         else
                         {
                                 Log.d(LOG_TAG, ">>> Exchange rates is null");
+                                mUnitPriceEditField.setTranslatedPrice(null);
+                                mBundlePriceEditField.setTranslatedPrice(null);
                         }
                 }
 
