@@ -5,18 +5,18 @@
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:title="Take a picture"
+    <item android:title="@string/use_camera"
         android:id="@+id/menu_camera"
         android:icon="@drawable/ic_camera_enhance"
         app:showAsAction="always"
         />
     <item android:id="@+id/choose_picture"
-          android:title="Insert a picture"
+          android:title="@string/insert_picture"
           android:icon="@drawable/ic_insert_photo"
           app:showAsAction="always" />
 
     <item android:id="@+id/remove_picture"
-          android:title="Insert a picture"
+          android:title="@string/remove_picture_item"
           android:icon="@drawable/ic_cancel"
           app:showAsAction="always" />
 </menu>

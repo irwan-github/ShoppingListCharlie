@@ -17,15 +17,4 @@
                 android:adjustViewBounds="true"
                 android:scaleType="centerCrop"
                 />
-
-        <android.support.v7.widget.Toolbar
-                android:id="@+id/picture_toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?android:actionBarSize"
-                android:background="@color/colorAccent"
-                android:elevation="4dp"
-                android:focusable="true"
-                android:gravity="center"
-                >
-        </android.support.v7.widget.Toolbar>
 </LinearLayout>

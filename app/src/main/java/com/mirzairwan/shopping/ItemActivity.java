@@ -167,11 +167,12 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 super.onCreate(savedInstanceState);
                 PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
                 setContentView(getLayoutXml());
-                setupPictureToolbar();
 
                 Toolbar mainToolbar = (Toolbar) findViewById(R.id.toolbar);
                 setSupportActionBar(mainToolbar);
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+                setupPictureToolbar();
 
                 daoManager = Builder.getDaoManager(this);
 
@@ -262,9 +263,10 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
                 Toolbar toolbarPicture = (Toolbar) findViewById(R.id.picture_toolbar);
 
+                // Inflate a menu to be displayed in the toolbar
                 toolbarPicture.inflateMenu(R.menu.picture_item_toolbar);
 
-                //check for the availability of the camera at runtime
+                //check for the availability of the camera at runtime. If unavailable, disable the affected action item
                 PackageManager pMgr = getPackageManager();
                 if (!pMgr.hasSystemFeature(PackageManager.FEATURE_CAMERA))
                 {
@@ -272,7 +274,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         itemCamera.setEnabled(false);
                 }
 
-                //Add menu click handler
+                //Add handler to handle menu item clicks
                 toolbarPicture.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener()
                 {
                         @Override

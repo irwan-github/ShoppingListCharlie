@@ -1,74 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!-- Copyright 2017, Mirza Irwan Bin Osman , All rights reserved. -->
 <!-- Contact owner at mirza.irwan.osman@gmail.com -->
 
-<ScrollView
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:focusableInTouchMode="true"
-        >
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                                 android:layout_width="match_parent"
+                                                 android:layout_height="match_parent"
+                                                 android:orientation="vertical">
 
-        <LinearLayout
+        <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:focusableInTouchMode="true"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
                 >
 
                 <include
                         layout="@layout/toolbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"/>
-
-                <FrameLayout
+                        android:id="@+id/toolbar"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="@dimen/edit_surface_margin"
-                        android:background="#fff"
-                        android:elevation="4dp"
-                        >
+                        />
 
-                        <include layout="@layout/item_image_editor"/>
-                </FrameLayout>
-
-
-                <FrameLayout
+                <include
+                        layout="@layout/toolbar_picture"
+                        android:id="@+id/picture_toolbar"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="@dimen/edit_surface_margin"
-                        android:background="#fff"
-                        android:elevation="4dp"
-                        >
+                        android:layout_alignParentBottom="true"
+                        />
 
-                        <include layout="@layout/item_editing"/>
-                </FrameLayout>
-
-                <FrameLayout
+                <ScrollView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="@dimen/edit_surface_margin"
-                        android:layout_marginTop="@dimen/edit_surface_margin"
-                        android:background="#fff"
-                        android:elevation="4dp"
+                        android:layout_below="@id/toolbar"
+                        android:layout_above="@id/picture_toolbar"
                         >
 
-                        <include layout="@layout/purchase_details"/>
-                </FrameLayout>
+                        <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:focusableInTouchMode="true"
+                                android:orientation="vertical"
+                                >
 
-                <FrameLayout
-                        android:id="@+id/price_container"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="@dimen/edit_surface_margin"
-                        android:layout_marginTop="@dimen/edit_surface_margin"
-                        android:background="#fff"
-                        android:elevation="4dp"
-                        >
+                                <FrameLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginBottom="@dimen/edit_surface_margin"
+                                        android:background="#fff"
+                                        android:elevation="4dp"
+                                        >
 
-                        <include layout="@layout/price_editing"/>
-                </FrameLayout>
-        </LinearLayout>
+                                        <include layout="@layout/item_image_editor"/>
 
-</ScrollView>
+                                </FrameLayout>
+
+
+                                <FrameLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginBottom="@dimen/edit_surface_margin"
+                                        android:background="#fff"
+                                        android:elevation="4dp"
+                                        >
+
+                                        <include layout="@layout/item_editing"/>
+
+                                </FrameLayout>
+
+                                <FrameLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginBottom="@dimen/edit_surface_margin"
+                                        android:layout_marginTop="@dimen/edit_surface_margin"
+                                        android:background="#fff"
+                                        android:elevation="4dp"
+                                        >
+
+                                        <include layout="@layout/purchase_details"/>
+
+                                </FrameLayout>
+
+                                <FrameLayout
+                                        android:id="@+id/price_container"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginBottom="@dimen/edit_surface_margin"
+                                        android:layout_marginTop="@dimen/edit_surface_margin"
+                                        android:background="#fff"
+                                        android:elevation="4dp"
+                                        >
+
+                                        <include layout="@layout/price_editing"/>
+
+                                </FrameLayout>
+
+                        </LinearLayout>
+
+                </ScrollView>
+
+
+
+        </RelativeLayout>
+
+</android.support.design.widget.CoordinatorLayout>

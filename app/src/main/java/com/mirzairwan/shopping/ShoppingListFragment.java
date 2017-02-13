@@ -116,7 +116,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
 
                 mRootView = inflater.inflate(R.layout.fragment_shopping_list, container, false);
                 ListView lvBuyItems = (ListView) mRootView.findViewById(R.id.lv_to_buy_items);
-                //setupFloatingActionButton(mRootView);
+                getActivity().setTitle(R.string.shopping_list);
                 setupListView(lvBuyItems);
                 setupListItemListener(lvBuyItems);
                 setupEmptyView(mRootView, lvBuyItems);

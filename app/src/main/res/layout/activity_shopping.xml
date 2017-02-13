@@ -3,11 +3,6 @@
 <!-- Copyright 2017, Mirza Irwan Bin Osman , All rights reserved. -->
 <!-- Contact owner at mirza.irwan.osman@gmail.com -->
 
-<!--
-This is the parent screen that pages the 2 child views:
-1. To-buy list view (managed by BuyListFragment
-2. Catalogue/History View (managed by HistoryFragment)
--->
 <android.support.v4.widget.DrawerLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -27,6 +22,7 @@ This is the parent screen that pages the 2 child views:
                 <!-- The ActionBar displayed at the top -->
                 <include
                         layout="@layout/toolbar"
+                        android:id="@+id/toolbar"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"/>
 
