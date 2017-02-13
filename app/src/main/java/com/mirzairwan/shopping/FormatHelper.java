@@ -12,7 +12,7 @@ import java.util.Locale;
  * Created by Mirza Irwan on 13/1/17.
  * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
  * Contact owner at mirza.irwan.osman@gmail.com
- *
+ * <p>
  * Helper class to format numbers, currencies, etc.
  */
 
@@ -144,7 +144,6 @@ public class FormatHelper
                 return formattedVal.doubleValue();
         }
 
-
         /**
          * Get currency symbol based on country code
          *
@@ -213,6 +212,7 @@ public class FormatHelper
 
         /**
          * Checks the validity of a currency code.
+         *
          * @param currencyCode
          * @return true if valid
          */

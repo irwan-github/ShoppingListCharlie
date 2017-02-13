@@ -169,6 +169,10 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 setContentView(getLayoutXml());
                 setupPictureToolbar();
 
+                Toolbar mainToolbar = (Toolbar) findViewById(R.id.toolbar);
+                setSupportActionBar(mainToolbar);
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
                 daoManager = Builder.getDaoManager(this);
 
                 SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -206,8 +210,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 mOnTouchListener = new View.OnTouchListener()
                 {
                         @Override
-                        public boolean onTouch(View v,
-                                               MotionEvent event)
+                        public boolean onTouch(View v, MotionEvent event)
                         {
                                 mItemHaveChanged = true;
                                 return false;
@@ -305,8 +308,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 PermissionHelper.setupStorageReadPermission(this);
         }
 
-        protected void initPriceLoader(Uri uri,
-                                       LoaderManager.LoaderCallbacks<Cursor> callback)
+        protected void initPriceLoader(Uri uri, LoaderManager.LoaderCallbacks<Cursor> callback)
         {
                 if (ContentUris.parseId(uri) == -1)
                 {
@@ -318,8 +320,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 getLoaderManager().initLoader(ITEM_PRICE_LOADER_ID, arg, callback);
         }
 
-        protected void initPictureLoader(Uri uri,
-                                         LoaderManager.LoaderCallbacks<Cursor> callback)
+        protected void initPictureLoader(Uri uri, LoaderManager.LoaderCallbacks<Cursor> callback)
         {
                 if (ContentUris.parseId(uri) == -1)
                 {
@@ -359,8 +360,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                         showUnsavedDialog(new DialogInterface.OnClickListener()
                                         {
                                                 @Override
-                                                public void onClick(DialogInterface dialog,
-                                                                    int which)
+                                                public void onClick(DialogInterface dialog, int which)
                                                 {
                                                         NavUtils.navigateUpFromSameTask(ItemActivity.this);
                                                 }
@@ -506,9 +506,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         }
 
         @Override
-        protected void onActivityResult(int requestCode,
-                                        int resultCode,
-                                        Intent data)
+        protected void onActivityResult(int requestCode, int resultCode, Intent data)
         {
                 switch (resultCode)
                 {
@@ -607,8 +605,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         showUnsavedDialog(new DialogInterface.OnClickListener()
                         {
                                 @Override
-                                public void onClick(DialogInterface dialog,
-                                                    int which)
+                                public void onClick(DialogInterface dialog, int which)
                                 {
                                         removeUnwantedPicturesFromApp();
                                         finish();
@@ -630,8 +627,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 builder.setNegativeButton(R.string.keep_editing, new DialogInterface.OnClickListener()
                 {
                         @Override
-                        public void onClick(DialogInterface dialog,
-                                            int which)
+                        public void onClick(DialogInterface dialog, int which)
                         {
                                 dialog.dismiss();
                         }
@@ -639,8 +635,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 builder.show();
         }
 
-        protected void alertRequiredField(int titleId,
-                                          int messageId)
+        protected void alertRequiredField(int titleId, int messageId)
         {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle(titleId);
@@ -648,8 +643,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
                 {
                         @Override
-                        public void onClick(DialogInterface dialog,
-                                            int which)
+                        public void onClick(DialogInterface dialog, int which)
                         {
                                 dialog.dismiss();
                         }
@@ -665,8 +659,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
                 {
                         @Override
-                        public void onClick(DialogInterface dialog,
-                                            int which)
+                        public void onClick(DialogInterface dialog, int which)
                         {
                                 dialog.dismiss();
                         }
@@ -790,8 +783,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
          * @return
          */
         @Override
-        public Loader<Cursor> onCreateLoader(int loaderId,
-                                             Bundle args)
+        public Loader<Cursor> onCreateLoader(int loaderId, Bundle args)
         {
                 String[] projection = null;
                 Uri uri = args.getParcelable(ITEM_URI);
@@ -844,8 +836,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         }
 
         @Override
-        public void onLoadFinished(Loader<Cursor> loader,
-                                   Cursor cursor)
+        public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
         {
                 if (cursor == null || cursor.getCount() < 1)
                 {
@@ -860,8 +851,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                 priceMgr.createPrices(cursor);
                                 populatePricesInputFields();
 
-                                //Important to move cursor back before the first record
-                                // because when device switches to landscape, it gives back the same cursor with
+                                //Important to move cursor back before the first record because when device switches to landscape, it gives back the same cursor with
                                 // the pre-exisiting state
                                 cursor.moveToPosition(-1);
                                 break;
@@ -875,8 +865,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                 mPictureMgr.setViewOriginalPicture();
                                 setPictureView(mPictureMgr.getPictureForViewing());
 
-                                //Important to move cursor back before the first record
-                                // because when device switches to landscape, it gives back the same cursor with
+                                //Important to move cursor back before the first record because when device switches to landscape, it gives back the same cursor with
                                 // the pre-exisiting state
                                 cursor.moveToPosition(-1);
                                 break;
@@ -969,8 +958,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 }
 
                 @Override
-                public void onLoadFinished(Loader<Map<String, ExchangeRate>> loader,
-                                           Map<String, ExchangeRate> exchangeRates)
+                public void onLoadFinished(Loader<Map<String, ExchangeRate>> loader, Map<String, ExchangeRate> exchangeRates)
                 {
                         Log.d(LOG_TAG, "onLoadFinished");
                         Log.d(LOG_TAG, ">>> Loader id: " + loader.getId());

@@ -37,11 +37,7 @@ public class PriceField implements View.OnFocusChangeListener
         private String mHomeCountryCode;
         private ExchangeRate mExchangeRate;
 
-        public PriceField(EditText etPrice,
-                          EditText etTranslatedPrice,
-                          View progressBar,
-                          String homeCountryCode,
-                          String textHint)
+        public PriceField(EditText etPrice, EditText etTranslatedPrice, View progressBar, String homeCountryCode, String textHint)
         {
                 mEtPrice = etPrice;
                 mEtPrice.setOnFocusChangeListener(this);
@@ -64,8 +60,7 @@ public class PriceField implements View.OnFocusChangeListener
         }
 
         @Override
-        public void onFocusChange(View v,
-                                  boolean hasFocus)
+        public void onFocusChange(View v, boolean hasFocus)
         {
                 boolean isPriceEmpty = false;
                 try
@@ -79,10 +74,12 @@ public class PriceField implements View.OnFocusChangeListener
                 }
                 if (!v.hasFocus() && !isPriceEmpty)
                 {
-                        if(isPriceChange() && mExchangeRate != null)
+                        if (isPriceChange() && mExchangeRate != null)
+                        {
                                 setTranslatedPrice(mExchangeRate);
+                        }
                 }
-                else if(!v.hasFocus())//Price is empty
+                else if (!v.hasFocus())//Price is empty
                 {
                         clear();
                 }
@@ -93,16 +90,20 @@ public class PriceField implements View.OnFocusChangeListener
                 double newPrice = 0.00;
                 try
                 {
-                        newPrice =  FormatHelper.parseTwoDecimalPlaces(mEtPrice.getText().toString());
+                        newPrice = FormatHelper.parseTwoDecimalPlaces(mEtPrice.getText().toString());
                 }
                 catch(ParseException e)
                 {
                         e.printStackTrace();
                 }
-                if(newPrice != mCurrentPrice)
+                if (newPrice != mCurrentPrice)
+                {
                         return true;
+                }
                 else
+                {
                         return false;
+                }
         }
 
         /**
@@ -148,8 +149,7 @@ public class PriceField implements View.OnFocusChangeListener
                 etLayout.setHint("");
         }
 
-        private void setCurrencyCodeInTranslatedPriceHint(String hint,
-                                                          String homeCountryCode)
+        private void setCurrencyCodeInTranslatedPriceHint(String hint, String homeCountryCode)
         {
                 String currencyCode = FormatHelper.getCurrencyCode(homeCountryCode);
                 String hintPx = hint + " (" + currencyCode + ")";
@@ -210,8 +210,7 @@ public class PriceField implements View.OnFocusChangeListener
          * @param formattedPrice
          * @param currencyCode
          */
-        public void setPrice(String currencyCode,
-                             String formattedPrice)
+        public void setPrice(String currencyCode, String formattedPrice)
         {
                 mEtPrice.setText(formattedPrice);
                 setCurrencySymbolInPriceHint(currencyCode);
@@ -219,7 +218,7 @@ public class PriceField implements View.OnFocusChangeListener
 
         public String getPrice()
         {
-                if (mEtPrice != null && !TextUtils.isEmpty(mEtPrice.getText()))
+                if (!TextUtils.isEmpty(mEtPrice.getText()))
                 {
                         return mEtPrice.getText().toString();
                 }

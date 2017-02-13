@@ -597,7 +597,9 @@ public class DaoContentProv implements DaoManager
 
                 if (price.getPriceType() == Price.Type.UNIT_PRICE)
                 {
-                        priceValues.put(PricesEntry.COLUMN_PRICE, (long) (price.getUnitPrice() * 100));
+                        double priceValTemp = price.getUnitPrice();
+                        long priceVal = Math.round(priceValTemp * 100);
+                        priceValues.put(PricesEntry.COLUMN_PRICE, priceVal);
                         priceValues.put(PricesEntry.COLUMN_PRICE_TYPE_ID, Price.Type.UNIT_PRICE.getType());
                 }
                 else

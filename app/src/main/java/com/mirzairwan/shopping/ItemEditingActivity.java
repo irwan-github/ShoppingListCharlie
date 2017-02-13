@@ -47,7 +47,7 @@ public class ItemEditingActivity extends ItemActivity
 
         protected void initLoaders(Uri uri)
         {
-                if(mUriItem != null)
+                if (mUriItem != null)
                 {
                         Bundle arg = new Bundle();
                         arg.putParcelable(ITEM_URI, uri);
@@ -102,7 +102,8 @@ public class ItemEditingActivity extends ItemActivity
                 try
                 {
                         priceMgr.setCurrencyCode(etCurrencyCode.getText().toString());
-                        priceMgr.setItemPricesForSaving(mItemManager.getItem(), mUnitPriceEditField.getPrice(), mBundlePriceEditField.getPrice(), bundleQtyFromInputField);
+                        String unitPrice = mUnitPriceEditField.getPrice();
+                        priceMgr.setItemPricesForSaving(mItemManager.getItem(), unitPrice, mBundlePriceEditField.getPrice(), bundleQtyFromInputField);
                 }
                 catch(ParseException e)
                 {
@@ -132,7 +133,11 @@ public class ItemEditingActivity extends ItemActivity
                 switch (loaderId)
                 {
                         case ITEM_LOADER_ID:
-                                projection = new String[]{Contract.ItemsEntry._ID, Contract.ItemsEntry.COLUMN_NAME, Contract.ItemsEntry.COLUMN_BRAND, Contract.ItemsEntry.COLUMN_COUNTRY_ORIGIN, Contract.ItemsEntry.COLUMN_DESCRIPTION,};
+                                projection = new String[]{Contract.ItemsEntry._ID,
+                                                          Contract.ItemsEntry.COLUMN_NAME,
+                                                          Contract.ItemsEntry.COLUMN_BRAND,
+                                                          Contract.ItemsEntry.COLUMN_COUNTRY_ORIGIN,
+                                                          Contract.ItemsEntry.COLUMN_DESCRIPTION,};
                                 loader = new CursorLoader(this, uri, projection, selection, selectionArgs, null);
                                 break;
 
