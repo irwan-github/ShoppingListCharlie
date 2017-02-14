@@ -30,9 +30,7 @@
                                 <FrameLayout
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:layout_marginBottom="@dimen/edit_surface_margin"
                                         android:background="#fff"
-                                        android:elevation="4dp"
                                         >
 
                                         <include layout="@layout/item_image_editor"/>
@@ -41,25 +39,20 @@
                                 <FrameLayout
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:layout_marginBottom="@dimen/edit_surface_margin"
                                         android:background="#fff"
-                                        android:elevation="4dp"
                                         >
 
-                                        <include layout="@layout/item_editing"/>
+                                        <include layout="@layout/item_editing2"/>
                                 </FrameLayout>
 
                                 <FrameLayout
                                         android:id="@+id/price_container"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:layout_marginBottom="@dimen/edit_surface_margin"
-                                        android:layout_marginTop="@dimen/edit_surface_margin"
                                         android:background="#fff"
-                                        android:elevation="4dp"
                                         >
 
-                                        <include layout="@layout/price_editing"/>
+                                        <include layout="@layout/price_editing2"/>
                                 </FrameLayout>
                         </LinearLayout>
 

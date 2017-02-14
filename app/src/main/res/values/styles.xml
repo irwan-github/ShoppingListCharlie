@@ -27,6 +27,16 @@
                 <item name="android:paddingBottom">@dimen/header_padding_bottom</item>
         </style>
 
+        <style name="myToggle">
+                <item name="android:text">""</item>
+                <item name="android:textOn">""</item>
+                <item name="android:textOff">""</item>
+                <item name="android:background">?android:selectableItemBackground</item>
+                <item name="android:layout_gravity">center</item>
+                <item name="android:gravity">center</item>
+                <item name="android:button">@drawable/toggle_item_details</item>
+        </style>
+
         <dimen name="header_padding_top">8dp</dimen>
         <dimen name="header_padding_bottom">16dp</dimen>
 </resources>

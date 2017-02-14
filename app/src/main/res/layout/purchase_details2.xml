@@ -41,13 +41,11 @@
 
                 <ToggleButton
                         android:id="@+id/btn_toggle_purchase"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:layout_gravity="center"
-                        android:background="@drawable/toggle_item_details"
-                        android:text=""
-                        android:textOff=""
-                        android:textOn=""
+                        android:layout_marginLeft="16dp"
+                        style="@style/myToggle"
                         />
 
         </LinearLayout>

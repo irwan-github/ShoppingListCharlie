@@ -121,7 +121,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
         private String mWebApiBase;
         private ItemEditorView mItemEditorView;
-
+        private PriceEditorView mPriceEditorView;
 
         @Override
         protected void onPause()
@@ -257,6 +257,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
                 etBundleQty = (EditText) findViewById(R.id.et_bundle_qty);
                 etBundleQty.setOnTouchListener(mOnTouchListener);
+
+                mPriceEditorView = new PriceEditorView(this);
         }
 
         protected abstract int getLayoutXml();
