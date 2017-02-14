@@ -1,7 +1,10 @@
 package com.mirzairwan.shopping;
 
 import android.support.v7.app.AppCompatActivity;
+import android.transition.ChangeBounds;
+import android.transition.TransitionManager;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -13,6 +16,7 @@ import android.widget.ToggleButton;
 
 public class PurchaseEditorView
 {
+        private ViewGroup mRootView;
         private RadioGroup mPriceTypeChoice;
         private TextView mPriceQuery;
         private ToggleButton mExpandButton;
@@ -21,10 +25,12 @@ public class PurchaseEditorView
         public PurchaseEditorView(AppCompatActivity activity)
         {
                 mActivity = activity;
-                mExpandButton = (ToggleButton)mActivity.findViewById(R.id.btn_toggle_purchase);
-                mPriceQuery = (TextView)mActivity.findViewById(R.id.price_type_query);
-                mPriceTypeChoice = (RadioGroup)mActivity.findViewById(R.id.price_type_choice);
-                hideOtherViews();
+                mExpandButton = (ToggleButton) mActivity.findViewById(R.id.btn_toggle_purchase);
+                mPriceQuery = (TextView) mActivity.findViewById(R.id.price_type_query);
+                mPriceTypeChoice = (RadioGroup) mActivity.findViewById(R.id.price_type_choice);
+
+                // Get the root view to create a transition
+                mRootView = (ViewGroup) mActivity.findViewById(R.id.purchase_details);
                 setupButton();
         }
 
@@ -35,28 +41,20 @@ public class PurchaseEditorView
                         @Override
                         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
                         {
-                                if(isChecked)
-                                {
-                                        showOtherViews();
-                                }
-                                else
-                                {
-                                        hideOtherViews();
-                                }
+
+                                showOtherViews(isChecked);
+
                         }
                 });
         }
 
-        private void hideOtherViews()
+        private void showOtherViews(boolean isChecked)
         {
-                mPriceQuery.setVisibility(View.GONE);
-                mPriceTypeChoice.setVisibility(View.GONE);
-        }
+                // Start recording changes to the view hierarchy
+                TransitionManager.beginDelayedTransition(mRootView, new ChangeBounds());
 
-        private void showOtherViews()
-        {
-                mPriceQuery.setVisibility(View.VISIBLE);
-                mPriceTypeChoice.setVisibility(View.VISIBLE);
+                mPriceQuery.setVisibility(isChecked? View.VISIBLE : View.GONE);
+                mPriceTypeChoice.setVisibility(isChecked? View.VISIBLE : View.GONE);
         }
 
 

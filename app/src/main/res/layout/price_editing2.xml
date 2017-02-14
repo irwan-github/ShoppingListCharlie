@@ -46,7 +46,7 @@
                         android:layout_width="48dp"
                         android:layout_height="48dp"
                         style="@style/myToggle"
-                        android:layout_marginLeft="16dp"
+                        android:layout_marginLeft="8dp"
                         />
 
                 <FrameLayout

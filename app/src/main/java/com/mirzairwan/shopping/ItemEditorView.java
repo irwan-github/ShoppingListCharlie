@@ -2,7 +2,10 @@ package com.mirzairwan.shopping;
 
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.transition.ChangeBounds;
+import android.transition.TransitionManager;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.ToggleButton;
 
@@ -13,6 +16,7 @@ import android.widget.ToggleButton;
 public class ItemEditorView
 {
 
+        private ViewGroup mRootView;
         private TextInputLayout mEtCountryOriginLayout;
         private TextInputLayout mEtDescriptionLayout;
         private TextInputLayout mEtBrandLayout;
@@ -20,15 +24,17 @@ public class ItemEditorView
         private AppCompatActivity mActivity;
 
 
-
         public ItemEditorView(AppCompatActivity activity)
         {
                 mActivity = activity;
                 mToggleButton = (ToggleButton) mActivity.findViewById(R.id.btn_toggle_item);
-                mEtBrandLayout = (TextInputLayout)mActivity.findViewById(R.id.item_brand_layout);
-                mEtDescriptionLayout = (TextInputLayout)mActivity.findViewById(R.id.item_description_layout);
+                mEtBrandLayout = (TextInputLayout) mActivity.findViewById(R.id.item_brand_layout);
+                mEtDescriptionLayout = (TextInputLayout) mActivity.findViewById(R.id.item_description_layout);
                 mEtCountryOriginLayout = (TextInputLayout) mActivity.findViewById(R.id.item_country_origin_layout);
-                hideOtherViews();
+
+                // Get the root view to create a transition
+                mRootView = (ViewGroup) mActivity.findViewById(R.id.activity_item_editing);
+
                 setupButton();
         }
 
@@ -39,30 +45,21 @@ public class ItemEditorView
                         @Override
                         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
                         {
-                                if(isChecked)
-                                {
-                                        showOtherViews();
-                                }
-                                else
-                                {
-                                        hideOtherViews();
-                                }
+
+                                showOtherViews(isChecked);
+
                         }
                 });
         }
 
-        private void hideOtherViews()
+        private void showOtherViews(boolean isChecked)
         {
-                mEtBrandLayout.setVisibility(View.GONE);
-                mEtCountryOriginLayout.setVisibility(View.GONE);
-                mEtDescriptionLayout.setVisibility(View.GONE);
-        }
+                // Start recording changes to the view hierarchy
+                TransitionManager.beginDelayedTransition(mRootView, new ChangeBounds());
 
-        private void showOtherViews()
-        {
-                mEtBrandLayout.setVisibility(View.VISIBLE);
-                mEtCountryOriginLayout.setVisibility(View.VISIBLE);
-                mEtDescriptionLayout.setVisibility(View.VISIBLE);
+                mEtBrandLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+                mEtCountryOriginLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+                mEtDescriptionLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
         }
 
 
