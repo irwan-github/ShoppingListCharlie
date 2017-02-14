@@ -120,7 +120,7 @@ public class ShoppingListEditingActivity extends ItemActivity
         @Override
         protected int getLayoutXml()
         {
-                return R.layout.activity_buying_item;
+                return R.layout.activity_edt_shopping_list;
         }
 
         @Override

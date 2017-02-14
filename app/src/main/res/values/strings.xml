@@ -18,7 +18,7 @@
         <string name="empty_view_title_text">Empty </string>
         <string name="empty_view_subtitle_text">Click "Add item" or star in History</string>
 
-        <string name="text_item_brand_max_length">15</string>
+        <string name="text_item_brand_max_length">26</string>
         <string name="text_item_name_max_length">26</string>
         <string name="text_max_line">1</string>
         <string name="text_item_buy_qty_max_length">2</string>
