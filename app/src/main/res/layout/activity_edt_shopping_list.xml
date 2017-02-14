@@ -65,7 +65,7 @@
                                 android:elevation="4dp"
                                 >
 
-                                <include layout="@layout/purchase_details"/>
+                                <include layout="@layout/purchase_details2"/>
 
                         </FrameLayout>
 

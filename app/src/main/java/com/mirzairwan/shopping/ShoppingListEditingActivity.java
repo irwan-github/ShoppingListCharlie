@@ -48,6 +48,7 @@ public class ShoppingListEditingActivity extends ItemActivity
         private Uri mUriItem;
 
         private PurchaseManager mPurchaseManager;
+        private PurchaseEditorView mPurchaseEditorView;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -65,7 +66,7 @@ public class ShoppingListEditingActivity extends ItemActivity
                 //set touchListener for Radio Group
                 rgPriceTypeChoice = (RadioGroup) findViewById(R.id.price_type_choice);
                 rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);
-
+                mPurchaseEditorView = new PurchaseEditorView(this);
 
                 if (savedInstanceState != null) //Restore from previous state
                 {

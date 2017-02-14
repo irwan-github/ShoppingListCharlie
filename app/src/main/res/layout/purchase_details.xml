@@ -59,7 +59,7 @@
         android:id="@+id/price_type_choice"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:checkedButton="@id/is_unit_price"
+        android:checkedButton="@+id/rb_unit_price"
         android:orientation="horizontal"
         android:layout_marginLeft="@dimen/keyline_1"
         android:layout_marginRight="@dimen/keyline_1"

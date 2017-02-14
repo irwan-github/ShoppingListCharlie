@@ -122,6 +122,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         private String mWebApiBase;
         private ItemEditorView mItemEditorView;
 
+
         @Override
         protected void onPause()
         {
