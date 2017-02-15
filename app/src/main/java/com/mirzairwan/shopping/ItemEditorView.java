@@ -2,7 +2,8 @@ package com.mirzairwan.shopping;
 
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.transition.ChangeBounds;
+import android.transition.Transition;
+import android.transition.TransitionInflater;
 import android.transition.TransitionManager;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,7 +35,6 @@ public class ItemEditorView
 
                 // Get the root view to create a transition
                 mRootView = (ViewGroup) mActivity.findViewById(R.id.activity_item_editing);
-
                 setupButton();
         }
 
@@ -54,8 +54,9 @@ public class ItemEditorView
 
         private void showOtherViews(boolean isChecked)
         {
+                Transition transition = TransitionInflater.from(mActivity).inflateTransition(R.transition.field_details);
                 // Start recording changes to the view hierarchy
-                TransitionManager.beginDelayedTransition(mRootView, new ChangeBounds());
+                TransitionManager.beginDelayedTransition(mRootView, transition);
 
                 mEtBrandLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
                 mEtCountryOriginLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);

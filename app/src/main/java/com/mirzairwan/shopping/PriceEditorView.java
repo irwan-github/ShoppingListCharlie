@@ -1,7 +1,8 @@
 package com.mirzairwan.shopping;
 
 import android.support.v7.app.AppCompatActivity;
-import android.transition.ChangeBounds;
+import android.transition.Transition;
+import android.transition.TransitionInflater;
 import android.transition.TransitionManager;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import android.widget.ToggleButton;
  */
 public class PriceEditorView
 {
+        private View mBundleQtyLayout;
         private ViewGroup mRootView;
         private LinearLayout mCurrencyCodeLayout;
         private ToggleButton mBtnTogglePrice;
@@ -23,8 +25,9 @@ public class PriceEditorView
         public PriceEditorView(AppCompatActivity activity)
         {
                 mActivity = activity;
-                mBundlePriceLayout = (LinearLayout) mActivity.findViewById(R.id.bundle_price_group);
                 mBtnTogglePrice = (ToggleButton) mActivity.findViewById(R.id.btn_toggle_price);
+                mBundlePriceLayout = (LinearLayout) mActivity.findViewById(R.id.bundle_price_group);
+                mBundleQtyLayout = mActivity.findViewById(R.id.bundle_qty_layout);
                 mCurrencyCodeLayout = (LinearLayout) mActivity.findViewById(R.id.currency_code_layout);
 
                 // Get the root view to create a transition
@@ -48,9 +51,12 @@ public class PriceEditorView
 
         private void showOtherViews(boolean isChecked)
         {
+                Transition transition = TransitionInflater.from(mActivity).inflateTransition(R.transition.field_details);
                 // Start recording changes to the view hierarchy
-                TransitionManager.beginDelayedTransition(mRootView, new ChangeBounds());
-                mCurrencyCodeLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+                TransitionManager.beginDelayedTransition(mRootView, transition);
+
                 mBundlePriceLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+                mBundleQtyLayout.setVisibility(isChecked? View.VISIBLE :View.GONE);
+                mCurrencyCodeLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
         }
 }
