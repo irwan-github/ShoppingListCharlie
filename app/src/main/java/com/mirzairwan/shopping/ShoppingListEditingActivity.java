@@ -7,7 +7,6 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.widget.EditText;
@@ -40,7 +39,7 @@ public class ShoppingListEditingActivity extends ItemActivity
 
         private boolean isItemDeleted = false; // After deleting, don't update picture and prices
 
-        private EditText etQty;
+        private EditText etQtyToBuy;
         private RadioGroup rgPriceTypeChoice;
 
         private long defaultShopId = 1;
@@ -57,11 +56,11 @@ public class ShoppingListEditingActivity extends ItemActivity
 
                 Log.d(LOG_TAG, ">>>savedInstantState is " + (savedInstanceState == null ? "NULL" : "NOT " + "NULL"));
 
-                etQty = (EditText) findViewById(R.id.et_item_quantity);
-                etQty.setOnTouchListener(mOnTouchListener);
+                etQtyToBuy = (EditText) findViewById(R.id.et_item_quantity);
+                etQtyToBuy.setOnTouchListener(mOnTouchListener);
 
                 //Set default quantity to 1. If I set this in xml layout , it will jumble up the number and hint. This did not happen at SDK v24
-                etQty.setText("1");
+                etQtyToBuy.setText("1");
 
                 //set touchListener for Radio Group
                 rgPriceTypeChoice = (RadioGroup) findViewById(R.id.price_type_choice);
@@ -134,8 +133,21 @@ public class ShoppingListEditingActivity extends ItemActivity
                 switch (loaderId)
                 {
                         case PURCHASE_ITEM_LOADER_ID:
-                                projection = new String[]{Contract.ToBuyItemsEntry._ID, Contract.ToBuyItemsEntry.COLUMN_ITEM_ID, Contract.ToBuyItemsEntry.COLUMN_QUANTITY, Contract.ToBuyItemsEntry.COLUMN_IS_CHECKED, Contract.ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID, Contract.ItemsEntry.COLUMN_NAME, Contract.ItemsEntry.COLUMN_BRAND, Contract
-                                        .ItemsEntry.COLUMN_COUNTRY_ORIGIN, Contract.ItemsEntry.COLUMN_DESCRIPTION, Contract.PricesEntry.ALIAS_ID, Contract.PricesEntry.COLUMN_PRICE_TYPE_ID, Contract.PricesEntry.COLUMN_PRICE, Contract.PricesEntry.COLUMN_BUNDLE_QTY, Contract.PricesEntry.COLUMN_CURRENCY_CODE, Contract.PricesEntry.COLUMN_SHOP_ID};
+                                projection = new String[]{Contract.ToBuyItemsEntry._ID,
+                                                          Contract.ToBuyItemsEntry.COLUMN_ITEM_ID,
+                                                          Contract.ToBuyItemsEntry.COLUMN_QUANTITY,
+                                                          Contract.ToBuyItemsEntry.COLUMN_IS_CHECKED,
+                                                          Contract.ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID,
+                                                          Contract.ItemsEntry.COLUMN_NAME,
+                                                          Contract.ItemsEntry.COLUMN_BRAND,
+                                                          Contract.ItemsEntry.COLUMN_COUNTRY_ORIGIN,
+                                                          Contract.ItemsEntry.COLUMN_DESCRIPTION,
+                                                          Contract.PricesEntry.ALIAS_ID,
+                                                          Contract.PricesEntry.COLUMN_PRICE_TYPE_ID,
+                                                          Contract.PricesEntry.COLUMN_PRICE,
+                                                          Contract.PricesEntry.COLUMN_BUNDLE_QTY,
+                                                          Contract.PricesEntry.COLUMN_CURRENCY_CODE,
+                                                          Contract.PricesEntry.COLUMN_SHOP_ID};
                                 uri = args.getParcelable(ITEM_URI);
                                 loader = new CursorLoader(this, uri, projection, null, null, null);
                                 break;
@@ -201,13 +213,13 @@ public class ShoppingListEditingActivity extends ItemActivity
 
         private void populatePurchaseInputFields(ItemInShoppingList toBuyItem)
         {
-                etQty.setText(String.valueOf(toBuyItem.getQuantity()));
+                etQtyToBuy.setText(String.valueOf(toBuyItem.getQuantity()));
                 rgPriceTypeChoice.check(toBuyItem.getSelectedPriceType() == BUNDLE_PRICE ? R.id.rb_bundle_price : R.id.rb_unit_price);
         }
 
         private void clearPurchaseInputFields()
         {
-                etQty.setText("");
+                etQtyToBuy.setText("");
                 rgPriceTypeChoice.clearCheck();
         }
 
@@ -225,13 +237,34 @@ public class ShoppingListEditingActivity extends ItemActivity
         protected boolean areFieldsValid()
         {
                 boolean result = super.areFieldsValid();
-                if (TextUtils.isEmpty(etQty.getText()) || Integer.parseInt(etQty.getText().toString()) < 1)
+                String qtyToBuy = etQtyToBuy.getText().toString();
+                if (mPurchaseManager.isQuantityToBuyZero(qtyToBuy))
                 {
-                        alertRequiredField(R.string.message_title, R.string.mandatory_quantity);
-                        etQty.requestFocus();
+                        etQtyToBuy.setError(getString(R.string.mandatory_quantity));
                         result = false;
                 }
 
+                if (getSelectedPriceType() == Price.Type.BUNDLE_PRICE)
+                {
+                        String bundleQty = etBundleQty.getText().toString();
+
+                        if (mPurchaseManager.isBundleQuantityOne(qtyToBuy))
+                        {
+                                etQtyToBuy.setError(getString(R.string.invalid_bundle_buy_quantity_one));
+                                result = false;
+                        }
+                        else if (mPurchaseManager.isBundleQuantityOne(bundleQty))
+                        {
+                                etBundleQty.setError(getString(R.string.invalid_bundle_quantity_one));
+                                mPriceEditorView.showOtherViews(true);
+                                result = false;
+                        }
+                        else if (!mPurchaseManager.isBundleQuantityToBuyValid(qtyToBuy, etBundleQty.getText().toString()))
+                        {
+                                etQtyToBuy.setError(getString(R.string.invalid_bundle_buy_quantity) + " " + bundleQty);
+                                result = false;
+                        }
+                }
                 return result;
         }
 
@@ -245,15 +278,15 @@ public class ShoppingListEditingActivity extends ItemActivity
 
                 populateItemFromInputFields(mPurchaseManager.getitem());
 
-                String itemQuantity = etQty.getText().toString();
+                String itemQuantity = etQtyToBuy.getText().toString();
                 mPurchaseManager.getItemInShoppingList().setQuantity(Integer.parseInt(itemQuantity));
 
                 String currencyCode = etCurrencyCode.getText().toString();
-                priceMgr.setCurrencyCode(currencyCode);
+                mPriceMgr.setCurrencyCode(currencyCode);
 
                 try
                 {
-                        priceMgr.setItemPricesForSaving(mPurchaseManager.getitem(), mUnitPriceEditField.getPrice(), mBundlePriceEditField.getPrice(), getBundleQtyFromInputField());
+                        mPriceMgr.setItemPricesForSaving(mUnitPriceEditField.getPrice(), mBundlePriceEditField.getPrice(), getBundleQtyFromInputField());
                 }
                 catch(ParseException e)
                 {
@@ -264,18 +297,18 @@ public class ShoppingListEditingActivity extends ItemActivity
 
                 //Get selected price
                 Price.Type selectedPriceType = getSelectedPriceType();
-                Price selectedPrice = priceMgr.getSelectedPrice(selectedPriceType);
+                Price selectedPrice = mPriceMgr.getSelectedPrice(selectedPriceType);
                 mPurchaseManager.getItemInShoppingList().setSelectedPrice(selectedPrice);
 
                 String msg;
 
                 if (actionMode == CREATE_BUY_ITEM_MODE)
                 {
-                        msg = daoManager.insert(mPurchaseManager.getItemInShoppingList(), mPurchaseManager.getitem(), priceMgr.getPrices(), mPictureMgr);
+                        msg = daoManager.insert(mPurchaseManager.getItemInShoppingList(), mPurchaseManager.getitem(), mPriceMgr.getPrices(), mPictureMgr);
                 }
                 else //Existing item in the shopping list
                 {
-                        msg = daoManager.update(mPurchaseManager.getItemInShoppingList(), mPurchaseManager.getitem(), priceMgr.getPrices(), mPictureMgr);
+                        msg = daoManager.update(mPurchaseManager.getItemInShoppingList(), mPurchaseManager.getitem(), mPriceMgr.getPrices(), mPictureMgr);
                 }
 
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
@@ -283,6 +316,11 @@ public class ShoppingListEditingActivity extends ItemActivity
                 finish();
         }
 
+        /**
+         * Query whether unit price or bundle price is selected
+         *
+         * @return unit price or bundle price
+         */
         protected Price.Type getSelectedPriceType()
         {
                 int idSelected = rgPriceTypeChoice.getCheckedRadioButtonId();

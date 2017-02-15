@@ -106,7 +106,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected Item mItem;
         protected DaoManager daoManager;
         protected PictureMgr mPictureMgr;
-        protected PriceMgr priceMgr;
+        protected PriceMgr mPriceMgr;
         protected String mCountryCode;
         protected EditText etCurrencyCode;
         protected PriceField mUnitPriceEditField;
@@ -120,8 +120,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         private ExchangeRate mExchangeRate;
 
         private String mWebApiBase;
-        private ItemEditorView mItemEditorView;
-        private PriceEditorView mPriceEditorView;
+        protected ItemEditorView mItemEditorView;
+        protected PriceEditorView mPriceEditorView;
 
         @Override
         protected void onPause()
@@ -180,7 +180,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
                 SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
                 mCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
-                priceMgr = new PriceMgr(mCountryCode);
+                mPriceMgr = new PriceMgr(mCountryCode);
 
                 String webApiKeyPref = getString(R.string.key_forex_web_api_1);
                 mWebApiBase = sharedPrefs.getString(webApiKeyPref, null);
@@ -688,10 +688,11 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
          */
         protected boolean areFieldsValid()
         {
+                boolean result = true;
                 if (TextUtils.isEmpty(etName.getText()))
                 {
-                        alertRequiredField(R.string.message_title, R.string.mandatory_name);
-                        return false;
+                        etName.setError(getString(R.string.mandatory_name));
+                        result =  false;
                 }
 
                 Editable currencyCodeEditable = etCurrencyCode.getText();
@@ -700,11 +701,22 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 if (!isCurrencyCodeValid)
                 {
                         etCurrencyCode.clearFocus();
-                        alertRequiredField(R.string.invalid_currency_code_msg, R.string.valid_country_code_msg);
-                        return false;
+                        etCurrencyCode.setError(getString(R.string.valid_country_code_msg));
+                        result =  false;
                 }
 
-                return true;
+                Editable bundleQty = etBundleQty.getText();
+                if(!TextUtils.isEmpty(bundleQty))
+                {
+                        int nBundleQty = Integer.parseInt(bundleQty.toString());
+                        if(nBundleQty < 2)
+                        {
+                                etBundleQty.setError(getString(R.string.invalid_bundle_quantity));
+                                result =  false;
+                        }
+                }
+
+                return result;
         }
 
         /**
@@ -754,11 +766,11 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
          */
         protected void populatePricesInputFields()
         {
-                String currencyCode = priceMgr.getUnitPrice().getCurrencyCode();
+                String currencyCode = mPriceMgr.getUnitPrice().getCurrencyCode();
                 etCurrencyCode.setText(currencyCode);
-                mUnitPriceEditField.setPrice(currencyCode, priceMgr.getUnitPriceForDisplay());
-                mBundlePriceEditField.setPrice(currencyCode, priceMgr.getBundlePriceForDisplay());
-                etBundleQty.setText(FormatHelper.formatToTwoDecimalPlaces((priceMgr.getBundlePrice().getBundleQuantity())));
+                mUnitPriceEditField.setPrice(currencyCode, mPriceMgr.getUnitPriceForDisplay());
+                mBundlePriceEditField.setPrice(currencyCode, mPriceMgr.getBundlePriceForDisplay());
+                etBundleQty.setText(String.valueOf(mPriceMgr.getBundlePrice().getBundleQuantity()));
 
                 if (!isItemLocalPriced(currencyCode))
                 {
@@ -854,8 +866,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 switch (loaderId)
                 {
                         case ITEM_PRICE_LOADER_ID:
-                                priceMgr = new PriceMgr(mCountryCode);
-                                priceMgr.createPrices(cursor);
+                                mPriceMgr = new PriceMgr(mCountryCode);
+                                mPriceMgr.createPrices(cursor);
                                 populatePricesInputFields();
 
                                 //Important to move cursor back before the first record because when device switches to landscape, it gives back the same cursor with

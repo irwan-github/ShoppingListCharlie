@@ -3,7 +3,9 @@ package com.mirzairwan.shopping;
 import android.database.Cursor;
 
 import com.mirzairwan.shopping.data.Contract;
+import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.domain.ExchangeRate;
+import com.mirzairwan.shopping.domain.Price;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -45,9 +47,15 @@ public class ShoppingCursorList
                 mCursor.moveToPosition(-1);
                 while (mCursor.moveToNext())
                 {
-
-
                         int colSelectedPriceTag = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_PRICE);
+                        double cost = mCursor.getDouble(colSelectedPriceTag);
+
+                        int colSelectedPriceType = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_PRICE_TYPE_ID);
+                        int nPriceType = mCursor.getInt(colSelectedPriceType);
+                        Price.Type priceType = nPriceType == 0 ? Price.Type.UNIT_PRICE : Price.Type.BUNDLE_PRICE;
+
+                        int colBundleQty = mCursor.getColumnIndex(PricesEntry.COLUMN_BUNDLE_QTY);
+                        int bundleQty = mCursor.getInt(colBundleQty);
 
                         int colCurrencyCode = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_CURRENCY_CODE);
                         String lCurrencyCode = mCursor.getString(colCurrencyCode);
@@ -55,16 +63,15 @@ public class ShoppingCursorList
                         int colQtyPurchased = mCursor.getColumnIndex(Contract.ToBuyItemsEntry.COLUMN_QUANTITY);
                         int qtyPurchased = mCursor.getInt(colQtyPurchased);
 
-                        double cost = mCursor.getDouble(colSelectedPriceTag);
-                        //Only add item with same currency code as user home currency code
+                        //Separate foreign-price items from local-priced items
                         if (!lCurrencyCode.trim().equalsIgnoreCase(baseCurrencyCode))
                         {
-                                SummaryItem val = new SummaryItem(cost / 100, lCurrencyCode, qtyPurchased);
-                                mSummaryForeignItemsAdded.add(val);
+                                SummaryItem foreignVal = new SummaryItem(cost / 100, lCurrencyCode, qtyPurchased, priceType, bundleQty);
+                                mSummaryForeignItemsAdded.add(foreignVal);
                         }
                         else
                         {
-                                SummaryItem localVal = new SummaryItem(cost / 100, lCurrencyCode, qtyPurchased);
+                                SummaryItem localVal = new SummaryItem(cost / 100, lCurrencyCode, qtyPurchased, priceType, bundleQty);
                                 mSummaryLocalItemsAdded.add(localVal);
                         }
                 }
@@ -76,38 +83,46 @@ public class ShoppingCursorList
          */
         public void listItemsChecked(String homeCountryCode)
         {
+                mSummaryForeignItemsChecked.clear();
+                mSummaryLocalItemsChecked.clear();
+
+                String homeCurrencyCode = getCurrencyCode(homeCountryCode);
+
+                mCursor.moveToPosition(-1);
+
                 int colShoppingItemId = mCursor.getColumnIndex(Contract.ToBuyItemsEntry._ID);
                 int colSelectedPriceTag = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_PRICE);
+                int colBundleQty = mCursor.getColumnIndex(PricesEntry.COLUMN_BUNDLE_QTY);
                 int colIsItemChecked = mCursor.getColumnIndex(Contract.ToBuyItemsEntry.COLUMN_IS_CHECKED);
                 int colCurrencyCode = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_CURRENCY_CODE);
                 int colQtyPurchased = mCursor.getColumnIndex(Contract.ToBuyItemsEntry.COLUMN_QUANTITY);
 
-                mSummaryForeignItemsChecked.clear();
-                mSummaryLocalItemsChecked.clear();
-                byte atLeastAnItemChecked = (byte) 0;
-                String currencyCode = getCurrencyCode(homeCountryCode);
 
-                mCursor.moveToPosition(-1);
                 while (mCursor.moveToNext())
                 {
                         long shoppingItemId = mCursor.getLong(colShoppingItemId);
+
+                        int colSelectedPriceType = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_PRICE_TYPE_ID);
+                        int nPriceType = mCursor.getInt(colSelectedPriceType);
+                        Price.Type priceType = nPriceType == 0 ? Price.Type.UNIT_PRICE : Price.Type.BUNDLE_PRICE;
+                        int bundleQty = mCursor.getInt(colBundleQty);
+
                         int qtyPurchased = mCursor.getInt(colQtyPurchased);
-                        String lCurrencyCode = mCursor.getString(colCurrencyCode);
+                        String itemCurrencyCode = mCursor.getString(colCurrencyCode);
                         boolean isItemChecked = mCursor.getInt(colIsItemChecked) > 0;
-                        atLeastAnItemChecked |= (byte) mCursor.getInt(colIsItemChecked);
 
                         //Only add item with same currency code as user home currency code
                         double cost = mCursor.getDouble(colSelectedPriceTag);
                         if (isItemChecked)
                         {
-                                if (!lCurrencyCode.trim().equalsIgnoreCase(currencyCode))
+                                if (!itemCurrencyCode.trim().equalsIgnoreCase(homeCurrencyCode))
                                 {
-                                        SummaryItem val = new SummaryItem(shoppingItemId, cost / 100, lCurrencyCode, qtyPurchased);
+                                        SummaryItem val = new SummaryItem(cost / 100, itemCurrencyCode, qtyPurchased, priceType, bundleQty);
                                         mSummaryForeignItemsChecked.add(val);
                                 }
                                 else
                                 {
-                                        SummaryItem localValChecked = new SummaryItem(shoppingItemId, cost / 100, lCurrencyCode, qtyPurchased);
+                                        SummaryItem localValChecked = new SummaryItem(cost / 100, itemCurrencyCode, qtyPurchased, priceType, bundleQty);
                                         mSummaryLocalItemsChecked.add(localValChecked);
                                 }
                         }
@@ -163,7 +178,7 @@ public class ShoppingCursorList
 
                 for (SummaryItem localItem : mSummaryLocalItemsChecked)
                 {
-                        totalValueOfItemsChecked += localItem.getCost() * localItem.getQuantity();
+                        totalValueOfItemsChecked += localItem.getTotalCost() ;
                 }
 
                 if (exchangeRates != null)
@@ -171,7 +186,7 @@ public class ShoppingCursorList
                         for (SummaryItem summaryItemChecked : mSummaryForeignItemsChecked)
                         {
                                 ExchangeRate fc = exchangeRates.get(summaryItemChecked.getSourceCurrencyCode());
-                                totalCostForexItemChecked += (fc.compute(summaryItemChecked.getCost(), destCurrencyCode) * summaryItemChecked.getQuantity());
+                                totalCostForexItemChecked += (fc.compute(summaryItemChecked.getTotalCost(), destCurrencyCode));
                         }
                 }
                 totalValueOfItemsChecked = totalValueOfItemsChecked + totalCostForexItemChecked;
@@ -193,7 +208,7 @@ public class ShoppingCursorList
 
                 for (SummaryItem localItem : mSummaryLocalItemsAdded)
                 {
-                        totalValueOfItemsAdded += localItem.getCost() * localItem.getQuantity();
+                        totalValueOfItemsAdded += localItem.getTotalCost();
                 }
 
                 if (exchangeRates != null)
@@ -204,7 +219,7 @@ public class ShoppingCursorList
                                 ExchangeRate exRate = exchangeRates.get(summaryItem.getSourceCurrencyCode());
                                 if (exRate != null)
                                 {
-                                        totalForexCost += (exRate.compute(summaryItem.getCost(), baseCurrencyCode) * summaryItem.getQuantity());
+                                        totalForexCost += (exRate.compute(summaryItem.getTotalCost(), baseCurrencyCode));
                                 }
                         }
                 }
@@ -220,25 +235,43 @@ public class ShoppingCursorList
                 private int mQtyToBuy;
                 private double mCost;
                 private String mSourceCurrencyCode;
+                private Price.Type mPriceType;
+                private int mBundleQty;
 
-                public SummaryItem(double cost, String sourceCurrencyCode, int qtyToBuy)
+                public SummaryItem(double cost, String sourceCurrencyCode, int qtyToBuy, Price.Type priceType, int bundleQty)
                 {
                         mCost = cost;
                         mSourceCurrencyCode = sourceCurrencyCode;
                         mQtyToBuy = qtyToBuy;
+                        mPriceType = priceType;
+                        mBundleQty = bundleQty;
                 }
 
-                public SummaryItem(long id, double cost, String sourceCurrencyCode, int qtyToBuy)
-                {
-                        mId = id;
-                        mCost = cost;
-                        mSourceCurrencyCode = sourceCurrencyCode;
-                        mQtyToBuy = qtyToBuy;
-                }
+//                public SummaryItem(long id, double cost, String sourceCurrencyCode, int qtyToBuy,  Price.Type priceType, int bundleQty)
+//                {
+//                        mId = id;
+//                        mCost = cost;
+//                        mSourceCurrencyCode = sourceCurrencyCode;
+//                        mQtyToBuy = qtyToBuy;
+//                        mPriceType = priceType;
+//                        mBundleQty = bundleQty;
+//                }
 
                 public double getCost()
                 {
                         return mCost;
+                }
+
+                public double getTotalCost()
+                {
+                        if(mPriceType == Price.Type.BUNDLE_PRICE)
+                        {
+                                return (mQtyToBuy/mBundleQty) * mCost;
+                        }
+                        else
+                        {
+                                return mQtyToBuy * mCost;
+                        }
                 }
 
                 public String getSourceCurrencyCode()

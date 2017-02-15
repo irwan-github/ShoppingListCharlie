@@ -91,17 +91,14 @@ public class ShoppingListAdapter extends CursorAdapter
                         tagViews.tvItemBrand.setText(R.string.default_brand_name);
                 }
 
-                //Disable checkbox listener to
-                // disable firing pre-existing checked items on the buy list
+                //Disable checkbox listener to disable firing pre-existing checked items on the buy list
                 tagViews.checkItem.setOnCheckedChangeListener(null);
 
-                //Now it is safe to
-                // associate the 'checked' status of buy  with the checkbox
+                //Now it is safe to associate the 'checked' status of buy  with the checkbox
                 int colIsChecked = cursor.getColumnIndex(ToBuyItemsEntry.COLUMN_IS_CHECKED);
                 tagViews.checkItem.setChecked(cursor.getInt(colIsChecked) == 1);
 
-                //Associate
-                // the listener with the position on the shopping list
+                //Associate the listener with the position on the shopping list
                 tagViews.onItemCheckedChangeListener.setCursorPosition(cursor.getPosition());
 
                 //Enable checkbox listener
@@ -179,14 +176,19 @@ public class ShoppingListAdapter extends CursorAdapter
                 mExchangeRates = exchangeRates;
         }
 
+        public interface OnCheckBuyItemListener
+        {
+                void onCheckBuyItem(boolean isChecked, int mBuyItemPosition);
+        }
+
         private static class TagBuyItemViews
         {
+                public TextView tvSelectedPrice;
                 ImageView ivItem;
                 TextView tvItemName;
                 TextView tvItemBrand;
                 ToggleButton checkItem;
                 OnItemCheckedChangeListener onItemCheckedChangeListener;
-                public TextView tvSelectedPrice;
         }
 
         private static class OnItemCheckedChangeListener implements CompoundButton.OnCheckedChangeListener
@@ -209,10 +211,5 @@ public class ShoppingListAdapter extends CursorAdapter
                 {
                         mBuyItemPosition = position;
                 }
-        }
-
-        public interface OnCheckBuyItemListener
-        {
-                void onCheckBuyItem(boolean isChecked, int mBuyItemPosition);
         }
 }

@@ -185,7 +185,7 @@
                         android:layout_height="wrap_content"
                         android:focusableInTouchMode="true"
                         android:hint="@string/bundle_quantity_txt"
-                        android:inputType="numberDecimal"
+                        android:inputType="number"
                         android:minWidth="@dimen/edit_text_bundle_qty_min_width"
                         android:textAppearance="?android:textAppearanceMedium"
                         />

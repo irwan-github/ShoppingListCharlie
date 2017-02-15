@@ -101,9 +101,9 @@ public class ItemEditingActivity extends ItemActivity
 
                 try
                 {
-                        priceMgr.setCurrencyCode(etCurrencyCode.getText().toString());
+                        mPriceMgr.setCurrencyCode(etCurrencyCode.getText().toString());
                         String unitPrice = mUnitPriceEditField.getPrice();
-                        priceMgr.setItemPricesForSaving(mItemManager.getItem(), unitPrice, mBundlePriceEditField.getPrice(), bundleQtyFromInputField);
+                        mPriceMgr.setItemPricesForSaving(unitPrice, mBundlePriceEditField.getPrice(), bundleQtyFromInputField);
                 }
                 catch(ParseException e)
                 {
@@ -113,7 +113,7 @@ public class ItemEditingActivity extends ItemActivity
                 }
 
                 //String msg = daoManager.update(mItemManager.getItem(), mItemManager.getItem().getPrices(), mPictureMgr);
-                String msg = daoManager.update(mItemManager.getItem(), priceMgr.getPrices(), mPictureMgr);
+                String msg = daoManager.update(mItemManager.getItem(), mPriceMgr.getPrices(), mPictureMgr);
 
                 Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
 

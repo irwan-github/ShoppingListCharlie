@@ -1,8 +1,5 @@
 package com.mirzairwan.shopping.domain;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-
 import java.util.Date;
 
 import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
@@ -16,7 +13,7 @@ import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
  * Price information of item added to Shopping List. This class in independent of quantity.
  * Created by Mirza Irwan on 17/11/16.
  */
-public class Price implements Parcelable
+public class Price
 {
 
 
@@ -42,7 +39,7 @@ public class Price implements Parcelable
     private long _id;
     private double mUnitPrice = 0.00d;
     private double mBundlePrice = 0.00d;
-    private double mBundleQuantity = 0.00d;
+    private int mBundleQuantity = 0;
     private Price.Type mPriceType = UNIT_PRICE; //Use unit price as default
     private String mCurrencyCode;
     private long mShopId = 1;
@@ -60,7 +57,7 @@ public class Price implements Parcelable
      * @param currencyCode Code of currency
      * @param shopId The identifier of the shop
      */
-    public Price(double bundlePrice, double bundleQuantity,
+    public Price(double bundlePrice, int bundleQuantity,
                  String currencyCode, long shopId)
     {
         mBundlePrice = bundlePrice;
@@ -79,7 +76,7 @@ public class Price implements Parcelable
      * @param shopId The identifier of the shop
      * @param lastUpdatedOn Timestamp of database update
      */
-    public Price(long _id, double bundlePrice, double bundleQuantity,
+    public Price(long _id, double bundlePrice, int bundleQuantity,
                  String currencyCode, long shopId, Date lastUpdatedOn)
     {
         this._id = _id;
@@ -168,7 +165,7 @@ public class Price implements Parcelable
         return mUnitPrice;
     }
 
-    public void setBundlePrice(double bundlePrice, double bundleQuantity)
+    public void setBundlePrice(double bundlePrice, int bundleQuantity)
     {
         mBundleQuantity = bundleQuantity;
         mBundlePrice = bundlePrice;
@@ -179,54 +176,10 @@ public class Price implements Parcelable
         return mBundlePrice;
     }
 
-    public double getBundleQuantity()
+    public int getBundleQuantity()
     {
         return mBundleQuantity;
     }
 
-
-    @Override
-    public int describeContents()
-    {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags)
-    {
-        dest.writeLong(_id);
-        dest.writeDouble(mUnitPrice);
-        dest.writeDouble(mBundlePrice);
-        dest.writeDouble(mBundleQuantity);
-        dest.writeSerializable(mPriceType);
-        dest.writeString(mCurrencyCode);
-        dest.writeLong(mShopId);
-        if(mLastUpdatedOn != null)
-            dest.writeLong(mLastUpdatedOn.getTime());
-    }
-
-    public static final Creator<Price> CREATOR
-            = new Creator<Price>() {
-        public Price createFromParcel(Parcel in) {
-            return new Price(in);
-        }
-
-        public Price[] newArray(int size) {
-            return new Price[size];
-        }
-    };
-
-    private Price(Parcel in)
-    {
-        _id = in.readLong();
-        mUnitPrice = in.readDouble();
-        mBundlePrice = in.readDouble();
-        mBundleQuantity = in.readDouble();
-        mPriceType = (Price.Type)in.readSerializable();
-        mCurrencyCode = in.readString();
-        mShopId = in.readLong();
-        mLastUpdatedOn = in.readLong() > 0? new Date(in.readLong()) : null;
-
-    }
 
 }

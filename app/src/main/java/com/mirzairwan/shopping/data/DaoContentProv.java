@@ -605,7 +605,7 @@ public class DaoContentProv implements DaoManager
                 else
                 {
                         priceValues.put(PricesEntry.COLUMN_PRICE, (long) (price.getBundlePrice() * 100));
-                        priceValues.put(PricesEntry.COLUMN_BUNDLE_QTY, (long) (price.getBundleQuantity() * 100));
+                        priceValues.put(PricesEntry.COLUMN_BUNDLE_QTY, price.getBundleQuantity() );
                         priceValues.put(PricesEntry.COLUMN_PRICE_TYPE_ID, Price.Type.BUNDLE_PRICE.getType());
                 }
 

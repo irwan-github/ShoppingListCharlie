@@ -346,20 +346,6 @@ public class ShoppingListProvider extends ContentProvider
          */
         private Cursor queryShoppingList(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder)
         {
-
-//        *           "SELECT items._id AS itemId," +
-//        *           "items.name, items.brand, items.country_origin, " +
-//        *           "items.description, items.last_updated_on, " +
-//        *           "buy_items._id AS dbBuyItemId, buy_items.quantity, " +
-//        *           "buy_items.selected_price_id, buy_items.is_checked, buy_items.last_updated_on, " +
-//                    "prices.price_type_id, prices.price, prices.currency_code
-//        *           "FROM buy_items " +
-//        *           "LEFT JOIN items " +
-//        *           "ON buy_items._id=items._id " +
-//                    "LEFT JOIN prices
-//                    "ON buy_items.selected_price_id=prices._id
-
-
                 SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
 
                 queryBuilder.setTables(ToBuyItemsEntry.TABLE_NAME +

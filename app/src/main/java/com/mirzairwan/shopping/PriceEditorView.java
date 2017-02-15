@@ -49,7 +49,7 @@ public class PriceEditorView
         }
 
 
-        private void showOtherViews(boolean isChecked)
+        protected void showOtherViews(boolean isChecked)
         {
                 Transition transition = TransitionInflater.from(mActivity).inflateTransition(R.transition.field_details);
                 // Start recording changes to the view hierarchy

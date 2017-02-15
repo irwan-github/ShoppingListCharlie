@@ -48,12 +48,13 @@ import static com.mirzairwan.shopping.R.xml.preferences;
  * Created by Mirza Irwan on 13/1/17.
  * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
  * Contact owner at mirza.irwan.osman@gmail.com
- *
+ * <p>
  * Display shopping list screen
  */
 
-public class ShoppingListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, ShoppingListAdapter.OnCheckBuyItemListener,
-        SharedPreferences.OnSharedPreferenceChangeListener
+public class ShoppingListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
+                                                              ShoppingListAdapter.OnCheckBuyItemListener,
+                                                              SharedPreferences.OnSharedPreferenceChangeListener
 
 {
         private static final String LOG_TAG = ShoppingListFragment.class.getSimpleName();
@@ -350,8 +351,19 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
         public Loader<Cursor> onCreateLoader(int id, Bundle args)
         {
                 Log.d(LOG_TAG, ">>>>>>> onCreateLoader");
-                String[] projection = new String[]{ToBuyItemsEntry._ID, ToBuyItemsEntry.COLUMN_ITEM_ID, ToBuyItemsEntry.COLUMN_QUANTITY, ToBuyItemsEntry.COLUMN_IS_CHECKED, ItemsEntry.COLUMN_NAME, ItemsEntry.COLUMN_BRAND, ItemsEntry.COLUMN_COUNTRY_ORIGIN, ItemsEntry.COLUMN_DESCRIPTION, PicturesEntry.COLUMN_FILE_PATH, PricesEntry
-                        .COLUMN_PRICE_TYPE_ID, PricesEntry.COLUMN_PRICE, PricesEntry.COLUMN_CURRENCY_CODE};
+                String[] projection = new String[]{ToBuyItemsEntry._ID,
+                                                   ToBuyItemsEntry.COLUMN_ITEM_ID,
+                                                   ToBuyItemsEntry.COLUMN_QUANTITY,
+                                                   ToBuyItemsEntry.COLUMN_IS_CHECKED,
+                                                   ItemsEntry.COLUMN_NAME,
+                                                   ItemsEntry.COLUMN_BRAND,
+                                                   ItemsEntry.COLUMN_COUNTRY_ORIGIN,
+                                                   ItemsEntry.COLUMN_DESCRIPTION,
+                                                   PicturesEntry.COLUMN_FILE_PATH,
+                                                   PricesEntry.COLUMN_PRICE_TYPE_ID,
+                                                   PricesEntry.COLUMN_BUNDLE_QTY,
+                                                   PricesEntry.COLUMN_PRICE,
+                                                   PricesEntry.COLUMN_CURRENCY_CODE};
 
                 Uri uri = Contract.ShoppingList.CONTENT_URI;
 
@@ -475,7 +487,7 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 String info = getString(R.string.added_to_shoppinglist) + costAdded +
                         " | " + getString(R.string.checked_to_shoppinglist) + costChecked;
 
-                mSnackBar = Snackbar.make(mRootView, info, Snackbar.LENGTH_INDEFINITE);
+                mSnackBar = Snackbar.make(mRootView, info, Snackbar.LENGTH_SHORT);
                 mSnackBar.setAction(R.string.dismiss, new View.OnClickListener()
                 {
                         @Override
@@ -487,23 +499,6 @@ public class ShoppingListFragment extends Fragment implements LoaderManager.Load
                 mSnackBar.setActionTextColor(Color.LTGRAY);
                 mSnackBar.show();
         }
-
-        private void dismissSummaryTotalsView()
-        {
-                if (mSnackBar != null)
-                {
-                        mSnackBar.dismiss();
-                }
-        }
-
-//        @Override
-//        public void onComplete(boolean isShareSuccess)
-//        {
-//                if (isShareSuccess)
-//                {
-//                        Snackbar.make(mRootView, R.string.share_shopping_list_success, Snackbar.LENGTH_SHORT).show();
-//                }
-//        }
 
         /**
          * Hosting Activity implements this interface to respond to user click on shopping list

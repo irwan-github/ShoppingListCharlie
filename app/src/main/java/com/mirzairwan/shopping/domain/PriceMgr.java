@@ -35,7 +35,7 @@ public class PriceMgr
         {
                 mCountryCode = countryCode;
                 mUnitPrice = new Price(0.00d, FormatHelper.getCurrencyCode(countryCode), DEFAULT_SHOP_ID);
-                mBundlePrice = new Price(0.00d, 0.00d, FormatHelper.getCurrencyCode(countryCode), DEFAULT_SHOP_ID);
+                mBundlePrice = new Price(0.00d, 0, FormatHelper.getCurrencyCode(countryCode), DEFAULT_SHOP_ID);
         }
 
 
@@ -77,7 +77,7 @@ public class PriceMgr
                         {
                                 double bundlePrice = cursor.getDouble(colPriceIdx) / 100;
                                 int colBundleQtyIdx = cursor.getColumnIndex(Contract.PricesEntry.COLUMN_BUNDLE_QTY);
-                                double bundleQty = cursor.getDouble(colBundleQtyIdx) / 100;
+                                int bundleQty = cursor.getInt(colBundleQtyIdx);
                                 mBundlePrice = new Price(priceId, bundlePrice, bundleQty, currencyCode, shopId, null);
                         }
 
@@ -107,23 +107,11 @@ public class PriceMgr
                 return FormatHelper.formatToTwoDecimalPlaces(mBundlePrice.getBundlePrice());
         }
 
-        public void setItemPricesForSaving(Item item,
-                                           String unitPriceFromInputField,
-                                           String bundlePriceFromInputField,
-                                           String bundleQtyFromInputField) throws ParseException
+        public void setItemPricesForSaving(String unitPriceFromInputField, String bundlePriceFromInputField, String bundleQtyFromInputField) throws ParseException
         {
-                if (item == null)
-                {
-                        throw new IllegalArgumentException("Item cannot be null");
-                }
-
                 double unitPrice = FormatHelper.parseTwoDecimalPlaces(unitPriceFromInputField);
                 mUnitPrice.setUnitPrice(unitPrice);
-                mBundlePrice.setBundlePrice(FormatHelper.parseTwoDecimalPlaces(bundlePriceFromInputField), Double.parseDouble(bundleQtyFromInputField));
-
-                //        item.addPrice(mUnitPrice);
-                //        item.addPrice(mBundlePrice);
-
+                mBundlePrice.setBundlePrice(FormatHelper.parseTwoDecimalPlaces(bundlePriceFromInputField), Integer.parseInt(bundleQtyFromInputField));
         }
 
         public Price getUnitPrice()

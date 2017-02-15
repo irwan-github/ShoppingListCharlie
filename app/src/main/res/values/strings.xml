@@ -110,4 +110,8 @@
         <string name="remove_picture_item">Remove picture</string>
         <string name="insert_picture">Pick a picture</string>
         <string name="use_camera">Use a camera</string>
+        <string name="invalid_bundle_buy_quantity">Invalid bundle quantity. Must be factors of</string>
+        <string name="invalid_bundle_quantity">Bundle quantity must be more than 1.</string>
+        <string name="invalid_bundle_buy_quantity_one">Quantity must be more than 1.</string>
+        <string name="invalid_bundle_quantity_one">Bundle quatity must be more than 1.</string>
 </resources>

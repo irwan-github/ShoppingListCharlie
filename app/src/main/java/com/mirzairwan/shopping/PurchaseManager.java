@@ -1,17 +1,20 @@
 package com.mirzairwan.shopping;
 
 import android.database.Cursor;
+import android.text.TextUtils;
 
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.ItemInShoppingList;
 import com.mirzairwan.shopping.domain.Price;
 
+import static java.lang.Integer.parseInt;
+
 /**
  * Created by Mirza Irwan on 13/1/17.
  * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
  * Contact owner at mirza.irwan.osman@gmail.com
- *
+ * <p>
  * Manages only one item placed or to-be placed into shopping list
  */
 
@@ -85,7 +88,7 @@ public class PurchaseManager
                 long priceId = mCursor.getLong(colPriceIdIdx);
 
                 int colBundleQtyIdx = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_BUNDLE_QTY);
-                long bundleQty = mCursor.getLong(colBundleQtyIdx);
+                int bundleQty = mCursor.getInt(colBundleQtyIdx);
 
                 int colCurrencyCodeIdx = mCursor.getColumnIndex(Contract.PricesEntry.COLUMN_CURRENCY_CODE);
                 String currencyCode = mCursor.getString(colCurrencyCodeIdx);
@@ -113,6 +116,18 @@ public class PurchaseManager
 
         }
 
+        public boolean isQuantityToBuyZero(String quantityToBuy)
+        {
+                if (TextUtils.isEmpty(quantityToBuy) || parseInt(quantityToBuy) < 1)
+                {
+                        return true;
+                }
+                else
+                {
+                        return false;
+                }
+        }
+
         public Item getitem()
         {
                 return mItem;
@@ -131,5 +146,34 @@ public class PurchaseManager
         public void setSelectedPrice(Price defaultPrice)
         {
                 mSelectedPrice = defaultPrice;
+        }
+
+        public boolean isBundleQuantityToBuyValid(String bundleQtyToBuy, String bundleQty)
+        {
+                int nBundleQty = Integer.parseInt(bundleQty);
+                int nBundleQtyToBuy = Integer.parseInt(bundleQtyToBuy);
+
+                if(nBundleQtyToBuy <= 1)
+                        return false;
+
+                int k = nBundleQtyToBuy % nBundleQty ;
+
+                if (k == 0)
+                {
+                        return true;
+                }
+                else
+                {
+                        return false;
+                }
+        }
+
+        public boolean isBundleQuantityOne(String bundleQtyToBuy)
+        {
+                int nBundleQtyToBuy = Integer.parseInt(bundleQtyToBuy);
+                if(nBundleQtyToBuy <= 1)
+                        return true;
+                else
+                        return false;
         }
 }
