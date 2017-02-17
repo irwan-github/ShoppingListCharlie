@@ -1,7 +1,6 @@
 package com.mirzairwan.shopping;
 
 import android.app.ActivityOptions;
-import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.LoaderManager;
 import android.content.ContentUris;
@@ -231,17 +230,9 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         @Override
         public void onBackPressed()
         {
-                FragmentManager fragmentManager = getFragmentManager();
-                int backStackEntryCount = fragmentManager.getBackStackEntryCount();
-                if (backStackEntryCount > 0)
+                if (mDrawerLayout.isDrawerOpen(GravityCompat.START))
                 {
-                        int index = backStackEntryCount - 1;
-                        fragmentManager.popBackStack();
-                        --index;
-                        FragmentManager.BackStackEntry backStackEntryAt = fragmentManager.getBackStackEntryAt(index);
-                        String name = backStackEntryAt.getName();
-                        Log.d(LOG_TAG, ">>> name of backstactentry " + name);
-                        setTitle(name);
+                        mDrawerLayout.closeDrawers();
                 }
                 else
                 {
@@ -331,10 +322,9 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                         }
                 }
 
-                intentToViewItem.putExtra(EXCHANGE_RATE, exchangeRate);
-
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
                 {
+                        intentToViewItem.putExtra(EXCHANGE_RATE, exchangeRate);
                         ActivityOptions activityOptions = ActivityOptions.makeSceneTransitionAnimation(this);
                         Bundle options = activityOptions.toBundle();
                         startActivity(intentToViewItem, options);

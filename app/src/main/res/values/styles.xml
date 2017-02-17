@@ -28,11 +28,16 @@
                 <item name="android:paddingBottom">@dimen/header_padding_bottom</item>
         </style>
 
+        <!-- Touch feedback in material design provides an instantaneous visual confirmation at the point of contact when users interact with UI elements -->
+        <!--  Apply this functionality in your view XML by specifying the view background as: ?android:attr/selectableItemBackground for a bounded ripple.-->
+        <!-- Alternatively, you can define a RippleDrawable as an XML resource using the ripple element.-->
+
+        <!-- The following us used to style togglebutton -->
         <style name="myToggle">
                 <item name="android:text">""</item>
                 <item name="android:textOn">""</item>
                 <item name="android:textOff">""</item>
-                <item name="android:background">?android:selectableItemBackground</item>
+                <item name="android:background">?android:attr/selectableItemBackground</item>
                 <item name="android:layout_gravity">center</item>
                 <item name="android:gravity">center</item>
                 <item name="android:button">@drawable/toggle_item_details</item>

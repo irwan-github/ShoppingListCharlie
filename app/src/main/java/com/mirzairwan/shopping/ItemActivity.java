@@ -14,6 +14,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -111,18 +112,16 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected EditText etCurrencyCode;
         protected PriceField mUnitPriceEditField;
         protected PriceField mBundlePriceEditField;
-        private ImageView mImgItemPic;
-        private long itemId;
-        private ExchangeRateInput mExchangeRateInput;
-
-        //During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance state
-        //and restore when device orientates to landscape.
-        private ExchangeRate mExchangeRate;
-
-        private String mWebApiBase;
         protected ItemEditorExpander mItemEditorExpander;
         //protected ItemEditorAnimation mItemEditorAnimation;
         protected PriceEditorExpander mPriceEditorExpander;
+        private ImageView mImgItemPic;
+        private long itemId;
+        private ExchangeRateInput mExchangeRateInput;
+        //During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance state
+        //and restore when device orientates to landscape.
+        private ExchangeRate mExchangeRate;
+        private String mWebApiBase;
 
         @Override
         protected void onPause()
@@ -353,7 +352,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         @Override
         public boolean onOptionsItemSelected(MenuItem menuItem)
         {
-
                 switch (menuItem.getItemId())
                 {
                         case R.id.save_item_details:
@@ -371,20 +369,34 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                                 @Override
                                                 public void onClick(DialogInterface dialog, int which)
                                                 {
-                                                        NavUtils.navigateUpFromSameTask(ItemActivity.this);
+                                                        removeUnwantedPicturesFromApp();
+                                                        endActivity();
                                                 }
                                         });
                                 }
                                 else
                                 {
-                                        NavUtils.navigateUpFromSameTask(ItemActivity.this);
                                         removeUnwantedPicturesFromApp();
+                                        endActivity();
+
                                 }
                                 return true;
                         default:
                                 return super.onOptionsItemSelected(menuItem);
                 }
 
+        }
+
+        private void endActivity()
+        {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                {
+                        finishAfterTransition();
+                }
+                else
+                {
+                        NavUtils.navigateUpFromSameTask(ItemActivity.this);
+                }
         }
 
         /**
@@ -694,7 +706,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 if (TextUtils.isEmpty(etName.getText()))
                 {
                         etName.setError(getString(R.string.mandatory_name));
-                        result =  false;
+                        result = false;
                 }
 
                 Editable currencyCodeEditable = etCurrencyCode.getText();
@@ -704,17 +716,17 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 {
                         etCurrencyCode.clearFocus();
                         etCurrencyCode.setError(getString(R.string.valid_country_code_msg));
-                        result =  false;
+                        result = false;
                 }
 
                 Editable bundleQty = etBundleQty.getText();
-                if(!TextUtils.isEmpty(bundleQty))
+                if (!TextUtils.isEmpty(bundleQty))
                 {
                         int nBundleQty = Integer.parseInt(bundleQty.toString());
-                        if(nBundleQty < 2)
+                        if (nBundleQty < 2)
                         {
                                 etBundleQty.setError(getString(R.string.invalid_bundle_quantity));
-                                result =  false;
+                                result = false;
                         }
                 }
 

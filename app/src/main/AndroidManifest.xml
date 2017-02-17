@@ -41,6 +41,7 @@
                 </activity>
                 <activity
                         android:name=".ShoppingListEditingActivity"
+                        android:launchMode="singleTop"
                         android:parentActivityName=".ShoppingActivity"
                         android:theme="@style/AppTheme.Details"
                         >
@@ -50,6 +51,7 @@
                 </activity>
                 <activity
                         android:name=".ItemEditingActivity"
+                        android:launchMode="singleTop"
                         android:parentActivityName=".ShoppingActivity">
                         <meta-data
                                 android:name="android.support.PARENT_ACTIVITY"
