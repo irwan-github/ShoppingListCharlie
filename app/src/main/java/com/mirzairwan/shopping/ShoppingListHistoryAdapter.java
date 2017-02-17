@@ -23,13 +23,13 @@ import com.mirzairwan.shopping.domain.Picture;
  * Contact owner at mirza.irwan.osman@gmail.com
  */
 
-public class CatalogAdapter extends CursorAdapter
+public class ShoppingListHistoryAdapter extends CursorAdapter
 {
-        private static final String LOG_TAG = CatalogAdapter.class.getSimpleName();
+        private static final String LOG_TAG = ShoppingListHistoryAdapter.class.getSimpleName();
         private OnPictureRequestListener mOnPictureRequestListener;
         private OnToggleCatalogItemListener mOnToggleCatalogItemListener;
 
-        public CatalogAdapter(Context context, Cursor cursor, OnToggleCatalogItemListener onToggleCatalogItemListener, OnPictureRequestListener onPictureRequestListener)
+        public ShoppingListHistoryAdapter(Context context, Cursor cursor, OnToggleCatalogItemListener onToggleCatalogItemListener, OnPictureRequestListener onPictureRequestListener)
         {
                 super(context, cursor, 0);
                 mOnToggleCatalogItemListener = onToggleCatalogItemListener;

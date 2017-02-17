@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+        <style name="AppTheme" parent="AppTheme.Base">
+
+        </style>
+
+        <style name="AppTheme.Home">
+                <item name="android:windowExitTransition">@transition/screen_slide_out_right</item>
+                <item name="android:windowTransitionBackgroundFadeDuration">900</item>
+        </style>
+
+        <style name="AppTheme.Details">
+                <item name="android:windowEnterTransition">@transition/screen_slide_in_left</item>
+                <item name="android:windowTransitionBackgroundFadeDuration">900</item>
+        </style>
+</resources>

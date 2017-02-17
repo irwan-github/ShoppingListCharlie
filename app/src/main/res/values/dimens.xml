@@ -42,4 +42,7 @@
         <dimen name="nav_item_margin_top">32dp</dimen>
         <dimen name ="nav_item_height">48dp</dimen>
 
+        <dimen name="header_padding_top">8dp</dimen>
+        <dimen name="header_padding_bottom">16dp</dimen>
+
 </resources>

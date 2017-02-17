@@ -114,7 +114,7 @@ class ExchangeRateAwareLoader extends AsyncTaskLoader<Map<String, ExchangeRate>>
                 if (mExchangeRateInput != null)
                 {
                         mExchangeRateInput.deleteObservers();
-                        mExchangeRateInput = null;
+                        //mExchangeRateInput = null;
                 }
         }
 

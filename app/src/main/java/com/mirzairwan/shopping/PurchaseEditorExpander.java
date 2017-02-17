@@ -15,7 +15,7 @@ import android.widget.ToggleButton;
  * Created by Mirza Irwan on 14/2/17.
  */
 
-public class PurchaseEditorView
+public class PurchaseEditorExpander
 {
         private ViewGroup mRootView;
         private RadioGroup mPriceTypeChoice;
@@ -23,7 +23,7 @@ public class PurchaseEditorView
         private ToggleButton mExpandButton;
         private AppCompatActivity mActivity;
 
-        public PurchaseEditorView(AppCompatActivity activity)
+        public PurchaseEditorExpander(AppCompatActivity activity)
         {
                 mActivity = activity;
                 mExpandButton = (ToggleButton) mActivity.findViewById(R.id.btn_toggle_purchase);
@@ -43,20 +43,37 @@ public class PurchaseEditorView
                         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
                         {
 
-                                showOtherViews(isChecked);
+                                if (isChecked)
+                                {
+                                        expandMore();
+                                }
+                                else
+                                {
+                                        expandLess();
+                                }
 
                         }
                 });
         }
 
-        private void showOtherViews(boolean isChecked)
+        private void expandLess()
         {
-                Transition transition = TransitionInflater.from(mActivity).inflateTransition(R.transition.field_details);
+                Transition transition = TransitionInflater.from(mActivity).inflateTransition(R.transition.item_expand_less);
+
                 // Start recording changes to the view hierarchy
                 TransitionManager.beginDelayedTransition(mRootView, transition);
+                mPriceQuery.setVisibility(View.GONE);
+                mPriceTypeChoice.setVisibility(View.GONE);
+        }
 
-                mPriceQuery.setVisibility(isChecked? View.VISIBLE : View.GONE);
-                mPriceTypeChoice.setVisibility(isChecked? View.VISIBLE : View.GONE);
+        private void expandMore()
+        {
+                Transition transition = TransitionInflater.from(mActivity).inflateTransition(R.transition.item_expand_more);
+
+                // Start recording changes to the view hierarchy
+                TransitionManager.beginDelayedTransition(mRootView, transition);
+                mPriceQuery.setVisibility(View.VISIBLE);
+                mPriceTypeChoice.setVisibility(View.VISIBLE);
         }
 
 

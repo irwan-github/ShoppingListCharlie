@@ -18,7 +18,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
-
 import com.mirzairwan.shopping.data.Contract.Catalogue;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PicturesEntry;
@@ -27,9 +26,7 @@ import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import com.mirzairwan.shopping.data.DaoContentProv;
 import com.mirzairwan.shopping.data.DaoManager;
 import com.mirzairwan.shopping.domain.Price;
-
 import static com.mirzairwan.shopping.R.xml.preferences;
-
 
 /**
  * Created by Mirza Irwan on 13/1/17.
@@ -37,26 +34,29 @@ import static com.mirzairwan.shopping.R.xml.preferences;
  * Contact owner at mirza.irwan.osman@gmail.com
  */
 
-public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalogItemListener, LoaderManager.LoaderCallbacks<Cursor>, AdapterView.OnItemClickListener, SharedPreferences.OnSharedPreferenceChangeListener
+public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalogItemListener,
+                                                                 LoaderManager.LoaderCallbacks<Cursor>,
+                                                                 AdapterView.OnItemClickListener,
+                                                                 SharedPreferences.OnSharedPreferenceChangeListener
 {
         private static final String LOG_TAG = ShoppingHistoryFragment.class.getSimpleName();
         private static final int LOADER_CATALOG_ID = 2;
         private static final String SORT_COLUMN = "SORT_COLUMN";
-        private CatalogAdapter catalogAdapter;
+        private ShoppingListHistoryAdapter historyAdapter;
         private DaoManager daoManager;
         private OnFragmentInteractionListener mOnFragmentInteractionListener;
         private OnPictureRequestListener mOnPictureRequestListener;
         private ShoppingHistoryCursorList mShoppingHistoryList;
         private PurchaseManager mPurchaseManager;
 
-        public static ShoppingHistoryFragment newInstance()
-        {
-                return new ShoppingHistoryFragment();
-        }
-
         public ShoppingHistoryFragment()
         {
                 mPurchaseManager = new PurchaseManager();
+        }
+
+        public static ShoppingHistoryFragment newInstance()
+        {
+                return new ShoppingHistoryFragment();
         }
 
         @Override
@@ -111,15 +111,16 @@ public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalog
 
         private void setupListView(ListView lvAllItems)
         {
-                catalogAdapter = new CatalogAdapter(getActivity(), null, this, mOnPictureRequestListener);
-                lvAllItems.setAdapter(catalogAdapter);
+                historyAdapter = new ShoppingListHistoryAdapter(getActivity(), null, this, mOnPictureRequestListener);
+                lvAllItems.setAdapter(historyAdapter);
                 lvAllItems.setOnItemClickListener(this);
         }
 
         /**
          * Add/remove an item into/from shopping list when user clicks on the toggle button.
+         *
          * @param isItemChecked Toggle button is filled.
-         * @param position the current cursor position.
+         * @param position      the current cursor position.
          */
         @Override
         public void onToggleItem(boolean isItemChecked, int position)
@@ -131,19 +132,20 @@ public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalog
                         String itemName = mShoppingHistoryList.getItemName(position);
                         long defaultPriceId = mShoppingHistoryList.getPriceId(position);
                         long rowId = daoManager.insert(itemId, defaultPriceId);
-                        msg = rowId > 0? itemName+ " " + getString(R.string.added_to_shopping_list_ok) : itemName+ " " + getString(R.string.added_to_shopping_list_error);
+                        msg = rowId > 0 ? itemName + " " + getString(R.string.added_to_shopping_list_ok) : itemName + " " + getString(R.string.added_to_shopping_list_error);
                 }
                 else
                 {
                         long shoppingListItemId = mShoppingHistoryList.getShoppingListItemId(position);
                         String itemName = mShoppingHistoryList.getItemName(position);
-                        msg = daoManager.delete(shoppingListItemId) > 0 ? itemName+ " " + getString(R.string.remove_item_from_shopping_list_ok) : itemName + " " + getString(R.string.remove_item_from_shopping_list_error);
+                        msg = daoManager.delete(shoppingListItemId) > 0 ? itemName + " " + getString(R.string.remove_item_from_shopping_list_ok) : itemName + " " + getString(R.string.remove_item_from_shopping_list_error);
                 }
                 Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
         }
 
         /**
          * Join tables: items, shopping list, prices and pictures. Only unit price type record is selected from prices table.
+         *
          * @param loaderId
          * @param args
          * @return
@@ -179,7 +181,6 @@ public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalog
                                 break;
                 }
 
-
                 return cursorLoader;
         }
 
@@ -187,14 +188,14 @@ public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalog
         public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
         {
                 Log.d(LOG_TAG, "Calling onLoadFinished");
-                catalogAdapter.swapCursor(cursor);
+                historyAdapter.swapCursor(cursor);
                 mShoppingHistoryList = new ShoppingHistoryCursorList(cursor);
         }
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader)
         {
-                catalogAdapter.swapCursor(null);
+                historyAdapter.swapCursor(null);
                 //shoppingList = null;
                 mShoppingHistoryList = null;
         }

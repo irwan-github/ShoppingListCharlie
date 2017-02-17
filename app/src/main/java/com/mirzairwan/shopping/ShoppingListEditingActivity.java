@@ -47,7 +47,7 @@ public class ShoppingListEditingActivity extends ItemActivity
         private Uri mUriItem;
 
         private PurchaseManager mPurchaseManager;
-        private PurchaseEditorView mPurchaseEditorView;
+        private PurchaseEditorExpander mPurchaseEditorExpander;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -65,7 +65,7 @@ public class ShoppingListEditingActivity extends ItemActivity
                 //set touchListener for Radio Group
                 rgPriceTypeChoice = (RadioGroup) findViewById(R.id.price_type_choice);
                 rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);
-                mPurchaseEditorView = new PurchaseEditorView(this);
+                mPurchaseEditorExpander = new PurchaseEditorExpander(this);
 
                 if (savedInstanceState != null) //Restore from previous state
                 {
@@ -256,7 +256,7 @@ public class ShoppingListEditingActivity extends ItemActivity
                         else if (mPurchaseManager.isBundleQuantityOne(bundleQty))
                         {
                                 etBundleQty.setError(getString(R.string.invalid_bundle_quantity_one));
-                                mPriceEditorView.showOtherViews(true);
+                                mPriceEditorExpander.expandMore();
                                 result = false;
                         }
                         else if (!mPurchaseManager.isBundleQuantityToBuyValid(qtyToBuy, etBundleQty.getText().toString()))

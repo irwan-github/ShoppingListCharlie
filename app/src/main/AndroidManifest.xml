@@ -23,7 +23,9 @@
                 android:theme="@style/AppTheme">
                 <activity
                         android:name=".ShoppingActivity"
-                        android:launchMode="singleTop">
+                        android:launchMode="singleTop"
+                        android:theme="@style/AppTheme.Home"
+                        >
                         <intent-filter>
                                 <action android:name="android.intent.action.MAIN"/>
                                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -39,7 +41,9 @@
                 </activity>
                 <activity
                         android:name=".ShoppingListEditingActivity"
-                        android:parentActivityName=".ShoppingActivity">
+                        android:parentActivityName=".ShoppingActivity"
+                        android:theme="@style/AppTheme.Details"
+                        >
                         <meta-data
                                 android:name="android.support.PARENT_ACTIVITY"
                                 android:value=".ShoppingActivity"/>

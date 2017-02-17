@@ -1,9 +1,10 @@
 <resources>
 
         <!-- Base application theme. -->
+        <style name="AppTheme" parent="AppTheme.Base"/>
 
         <!-- disable the decor-provided Action Bar -->
-        <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <style name="AppTheme.Base" parent="Theme.AppCompat.Light.NoActionBar">
 
                 <!-- Customize your theme here. -->
 
@@ -37,6 +38,6 @@
                 <item name="android:button">@drawable/toggle_item_details</item>
         </style>
 
-        <dimen name="header_padding_top">8dp</dimen>
-        <dimen name="header_padding_bottom">16dp</dimen>
+
+
 </resources>

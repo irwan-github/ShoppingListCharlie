@@ -1,5 +1,6 @@
 package com.mirzairwan.shopping;
 
+import android.app.ActivityOptions;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.LoaderManager;
@@ -10,6 +11,7 @@ import android.content.Loader;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -319,6 +321,7 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 uri = ContentUris.withAppendedId(uri, itemId);
                 intentToViewItem.setData(uri);
                 ExchangeRate exchangeRate = null;
+
                 if (mExchangeRates != null)
                 {
                         String homeCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
@@ -327,8 +330,19 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                                 exchangeRate = mExchangeRates.get(currencyCode);
                         }
                 }
+
                 intentToViewItem.putExtra(EXCHANGE_RATE, exchangeRate);
-                startActivity(intentToViewItem);
+
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                {
+                        ActivityOptions activityOptions = ActivityOptions.makeSceneTransitionAnimation(this);
+                        Bundle options = activityOptions.toBundle();
+                        startActivity(intentToViewItem, options);
+                }
+                else
+                {
+                        startActivity(intentToViewItem);
+                }
         }
 
         @Override

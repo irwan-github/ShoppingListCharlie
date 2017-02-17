@@ -120,8 +120,9 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         private ExchangeRate mExchangeRate;
 
         private String mWebApiBase;
-        protected ItemEditorView mItemEditorView;
-        protected PriceEditorView mPriceEditorView;
+        protected ItemEditorExpander mItemEditorExpander;
+        //protected ItemEditorAnimation mItemEditorAnimation;
+        protected PriceEditorExpander mPriceEditorExpander;
 
         @Override
         protected void onPause()
@@ -224,7 +225,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 etBrand = (EditText) findViewById(R.id.et_item_brand);
                 etDescription = (EditText) findViewById(R.id.et_item_description);
                 etCountryOrigin = (EditText) findViewById(R.id.et_item_country_origin);
-                mItemEditorView = new ItemEditorView(this);
+                mItemEditorExpander = new ItemEditorExpander(this);
+                //mItemEditorAnimation = new ItemEditorAnimation(this);
                 mImgItemPic = (ImageView) findViewById(R.id.img_item);
 
                 etName.setOnTouchListener(mOnTouchListener);
@@ -258,7 +260,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 etBundleQty = (EditText) findViewById(R.id.et_bundle_qty);
                 etBundleQty.setOnTouchListener(mOnTouchListener);
 
-                mPriceEditorView = new PriceEditorView(this);
+                mPriceEditorExpander = new PriceEditorExpander(this);
         }
 
         protected abstract int getLayoutXml();

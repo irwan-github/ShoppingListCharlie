@@ -42,7 +42,7 @@
                                         android:background="#fff"
                                         >
 
-                                        <include layout="@layout/item_editing2"/>
+                                        <include layout="@layout/item_editing"/>
                                 </FrameLayout>
 
                                 <FrameLayout
@@ -52,7 +52,7 @@
                                         android:background="#fff"
                                         >
 
-                                        <include layout="@layout/price_editing2"/>
+                                        <include layout="@layout/price_editing"/>
                                 </FrameLayout>
                         </LinearLayout>
 

@@ -2,16 +2,17 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
+
         <include
-                layout="@layout/toolbar"
                 android:id="@+id/toolbar"
+                layout="@layout/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 />
 
         <include
-                layout="@layout/toolbar_picture"
                 android:id="@+id/picture_toolbar"
+                layout="@layout/toolbar_picture"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
@@ -20,8 +21,8 @@
         <ScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/toolbar"
                 android:layout_above="@id/picture_toolbar"
+                android:layout_below="@id/toolbar"
                 >
 
                 <LinearLayout
@@ -31,47 +32,17 @@
                         android:orientation="vertical"
                         >
 
-                        <FrameLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="#fff"
-                                >
-
-                                <include layout="@layout/item_image_editor"/>
-
-                        </FrameLayout>
+                        <include layout="@layout/item_image_editor"/>
 
 
-                        <FrameLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="#fff"
-                                >
+                        <include layout="@layout/item_editing"/>
 
-                                <include layout="@layout/item_editing2"/>
 
-                        </FrameLayout>
+                        <include layout="@layout/purchase_details1"/>
 
-                        <FrameLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="#fff"
-                                >
 
-                                <include layout="@layout/purchase_details2"/>
+                        <include layout="@layout/price_editing"/>
 
-                        </FrameLayout>
-
-                        <FrameLayout
-                                android:id="@+id/price_container"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="#fff"
-                                >
-
-                                <include layout="@layout/price_editing2"/>
-
-                        </FrameLayout>
 
                 </LinearLayout>
 

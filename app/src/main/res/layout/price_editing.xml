@@ -7,211 +7,213 @@
               xmlns:tools="http://schemas.android.com/tools"
               android:id="@+id/prices_layout"
               android:layout_width="match_parent"
-              android:layout_height="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginLeft="@dimen/keyline_1"
+              android:layout_marginRight="@dimen/keyline_1"
+              android:background="#fff"
               android:orientation="vertical">
 
-    <TextView
-        style="@style/HeaderFont"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/keyline_1"
-        android:layout_marginRight="@dimen/keyline_1"
-        android:text="@string/prices_header"
-        >
-    </TextView>
+        <!-- Unit Price -->
+        <LinearLayout
+                android:id="@+id/unit_price_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                >
 
-    <android.support.design.widget.TextInputLayout
-        android:id="@+id/currency_code_layout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/keyline_1"
-        android:layout_marginRight="@dimen/keyline_1"
-        android:paddingBottom="@dimen/edit_text_padding_bottom"
-        android:paddingTop="@dimen/edit_text_padding_top"
-        >
+                <android.support.design.widget.TextInputLayout
+                        android:id="@+id/unit_price_layout"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="@dimen/edit_text_padding_bottom"
+                        android:paddingTop="@dimen/edit_text_padding_top"
+                        >
 
-        <android.support.design.widget.TextInputEditText
-            android:id="@+id/et_currency_code"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:focusableInTouchMode="true"
-            android:hint="@string/currency_code_txt"
-            android:inputType="textCapCharacters"
-            android:maxLength="@string/max_currency_len"
-            android:minWidth="160dp"
-            android:textAppearance="?android:textAppearanceMedium"
-            android:selectAllOnFocus="true"
-            tools:text="GBP"/>
+                        <android.support.design.widget.TextInputEditText
+                                android:id="@+id/et_unit_price"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:focusableInTouchMode="true"
+                                android:hint="@string/unit_price_txt"
+                                android:inputType="numberDecimal"
+                                android:minWidth="@dimen/edit_text_price_min_width"
+                                android:textAppearance="?android:textAppearanceMedium"
+                                tools:text="4.25"/>
 
-    </android.support.design.widget.TextInputLayout>
+                </android.support.design.widget.TextInputLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/keyline_1"
-        android:layout_marginRight="@dimen/keyline_1"
-        android:orientation="horizontal"
-        >
+                <!-- Translated unit price-->
+                <FrameLayout
+                        android:id="@+id/translated_unit_px_grp"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:visibility="gone"
+                        >
 
+                        <android.support.design.widget.TextInputLayout
+                                android:id="@+id/translated_unit_price_layout"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="@dimen/keyline_1"
+                                android:layout_marginRight="@dimen/keyline_1"
+                                android:paddingBottom="@dimen/edit_text_padding_bottom"
+                                android:paddingTop="@dimen/edit_text_padding_top"
+                                android:visibility="gone"
+                                >
+
+                                <android.support.design.widget.TextInputEditText
+                                        android:id="@+id/et_translated_unit_price"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:enabled="false"
+                                        android:focusableInTouchMode="true"
+                                        android:hint="@string/unit_price_txt"
+                                        android:inputType="none"
+                                        android:minWidth="@dimen/edit_text_price_min_width"
+                                        android:textAppearance="?android:textAppearanceMedium"
+                                        android:visibility="invisible"
+                                        tools:text="4.25"/>
+
+                        </android.support.design.widget.TextInputLayout>
+
+                        <ProgressBar
+                                android:id="@+id/pb_translated_unit_px"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:paddingBottom="@dimen/edit_text_padding_bottom"
+                                android:paddingTop="@dimen/edit_text_padding_top"
+                                android:visibility="gone"
+                                />
+                </FrameLayout>
+
+                <ToggleButton
+                        android:id="@+id/btn_toggle_price"
+                        style="@style/myToggle"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginLeft="8dp"
+                        />
+
+        </LinearLayout>
+
+        <!-- Bundle price -->
+        <LinearLayout
+                android:id="@+id/bundle_price_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                >
+
+                <android.support.design.widget.TextInputLayout
+                        android:id="@+id/bundle_price_layout"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="@dimen/edit_text_padding_bottom"
+                        android:paddingTop="@dimen/edit_text_padding_top"
+                        >
+
+                        <android.support.design.widget.TextInputEditText
+                                android:id="@+id/et_bundle_price"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:focusableInTouchMode="true"
+                                android:hint="@string/bundle_price_txt"
+                                android:inputType="numberDecimal"
+                                android:minWidth="@dimen/edit_text_price_min_width"
+                                android:textAppearance="?android:textAppearanceMedium"
+                                />
+                </android.support.design.widget.TextInputLayout>
+
+                <FrameLayout
+                        android:id="@+id/translated_bundle_px_grp"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <android.support.design.widget.TextInputLayout
+                                android:id="@+id/translated_bundle_price_layout"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingBottom="@dimen/edit_text_padding_bottom"
+                                android:paddingTop="@dimen/edit_text_padding_top"
+                                android:visibility="invisible"
+                                >
+
+                                <android.support.design.widget.TextInputEditText
+                                        android:id="@+id/et_translated_bundle_price"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:enabled="false"
+                                        android:focusableInTouchMode="true"
+                                        android:hint="@string/bundle_price_txt"
+                                        android:inputType="none"
+                                        android:minWidth="@dimen/edit_text_price_min_width"
+                                        android:textAppearance="?android:textAppearanceMedium"
+                                        android:visibility="invisible"
+                                        tools:text="4.25"/>
+
+                        </android.support.design.widget.TextInputLayout>
+
+
+                        <ProgressBar
+                                android:id="@+id/pb_translated_bundle_px"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:paddingBottom="@dimen/edit_text_padding_bottom"
+                                android:paddingTop="@dimen/edit_text_padding_top"
+                                android:visibility="invisible"
+                                />
+                </FrameLayout>
+
+        </LinearLayout>
+
+        <!-- Bundle quantity -->
         <android.support.design.widget.TextInputLayout
-            android:id="@+id/unit_price_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingBottom="@dimen/edit_text_padding_bottom"
-            android:paddingTop="@dimen/edit_text_padding_top"
-            >
-
-            <android.support.design.widget.TextInputEditText
-                android:id="@+id/et_unit_price"
+                android:id="@+id/bundle_qty_layout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:focusableInTouchMode="true"
-                android:hint="@string/unit_price_txt"
-                android:inputType="numberDecimal"
-                android:minWidth="@dimen/edit_text_price_min_width"
-                android:textAppearance="?android:textAppearanceMedium"
-                tools:text="4.25"/>
-
-        </android.support.design.widget.TextInputLayout>
-
-        <FrameLayout
-            android:id="@+id/translated_unit_px_grp"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <android.support.design.widget.TextInputLayout
-                android:id="@+id/translated_unit_price_layout"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/keyline_1"
-                android:layout_marginRight="@dimen/keyline_1"
                 android:paddingBottom="@dimen/edit_text_padding_bottom"
                 android:paddingTop="@dimen/edit_text_padding_top"
-                android:visibility="invisible"
+                android:visibility="gone"
                 >
 
                 <android.support.design.widget.TextInputEditText
-                    android:id="@+id/et_translated_unit_price"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:enabled="false"
-                    android:focusableInTouchMode="true"
-                    android:hint="@string/unit_price_txt"
-                    android:inputType="none"
-                    android:minWidth="@dimen/edit_text_price_min_width"
-                    android:textAppearance="?android:textAppearanceMedium"
-                    android:visibility="invisible"
-                    tools:text="4.25"/>
+                        android:id="@+id/et_bundle_qty"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:focusableInTouchMode="true"
+                        android:hint="@string/bundle_quantity_txt"
+                        android:inputType="number"
+                        android:minWidth="@dimen/edit_text_bundle_qty_min_width"
+                        android:textAppearance="?android:textAppearanceMedium"
+                        />
 
-            </android.support.design.widget.TextInputLayout>
-
-            <ProgressBar
-                android:id="@+id/pb_translated_unit_px"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:paddingBottom="@dimen/edit_text_padding_bottom"
-                android:paddingTop="@dimen/edit_text_padding_top"
-                android:visibility="invisible"
-                />
-        </FrameLayout>
-    </LinearLayout>
-
-
-    <LinearLayout
-        android:id="@+id/bundle_price_group"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/keyline_1"
-        android:layout_marginRight="@dimen/keyline_1"
-        android:orientation="horizontal"
-        >
-
-        <android.support.design.widget.TextInputLayout
-            android:id="@+id/bundle_price_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingBottom="@dimen/edit_text_padding_bottom"
-            android:paddingTop="@dimen/edit_text_padding_top"
-            >
-
-            <android.support.design.widget.TextInputEditText
-                android:id="@+id/et_bundle_price"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:focusableInTouchMode="true"
-                android:hint="@string/bundle_price_txt"
-                android:inputType="numberDecimal"
-                android:minWidth="@dimen/edit_text_price_min_width"
-                android:textAppearance="?android:textAppearanceMedium"
-                />
         </android.support.design.widget.TextInputLayout>
 
-        <FrameLayout
-            android:id="@+id/translated_bundle_px_grp"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <android.support.design.widget.TextInputLayout
-                android:id="@+id/translated_bundle_price_layout"
+        <!-- -Currency dode -->
+        <android.support.design.widget.TextInputLayout
+                android:id="@+id/currency_code_layout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/keyline_1"
-                android:layout_marginRight="@dimen/keyline_1"
                 android:paddingBottom="@dimen/edit_text_padding_bottom"
                 android:paddingTop="@dimen/edit_text_padding_top"
-                android:visibility="invisible"
+                android:visibility="gone"
                 >
 
                 <android.support.design.widget.TextInputEditText
-                    android:id="@+id/et_translated_bundle_price"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:enabled="false"
-                    android:focusableInTouchMode="true"
-                    android:hint="@string/bundle_price_txt"
-                    android:inputType="none"
-                    android:minWidth="@dimen/edit_text_price_min_width"
-                    android:textAppearance="?android:textAppearanceMedium"
-                    android:visibility="invisible"
-                    tools:text="4.25"/>
+                        android:id="@+id/et_currency_code"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:focusableInTouchMode="true"
+                        android:hint="@string/currency_code_txt"
+                        android:inputType="textCapCharacters"
+                        android:maxLength="@string/max_currency_len"
+                        android:minWidth="160dp"
+                        android:selectAllOnFocus="true"
+                        android:textAppearance="?android:textAppearanceMedium"
+                        tools:text="GBP"/>
 
-            </android.support.design.widget.TextInputLayout>
-
-            <ProgressBar
-                android:id="@+id/pb_translated_bundle_px"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:paddingBottom="@dimen/edit_text_padding_bottom"
-                android:paddingTop="@dimen/edit_text_padding_top"
-                android:visibility="invisible"
-                />
-        </FrameLayout>
-
-    </LinearLayout>
-
-
-    <android.support.design.widget.TextInputLayout
-        android:id="@+id/bundle_qty_layout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/keyline_1"
-        android:layout_marginRight="@dimen/keyline_1"
-        android:paddingBottom="@dimen/edit_text_padding_bottom"
-        android:paddingTop="@dimen/edit_text_padding_top"
-        >
-
-        <android.support.design.widget.TextInputEditText
-            android:id="@+id/et_bundle_qty"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:focusableInTouchMode="true"
-            android:hint="@string/bundle_quantity_txt"
-            android:inputType="numberDecimal"
-            android:minWidth="@dimen/edit_text_bundle_qty_min_width"
-            android:textAppearance="?android:textAppearanceMedium"
-            />
-
-    </android.support.design.widget.TextInputLayout>
+        </android.support.design.widget.TextInputLayout>
 </LinearLayout>
