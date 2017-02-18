@@ -1,6 +1,7 @@
 package com.mirzairwan.shopping;
 
 import android.app.ActivityOptions;
+import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.LoaderManager;
 import android.content.ContentUris;
@@ -59,7 +60,8 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                                                                    OnPictureRequestListener,
                                                                    OnExchangeRateRequestListener,
                                                                    SharedPreferences.OnSharedPreferenceChangeListener,
-                                                                   SignOutDialogFrag.OnSignOutListener
+                                                                   SignOutDialogFrag.OnSignOutListener,
+                                                                   FragmentManager.OnBackStackChangedListener
 {
         public static final String EXCHANGE_RATE = "EXCHANGE_RATE";
         private static final String LOG_TAG = ShoppingActivity.class.getSimpleName();
@@ -78,8 +80,9 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
 
         private ShoppingListExchangeRateLoaderCb mShoppingListExchangeRateLoaderCb;
         private ExchangeRateInput mExchangeRateInput;
-        private NavigationView mNavDrawer;
+        private NavigationView mNavigationView;
         private Toolbar mToolbar;
+        private HashMap<String, Integer> mNavigationViewStateBackState;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -91,9 +94,9 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 PermissionHelper.setupStorageReadPermission(this);
 
                 PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
-                PreferenceManager.getDefaultSharedPreferences(this).
-                        registerOnSharedPreferenceChangeListener(this);
+                PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
 
+                getFragmentManager().addOnBackStackChangedListener(this);
                 FragmentTransaction txn = getFragmentManager().beginTransaction();
                 FragmentTransaction fragmentTransaction = txn.add(R.id.frag_container, ShoppingListFragment.newInstance());
                 fragmentTransaction.addToBackStack(getString(R.string.shopping_list));
@@ -119,7 +122,6 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 {
                         Log.d(LOG_TAG, ">>>>>>> savedInstanceState != null");
                 }
-
 
                 //Initialize the exchange rate loader but do NOT let it fetch exchange rate until
                 //shopping list fragment has finished fetching shopping list. Upon fetching the shopping list
@@ -171,12 +173,15 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
 
         private void setUpNavDrawer()
         {
+                mNavigationViewStateBackState = new HashMap<>();
+                mNavigationViewStateBackState.put(getString(R.string.shopping_list), R.id.nav_shopping_list);
+
                 //Find drawer layout
                 mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 
                 //Find navigation drawer view
-                mNavDrawer = (NavigationView) findViewById(R.id.nav_drawer);
-                mNavDrawer.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener()
+                mNavigationView = (NavigationView) findViewById(R.id.navigation_view);
+                mNavigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener()
                 {
                         @Override
                         public boolean onNavigationItemSelected(@NonNull MenuItem item)
@@ -202,11 +207,21 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 switch (itemId)
                 {
                         case R.id.nav_shopping_list:
-                                getFragmentManager().popBackStack(getString(R.string.shopping_list), 0);
+                                String fragShoppingListName = getString(R.string.shopping_list);
+                                if (!pushFragmentForeground(fragShoppingListName))
+                                {
+                                        FragmentTransaction shoppingListTxn = getFragmentManager().beginTransaction().replace(R.id.frag_container, ShoppingListFragment.newInstance());
+                                        shoppingListTxn.addToBackStack(fragShoppingListName).commit();
+                                }
                                 break;
                         case R.id.nav_shared_shopping_list:
-                                FragmentTransaction socialShoppingListTxn = getFragmentManager().beginTransaction().replace(R.id.frag_container, new ShareeShoppingListFragment());
-                                socialShoppingListTxn.addToBackStack(getString((R.string.share_shopping_list_txt))).commit();
+                                String fragShareeName = getString(R.string.share_shopping_list_txt);
+                                mNavigationViewStateBackState.put(fragShareeName, R.id.nav_shared_shopping_list);
+                                if (!pushFragmentForeground(fragShareeName))
+                                {
+                                        FragmentTransaction socialShoppingListTxn = getFragmentManager().beginTransaction().replace(R.id.frag_container, new ShareeShoppingListFragment());
+                                        socialShoppingListTxn.addToBackStack(fragShareeName).commit();
+                                }
                                 break;
                         case R.id.nav_cloud_sign_out:
                                 SignOutDialogFrag signOutDialogFrag = new SignOutDialogFrag();
@@ -217,14 +232,62 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                                 startActivity(settingIntent);
                                 break;
                         case R.id.nav_history:
-                                FragmentTransaction historyTxn = getFragmentManager().beginTransaction().replace(R.id.frag_container, ShoppingHistoryFragment.newInstance());
-                                historyTxn.addToBackStack(getString(R.string.history)).commit();
+                                String fragHistoryName = getString(R.string.history);
+                                mNavigationViewStateBackState.put(fragHistoryName, R.id.nav_history);
+                                if (!pushFragmentForeground(fragHistoryName))
+                                {
+                                        FragmentTransaction historyTxn = getFragmentManager().beginTransaction().replace(R.id.frag_container, ShoppingHistoryFragment.newInstance());
+                                        historyTxn.addToBackStack(fragHistoryName).commit();
+                                }
                                 break;
                         default:
                                 menuItem.setChecked(false);
                 }
 
                 mDrawerLayout.closeDrawers();
+        }
+
+        private boolean isFragmentForeground(String name)
+        {
+                boolean isFragmentForeground = false;
+                int backStackEntryCount = getFragmentManager().getBackStackEntryCount();
+                if (backStackEntryCount > 0)
+                {
+                        String fragName = getFragmentManager().getBackStackEntryAt(backStackEntryCount - 1).getName();
+                        isFragmentForeground = fragName.equals(name);
+                }
+
+                return isFragmentForeground;
+        }
+
+        private boolean pushFragmentForeground(String name)
+        {
+                boolean isShowing = false;
+
+                isShowing = isFragmentForeground(name);
+
+                if (!isShowing)
+                {
+                        isShowing = getFragmentManager().popBackStackImmediate(name, 0);
+                }
+
+                return isShowing;
+        }
+
+        @Override
+        public void onBackStackChanged()
+        {
+                FragmentManager fragmentManager = getFragmentManager();
+                int backStackEntryCount = fragmentManager.getBackStackEntryCount();
+                Log.d(LOG_TAG, "backStackEntryCount " + backStackEntryCount);
+                if (backStackEntryCount > 0)
+                {
+                        FragmentManager.BackStackEntry backStackEntry = fragmentManager.getBackStackEntryAt(backStackEntryCount - 1);
+                        Log.d(LOG_TAG, "backStackEntryName " + backStackEntry.getName());
+                        Log.d(LOG_TAG, "backStackEntryId " + backStackEntry.getId());
+                        int navigationItemId = mNavigationViewStateBackState.get(backStackEntry.getName());
+                        mNavigationView.setCheckedItem(navigationItemId);
+                }
         }
 
         @Override
@@ -237,6 +300,13 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 else
                 {
                         super.onBackPressed();
+
+                        //To prevent activity showing an empty screen due to zero fragment deing loaded
+                        int backStackEntryCount = getFragmentManager().getBackStackEntryCount();
+                        if(backStackEntryCount == 0)
+                        {
+                                super.onBackPressed();
+                        }
                 }
         }
 

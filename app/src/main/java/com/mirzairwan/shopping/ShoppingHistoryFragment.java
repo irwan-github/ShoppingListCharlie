@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
+
 import com.mirzairwan.shopping.data.Contract.Catalogue;
 import com.mirzairwan.shopping.data.Contract.ItemsEntry;
 import com.mirzairwan.shopping.data.Contract.PicturesEntry;
@@ -26,6 +27,7 @@ import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import com.mirzairwan.shopping.data.DaoContentProv;
 import com.mirzairwan.shopping.data.DaoManager;
 import com.mirzairwan.shopping.domain.Price;
+
 import static com.mirzairwan.shopping.R.xml.preferences;
 
 /**
@@ -60,12 +62,6 @@ public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalog
         }
 
         @Override
-        public void onCreate(Bundle savedInstanceState)
-        {
-                super.onCreate(savedInstanceState);
-        }
-
-        @Override
         public void onAttach(Activity activity)
         {
                 super.onAttach(activity);
@@ -74,10 +70,18 @@ public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalog
                 mOnPictureRequestListener = (OnPictureRequestListener) activity;
         }
 
+        @Override
+        public void onCreate(Bundle savedInstanceState)
+        {
+                super.onCreate(savedInstanceState);
+                Log.d(LOG_TAG, ">>> onCreate");
+        }
+
         @Nullable
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
+                Log.d(LOG_TAG, ">>> onCreateView");
                 View rootView = inflater.inflate(R.layout.fragment_catalog, container, false);
                 ListView allItemsListView = (ListView) rootView.findViewById(R.id.lv_all_items);
                 setupListView(allItemsListView);
