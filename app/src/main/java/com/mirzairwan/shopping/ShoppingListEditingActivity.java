@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -133,21 +134,9 @@ public class ShoppingListEditingActivity extends ItemActivity
                 switch (loaderId)
                 {
                         case PURCHASE_ITEM_LOADER_ID:
-                                projection = new String[]{Contract.ToBuyItemsEntry._ID,
-                                                          Contract.ToBuyItemsEntry.COLUMN_ITEM_ID,
-                                                          Contract.ToBuyItemsEntry.COLUMN_QUANTITY,
-                                                          Contract.ToBuyItemsEntry.COLUMN_IS_CHECKED,
-                                                          Contract.ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID,
-                                                          Contract.ItemsEntry.COLUMN_NAME,
-                                                          Contract.ItemsEntry.COLUMN_BRAND,
-                                                          Contract.ItemsEntry.COLUMN_COUNTRY_ORIGIN,
-                                                          Contract.ItemsEntry.COLUMN_DESCRIPTION,
-                                                          Contract.PricesEntry.ALIAS_ID,
-                                                          Contract.PricesEntry.COLUMN_PRICE_TYPE_ID,
-                                                          Contract.PricesEntry.COLUMN_PRICE,
-                                                          Contract.PricesEntry.COLUMN_BUNDLE_QTY,
-                                                          Contract.PricesEntry.COLUMN_CURRENCY_CODE,
-                                                          Contract.PricesEntry.COLUMN_SHOP_ID};
+                                projection = new String[]{
+                                        Contract.ToBuyItemsEntry._ID, Contract.ToBuyItemsEntry.COLUMN_ITEM_ID, Contract.ToBuyItemsEntry.COLUMN_QUANTITY, Contract.ToBuyItemsEntry.COLUMN_IS_CHECKED, Contract.ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID, Contract.ItemsEntry.COLUMN_NAME, Contract.ItemsEntry.COLUMN_BRAND, Contract.ItemsEntry
+                                        .COLUMN_COUNTRY_ORIGIN, Contract.ItemsEntry.COLUMN_DESCRIPTION, Contract.PricesEntry.ALIAS_ID, Contract.PricesEntry.COLUMN_PRICE_TYPE_ID, Contract.PricesEntry.COLUMN_PRICE, Contract.PricesEntry.COLUMN_BUNDLE_QTY, Contract.PricesEntry.COLUMN_CURRENCY_CODE, Contract.PricesEntry.COLUMN_SHOP_ID};
                                 uri = args.getParcelable(ITEM_URI);
                                 loader = new CursorLoader(this, uri, projection, null, null, null);
                                 break;
@@ -236,12 +225,16 @@ public class ShoppingListEditingActivity extends ItemActivity
         @Override
         protected boolean areFieldsValid()
         {
-                boolean result = super.areFieldsValid();
+                boolean areFieldsValid = super.areFieldsValid();
+                if (!areFieldsValid)
+                {
+                        return areFieldsValid;
+                }
                 String qtyToBuy = etQtyToBuy.getText().toString();
                 if (mPurchaseManager.isQuantityToBuyZero(qtyToBuy))
                 {
                         etQtyToBuy.setError(getString(R.string.mandatory_quantity));
-                        result = false;
+                        areFieldsValid = false;
                 }
 
                 if (getSelectedPriceType() == Price.Type.BUNDLE_PRICE)
@@ -251,21 +244,21 @@ public class ShoppingListEditingActivity extends ItemActivity
                         if (mPurchaseManager.isBundleQuantityOne(qtyToBuy))
                         {
                                 etQtyToBuy.setError(getString(R.string.invalid_bundle_buy_quantity_one));
-                                result = false;
+                                areFieldsValid = false;
                         }
                         else if (mPurchaseManager.isBundleQuantityOne(bundleQty))
                         {
                                 etBundleQty.setError(getString(R.string.invalid_bundle_quantity_one));
                                 mPriceEditorExpander.expandMore();
-                                result = false;
+                                areFieldsValid = false;
                         }
                         else if (!mPurchaseManager.isBundleQuantityToBuyValid(qtyToBuy, etBundleQty.getText().toString()))
                         {
                                 etQtyToBuy.setError(getString(R.string.invalid_bundle_buy_quantity) + " " + bundleQty);
-                                result = false;
+                                areFieldsValid = false;
                         }
                 }
-                return result;
+                return areFieldsValid;
         }
 
         @Override
@@ -313,7 +306,14 @@ public class ShoppingListEditingActivity extends ItemActivity
 
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
 
-                finish();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                {
+                        finishAfterTransition();
+                }
+                else
+                {
+                        finish();
+                }
         }
 
         /**

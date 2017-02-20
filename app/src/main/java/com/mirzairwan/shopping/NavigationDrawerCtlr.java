@@ -41,6 +41,9 @@ public class NavigationDrawerCtlr implements NavigationView.OnNavigationItemSele
                 mNavigationView.setNavigationItemSelectedListener(this);
         }
 
+        /**
+         * Check item in navigation menu. Called from activity onBackPressed() method.
+         */
         public void onBackPressed()
         {
                 int backCount = mFragmentManager.getBackStackEntryCount();

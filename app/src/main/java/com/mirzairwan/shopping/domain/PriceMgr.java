@@ -111,7 +111,9 @@ public class PriceMgr
         {
                 double unitPrice = FormatHelper.parseTwoDecimalPlaces(unitPriceFromInputField);
                 mUnitPrice.setUnitPrice(unitPrice);
-                mBundlePrice.setBundlePrice(FormatHelper.parseTwoDecimalPlaces(bundlePriceFromInputField), Integer.parseInt(bundleQtyFromInputField));
+                double bundlePrice = FormatHelper.parseTwoDecimalPlaces(bundlePriceFromInputField);
+                int bundleQuantity = Integer.parseInt(bundleQtyFromInputField);
+                mBundlePrice.setBundlePrice(bundlePrice, bundleQuantity);
         }
 
         public Price getUnitPrice()

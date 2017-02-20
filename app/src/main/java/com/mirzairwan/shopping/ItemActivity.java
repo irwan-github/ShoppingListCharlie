@@ -719,17 +719,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         result = false;
                 }
 
-                Editable bundleQty = etBundleQty.getText();
-                if (!TextUtils.isEmpty(bundleQty))
-                {
-                        int nBundleQty = Integer.parseInt(bundleQty.toString());
-                        if (nBundleQty < 2)
-                        {
-                                etBundleQty.setError(getString(R.string.invalid_bundle_quantity));
-                                result = false;
-                        }
-                }
-
                 return result;
         }
 
@@ -756,7 +745,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected String getBundleQtyFromInputField()
         {
                 String bundleQty;
-                bundleQty = "0.00";
+                bundleQty = "0";
                 if (etBundleQty != null && !TextUtils.isEmpty(etBundleQty.getText()))
                 {
                         bundleQty = etBundleQty.getText().toString();
