@@ -13,7 +13,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -33,7 +32,6 @@ import com.mirzairwan.shopping.domain.ExchangeRate;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.firebase.SendShareFragment;
-import com.mirzairwan.shopping.firebase.ShareeShoppingListFragment;
 import com.mirzairwan.shopping.firebase.SignOutDialogFrag;
 
 import java.util.HashMap;
@@ -45,7 +43,6 @@ import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static com.mirzairwan.shopping.ItemEditingActivity.ITEM_IS_IN_SHOPPING_LIST;
 import static com.mirzairwan.shopping.LoaderHelper.EXCHANGE_RATES_SHOPPING_LIST_LOADER_ID;
 import static com.mirzairwan.shopping.R.id.menu_database_shopping_list;
-import static com.mirzairwan.shopping.R.id.nav_shared_shopping_list;
 
 /**
  * Created by Mirza Irwan on 13/1/17.
@@ -68,7 +65,6 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         //ExchangeRates are cleared, populated and cached by ExchangeRateAwareLoader. Do not persist exchange rate in onSavedInstanceState
         Map<String, ExchangeRate> mExchangeRates = new HashMap<>();
 
-        private DrawerLayout mDrawerLayout;
         private ActionBarDrawerToggle mDrawerToggle;
         private ImageResizer mImageResizer;
         private String mCountryCode;
@@ -81,7 +77,7 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         private ExchangeRateInput mExchangeRateInput;
         private NavigationView mNavigationView;
         private Toolbar mToolbar;
-        private NavigationViewFsm mNavigateViewCtlr;
+        private NavigationDrawerCtlr mNavViewFsmCtlr;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -95,16 +91,14 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
                 PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
 
-                FragmentTransaction txn = getFragmentManager().beginTransaction();
-                FragmentTransaction fragmentTransaction = txn.add(R.id.frag_container, ShoppingListFragment.newInstance());
-                fragmentTransaction.addToBackStack(getString(R.string.shopping_list));
-                fragmentTransaction.commit();
-
                 // Set a Toolbar to replace the ActionBar.
                 mToolbar = (Toolbar) findViewById(R.id.toolbar);
                 setSupportActionBar(mToolbar);
 
                 setUpNavDrawer();
+
+                //Load Shopping list fragment
+                mNavViewFsmCtlr.onNavigationItemSelected(mNavigationView.getMenu().findItem(R.id.nav_shopping_list));
 
                 mImageResizer = new ImageResizer(this, getResources().getDimensionPixelSize(R.dimen.image_summary_width), getResources().getDimensionPixelSize(R.dimen.list_item_height));
 
@@ -172,115 +166,33 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         private void setUpNavDrawer()
         {
                 //Find drawer layout
-                mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+                DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 
                 //Find navigation drawer view
                 mNavigationView = (NavigationView) findViewById(R.id.navigation_view);
 
-                //Set up the FSM controller to handle the highlighting of NavigationView Item behaviour
-                mNavigateViewCtlr = new NavigationViewFsm(mNavigationView, getFragmentManager());
+                //Set up the navigation drawer controller to handle the onNavigationItemSelected and onBackPressed events of NavigationView Item behaviour
+                mNavViewFsmCtlr = new NavigationDrawerCtlr(this, getFragmentManager(), mNavigationView, drawerLayout);
 
-                mNavigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener()
-                {
-                        @Override
-                        public boolean onNavigationItemSelected(@NonNull MenuItem item)
-                        {
-                                mNavigateViewCtlr.loadViewItem(item);
-                                selectDrawerItem(item);
-                                return true;
-                        }
-                });
+                mDrawerToggle = new ActionBarDrawerToggle(this, drawerLayout, mToolbar, R.string.drawer_open, R.string.drawer_close);
 
-                mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, mToolbar, R.string.drawer_open, R.string.drawer_close);
+                drawerLayout.addDrawerListener(mDrawerToggle);
 
-                mDrawerLayout.addDrawerListener(mDrawerToggle);
-
-        }
-
-        private void selectDrawerItem(MenuItem menuItem)
-        {
-                int itemId = menuItem.getItemId();
-
-                switch (itemId)
-                {
-                        case R.id.nav_shopping_list:
-                                String fragShoppingListName = getString(R.string.shopping_list);
-                                if (!pushFragmentForeground(fragShoppingListName))
-                                {
-                                        FragmentTransaction shoppingListTxn = getFragmentManager().beginTransaction().replace(R.id.frag_container, ShoppingListFragment.newInstance());
-                                        shoppingListTxn.addToBackStack(fragShoppingListName).commit();
-                                }
-                                break;
-                        case nav_shared_shopping_list:
-                                String fragShareeName = getString(R.string.share_shopping_list_txt);
-                                if (!pushFragmentForeground(fragShareeName))
-                                {
-                                        FragmentTransaction socialShoppingListTxn = getFragmentManager().beginTransaction().replace(R.id.frag_container, new ShareeShoppingListFragment());
-                                        socialShoppingListTxn.addToBackStack(fragShareeName).commit();
-                                }
-                                break;
-                        case R.id.nav_cloud_sign_out:
-                                SignOutDialogFrag signOutDialogFrag = new SignOutDialogFrag();
-                                signOutDialogFrag.show(getFragmentManager(), "SIGN_OUT");
-                                break;
-                        case R.id.nav_settings_screen:
-                                Intent settingIntent = new Intent(this, SettingsActivity.class);
-                                startActivity(settingIntent);
-                                break;
-                        case R.id.nav_history:
-                                String fragHistoryName = getString(R.string.history);
-                                if (!pushFragmentForeground(fragHistoryName))
-                                {
-                                        FragmentTransaction historyTxn = getFragmentManager().beginTransaction().replace(R.id.frag_container, ShoppingHistoryFragment.newInstance());
-                                        historyTxn.addToBackStack(fragHistoryName).commit();
-                                }
-                                break;
-                        default:
-                                menuItem.setChecked(false);
-                }
-
-                mDrawerLayout.closeDrawers();
-        }
-
-        private boolean isFragmentForeground(String name)
-        {
-                boolean isFragmentForeground = false;
-                int backStackEntryCount = getFragmentManager().getBackStackEntryCount();
-                if (backStackEntryCount > 0)
-                {
-                        String fragName = getFragmentManager().getBackStackEntryAt(backStackEntryCount - 1).getName();
-                        isFragmentForeground = fragName.equals(name);
-                }
-
-                return isFragmentForeground;
-        }
-
-        private boolean pushFragmentForeground(String name)
-        {
-                boolean isShowing = false;
-
-                isShowing = isFragmentForeground(name);
-
-                if (!isShowing)
-                {
-                        isShowing = getFragmentManager().popBackStackImmediate(name, 0);
-                }
-
-                return isShowing;
         }
 
         @Override
         public void onBackPressed()
         {
-                if (mDrawerLayout.isDrawerOpen(GravityCompat.START))
+                if (mNavViewFsmCtlr.isDrawerOpen(GravityCompat.START))
                 {
-                        mDrawerLayout.closeDrawers();
+                        mNavViewFsmCtlr.closeDrawers();
                 }
                 else
                 {
                         super.onBackPressed();
-                        //mNavigateViewCtlr.onBackPressed();
-                        //To prevent activity showing an empty screen due to zero fragment deing loaded
+                        mNavViewFsmCtlr.onBackPressed();
+
+                        //To prevent activity showing an empty screen due to zero fragment being loaded
                         int backStackEntryCount = getFragmentManager().getBackStackEntryCount();
                         if(backStackEntryCount == 0)
                         {
@@ -329,9 +241,6 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                         case menu_database_shopping_list:
                                 Intent intentDb = new Intent(this, AndroidDatabaseManager.class);
                                 startActivity(intentDb);
-                                return true;
-                        case android.R.id.home:
-                                mDrawerLayout.openDrawer(GravityCompat.START);
                                 return true;
                         default:
                                 return super.onOptionsItemSelected(menuItem);
