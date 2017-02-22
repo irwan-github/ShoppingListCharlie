@@ -6,49 +6,52 @@ import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
+import android.support.design.widget.BaseTransientBottomBar;
+import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.RadioGroup;
-import android.widget.Toast;
-
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.domain.ItemInShoppingList;
 import com.mirzairwan.shopping.domain.Price;
-
 import java.text.ParseException;
-
 import static com.mirzairwan.shopping.LoaderHelper.PURCHASE_ITEM_LOADER_ID;
+import static com.mirzairwan.shopping.R.id.rb_unit_price;
 import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
+import static com.mirzairwan.shopping.ItemStateMachine.State.NEW;
+import static com.mirzairwan.shopping.ItemStateMachine.State.EXIST;
 
 /**
  * Created by Mirza Irwan on 13/1/17.
  * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
  * Contact owner at mirza.irwan.osman@gmail.com
+ *
+ *
+ * Events delegated to state machine:
+ *
+ * onBackPressed
+ * onUpHome
+ * onButtonSaveClick
+ * onButtoDeleteClick
  */
 
-public class ShoppingListEditingActivity extends ItemActivity
+public class ShoppingListEditingActivity extends ItemActivity implements ItemStateMachine.ItemContext
 {
-        public static final int CREATE_BUY_ITEM_MODE = 1; //use for action mode
-        public static final int EDIT_BUY_ITEM_MODE = 2; //use for action mode
         private static final String LOG_TAG = ShoppingListEditingActivity.class.getSimpleName();
-        private static final String URI_ITEM = "uri"; //Used for saving instant state
-        private int actionMode = -1; //Informs the editor whether this activity is creation or updating
-
-        private boolean isItemDeleted = false; // After deleting, don't update picture and prices
+        private static final String URI_ITEM = "uri"; //Used for saving instant mState
 
         private EditText etQtyToBuy;
         private RadioGroup rgPriceTypeChoice;
-
         private long defaultShopId = 1;
         private ItemInShoppingList mToBuyItem;
         private Uri mUriItem;
-
         private PurchaseManager mPurchaseManager;
-        private PurchaseEditorExpander mPurchaseEditorExpander;
+        private View mContainer;
+        private String mDbMsg;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -57,6 +60,7 @@ public class ShoppingListEditingActivity extends ItemActivity
 
                 Log.d(LOG_TAG, ">>>savedInstantState is " + (savedInstanceState == null ? "NULL" : "NOT " + "NULL"));
 
+                mContainer = findViewById(R.id.shopping_list_editor_container);
                 etQtyToBuy = (EditText) findViewById(R.id.et_item_quantity);
                 etQtyToBuy.setOnTouchListener(mOnTouchListener);
 
@@ -66,9 +70,12 @@ public class ShoppingListEditingActivity extends ItemActivity
                 //set touchListener for Radio Group
                 rgPriceTypeChoice = (RadioGroup) findViewById(R.id.price_type_choice);
                 rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);
-                mPurchaseEditorExpander = new PurchaseEditorExpander(this);
+                findViewById(R.id.rb_unit_price).setOnTouchListener(mOnTouchListener);
+                findViewById(R.id.rb_bundle_price).setOnTouchListener(mOnTouchListener);
 
-                if (savedInstanceState != null) //Restore from previous state
+                PurchaseEditorExpander purchaseEditorExpander = new PurchaseEditorExpander(this);
+
+                if (savedInstanceState != null) //Restore from previous mState
                 {
                         mUriItem = savedInstanceState.getParcelable(URI_ITEM);
                 }
@@ -81,14 +88,12 @@ public class ShoppingListEditingActivity extends ItemActivity
                 if (mUriItem == null)
                 {
                         setTitle(R.string.new_buy_item_title);
-
-                        // This flag is used for menu creation and database operation
-                        actionMode = CREATE_BUY_ITEM_MODE;
+                        mItemStateMachine = new ItemStateMachine(this, NEW);
                 }
                 else
                 {
                         setTitle(R.string.view_buy_item_details);
-                        actionMode = EDIT_BUY_ITEM_MODE; //This flag is used for database operation
+                        mItemStateMachine = new ItemStateMachine(this, EXIST);
                 }
 
                 initLoaders(mUriItem);
@@ -171,14 +176,7 @@ public class ShoppingListEditingActivity extends ItemActivity
                                 break;
 
                         default:
-                                if (isItemDeleted) //Don't populate prices and pictures
-                                {
-                                        return;
-                                }
-                                else
-                                {
-                                        super.onLoadFinished(loader, cursor);
-                                }
+                                super.onLoadFinished(loader, cursor);
                 }
         }
 
@@ -193,7 +191,7 @@ public class ShoppingListEditingActivity extends ItemActivity
         @Override
         public boolean onPrepareOptionsMenu(Menu menu)
         {
-                if (actionMode == CREATE_BUY_ITEM_MODE)
+                if (mItemStateMachine.getState() == NEW)
                 {
                         menu.removeItem(R.id.menu_remove_item_from_list);
                 }
@@ -203,7 +201,7 @@ public class ShoppingListEditingActivity extends ItemActivity
         private void populatePurchaseInputFields(ItemInShoppingList toBuyItem)
         {
                 etQtyToBuy.setText(String.valueOf(toBuyItem.getQuantity()));
-                rgPriceTypeChoice.check(toBuyItem.getSelectedPriceType() == BUNDLE_PRICE ? R.id.rb_bundle_price : R.id.rb_unit_price);
+                rgPriceTypeChoice.check(toBuyItem.getSelectedPriceType() == BUNDLE_PRICE ? R.id.rb_bundle_price : rb_unit_price);
         }
 
         private void clearPurchaseInputFields()
@@ -213,17 +211,15 @@ public class ShoppingListEditingActivity extends ItemActivity
         }
 
         @Override
-        protected void delete()
+        public void delete()
         {
-                //the onLoaderFinished method will use this flag to decide whether to load prices
-                isItemDeleted = true;
                 Uri uriDeleteBuyItem = ContentUris.withAppendedId(Contract.ToBuyItemsEntry.CONTENT_URI, mToBuyItem.getId());
                 getContentResolver().delete(uriDeleteBuyItem, null, null);
-                finish();
+                mDbMsg = "Deleted item " + mPurchaseManager.getitem().getName();
         }
 
         @Override
-        protected boolean areFieldsValid()
+        public boolean areFieldsValid()
         {
                 boolean areFieldsValid = super.areFieldsValid();
                 if (!areFieldsValid)
@@ -262,13 +258,32 @@ public class ShoppingListEditingActivity extends ItemActivity
         }
 
         @Override
-        protected void save()
+        public void save()
         {
-                if (!areFieldsValid())
-                {
-                        return;
-                }
+                mItemStateMachine.onProcessSave();
+        }
 
+        /**
+         * Query whether unit price or bundle price is selected
+         *
+         * @return unit price or bundle price
+         */
+        protected Price.Type getSelectedPriceType()
+        {
+                int idSelected = rgPriceTypeChoice.getCheckedRadioButtonId();
+                Price.Type selectedPriceType = (idSelected == R.id.rb_bundle_price) ? Price.Type.BUNDLE_PRICE : UNIT_PRICE;
+                return selectedPriceType;
+        }
+
+        @Override
+        public void onSaveInstanceState(Bundle outState)
+        {
+                super.onSaveInstanceState(outState);
+                outState.putParcelable(URI_ITEM, mUriItem);
+        }
+
+        protected void prepareForDbOperation()
+        {
                 populateItemFromInputFields(mPurchaseManager.getitem());
 
                 String itemQuantity = etQtyToBuy.getText().toString();
@@ -292,46 +307,39 @@ public class ShoppingListEditingActivity extends ItemActivity
                 Price.Type selectedPriceType = getSelectedPriceType();
                 Price selectedPrice = mPriceMgr.getSelectedPrice(selectedPriceType);
                 mPurchaseManager.getItemInShoppingList().setSelectedPrice(selectedPrice);
-
-                String msg;
-
-                if (actionMode == CREATE_BUY_ITEM_MODE)
-                {
-                        msg = daoManager.insert(mPurchaseManager.getItemInShoppingList(), mPurchaseManager.getitem(), mPriceMgr.getPrices(), mPictureMgr);
-                }
-                else //Existing item in the shopping list
-                {
-                        msg = daoManager.update(mPurchaseManager.getItemInShoppingList(), mPurchaseManager.getitem(), mPriceMgr.getPrices(), mPictureMgr);
-                }
-
-                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-                {
-                        finishAfterTransition();
-                }
-                else
-                {
-                        finish();
-                }
         }
 
-        /**
-         * Query whether unit price or bundle price is selected
-         *
-         * @return unit price or bundle price
-         */
-        protected Price.Type getSelectedPriceType()
+
+        @Override
+        public void postDbProcess()
         {
-                int idSelected = rgPriceTypeChoice.getCheckedRadioButtonId();
-                Price.Type selectedPriceType = (idSelected == R.id.rb_bundle_price) ? Price.Type.BUNDLE_PRICE : UNIT_PRICE;
-                return selectedPriceType;
+                Snackbar.make(mContainer, mDbMsg, 5000).addCallback(new BaseTransientBottomBar.BaseCallback<Snackbar>()
+                {
+                        @Override
+                        public void onDismissed(Snackbar transientBottomBar, int event)
+                        {
+                                mItemStateMachine.onLeave();
+                        }
+                }).show();
         }
 
         @Override
-        public void onSaveInstanceState(Bundle outState)
+        public void update()
         {
-                super.onSaveInstanceState(outState);
-                outState.putParcelable(URI_ITEM, mUriItem);
+                prepareForDbOperation();
+
+                mDbMsg = daoManager.update(mPurchaseManager.getItemInShoppingList(), mPurchaseManager.getitem(), mPriceMgr.getPrices(), mPictureMgr);
+
         }
+
+
+        @Override
+        public void insert()
+        {
+                prepareForDbOperation();
+
+                mDbMsg = daoManager.insert(mPurchaseManager.getItemInShoppingList(), mPurchaseManager.getitem(), mPriceMgr.getPrices(), mPictureMgr);
+
+        }
+
 }

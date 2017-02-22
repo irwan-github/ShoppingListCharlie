@@ -96,14 +96,12 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         private static final String LOG_TAG = ItemActivity.class.getSimpleName();
         private static final int REQUEST_PICK_PHOTO = 16;
         private static final String PICTURE_MANAGER = "picture_mgr";
-
         protected EditText etName;
         protected EditText etBrand;
         protected EditText etDescription;
         protected EditText etCountryOrigin;
         protected EditText etBundleQty;
         protected View.OnTouchListener mOnTouchListener;
-        protected boolean mItemHaveChanged = false;
         protected Item mItem;
         protected DaoManager daoManager;
         protected PictureMgr mPictureMgr;
@@ -113,12 +111,14 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected PriceField mUnitPriceEditField;
         protected PriceField mBundlePriceEditField;
         protected ItemEditorExpander mItemEditorExpander;
-        //protected ItemEditorAnimation mItemEditorAnimation;
+
         protected PriceEditorExpander mPriceEditorExpander;
+        protected ItemStateMachine mItemStateMachine;
         private ImageView mImgItemPic;
         private long itemId;
         private ExchangeRateInput mExchangeRateInput;
-        //During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance state
+
+        //During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance mState
         //and restore when device orientates to landscape.
         private ExchangeRate mExchangeRate;
         private String mWebApiBase;
@@ -215,7 +215,12 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         @Override
                         public boolean onTouch(View v, MotionEvent event)
                         {
-                                mItemHaveChanged = true;
+                                //mItemHaveChanged = true;
+                                int action = event.getAction();
+                                if (action == MotionEvent.ACTION_UP)
+                                {
+                                        mItemStateMachine.onChange();
+                                }
                                 return false;
                         }
                 };
@@ -225,7 +230,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 etDescription = (EditText) findViewById(R.id.et_item_description);
                 etCountryOrigin = (EditText) findViewById(R.id.et_item_country_origin);
                 mItemEditorExpander = new ItemEditorExpander(this);
-                //mItemEditorAnimation = new ItemEditorAnimation(this);
                 mImgItemPic = (ImageView) findViewById(R.id.img_item);
 
                 etName.setOnTouchListener(mOnTouchListener);
@@ -286,6 +290,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         @Override
                         public boolean onMenuItemClick(MenuItem item)
                         {
+
                                 switch (item.getItemId())
                                 {
                                         case R.id.menu_camera:
@@ -356,30 +361,13 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 {
                         case R.id.save_item_details:
                                 save();
-                                mItemHaveChanged = false;
                                 return true;
                         case R.id.menu_remove_item_from_list:
-                                delete();
+                                //delete();
+                                mItemStateMachine.onProcessDelete();
                                 return true;
                         case android.R.id.home:
-                                if (mItemHaveChanged)
-                                {
-                                        showUnsavedDialog(new DialogInterface.OnClickListener()
-                                        {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which)
-                                                {
-                                                        removeUnwantedPicturesFromApp();
-                                                        endActivity();
-                                                }
-                                        });
-                                }
-                                else
-                                {
-                                        removeUnwantedPicturesFromApp();
-                                        endActivity();
-
-                                }
+                                mItemStateMachine.onUp();
                                 return true;
                         default:
                                 return super.onOptionsItemSelected(menuItem);
@@ -387,7 +375,26 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
         }
 
-        private void endActivity()
+        public void warnChangesMade()
+        {
+                showUnsavedDialog(new DialogInterface.OnClickListener()
+                {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which)
+                        {
+                                dialog.dismiss();
+                                mItemStateMachine.onLeave();
+                        }
+                });
+        }
+
+        public void cleanUp()
+        {
+                removeUnwantedPicturesFromApp();
+        }
+
+
+        public void finishItemEditing()
         {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
                 {
@@ -532,6 +539,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 switch (resultCode)
                 {
                         case Activity.RESULT_OK:
+                                mItemStateMachine.onChange();
                                 switch (requestCode)
                                 {
                                         case REQUEST_SNAP_PICTURE:
@@ -621,25 +629,14 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         @Override
         public void onBackPressed()
         {
-                if (mItemHaveChanged)
-                {
-                        showUnsavedDialog(new DialogInterface.OnClickListener()
-                        {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which)
-                                {
-                                        removeUnwantedPicturesFromApp();
-                                        finish();
-                                }
-                        });
-                }
-                else
-                {
-                        removeUnwantedPicturesFromApp();
-                        super.onBackPressed();
-                }
+                mItemStateMachine.onBackPressed();
         }
 
+        /**
+         * Create and display a dialog with positive and negative button.
+         * Clicking positive button will delete unsaved pictures and finish the activity.
+         * @param onLeaveClickListener
+         */
         private void showUnsavedDialog(DialogInterface.OnClickListener onLeaveClickListener)
         {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -650,6 +647,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         @Override
                         public void onClick(DialogInterface dialog, int which)
                         {
+                                mItemStateMachine.onStay();
                                 dialog.dismiss();
                         }
                 });
@@ -817,13 +815,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 switch (loaderId)
                 {
                         case ITEM_PRICE_LOADER_ID:
-                                projection = new String[]{PricesEntry._ID,
-                                                          PricesEntry.COLUMN_ITEM_ID,
-                                                          PricesEntry.COLUMN_PRICE_TYPE_ID,
-                                                          PricesEntry.COLUMN_PRICE,
-                                                          PricesEntry.COLUMN_BUNDLE_QTY,
-                                                          PricesEntry.COLUMN_CURRENCY_CODE,
-                                                          PricesEntry.COLUMN_SHOP_ID};
+                                projection = new String[]{
+                                        PricesEntry._ID, PricesEntry.COLUMN_ITEM_ID, PricesEntry.COLUMN_PRICE_TYPE_ID, PricesEntry.COLUMN_PRICE, PricesEntry.COLUMN_BUNDLE_QTY, PricesEntry.COLUMN_CURRENCY_CODE, PricesEntry.COLUMN_SHOP_ID};
                                 itemId = ContentUris.parseId(uri);
                                 if (itemId == -1)
                                 {
@@ -836,9 +829,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                 break;
 
                         case ITEM_PICTURE_LOADER_ID:
-                                projection = new String[]{PicturesEntry._ID,
-                                                          PicturesEntry.COLUMN_FILE_PATH,
-                                                          PicturesEntry.COLUMN_ITEM_ID};
+                                projection = new String[]{
+                                        PicturesEntry._ID, PicturesEntry.COLUMN_FILE_PATH, PicturesEntry.COLUMN_ITEM_ID};
                                 itemId = ContentUris.parseId(uri);
                                 if (itemId == -1)
                                 {
@@ -874,7 +866,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                 populatePricesInputFields();
 
                                 //Important to move cursor back before the first record because when device switches to landscape, it gives back the same cursor with
-                                // the pre-exisiting state
+                                // the pre-exisiting mState
                                 cursor.moveToPosition(-1);
                                 break;
 
@@ -888,7 +880,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                 setPictureView(mPictureMgr.getPictureForViewing());
 
                                 //Important to move cursor back before the first record because when device switches to landscape, it gives back the same cursor with
-                                // the pre-exisiting state
+                                // the pre-exisiting mState
                                 cursor.moveToPosition(-1);
                                 break;
                 }

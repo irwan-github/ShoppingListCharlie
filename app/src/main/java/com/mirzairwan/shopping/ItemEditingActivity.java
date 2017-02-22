@@ -22,7 +22,7 @@ import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
 
 public class ItemEditingActivity extends ItemActivity
 {
-        private static final String URI_ITEM = "uri"; //Used for saving instant state
+        private static final String URI_ITEM = "uri"; //Used for saving instant mState
         private Uri mUriItem;
         private ItemManager mItemManager;
 
@@ -31,7 +31,7 @@ public class ItemEditingActivity extends ItemActivity
         {
                 super.onCreate(savedInstanceState);
 
-                if (savedInstanceState != null) //Restore from previous state
+                if (savedInstanceState != null) //Restore from previous mState
                 {
                         mUriItem = savedInstanceState.getParcelable(URI_ITEM);
                 }
