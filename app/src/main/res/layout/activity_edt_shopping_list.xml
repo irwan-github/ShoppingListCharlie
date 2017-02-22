@@ -39,7 +39,7 @@
                         <include layout="@layout/item_editing"/>
 
 
-                        <include layout="@layout/purchase_details1"/>
+                        <include layout="@layout/purchase_details"/>
 
 
                         <include layout="@layout/price_editing"/>
