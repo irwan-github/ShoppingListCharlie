@@ -194,7 +194,7 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
 
                         //To prevent activity showing an empty screen due to zero fragment being loaded
                         int backStackEntryCount = getFragmentManager().getBackStackEntryCount();
-                        if(backStackEntryCount == 0)
+                        if (backStackEntryCount == 0)
                         {
                                 super.onBackPressed();
                         }
@@ -252,7 +252,17 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         {
                 Intent intentToEditItem = new Intent();
                 intentToEditItem.setClass(this, ShoppingListEditingActivity.class);
-                startActivity(intentToEditItem);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                {
+                        ActivityOptions activityOptions = ActivityOptions.makeSceneTransitionAnimation(this);
+                        Bundle options = activityOptions.toBundle();
+                        startActivity(intentToEditItem, options);
+                }
+                else
+                {
+                        startActivity(intentToEditItem);
+                }
         }
 
         /**

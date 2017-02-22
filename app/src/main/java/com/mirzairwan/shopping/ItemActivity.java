@@ -363,7 +363,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                 save();
                                 return true;
                         case R.id.menu_remove_item_from_list:
-                                //delete();
                                 mItemStateMachine.onProcessDelete();
                                 return true;
                         case android.R.id.home:
@@ -485,8 +484,10 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
                         try
                         {
-                                //File for use with ACTION_VIEW intents.
-                                //File path is /storage/emulated/0/Android/data/com.mirzairwan.shopping/files/Pictures/Item__***_***_-***.jpg
+                                /*
+                                File for use with ACTION_VIEW intents.
+                                 File path is /storage/emulated/0/Android/data/com.mirzairwan.shopping/files/Pictures/Item__***_***_-***.jpg
+                                */
                                 itemPicFile = PictureMgr.createFileHandle(externalFilesDir);
                         }
                         catch(IOException e)
@@ -698,7 +699,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
          *
          * @return true if input fields are valid
          */
-        protected boolean areFieldsValid()
+        public boolean areFieldsValid()
         {
                 boolean result = true;
                 if (TextUtils.isEmpty(etName.getText()))

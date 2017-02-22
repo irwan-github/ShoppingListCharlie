@@ -540,7 +540,7 @@ public class DaoContentProv implements DaoManager
                 try
                 {
                         contentProviderResults = mContext.getContentResolver().applyBatch(Contract.CONTENT_AUTHORITY, ops);
-                        msg = mContext.getString(R.string.database_success);
+                        msg = mContext.getString(R.string.database_delete_success);
                 }
                 catch(RemoteException | OperationApplicationException e)
                 {

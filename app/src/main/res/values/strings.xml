@@ -114,4 +114,6 @@
         <string name="invalid_bundle_quantity">Bundle quantity must be more than 1.</string>
         <string name="invalid_bundle_buy_quantity_one">Quantity must be more than 1.</string>
         <string name="invalid_bundle_quantity_one">Bundle quatity must be more than 1.</string>
+        <string name="add_item_button_text">Add item ....</string>
+        <string name="database_delete_success">deleted: OK</string>
 </resources>

@@ -9,15 +9,15 @@
         <style name="AppTheme.Home">
                 <!-- enable window content transitions -->
                 <item name="android:windowActivityTransitions">true</item>
-                <item name="android:windowExitTransition">@transition/main_screen_slide_out_right</item>
-                <item name="android:windowReenterTransition">@transition/main_screen_slide_in_left</item>
+                <item name="android:windowExitTransition">@transition/activity_fade</item>
+                <item name="android:windowReenterTransition">@transition/activity_explode</item>
         </style>
 
         <style name="AppTheme.Details">
                 <!-- enable window content transitions -->
                 <item name="android:windowActivityTransitions">true</item>
-                <item name="android:windowEnterTransition">@transition/screen_slide_in_left</item>
-                <item name="android:windowReturnTransition">@transition/screen_slide_out_right</item>
+                <item name="android:windowEnterTransition">@transition/activity_explode</item>
+                <item name="android:windowReturnTransition">@transition/activity_fade</item>
 
         </style>
 </resources>

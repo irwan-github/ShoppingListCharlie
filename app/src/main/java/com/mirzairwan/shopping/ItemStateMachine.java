@@ -2,13 +2,13 @@ package com.mirzairwan.shopping;
 
 import static com.mirzairwan.shopping.ItemStateMachine.Event.ON_BACK_PRESSED;
 import static com.mirzairwan.shopping.ItemStateMachine.Event.ON_CHANGE;
-import static com.mirzairwan.shopping.ItemStateMachine.Event.ON_DELETE;
 import static com.mirzairwan.shopping.ItemStateMachine.Event.ON_LEAVE;
 import static com.mirzairwan.shopping.ItemStateMachine.Event.ON_SAVE;
 import static com.mirzairwan.shopping.ItemStateMachine.Event.ON_SAVE_VALIDATE;
 import static com.mirzairwan.shopping.ItemStateMachine.Event.ON_STAY;
 import static com.mirzairwan.shopping.ItemStateMachine.Event.ON_UP;
 import static com.mirzairwan.shopping.ItemStateMachine.LifecycleState.UNCHANGED;
+import static com.mirzairwan.shopping.ItemStateMachine.State.TO_BE_DELETED;
 
 /**
  * Created by Mirza Irwan on 21/2/17.
@@ -17,7 +17,7 @@ import static com.mirzairwan.shopping.ItemStateMachine.LifecycleState.UNCHANGED;
 public class ItemStateMachine
 {
         ItemContext mContext;
-        State mState; //New or Existing
+        State mState; //New or Existing or To be deleted
         private LifecycleState mModifiedState;
 
         public ItemStateMachine(ItemContext context, State state)
@@ -47,7 +47,8 @@ public class ItemStateMachine
 
         public void onProcessDelete()
         {
-                mModifiedState.transition(this, ON_DELETE);
+                mState = TO_BE_DELETED;
+                mModifiedState.transition(this, ON_SAVE_VALIDATE);
                 mModifiedState.process(this);
         }
 
@@ -83,7 +84,7 @@ public class ItemStateMachine
 
         public enum State
         {
-                NEW, EXIST
+                NEW, EXIST, TO_BE_DELETED
         }
 
         public enum LifecycleState
@@ -97,11 +98,13 @@ public class ItemStateMachine
                                         {
                                                 case ON_UP:
                                                 case ON_BACK_PRESSED:
-                                                        sm.mModifiedState = ON_END;
+                                                        sm.mModifiedState = END;
                                                         break;
-                                                case ON_DELETE:
-                                                        if (sm.mState == State.EXIST)
-                                                                sm.mModifiedState = DELETED;
+                                                case ON_SAVE_VALIDATE:
+                                                        if (sm.mState == TO_BE_DELETED)
+                                                        {
+                                                                sm.mModifiedState = ERROR_VALIDATION;
+                                                        }
                                                         break;
                                                 case ON_CHANGE:
                                                         sm.mModifiedState = CHANGED;
@@ -123,7 +126,9 @@ public class ItemStateMachine
                                                         break;
                                                 case ON_DELETE:
                                                         if (sm.mState == State.EXIST)
+                                                        {
                                                                 sm.mModifiedState = DELETED;
+                                                        }
                                                         break;
                                                 case ON_SAVE_VALIDATE:
                                                         sm.mModifiedState = ERROR_VALIDATION;
@@ -143,7 +148,7 @@ public class ItemStateMachine
                                                         sm.mModifiedState = CHANGED;
                                                         break;
                                                 case ON_LEAVE:
-                                                        sm.mModifiedState = ON_END;
+                                                        sm.mModifiedState = END;
                                                         break;
                                         }
                                 }
@@ -164,11 +169,20 @@ public class ItemStateMachine
                                         {
                                                 case ON_UP:
                                                 case ON_BACK_PRESSED:
-                                                        sm.mModifiedState = WARNED;
+                                                        if (sm.mState == TO_BE_DELETED)
+                                                        {
+                                                                sm.mModifiedState = END;
+                                                        }
+                                                        else
+                                                        {
+                                                                sm.mModifiedState = WARNED;
+                                                        }
                                                         break;
                                                 case ON_DELETE:
                                                         if (sm.mState == State.EXIST)
+                                                        {
                                                                 sm.mModifiedState = DELETED;
+                                                        }
                                                         break;
                                                 case ON_SAVE:
                                                 {
@@ -179,6 +193,9 @@ public class ItemStateMachine
                                                                         break;
                                                                 case EXIST:
                                                                         sm.mModifiedState = UPDATE;
+                                                                        break;
+                                                                case TO_BE_DELETED:
+                                                                        sm.mModifiedState = DELETED;
                                                                         break;
                                                         }
                                                 }
@@ -193,7 +210,6 @@ public class ItemStateMachine
                                         {
                                                 sm.mModifiedState.transition(sm, ON_SAVE);
                                                 sm.mModifiedState.process(sm);
-
                                         }
 
                                 }
@@ -207,7 +223,7 @@ public class ItemStateMachine
                                         switch (event)
                                         {
                                                 case ON_LEAVE:
-                                                        sm.mModifiedState = ON_END;
+                                                        sm.mModifiedState = END;
                                                         break;
                                         }
                                 }
@@ -215,10 +231,8 @@ public class ItemStateMachine
                                 @Override
                                 public void process(ItemStateMachine sm)
                                 {
-
                                         sm.mContext.insert();
                                         sm.mContext.postDbProcess();
-
                                 }
                         },
 
@@ -230,7 +244,7 @@ public class ItemStateMachine
                                         switch (event)
                                         {
                                                 case ON_LEAVE:
-                                                        sm.mModifiedState = ON_END;
+                                                        sm.mModifiedState = END;
                                                         break;
                                         }
                                 }
@@ -238,10 +252,8 @@ public class ItemStateMachine
                                 @Override
                                 public void process(ItemStateMachine sm)
                                 {
-
                                         sm.mContext.update();
                                         sm.mContext.postDbProcess();
-
                                 }
                         },
 
@@ -253,7 +265,7 @@ public class ItemStateMachine
                                         switch (event)
                                         {
                                                 case ON_LEAVE:
-                                                        sm.mModifiedState = ON_END;
+                                                        sm.mModifiedState = END;
                                                         break;
                                         }
                                 }
@@ -266,7 +278,7 @@ public class ItemStateMachine
                                 }
                         },
 
-                ON_END
+                END
                         {
                                 @Override
                                 public void transition(ItemStateMachine sm, Event event)
@@ -282,7 +294,7 @@ public class ItemStateMachine
                                 }
                         };
 
-                public abstract  void transition(ItemStateMachine sm, Event event);
+                public abstract void transition(ItemStateMachine sm, Event event);
 
                 public void process(ItemStateMachine sm)
                 {

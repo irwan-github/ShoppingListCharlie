@@ -15,7 +15,7 @@
                 android:id="@+id/shopping_list_add_item"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:text="Add item ...."
+                android:text="@string/add_item_button_text"
                 android:background="?android:attr/selectableItemBackground"
                 android:gravity="center_vertical"
                 android:textAppearance="?android:textAppearanceMedium"
@@ -23,5 +23,13 @@
                 android:textColor="#9e9e9e"
                 android:textStyle="bold"
                 />
+
+        <!--
+        "?android:attr/selectableItemBackground"  is background drawable for bordered standalone items that need focus/pressed states.and touch feedback.
+        Touch feedback in material design provides an instantaneous visual confirmation at the point of contact when users interact with UI elements.
+       The default touch feedback animations for buttons use the new RippleDrawable class, which transitions between different states with a ripple effect.
+       Alternatively, you can define a RippleDrawable as an XML resource using the ripple element.
+       -->
+
 
 </android.support.v7.widget.Toolbar>

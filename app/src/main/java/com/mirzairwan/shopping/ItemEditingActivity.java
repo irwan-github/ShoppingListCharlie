@@ -12,6 +12,7 @@ import com.mirzairwan.shopping.data.Contract;
 
 import java.text.ParseException;
 
+import static com.mirzairwan.shopping.ItemStateMachine.State.EXIST;
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
 
 /**
@@ -20,11 +21,12 @@ import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
  * Contact owner at mirza.irwan.osman@gmail.com
  */
 
-public class ItemEditingActivity extends ItemActivity
+public class ItemEditingActivity extends ItemActivity implements ItemStateMachine.ItemContext
 {
         private static final String URI_ITEM = "uri"; //Used for saving instant mState
         private Uri mUriItem;
         private ItemManager mItemManager;
+        private String dbOpMsg;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -43,6 +45,7 @@ public class ItemEditingActivity extends ItemActivity
 
                 initLoaders(mUriItem);
                 setTitle(R.string.view_buy_item_details);
+                mItemStateMachine = new ItemStateMachine(this, EXIST);
         }
 
         protected void initLoaders(Uri uri)
@@ -64,24 +67,31 @@ public class ItemEditingActivity extends ItemActivity
                 return R.layout.activity_item_editing;
         }
 
+        @Override
+        public boolean areFieldsValid()
+        {
+                boolean areFieldsValid = super.areFieldsValid();
+
+                if (mItemManager.getItem().isInBuyList())
+                {
+                        areFieldsValid = false;
+                        alertItemInShoppingList(R.string.item_is_in_shopping_list);
+                }
+
+                return areFieldsValid;
+        }
+
         /**
          * Call by menu action
          * Delete  if only  is NOT in shoppinglist
          */
         @Override
-        protected void delete()
+        public void delete()
         {
-                if (mItemManager.getItem().isInBuyList())
-                {
-                        alertItemInShoppingList(R.string.item_is_in_shopping_list);
-                        return;
-                }
 
-                String results = daoManager.delete(mItemManager.getItem(), mPictureMgr);
+                dbOpMsg = daoManager.delete(mItemManager.getItem(), mPictureMgr);
 
-                Toast.makeText(this, results, Toast.LENGTH_SHORT).show();
-
-                finish();
+                dbOpMsg = mItemManager.getItem().getName() + " " + dbOpMsg;
         }
 
         /**
@@ -90,11 +100,13 @@ public class ItemEditingActivity extends ItemActivity
         @Override
         protected void save()
         {
-                if (!areFieldsValid())
-                {
-                        return;
-                }
+                mItemStateMachine.onProcessSave();
+        }
 
+
+
+        protected void prepareForDbOperation()
+        {
                 populateItemFromInputFields(mItemManager.getItem());
 
                 String bundleQtyFromInputField = getBundleQtyFromInputField();
@@ -111,13 +123,6 @@ public class ItemEditingActivity extends ItemActivity
                         alertRequiredField(R.string.dialog_invalid_title, R.string.invalid_price);
                         return;
                 }
-
-                //String msg = daoManager.update(mItemManager.getItem(), mItemManager.getItem().getPrices(), mPictureMgr);
-                String msg = daoManager.update(mItemManager.getItem(), mPriceMgr.getPrices(), mPictureMgr);
-
-                Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
-
-                finish();
         }
 
 
@@ -176,5 +181,24 @@ public class ItemEditingActivity extends ItemActivity
                 super.onSaveInstanceState(outState);
         }
 
+        @Override
+        public void postDbProcess()
+        {
+                Toast.makeText(this, dbOpMsg, Toast.LENGTH_LONG).show();
 
+                finish();
+        }
+
+        @Override
+        public void update()
+        {
+                prepareForDbOperation();
+                dbOpMsg = daoManager.update(mItemManager.getItem(), mPriceMgr.getPrices(), mPictureMgr);
+        }
+
+        @Override
+        public void insert()
+        {
+
+        }
 }
