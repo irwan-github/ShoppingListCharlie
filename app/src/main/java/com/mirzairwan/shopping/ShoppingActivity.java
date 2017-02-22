@@ -290,9 +290,10 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                         }
                 }
 
+                intentToViewItem.putExtra(EXCHANGE_RATE, exchangeRate);
+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
                 {
-                        intentToViewItem.putExtra(EXCHANGE_RATE, exchangeRate);
                         ActivityOptions activityOptions = ActivityOptions.makeSceneTransitionAnimation(this);
                         Bundle options = activityOptions.toBundle();
                         startActivity(intentToViewItem, options);
@@ -328,7 +329,17 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 {
                         intentToViewItem.putExtra(EXCHANGE_RATE, mExchangeRates.get(currencyCode));
                 }
-                startActivity(intentToViewItem);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                {
+                        ActivityOptions activityOptions = ActivityOptions.makeSceneTransitionAnimation(this);
+                        Bundle options = activityOptions.toBundle();
+                        startActivity(intentToViewItem, options);
+                }
+                else
+                {
+                        startActivity(intentToViewItem);
+                }
         }
 
         @Override

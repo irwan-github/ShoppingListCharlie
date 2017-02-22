@@ -6,7 +6,6 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.widget.Toast;
 
 import com.mirzairwan.shopping.data.Contract;
 
@@ -26,12 +25,13 @@ public class ItemEditingActivity extends ItemActivity implements ItemStateMachin
         private static final String URI_ITEM = "uri"; //Used for saving instant mState
         private Uri mUriItem;
         private ItemManager mItemManager;
-        private String dbOpMsg;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
         {
                 super.onCreate(savedInstanceState);
+
+                mContainer = findViewById(R.id.item_editing_container);
 
                 if (savedInstanceState != null) //Restore from previous mState
                 {
@@ -71,14 +71,21 @@ public class ItemEditingActivity extends ItemActivity implements ItemStateMachin
         public boolean areFieldsValid()
         {
                 boolean areFieldsValid = super.areFieldsValid();
+                return areFieldsValid;
+        }
 
+        @Override
+        public boolean isItemInShoppingList()
+        {
                 if (mItemManager.getItem().isInBuyList())
                 {
-                        areFieldsValid = false;
                         alertItemInShoppingList(R.string.item_is_in_shopping_list);
+                        return true;
                 }
-
-                return areFieldsValid;
+                else
+                {
+                        return false;
+                }
         }
 
         /**
@@ -88,10 +95,9 @@ public class ItemEditingActivity extends ItemActivity implements ItemStateMachin
         @Override
         public void delete()
         {
+                mDbMsg = daoManager.delete(mItemManager.getItem(), mPictureMgr);
 
-                dbOpMsg = daoManager.delete(mItemManager.getItem(), mPictureMgr);
-
-                dbOpMsg = mItemManager.getItem().getName() + " " + dbOpMsg;
+                mDbMsg = mItemManager.getItem().getName() + " " + mDbMsg;
         }
 
         /**
@@ -102,7 +108,6 @@ public class ItemEditingActivity extends ItemActivity implements ItemStateMachin
         {
                 mItemStateMachine.onProcessSave();
         }
-
 
 
         protected void prepareForDbOperation()
@@ -138,11 +143,8 @@ public class ItemEditingActivity extends ItemActivity implements ItemStateMachin
                 switch (loaderId)
                 {
                         case ITEM_LOADER_ID:
-                                projection = new String[]{Contract.ItemsEntry._ID,
-                                                          Contract.ItemsEntry.COLUMN_NAME,
-                                                          Contract.ItemsEntry.COLUMN_BRAND,
-                                                          Contract.ItemsEntry.COLUMN_COUNTRY_ORIGIN,
-                                                          Contract.ItemsEntry.COLUMN_DESCRIPTION,};
+                                projection = new String[]{
+                                        Contract.ItemsEntry._ID, Contract.ItemsEntry.COLUMN_NAME, Contract.ItemsEntry.COLUMN_BRAND, Contract.ItemsEntry.COLUMN_COUNTRY_ORIGIN, Contract.ItemsEntry.COLUMN_DESCRIPTION,};
                                 loader = new CursorLoader(this, uri, projection, selection, selectionArgs, null);
                                 break;
 
@@ -182,18 +184,11 @@ public class ItemEditingActivity extends ItemActivity implements ItemStateMachin
         }
 
         @Override
-        public void postDbProcess()
-        {
-                Toast.makeText(this, dbOpMsg, Toast.LENGTH_LONG).show();
-
-                finish();
-        }
-
-        @Override
         public void update()
         {
                 prepareForDbOperation();
-                dbOpMsg = daoManager.update(mItemManager.getItem(), mPriceMgr.getPrices(), mPictureMgr);
+                mDbMsg = daoManager.update(mItemManager.getItem(), mPriceMgr.getPrices(), mPictureMgr);
+                mDbMsg = mItemManager.getItem().getName() + " " + mDbMsg;
         }
 
         @Override

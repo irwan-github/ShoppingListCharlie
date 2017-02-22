@@ -19,6 +19,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
+import android.support.design.widget.BaseTransientBottomBar;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.NavUtils;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
@@ -117,6 +119,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         private ImageView mImgItemPic;
         private long itemId;
         private ExchangeRateInput mExchangeRateInput;
+        protected String mDbMsg;
+        protected View mContainer;
 
         //During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance mState
         //and restore when device orientates to landscape.
@@ -403,6 +407,18 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 {
                         NavUtils.navigateUpFromSameTask(ItemActivity.this);
                 }
+        }
+
+        public void postDbProcess()
+        {
+                Snackbar.make(mContainer, mDbMsg, 5000).addCallback(new BaseTransientBottomBar.BaseCallback<Snackbar>()
+                {
+                        @Override
+                        public void onDismissed(Snackbar transientBottomBar, int event)
+                        {
+                                mItemStateMachine.onLeave();
+                        }
+                }).show();
         }
 
         /**

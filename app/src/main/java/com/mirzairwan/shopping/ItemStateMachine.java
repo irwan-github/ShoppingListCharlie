@@ -124,12 +124,6 @@ public class ItemStateMachine
                                                 case ON_BACK_PRESSED:
                                                         sm.mModifiedState = WARNED;
                                                         break;
-                                                case ON_DELETE:
-                                                        if (sm.mState == State.EXIST)
-                                                        {
-                                                                sm.mModifiedState = DELETED;
-                                                        }
-                                                        break;
                                                 case ON_SAVE_VALIDATE:
                                                         sm.mModifiedState = ERROR_VALIDATION;
                                                         break;
@@ -206,12 +200,21 @@ public class ItemStateMachine
                                 @Override
                                 public void process(ItemStateMachine sm)
                                 {
-                                        if (sm.mContext.areFieldsValid())
+                                        if (!sm.mContext.areFieldsValid())
                                         {
-                                                sm.mModifiedState.transition(sm, ON_SAVE);
-                                                sm.mModifiedState.process(sm);
+                                                return;
                                         }
 
+                                        if(sm.mState == TO_BE_DELETED)
+                                        {
+                                                if(sm.mContext.isItemInShoppingList())
+                                                {
+                                                        return;
+                                                }
+                                        }
+
+                                        sm.mModifiedState.transition(sm, ON_SAVE);
+                                        sm.mModifiedState.process(sm);
                                 }
                         },
 
@@ -319,6 +322,8 @@ public class ItemStateMachine
                 void cleanUp();
 
                 void delete();
+
+                boolean isItemInShoppingList();
         }
 
 

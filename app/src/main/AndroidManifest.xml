@@ -52,7 +52,9 @@
                 <activity
                         android:name=".ItemEditingActivity"
                         android:launchMode="singleTop"
-                        android:parentActivityName=".ShoppingActivity">
+                        android:parentActivityName=".ShoppingActivity"
+                        android:theme="@style/AppTheme.Details"
+                        >
                         <meta-data
                                 android:name="android.support.PARENT_ACTIVITY"
                                 android:value=".ShoppingActivity"/>

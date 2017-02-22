@@ -7,23 +7,23 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.design.widget.BaseTransientBottomBar;
-import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.Menu;
-import android.view.View;
 import android.widget.EditText;
 import android.widget.RadioGroup;
+
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.domain.ItemInShoppingList;
 import com.mirzairwan.shopping.domain.Price;
+
 import java.text.ParseException;
+
+import static com.mirzairwan.shopping.ItemStateMachine.State.EXIST;
+import static com.mirzairwan.shopping.ItemStateMachine.State.NEW;
 import static com.mirzairwan.shopping.LoaderHelper.PURCHASE_ITEM_LOADER_ID;
 import static com.mirzairwan.shopping.R.id.rb_unit_price;
 import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
-import static com.mirzairwan.shopping.ItemStateMachine.State.NEW;
-import static com.mirzairwan.shopping.ItemStateMachine.State.EXIST;
 
 /**
  * Created by Mirza Irwan on 13/1/17.
@@ -50,8 +50,6 @@ public class ShoppingListEditingActivity extends ItemActivity implements ItemSta
         private ItemInShoppingList mToBuyItem;
         private Uri mUriItem;
         private PurchaseManager mPurchaseManager;
-        private View mContainer;
-        private String mDbMsg;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -258,6 +256,12 @@ public class ShoppingListEditingActivity extends ItemActivity implements ItemSta
         }
 
         @Override
+        public boolean isItemInShoppingList()
+        {
+                return false;
+        }
+
+        @Override
         public void save()
         {
                 mItemStateMachine.onProcessSave();
@@ -307,20 +311,6 @@ public class ShoppingListEditingActivity extends ItemActivity implements ItemSta
                 Price.Type selectedPriceType = getSelectedPriceType();
                 Price selectedPrice = mPriceMgr.getSelectedPrice(selectedPriceType);
                 mPurchaseManager.getItemInShoppingList().setSelectedPrice(selectedPrice);
-        }
-
-
-        @Override
-        public void postDbProcess()
-        {
-                Snackbar.make(mContainer, mDbMsg, 5000).addCallback(new BaseTransientBottomBar.BaseCallback<Snackbar>()
-                {
-                        @Override
-                        public void onDismissed(Snackbar transientBottomBar, int event)
-                        {
-                                mItemStateMachine.onLeave();
-                        }
-                }).show();
         }
 
         @Override
