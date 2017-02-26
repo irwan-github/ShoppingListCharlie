@@ -508,11 +508,11 @@ public class DaoContentProv implements DaoManager
          * 2. The Item's prices
          * 3. The Item,
          *
-         * @param item Item
+         * @param itemId row  id / primary key
          * @return String
          */
         @Override
-        public String delete(Item item, PictureMgr pictureMgr)
+        public String delete(long itemId, PictureMgr pictureMgr)
         {
                 ArrayList<ContentProviderOperation> ops = new ArrayList<>();
                 String msg;
@@ -521,18 +521,18 @@ public class DaoContentProv implements DaoManager
                 int deletePictureOpIndex = 0;
                 Uri uriDeletePicture = PicturesEntry.CONTENT_URI;
                 ContentProviderOperation.Builder pictureDeleteBuilder = ContentProviderOperation.newDelete(uriDeletePicture);
-                pictureDeleteBuilder.withSelection(PicturesEntry.COLUMN_ITEM_ID + "=?", new String[]{String.valueOf(item.getId())});
+                pictureDeleteBuilder.withSelection(PicturesEntry.COLUMN_ITEM_ID + "=?", new String[]{String.valueOf(itemId)});
                 ops.add(pictureDeleteBuilder.build());
 
                 //Delete prices
                 Uri uriDeletePrice = PricesEntry.CONTENT_URI;
                 ContentProviderOperation.Builder deletePriceBuilder = ContentProviderOperation.newDelete(uriDeletePrice);
-                deletePriceBuilder.withSelection(PricesEntry.COLUMN_ITEM_ID + "=?", new String[]{String.valueOf(item.getId())});
+                deletePriceBuilder.withSelection(PricesEntry.COLUMN_ITEM_ID + "=?", new String[]{String.valueOf(itemId)});
                 ops.add(deletePriceBuilder.build());
 
 
                 //Delete item
-                Uri uriDeleteItem = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
+                Uri uriDeleteItem = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, itemId);
                 ContentProviderOperation.Builder itemDeleteBuilder = ContentProviderOperation.newDelete(uriDeleteItem);
                 ops.add(itemDeleteBuilder.build());
 

@@ -6,12 +6,12 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.mirzairwan.shopping.data.Contract;
 
 import java.text.ParseException;
 
-import static com.mirzairwan.shopping.ItemStateMachine.State.EXIST;
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
 
 /**
@@ -20,11 +20,11 @@ import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
  * Contact owner at mirza.irwan.osman@gmail.com
  */
 
-public class ItemEditingActivity extends ItemActivity implements ItemStateMachine.ItemContext
+public class ItemEditingActivity extends ItemActivity implements ItemEditorControl.ItemEditorContext
 {
-        private static final String URI_ITEM = "uri"; //Used for saving instant mState
+        private static final String URI_ITEM = "uri"; /* Used for saving instance state */
         private Uri mUriItem;
-        private ItemManager mItemManager;
+        private ItemEditorControl mItemEditorControl;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -33,7 +33,7 @@ public class ItemEditingActivity extends ItemActivity implements ItemStateMachin
 
                 mContainer = findViewById(R.id.item_editing_container);
 
-                if (savedInstanceState != null) //Restore from previous mState
+                if (savedInstanceState != null) /* Restore from previous activity */
                 {
                         mUriItem = savedInstanceState.getParcelable(URI_ITEM);
                 }
@@ -43,14 +43,15 @@ public class ItemEditingActivity extends ItemActivity implements ItemStateMachin
                         mUriItem = intent.getData();
                 }
 
+                mItemEditorControl = new ItemEditorControl(this);
+                mItemControl = mItemEditorControl;
+                mItemEditorControl.onExistingItem();
                 initLoaders(mUriItem);
-                setTitle(R.string.view_buy_item_details);
-                mItemStateMachine = new ItemStateMachine(this, EXIST);
         }
 
         protected void initLoaders(Uri uri)
         {
-                if (mUriItem != null)
+                if (uri != null)
                 {
                         Bundle arg = new Bundle();
                         arg.putParcelable(ITEM_URI, uri);
@@ -60,57 +61,18 @@ public class ItemEditingActivity extends ItemActivity implements ItemStateMachin
                 }
         }
 
-
         @Override
         protected int getLayoutXml()
         {
                 return R.layout.activity_item_editing;
         }
 
-        @Override
-        public boolean areFieldsValid()
+        public void delete(long itemId)
         {
-                boolean areFieldsValid = super.areFieldsValid();
-                return areFieldsValid;
+                mDbMsg = daoManager.delete(itemId, mPictureMgr);
         }
 
-        @Override
-        public boolean isItemInShoppingList()
-        {
-                if (mItemManager.getItem().isInBuyList())
-                {
-                        alertItemInShoppingList(R.string.item_is_in_shopping_list);
-                        return true;
-                }
-                else
-                {
-                        return false;
-                }
-        }
-
-        /**
-         * Call by menu action
-         * Delete  if only  is NOT in shoppinglist
-         */
-        @Override
-        public void delete()
-        {
-                mDbMsg = daoManager.delete(mItemManager.getItem(), mPictureMgr);
-
-                mDbMsg = mItemManager.getItem().getName() + " " + mDbMsg;
-        }
-
-        /**
-         * Call by menu action
-         */
-        @Override
-        protected void save()
-        {
-                mItemStateMachine.onProcessSave();
-        }
-
-
-        protected void prepareForDbOperation()
+        protected void prepareForDbOperation(ItemManager mItemManager)
         {
                 populateItemFromInputFields(mItemManager.getItem());
 
@@ -126,26 +88,21 @@ public class ItemEditingActivity extends ItemActivity implements ItemStateMachin
                 {
                         e.printStackTrace();
                         alertRequiredField(R.string.dialog_invalid_title, R.string.invalid_price);
-                        return;
                 }
         }
-
 
         @Override
         public Loader<Cursor> onCreateLoader(int loaderId, Bundle args)
         {
-                String[] projection = null;
+                String[] projection;
                 Uri uri = args.getParcelable(ITEM_URI);
-                Loader<Cursor> loader = null;
-                String selection = null;
-                String[] selectionArgs = null;
-
+                Loader<Cursor> loader;
                 switch (loaderId)
                 {
                         case ITEM_LOADER_ID:
                                 projection = new String[]{
                                         Contract.ItemsEntry._ID, Contract.ItemsEntry.COLUMN_NAME, Contract.ItemsEntry.COLUMN_BRAND, Contract.ItemsEntry.COLUMN_COUNTRY_ORIGIN, Contract.ItemsEntry.COLUMN_DESCRIPTION,};
-                                loader = new CursorLoader(this, uri, projection, selection, selectionArgs, null);
+                                loader = new CursorLoader(this, uri, projection, null, null, null);
                                 break;
 
                         default:
@@ -166,9 +123,9 @@ public class ItemEditingActivity extends ItemActivity implements ItemStateMachin
                 switch (loaderId)
                 {
                         case ITEM_LOADER_ID:
-                                mItemManager = new ItemManager(cursor, getIntent().getBooleanExtra(ITEM_IS_IN_SHOPPING_LIST, false));
+                                ItemManager mItemManager = new ItemManager(cursor, getIntent().getBooleanExtra(ITEM_IS_IN_SHOPPING_LIST, false));
+                                mItemEditorControl.onLoadItemFinished(mItemManager);
                                 mPictureMgr.setItemId(mItemManager.getItem().getId());
-                                populateItemInputFields(mItemManager.getItem());
                                 break;
 
                         default:
@@ -183,17 +140,11 @@ public class ItemEditingActivity extends ItemActivity implements ItemStateMachin
                 super.onSaveInstanceState(outState);
         }
 
-        @Override
-        public void update()
+        public void update(ItemManager mItemManager)
         {
-                prepareForDbOperation();
+                prepareForDbOperation(mItemManager);
                 mDbMsg = daoManager.update(mItemManager.getItem(), mPriceMgr.getPrices(), mPictureMgr);
                 mDbMsg = mItemManager.getItem().getName() + " " + mDbMsg;
         }
 
-        @Override
-        public void insert()
-        {
-
-        }
 }

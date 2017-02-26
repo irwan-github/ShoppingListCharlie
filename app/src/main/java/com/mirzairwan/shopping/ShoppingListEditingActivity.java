@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 
@@ -18,8 +17,6 @@ import com.mirzairwan.shopping.domain.Price;
 
 import java.text.ParseException;
 
-import static com.mirzairwan.shopping.ItemStateMachine.State.EXIST;
-import static com.mirzairwan.shopping.ItemStateMachine.State.NEW;
 import static com.mirzairwan.shopping.LoaderHelper.PURCHASE_ITEM_LOADER_ID;
 import static com.mirzairwan.shopping.R.id.rb_unit_price;
 import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
@@ -29,27 +26,27 @@ import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
  * Created by Mirza Irwan on 13/1/17.
  * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
  * Contact owner at mirza.irwan.osman@gmail.com
- *
- *
+ * <p>
+ * <p>
  * Events delegated to state machine:
- *
+ * <p>
  * onBackPressed
  * onUpHome
  * onButtonSaveClick
  * onButtoDeleteClick
  */
 
-public class ShoppingListEditingActivity extends ItemActivity implements ItemStateMachine.ItemContext
+public class ShoppingListEditingActivity extends ItemActivity implements ShoppingItemControl.ShoppingItemContext
 {
         private static final String LOG_TAG = ShoppingListEditingActivity.class.getSimpleName();
-        private static final String URI_ITEM = "uri"; //Used for saving instant mState
+        private static final String URI_ITEM = "uri"; /* Used for saving instant mItemType */
 
         private EditText etQtyToBuy;
         private RadioGroup rgPriceTypeChoice;
         private long defaultShopId = 1;
-        private ItemInShoppingList mToBuyItem;
+
         private Uri mUriItem;
-        private PurchaseManager mPurchaseManager;
+        private ShoppingItemControl mShoppingItemControl;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -62,10 +59,10 @@ public class ShoppingListEditingActivity extends ItemActivity implements ItemSta
                 etQtyToBuy = (EditText) findViewById(R.id.et_item_quantity);
                 etQtyToBuy.setOnTouchListener(mOnTouchListener);
 
-                //Set default quantity to 1. If I set this in xml layout , it will jumble up the number and hint. This did not happen at SDK v24
+                /* Set default quantity to 1. If I set this in xml layout , it will jumble up the number and hint. This did not happen at SDK v24 */
                 etQtyToBuy.setText("1");
 
-                //set touchListener for Radio Group
+                /* set touchListener for Radio Group */
                 rgPriceTypeChoice = (RadioGroup) findViewById(R.id.price_type_choice);
                 rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);
                 findViewById(R.id.rb_unit_price).setOnTouchListener(mOnTouchListener);
@@ -73,7 +70,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements ItemSta
 
                 PurchaseEditorExpander purchaseEditorExpander = new PurchaseEditorExpander(this);
 
-                if (savedInstanceState != null) //Restore from previous mState
+                if (savedInstanceState != null) //Restore from previous mItemType
                 {
                         mUriItem = savedInstanceState.getParcelable(URI_ITEM);
                 }
@@ -83,18 +80,25 @@ public class ShoppingListEditingActivity extends ItemActivity implements ItemSta
                         mUriItem = intent.getData();
                 }
 
+                mShoppingItemControl = new ShoppingItemControl(this);
+                mItemControl = mShoppingItemControl;
+
                 if (mUriItem == null)
                 {
-                        setTitle(R.string.new_buy_item_title);
-                        mItemStateMachine = new ItemStateMachine(this, NEW);
+                        PurchaseManager mPurchaseManager = new PurchaseManager();
+                        mShoppingItemControl.onNewItem(mPurchaseManager);
                 }
                 else
                 {
-                        setTitle(R.string.view_buy_item_details);
-                        mItemStateMachine = new ItemStateMachine(this, EXIST);
+                        mShoppingItemControl.onExistingItem();
+                        initLoaders(mUriItem);
                 }
+        }
 
-                initLoaders(mUriItem);
+        @Override
+        protected void onStart()
+        {
+                super.onStart();
         }
 
         @Override
@@ -105,20 +109,12 @@ public class ShoppingListEditingActivity extends ItemActivity implements ItemSta
 
         private void initLoaders(Uri uri)
         {
-                //if no uri, then the request is for new item in shopping list
-                if (uri != null)
-                {
-                        Bundle arg = new Bundle();
-                        arg.putParcelable(ITEM_URI, uri);
+                Bundle arg = new Bundle();
+                arg.putParcelable(ITEM_URI, uri);
 
-                        getLoaderManager().initLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
-                        super.initPictureLoader(uri, this);
-                        super.initPriceLoader(uri, this);
-                }
-                else
-                {
-                        mPurchaseManager = new PurchaseManager();
-                }
+                getLoaderManager().initLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
+                super.initPictureLoader(uri, this);
+                super.initPriceLoader(uri, this);
         }
 
         @Override
@@ -157,20 +153,21 @@ public class ShoppingListEditingActivity extends ItemActivity implements ItemSta
                 {
                         return;
                 }
+
                 int loaderId = loader.getId();
                 switch (loaderId)
                 {
                         case PURCHASE_ITEM_LOADER_ID:
 
-                                mPurchaseManager = new PurchaseManager(cursor);
+                                /*
+                                     Proceed with moving to the first row of the cursor for purchase mItem and
+                                     reading data from it. This should be the only purchase  row in the cursor.
+                                 */
+                                PurchaseManager mPurchaseManager = new PurchaseManager(cursor);
 
-                                // Proceed with moving to the first row of the cursor for purchase mItem and
-                                // reading data from it. This should be the only purchase  row in the cursor.
-                                mItem = mPurchaseManager.getitem();
-                                mToBuyItem = mPurchaseManager.getItemInShoppingList();
+                                mShoppingItemControl.onLoadItemFinished(mPurchaseManager);
+
                                 mPictureMgr.setItemId(mPurchaseManager.getitem().getId());
-                                populateItemInputFields(mItem);
-                                populatePurchaseInputFields(mToBuyItem);
                                 break;
 
                         default:
@@ -181,22 +178,11 @@ public class ShoppingListEditingActivity extends ItemActivity implements ItemSta
         @Override
         public void onLoaderReset(Loader<Cursor> loader)
         {
-                mPurchaseManager = null;
                 super.onLoaderReset(loader);
                 clearPurchaseInputFields();
         }
 
-        @Override
-        public boolean onPrepareOptionsMenu(Menu menu)
-        {
-                if (mItemStateMachine.getState() == NEW)
-                {
-                        menu.removeItem(R.id.menu_remove_item_from_list);
-                }
-                return super.onPrepareOptionsMenu(menu);
-        }
-
-        private void populatePurchaseInputFields(ItemInShoppingList toBuyItem)
+        public void populatePurchaseInputFields(ItemInShoppingList toBuyItem)
         {
                 etQtyToBuy.setText(String.valueOf(toBuyItem.getQuantity()));
                 rgPriceTypeChoice.check(toBuyItem.getSelectedPriceType() == BUNDLE_PRICE ? R.id.rb_bundle_price : rb_unit_price);
@@ -209,15 +195,13 @@ public class ShoppingListEditingActivity extends ItemActivity implements ItemSta
         }
 
         @Override
-        public void delete()
+        public boolean areFieldsValid()
         {
-                Uri uriDeleteBuyItem = ContentUris.withAppendedId(Contract.ToBuyItemsEntry.CONTENT_URI, mToBuyItem.getId());
-                getContentResolver().delete(uriDeleteBuyItem, null, null);
-                mDbMsg = "Deleted item " + mPurchaseManager.getitem().getName();
+                return false;
         }
 
         @Override
-        public boolean areFieldsValid()
+        public boolean areFieldsValid(PurchaseManager purchaseManager)
         {
                 boolean areFieldsValid = super.areFieldsValid();
                 if (!areFieldsValid)
@@ -225,7 +209,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements ItemSta
                         return areFieldsValid;
                 }
                 String qtyToBuy = etQtyToBuy.getText().toString();
-                if (mPurchaseManager.isQuantityToBuyZero(qtyToBuy))
+                if (purchaseManager.isQuantityToBuyZero(qtyToBuy))
                 {
                         etQtyToBuy.setError(getString(R.string.mandatory_quantity));
                         areFieldsValid = false;
@@ -235,36 +219,24 @@ public class ShoppingListEditingActivity extends ItemActivity implements ItemSta
                 {
                         String bundleQty = etBundleQty.getText().toString();
 
-                        if (mPurchaseManager.isBundleQuantityOne(qtyToBuy))
+                        if (purchaseManager.isBundleQuantityOne(qtyToBuy))
                         {
                                 etQtyToBuy.setError(getString(R.string.invalid_bundle_buy_quantity_one));
                                 areFieldsValid = false;
                         }
-                        else if (mPurchaseManager.isBundleQuantityOne(bundleQty))
+                        else if (purchaseManager.isBundleQuantityOne(bundleQty))
                         {
                                 etBundleQty.setError(getString(R.string.invalid_bundle_quantity_one));
                                 mPriceEditorExpander.expandMore();
                                 areFieldsValid = false;
                         }
-                        else if (!mPurchaseManager.isBundleQuantityToBuyValid(qtyToBuy, etBundleQty.getText().toString()))
+                        else if (!purchaseManager.isBundleQuantityToBuyValid(qtyToBuy, etBundleQty.getText().toString()))
                         {
                                 etQtyToBuy.setError(getString(R.string.invalid_bundle_buy_quantity) + " " + bundleQty);
                                 areFieldsValid = false;
                         }
                 }
                 return areFieldsValid;
-        }
-
-        @Override
-        public boolean isItemInShoppingList()
-        {
-                return false;
-        }
-
-        @Override
-        public void save()
-        {
-                mItemStateMachine.onProcessSave();
         }
 
         /**
@@ -286,12 +258,12 @@ public class ShoppingListEditingActivity extends ItemActivity implements ItemSta
                 outState.putParcelable(URI_ITEM, mUriItem);
         }
 
-        protected void prepareForDbOperation()
+        protected void prepareForDbOperation(PurchaseManager purchaseManager)
         {
-                populateItemFromInputFields(mPurchaseManager.getitem());
+                populateItemFromInputFields(purchaseManager.getitem());
 
                 String itemQuantity = etQtyToBuy.getText().toString();
-                mPurchaseManager.getItemInShoppingList().setQuantity(Integer.parseInt(itemQuantity));
+                purchaseManager.getItemInShoppingList().setQuantity(Integer.parseInt(itemQuantity));
 
                 String currencyCode = etCurrencyCode.getText().toString();
                 mPriceMgr.setCurrencyCode(currencyCode);
@@ -310,26 +282,28 @@ public class ShoppingListEditingActivity extends ItemActivity implements ItemSta
                 //Get selected price
                 Price.Type selectedPriceType = getSelectedPriceType();
                 Price selectedPrice = mPriceMgr.getSelectedPrice(selectedPriceType);
-                mPurchaseManager.getItemInShoppingList().setSelectedPrice(selectedPrice);
+                purchaseManager.getItemInShoppingList().setSelectedPrice(selectedPrice);
         }
 
         @Override
-        public void update()
+        public void delete(long id)
         {
-                prepareForDbOperation();
-
-                mDbMsg = daoManager.update(mPurchaseManager.getItemInShoppingList(), mPurchaseManager.getitem(), mPriceMgr.getPrices(), mPictureMgr);
-
+                Uri uriDeleteBuyItem = ContentUris.withAppendedId(Contract.ToBuyItemsEntry.CONTENT_URI, id);
+                getContentResolver().delete(uriDeleteBuyItem, null, null);
+                mDbMsg = "Deleted item ";
         }
 
-
         @Override
-        public void insert()
+        public void update(PurchaseManager purchaseManager)
         {
-                prepareForDbOperation();
+                prepareForDbOperation(purchaseManager);
+                mDbMsg = daoManager.update(purchaseManager.getItemInShoppingList(), purchaseManager.getitem(), mPriceMgr.getPrices(), mPictureMgr);
+        }
 
-                mDbMsg = daoManager.insert(mPurchaseManager.getItemInShoppingList(), mPurchaseManager.getitem(), mPriceMgr.getPrices(), mPictureMgr);
-
+        public void insert(PurchaseManager purchaseManager)
+        {
+                prepareForDbOperation(purchaseManager);
+                mDbMsg = daoManager.insert(purchaseManager.getItemInShoppingList(), purchaseManager.getitem(), mPriceMgr.getPrices(), mPictureMgr);
         }
 
 }

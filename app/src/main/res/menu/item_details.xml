@@ -9,6 +9,7 @@
                 android:id="@+id/save_item_details"
                 android:icon="@drawable/ic_done"
                 android:title="Save Item"
+                android:visible="false"
                 app:showAsAction="always">
         </item>
         <item

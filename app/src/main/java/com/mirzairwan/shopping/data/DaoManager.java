@@ -68,11 +68,11 @@ public interface DaoManager
         /**
          * Delete item in catalogue and its child records in other tables.
          *
-         * @param item
+         * @param itemId
          * @param pictureMgr tracks item's updated and discarded or replaced pictures
          * @return
          */
-        String delete(Item item, PictureMgr pictureMgr);
+        String delete(long itemId, PictureMgr pictureMgr);
 
         /**
          * Update item and its child records in other tables.

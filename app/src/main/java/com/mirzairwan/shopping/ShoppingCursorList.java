@@ -247,7 +247,7 @@ public class ShoppingCursorList
                         mBundleQty = bundleQty;
                 }
 
-//                public SummaryItem(long id, double cost, String sourceCurrencyCode, int qtyToBuy,  Price.Type priceType, int bundleQty)
+//                public SummaryItem(long id, double cost, String sourceCurrencyCode, int qtyToBuy,  Price.ItemType priceType, int bundleQty)
 //                {
 //                        mId = id;
 //                        mCost = cost;

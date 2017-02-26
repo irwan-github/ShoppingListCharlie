@@ -29,7 +29,7 @@ public class NavigationDrawerCtlr implements NavigationView.OnNavigationItemSele
         private NavigationView mNavigationView;
         private DrawerLayout mDrawerLayout;
 
-        /* Map back stack mState to checkable navigation view item Id */
+        /* Map back stack mItemType to checkable navigation view item Id */
         private HashMap<String, Integer> mNavViewIdLookup = new HashMap<>();
 
         public NavigationDrawerCtlr(Context context, FragmentManager fragmentManager, NavigationView navigationView, DrawerLayout drawerLayout)

@@ -31,7 +31,7 @@
         <string name="discard">Leave</string>
         <string name="keep_editing">Stay</string>
         <string name="unsaved_changes">You may have unsaved changes.</string>
-        <string name="item_is_in_shopping_list">Remove item from shopping list before deleting.</string>
+        <string name="item_is_in_shopping_list">To delete item, remove item from shopping list</string>
         <string name="ok">OK</string>
         <string name="default_brand_name">Brand</string>
         <string name="description_country_origin">Country of origin</string>

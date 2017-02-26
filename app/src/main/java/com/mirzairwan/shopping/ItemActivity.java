@@ -21,13 +21,14 @@ import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.design.widget.BaseTransientBottomBar;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.NavUtils;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
+import android.transition.Transition;
+import android.transition.TransitionInflater;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -104,7 +105,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected EditText etCountryOrigin;
         protected EditText etBundleQty;
         protected View.OnTouchListener mOnTouchListener;
-        protected Item mItem;
         protected DaoManager daoManager;
         protected PictureMgr mPictureMgr;
         protected PriceMgr mPriceMgr;
@@ -113,19 +113,19 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected PriceField mUnitPriceEditField;
         protected PriceField mBundlePriceEditField;
         protected ItemEditorExpander mItemEditorExpander;
-
         protected PriceEditorExpander mPriceEditorExpander;
-        protected ItemStateMachine mItemStateMachine;
+        protected ItemControl mItemControl;
         private ImageView mImgItemPic;
         private long itemId;
         private ExchangeRateInput mExchangeRateInput;
         protected String mDbMsg;
         protected View mContainer;
 
-        //During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance mState
-        //and restore when device orientates to landscape.
+        /*During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance
+            and restore when device orientates to landscape. */
         private ExchangeRate mExchangeRate;
         private String mWebApiBase;
+        protected Menu mMenu;
 
         @Override
         protected void onPause()
@@ -219,11 +219,11 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         @Override
                         public boolean onTouch(View v, MotionEvent event)
                         {
-                                //mItemHaveChanged = true;
+
                                 int action = event.getAction();
                                 if (action == MotionEvent.ACTION_UP)
                                 {
-                                        mItemStateMachine.onChange();
+                                        mItemControl.onChange();
                                 }
                                 return false;
                         }
@@ -353,8 +353,9 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         @Override
         public boolean onCreateOptionsMenu(Menu menu)
         {
-                super.onCreateOptionsMenu(menu);
+                mMenu = menu;
                 getMenuInflater().inflate(R.menu.item_details, menu);
+                mItemControl.onCreateOptionsMenu();
                 return true;
         }
 
@@ -364,13 +365,13 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 switch (menuItem.getItemId())
                 {
                         case R.id.save_item_details:
-                                save();
+                                mItemControl.onOk();
                                 return true;
                         case R.id.menu_remove_item_from_list:
-                                mItemStateMachine.onProcessDelete();
+                                mItemControl.onDelete();
                                 return true;
                         case android.R.id.home:
-                                mItemStateMachine.onUp();
+                                mItemControl.onUp();
                                 return true;
                         default:
                                 return super.onOptionsItemSelected(menuItem);
@@ -386,9 +387,26 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         public void onClick(DialogInterface dialog, int which)
                         {
                                 dialog.dismiss();
-                                mItemStateMachine.onLeave();
+                                mItemControl.onLeave();
                         }
                 });
+        }
+
+        public void setMenuVisible(int id, boolean isVisible)
+        {
+                if (mMenu != null)
+                {
+                        mMenu.findItem(id).setVisible(isVisible);
+                }
+        }
+
+        public void setExitTransition()
+        {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                {
+                        Transition slide = TransitionInflater.from(this).inflateTransition(R.transition.screen_slide_out_right);
+                        getWindow().setReturnTransition(slide);
+                }
         }
 
         public void cleanUp()
@@ -405,21 +423,22 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 }
                 else
                 {
-                        NavUtils.navigateUpFromSameTask(ItemActivity.this);
+                        finish();
                 }
         }
 
-        public void postDbProcess()
+        public void showTransientDbMessage()
         {
-                Snackbar.make(mContainer, mDbMsg, 5000).addCallback(new BaseTransientBottomBar.BaseCallback<Snackbar>()
+                Snackbar.make(mContainer, mDbMsg, 3000).addCallback(new BaseTransientBottomBar.BaseCallback<Snackbar>()
                 {
                         @Override
                         public void onDismissed(Snackbar transientBottomBar, int event)
                         {
-                                mItemStateMachine.onLeave();
+                                mItemControl.onLeave();
                         }
                 }).show();
         }
+
 
         /**
          * Invoked when user click system back or navigate up with no intention of saving any pictures.
@@ -556,7 +575,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 switch (resultCode)
                 {
                         case Activity.RESULT_OK:
-                                mItemStateMachine.onChange();
+                                mItemControl.onChange();
                                 switch (requestCode)
                                 {
                                         case REQUEST_SNAP_PICTURE:
@@ -646,7 +665,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         @Override
         public void onBackPressed()
         {
-                mItemStateMachine.onBackPressed();
+                //mItemStateMachine.onBackPressed();
+                mItemControl.onBackPressed();
         }
 
         /**
@@ -664,7 +684,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         @Override
                         public void onClick(DialogInterface dialog, int which)
                         {
-                                mItemStateMachine.onStay();
+                                //mItemStateMachine.onStay();
+                                mItemControl.onStay();
                                 dialog.dismiss();
                         }
                 });
@@ -703,11 +724,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 AlertDialog alertDialog = builder.create();
                 alertDialog.show();
         }
-
-        /**
-         * Delete item if only item is NOT in shoppinglist
-         */
-        protected abstract void delete();
 
         /**
          * Validate item details. Invoked when user clicks on save button.
@@ -768,9 +784,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 return bundleQty;
         }
 
-        protected abstract void save();
-
-        protected void populateItemInputFields(Item item)
+        public void populateItemInputFields(Item item)
         {
                 etName.setText(item != null ? item.getName() : "");
                 etBrand.setText(item != null ? item.getBrand() : "");
@@ -782,13 +796,13 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
          * When displaying existing item in shopping list, set currency symbol to the saved currency
          * code irregardless of current country code preference
          */
-        protected void populatePricesInputFields()
+        public void populatePricesInputFields(PriceMgr priceMgr)
         {
-                String currencyCode = mPriceMgr.getUnitPrice().getCurrencyCode();
+                String currencyCode = priceMgr.getUnitPrice().getCurrencyCode();
                 etCurrencyCode.setText(currencyCode);
-                mUnitPriceEditField.setPrice(currencyCode, mPriceMgr.getUnitPriceForDisplay());
-                mBundlePriceEditField.setPrice(currencyCode, mPriceMgr.getBundlePriceForDisplay());
-                etBundleQty.setText(String.valueOf(mPriceMgr.getBundlePrice().getBundleQuantity()));
+                mUnitPriceEditField.setPrice(currencyCode, priceMgr.getUnitPriceForDisplay());
+                mBundlePriceEditField.setPrice(currencyCode, priceMgr.getBundlePriceForDisplay());
+                etBundleQty.setText(String.valueOf(priceMgr.getBundlePrice().getBundleQuantity()));
 
                 if (!isItemLocalPriced(currencyCode))
                 {
@@ -880,10 +894,12 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         case ITEM_PRICE_LOADER_ID:
                                 mPriceMgr = new PriceMgr(mCountryCode);
                                 mPriceMgr.createPrices(cursor);
-                                populatePricesInputFields();
+                                mItemControl.onLoadPriceFinished(mPriceMgr);
 
-                                //Important to move cursor back before the first record because when device switches to landscape, it gives back the same cursor with
-                                // the pre-exisiting mState
+                                /*
+                                Important to move cursor back before the first record because when device switches to landscape, it gives back the same cursor with
+                                 the pre-exisiting index
+                                 */
                                 cursor.moveToPosition(-1);
                                 break;
 
@@ -896,8 +912,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                 mPictureMgr.setViewOriginalPicture();
                                 setPictureView(mPictureMgr.getPictureForViewing());
 
-                                //Important to move cursor back before the first record because when device switches to landscape, it gives back the same cursor with
-                                // the pre-exisiting mState
+                                /* Important to move cursor back before the first record because when device switches to landscape, it gives back the same cursor with
+                                 the pre-exisiting index */
                                 cursor.moveToPosition(-1);
                                 break;
                 }

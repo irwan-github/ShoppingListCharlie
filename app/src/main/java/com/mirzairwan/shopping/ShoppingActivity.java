@@ -109,7 +109,7 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
                 mBaseEndPoint = sharedPrefs.getString(webUriKey, null);
                 mCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
 
-                // recovering the instance mState
+                // recovering the instance mItemType
                 if (savedInstanceState != null)
                 {
                         Log.d(LOG_TAG, ">>>>>>> savedInstanceState != null");
@@ -211,7 +211,7 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         protected void onPostCreate(Bundle savedInstanceState)
         {
                 super.onPostCreate(savedInstanceState);
-                // Sync the toggle mState after onRestoreInstanceState has occurred.
+                // Sync the toggle mItemType after onRestoreInstanceState has occurred.
                 mDrawerToggle.syncState();
         }
 
