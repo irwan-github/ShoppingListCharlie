@@ -6,7 +6,6 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 
 import com.mirzairwan.shopping.data.Contract;
 
@@ -29,6 +28,8 @@ public class ItemEditingActivity extends ItemActivity implements ItemEditorContr
         @Override
         protected void onCreate(Bundle savedInstanceState)
         {
+                mItemEditorControl = new ItemEditorControl(this);
+                mItemControl = mItemEditorControl;
                 super.onCreate(savedInstanceState);
 
                 mContainer = findViewById(R.id.item_editing_container);
@@ -43,8 +44,6 @@ public class ItemEditingActivity extends ItemActivity implements ItemEditorContr
                         mUriItem = intent.getData();
                 }
 
-                mItemEditorControl = new ItemEditorControl(this);
-                mItemControl = mItemEditorControl;
                 mItemEditorControl.onExistingItem();
                 initLoaders(mUriItem);
         }

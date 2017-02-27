@@ -108,24 +108,23 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected DaoManager daoManager;
         protected PictureMgr mPictureMgr;
         protected PriceMgr mPriceMgr;
-        protected String mCountryCode;
+        protected String mSettingsCountryCode;
         protected EditText etCurrencyCode;
         protected PriceField mUnitPriceEditField;
         protected PriceField mBundlePriceEditField;
         protected ItemEditorExpander mItemEditorExpander;
         protected PriceEditorExpander mPriceEditorExpander;
         protected ItemControl mItemControl;
+        protected String mDbMsg;
+        protected View mContainer;
+        protected Menu mMenu;
         private ImageView mImgItemPic;
         private long itemId;
         private ExchangeRateInput mExchangeRateInput;
-        protected String mDbMsg;
-        protected View mContainer;
-
         /*During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance
             and restore when device orientates to landscape. */
         private ExchangeRate mExchangeRate;
         private String mWebApiBase;
-        protected Menu mMenu;
 
         @Override
         protected void onPause()
@@ -163,8 +162,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
                 //Any translated price will be invisible when device orientates. So show it again
                 mExchangeRate = savedInstanceState.getParcelable(EXCHANGE_RATE);
-                mUnitPriceEditField.setTranslatedPrice(mExchangeRate);
-                mBundlePriceEditField.setTranslatedPrice(mExchangeRate);
+                mUnitPriceEditField.setCurrencySymbolInPriceHint(mExchangeRate);
+                mBundlePriceEditField.setCurrencySymbolInPriceHint(mExchangeRate);
         }
 
         @Override
@@ -183,14 +182,14 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 daoManager = Builder.getDaoManager(this);
 
                 SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-                mCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
-                mPriceMgr = new PriceMgr(mCountryCode);
+                mSettingsCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
+                mPriceMgr = new PriceMgr(mSettingsCountryCode);
 
                 String webApiKeyPref = getString(R.string.key_forex_web_api_1);
                 mWebApiBase = sharedPrefs.getString(webApiKeyPref, null);
                 mExchangeRateInput = new ExchangeRateInput();
                 mExchangeRateInput.setBaseWebApi(mWebApiBase);
-                mExchangeRateInput.setBaseCurrency(FormatHelper.getCurrencyCode(mCountryCode));
+                mExchangeRateInput.setBaseCurrency(FormatHelper.getCurrencyCode(mSettingsCountryCode));
 
                 mExchangeRate = getIntent().getParcelableExtra(EXCHANGE_RATE);
                 if (mExchangeRate != null)
@@ -243,23 +242,18 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
                 //Set default currency code
                 etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
-                etCurrencyCode.setText(FormatHelper.getCurrencyCode(mCountryCode));
+                etCurrencyCode.setText(FormatHelper.getCurrencyCode(mSettingsCountryCode));
 
                 EditText etUnitPrice = (EditText) findViewById(R.id.et_unit_price);
-                EditText etTranslatedUnitPrice = (EditText) findViewById(R.id.et_translated_unit_price);
                 etUnitPrice.setOnTouchListener(mOnTouchListener);
-                View pbUnitPx = findViewById(R.id.pb_translated_unit_px);
-                mUnitPriceEditField = new PriceField(etUnitPrice, etTranslatedUnitPrice, pbUnitPx, mCountryCode, getString(R.string.unit_price_txt));
+                mUnitPriceEditField = new PriceField(etUnitPrice, mSettingsCountryCode, getString(R.string.unit_price_txt));
 
                 EditText etBundlePrice = (EditText) findViewById(R.id.et_bundle_price);
-                EditText etTranslatedBundlePrice = (EditText) findViewById(R.id.et_translated_bundle_price);
                 etBundlePrice.setOnTouchListener(mOnTouchListener);
-                View pbBundlePx = findViewById(R.id.pb_translated_bundle_px);
-                mBundlePriceEditField = new PriceField(etBundlePrice, etTranslatedBundlePrice, pbBundlePx, mCountryCode, getString(R.string.bundle_price_txt));
+                mBundlePriceEditField = new PriceField(etBundlePrice, mSettingsCountryCode, getString(R.string.bundle_price_txt));
 
-                OnCurrencyCodeChange onCurrencyCodeChange = new OnCurrencyCodeChange(this, etCurrencyCode, mCountryCode, mUnitPriceEditField, mBundlePriceEditField, mExchangeRateInput);
+                OnCurrencyCodeChange onCurrencyCodeChange = new OnCurrencyCodeChange(etCurrencyCode, mUnitPriceEditField, mBundlePriceEditField, mItemControl);
                 MyTextUtils.setAllCapsInputFilter(etCurrencyCode);
-                etCurrencyCode.setOnTouchListener(mOnTouchListener);
                 etCurrencyCode.setOnFocusChangeListener(onCurrencyCodeChange);
                 ItemExchangeRateLoaderCallback pxExLoaderCb = new ItemExchangeRateLoaderCallback(this);
                 getLoaderManager().initLoader(78, null, pxExLoaderCb);
@@ -672,6 +666,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         /**
          * Create and display a dialog with positive and negative button.
          * Clicking positive button will delete unsaved pictures and finish the activity.
+         *
          * @param onLeaveClickListener
          */
         private void showUnsavedDialog(DialogInterface.OnClickListener onLeaveClickListener)
@@ -803,17 +798,13 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 mUnitPriceEditField.setPrice(currencyCode, priceMgr.getUnitPriceForDisplay());
                 mBundlePriceEditField.setPrice(currencyCode, priceMgr.getBundlePriceForDisplay());
                 etBundleQty.setText(String.valueOf(priceMgr.getBundlePrice().getBundleQuantity()));
-
-                if (!isItemLocalPriced(currencyCode))
-                {
-                        mUnitPriceEditField.setTranslatedPrice(mExchangeRate);
-                        mBundlePriceEditField.setTranslatedPrice(mExchangeRate);
-                }
+                mUnitPriceEditField.setCurrencySymbolInPriceHint(currencyCode);
+                mBundlePriceEditField.setCurrencySymbolInPriceHint(currencyCode);
         }
 
         private boolean isItemLocalPriced(String currencyCode)
         {
-                String homeCurrencyCode = FormatHelper.getCurrencyCode(mCountryCode);
+                String homeCurrencyCode = FormatHelper.getCurrencyCode(mSettingsCountryCode);
                 return currencyCode.equalsIgnoreCase(homeCurrencyCode);
         }
 
@@ -892,7 +883,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 switch (loaderId)
                 {
                         case ITEM_PRICE_LOADER_ID:
-                                mPriceMgr = new PriceMgr(mCountryCode);
+                                mPriceMgr = new PriceMgr(mSettingsCountryCode);
                                 mPriceMgr.createPrices(cursor);
                                 mItemControl.onLoadPriceFinished(mPriceMgr);
 
@@ -1014,14 +1005,14 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         {
                                 String sourceCurrencyCode = etCurrencyCode.getText().toString();
                                 mExchangeRate = exchangeRates.get(sourceCurrencyCode);
-                                mUnitPriceEditField.setTranslatedPrice(mExchangeRate);
-                                mBundlePriceEditField.setTranslatedPrice(mExchangeRate);
+                                //                                mUnitPriceEditField.setTranslatedPrice(mExchangeRate);
+                                //                                mBundlePriceEditField.setTranslatedPrice(mExchangeRate);
                         }
                         else
                         {
                                 Log.d(LOG_TAG, ">>> Exchange rates is null");
-                                mUnitPriceEditField.setTranslatedPrice(null);
-                                mBundlePriceEditField.setTranslatedPrice(null);
+                                //                                mUnitPriceEditField.setTranslatedPrice(null);
+                                //                                mBundlePriceEditField.setTranslatedPrice(null);
                         }
                 }
 

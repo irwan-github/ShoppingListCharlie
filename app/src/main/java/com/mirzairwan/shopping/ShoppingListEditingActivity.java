@@ -51,6 +51,9 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
         @Override
         protected void onCreate(Bundle savedInstanceState)
         {
+                mShoppingItemControl = new ShoppingItemControl(this);
+                mItemControl = mShoppingItemControl;
+
                 super.onCreate(savedInstanceState);
 
                 Log.d(LOG_TAG, ">>>savedInstantState is " + (savedInstanceState == null ? "NULL" : "NOT " + "NULL"));
@@ -70,7 +73,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
 
                 PurchaseEditorExpander purchaseEditorExpander = new PurchaseEditorExpander(this);
 
-                if (savedInstanceState != null) //Restore from previous mItemType
+                if (savedInstanceState != null) //Restore from previous activity
                 {
                         mUriItem = savedInstanceState.getParcelable(URI_ITEM);
                 }
@@ -79,9 +82,6 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                         Intent intent = getIntent();
                         mUriItem = intent.getData();
                 }
-
-                mShoppingItemControl = new ShoppingItemControl(this);
-                mItemControl = mShoppingItemControl;
 
                 if (mUriItem == null)
                 {
