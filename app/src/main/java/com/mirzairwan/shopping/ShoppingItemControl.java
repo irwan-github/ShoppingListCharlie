@@ -3,9 +3,12 @@ package com.mirzairwan.shopping;
 import android.util.Log;
 
 import com.mirzairwan.shopping.domain.Item;
-import com.mirzairwan.shopping.domain.ItemInShoppingList;
 import com.mirzairwan.shopping.domain.PriceMgr;
 
+import static com.mirzairwan.shopping.ItemBuyQtyControl.State.BUNDLE_BUY_QUANTITY_ERROR;
+import static com.mirzairwan.shopping.ItemBuyQtyControl.State.UNIT_BUY_QUANTITY_ERROR;
+import static com.mirzairwan.shopping.ItemEditFieldControl.State.ERROR_EMPTY_NAME;
+import static com.mirzairwan.shopping.PriceEditControl.State.BUNDLE_QTY_ERROR;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_BACK;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_CHANGE;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_CREATE_OPTIONS_MENU;
@@ -33,9 +36,12 @@ public class ShoppingItemControl implements ItemControl
         protected State mCurrentState = START;
         protected ItemType mItemType;
         protected PriceMgr mPriceMgr;
+        private ItemEditFieldControl mItemEditFieldControl;
         private ShoppingItemContext mContext;
         private PurchaseManager mPurchaseManager;
         private String LOG_TAG = ShoppingItemControl.class.getCanonicalName();
+        private ItemBuyQtyControl mItemBuyQtyControl;
+        private PriceEditControl mPriceEditControl;
 
         public ShoppingItemControl(ShoppingItemContext context)
         {
@@ -115,24 +121,44 @@ public class ShoppingItemControl implements ItemControl
 
         public void onOk()
         {
+                mItemEditFieldControl.onValidate();
+                if (mItemEditFieldControl.getState() == ERROR_EMPTY_NAME)
+                {
+                        return;
+                }
+
+                mItemBuyQtyControl.onValidate();
+                if (mPriceEditControl.getState() == BUNDLE_QTY_ERROR || mItemBuyQtyControl.getState() == UNIT_BUY_QUANTITY_ERROR
+                        || mItemBuyQtyControl.getState() == BUNDLE_BUY_QUANTITY_ERROR)
+                {
+                        return;
+                }
+
                 if (mItemType == NEW_ITEM)
                 {
                         mCurrentState = mCurrentState.transition(ON_INSERT, this);
                         mCurrentState = mCurrentState.transition(ON_DB_RESULT, this);
+                        return;
                 }
 
                 if (mItemType == EXISTING_ITEM)
                 {
                         mCurrentState = mCurrentState.transition(ON_UPDATE, this);
                         mCurrentState = mCurrentState.transition(ON_DB_RESULT, this);
+                        return;
                 }
+        }
+
+        @Override
+        public void setItemNameFieldControl(ItemEditFieldControl itemEditFieldControl)
+        {
+                mItemEditFieldControl = itemEditFieldControl;
         }
 
         private void populateItemInputFields()
         {
                 Item item = mPurchaseManager.getitem();
                 mContext.populateItemInputFields(item);
-                mContext.populatePurchaseInputFields(mPurchaseManager.getItemInShoppingList());
         }
 
         private void populatePricesInputFields()
@@ -175,11 +201,6 @@ public class ShoppingItemControl implements ItemControl
                 mContext.setTitle(stringResId);
         }
 
-        private boolean areFieldsValid()
-        {
-                return mContext.areFieldsValid(mPurchaseManager);
-        }
-
         private void showDbMessage()
         {
                 mContext.showTransientDbMessage();
@@ -193,6 +214,16 @@ public class ShoppingItemControl implements ItemControl
         private void setExitTransition()
         {
                 mContext.setExitTransition();
+        }
+
+        public void setItemBuyQtyFieldControl(ItemBuyQtyControl itemBuyQtyControl)
+        {
+                mItemBuyQtyControl = itemBuyQtyControl;
+        }
+
+        public void setPriceEditControl(PriceEditControl priceEditControl)
+        {
+                mPriceEditControl = priceEditControl;
         }
 
         enum Event
@@ -284,26 +315,12 @@ public class ShoppingItemControl implements ItemControl
                                         switch (event)
                                         {
                                                 case ON_INSERT:
-                                                        if (control.areFieldsValid())
-                                                        {
-                                                                control.insert();
-                                                                state = POST_DB_OP;
-                                                        }
-                                                        else
-                                                        {
-                                                                state = this;
-                                                        }
+                                                        control.insert();
+                                                        state = POST_DB_OP;
                                                         break;
                                                 case ON_UPDATE:
-                                                        if (control.areFieldsValid())
-                                                        {
-                                                                control.update();
-                                                                state = POST_DB_OP;
-                                                        }
-                                                        else
-                                                        {
-                                                                state = this;
-                                                        }
+                                                        control.update();
+                                                        state = POST_DB_OP;
                                                         break;
                                                 case ON_DELETE:
                                                         control.delete();
@@ -399,11 +416,8 @@ public class ShoppingItemControl implements ItemControl
 
         public interface ShoppingItemContext extends ItemContext
         {
-                void populatePurchaseInputFields(ItemInShoppingList itemInShoppingList);
 
                 void delete(long id);
-
-                boolean areFieldsValid(PurchaseManager purchaseManager);
 
                 void update(PurchaseManager mPurchaseManager);
 

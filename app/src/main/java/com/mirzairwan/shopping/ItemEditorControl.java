@@ -110,6 +110,12 @@ public class ItemEditorControl implements ItemControl
                 mCurrentState = mCurrentState.transition(ON_LOAD_ITEM, this);
         }
 
+        @Override
+        public void setItemNameFieldControl(ItemEditFieldControl itemNameFieldControl)
+        {
+
+        }
+
         private void populateItemInputFields()
         {
                 Item item = mItemManager.getItem();

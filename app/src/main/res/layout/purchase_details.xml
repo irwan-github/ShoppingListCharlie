@@ -46,7 +46,7 @@
                         style="@style/myToggle"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:layout_gravity="center"
+                        android:layout_gravity="top"
                         android:layout_marginLeft="8dp"
                         />
 
@@ -74,7 +74,6 @@
                         android:id="@+id/price_type_choice"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:checkedButton="@+id/rb_unit_price"
                         android:focusableInTouchMode="true"
                         android:orientation="horizontal"
                         android:paddingBottom="@dimen/radio_button_top_bottom_padding"
@@ -82,7 +81,7 @@
                         >
 
                         <RadioButton
-                                android:id="@id/rb_unit_price"
+                                android:id="@+id/rb_unit_price"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"

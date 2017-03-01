@@ -1,10 +1,12 @@
 package com.mirzairwan.shopping;
 
+import android.support.design.widget.TextInputEditText;
 import android.support.design.widget.TextInputLayout;
 import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewParent;
-import android.widget.EditText;
+import android.view.inputmethod.EditorInfo;
+import android.widget.TextView;
 
 import com.mirzairwan.shopping.domain.ExchangeRate;
 
@@ -29,21 +31,24 @@ import java.text.ParseException;
 
 public class PriceField implements View.OnFocusChangeListener
 {
-        double mCurrentPrice = 0.00;
-        private EditText mEtPrice;
+        private double mCurrentPrice = 0.00;
+        private ItemControl mItemControl;
+        private TextInputEditText mTextInputPrice;
+        private TextInputLayout mEtPriceWrapper;
         private String mTextHint;
-        private String mHomeCountryCode;
         private ExchangeRate mExchangeRate;
 
-        public PriceField(EditText etPrice, String homeCountryCode, String textHint)
+        public PriceField(TextInputLayout priceWrapper, String textHint, int textInputId, ItemControl itemControl)
         {
-                mEtPrice = etPrice;
-                mEtPrice.setOnFocusChangeListener(this);
-                mHomeCountryCode = homeCountryCode;
+                mEtPriceWrapper = priceWrapper;
+                mTextInputPrice = (TextInputEditText) mEtPriceWrapper.findViewById(textInputId);
+                mTextInputPrice.setOnFocusChangeListener(this);
+                mTextInputPrice.setOnEditorActionListener(new Action());
+                mItemControl = itemControl;
                 mTextHint = textHint;
                 try
                 {
-                        String value = mEtPrice.getText().toString();
+                        String value = mTextInputPrice.getText().toString();
                         if (!TextUtils.isEmpty(value))
                         {
                                 mCurrentPrice = FormatHelper.parseTwoDecimalPlaces(value);
@@ -58,27 +63,27 @@ public class PriceField implements View.OnFocusChangeListener
         @Override
         public void onFocusChange(View v, boolean hasFocus)
         {
-                boolean isPriceEmpty = false;
-                try
-                {
-                        isPriceEmpty = MyTextUtils.isZeroValue(mEtPrice);
-                }
-                catch(ParseException e)
-                {
-                        e.printStackTrace();
-                        return;
-                }
-                if (!v.hasFocus() && !isPriceEmpty)
-                {
-                        if (isPriceChange() && mExchangeRate != null)
-                        {
-                                setCurrencySymbolInPriceHint(mExchangeRate);
-                        }
-                }
-                else if (!v.hasFocus())//Price is empty
-                {
-                        clear();
-                }
+//                boolean isPriceEmpty = false;
+//                try
+//                {
+//                        isPriceEmpty = MyTextUtils.isZeroValue(mTextInputPrice);
+//                }
+//                catch(ParseException e)
+//                {
+//                        e.printStackTrace();
+//                        return;
+//                }
+//                if (!v.hasFocus() && !isPriceEmpty)
+//                {
+//                        if (isPriceChange() && mExchangeRate != null)
+//                        {
+//                                setCurrencySymbolInPriceHint(mExchangeRate);
+//                        }
+//                }
+//                else if (!v.hasFocus())//Price is empty
+//                {
+//                        clear();
+//                }
         }
 
         private boolean isPriceChange()
@@ -86,7 +91,7 @@ public class PriceField implements View.OnFocusChangeListener
                 double newPrice = 0.00;
                 try
                 {
-                        newPrice = FormatHelper.parseTwoDecimalPlaces(mEtPrice.getText().toString());
+                        newPrice = FormatHelper.parseTwoDecimalPlaces(mTextInputPrice.getText().toString());
                 }
                 catch(ParseException e)
                 {
@@ -123,9 +128,12 @@ public class PriceField implements View.OnFocusChangeListener
         {
                 String currencySymbol = FormatHelper.getCurrencySymbol(currencyCode);
                 String hintPx = mTextHint + " (" + currencySymbol + ")";
-                ViewParent viewParent = mEtPrice.getParent();
-                TextInputLayout etLayout = (TextInputLayout) (viewParent.getParent());
-                etLayout.setHint(hintPx);
+                //                ViewParent viewParent = mEtPrice.getParent();
+                //                TextInputLayout etLayout = (TextInputLayout) (viewParent.getParent());
+                //                etLayout.setHint(hintPx);
+
+
+                mEtPriceWrapper.setHint(hintPx);
         }
 
         /**
@@ -136,15 +144,15 @@ public class PriceField implements View.OnFocusChangeListener
          */
         public void setPrice(String currencyCode, String formattedPrice)
         {
-                mEtPrice.setText(formattedPrice);
+                mTextInputPrice.setText(formattedPrice);
                 setCurrencySymbolInPriceHint(currencyCode);
         }
 
         public String getPrice()
         {
-                if (!TextUtils.isEmpty(mEtPrice.getText()))
+                if (!TextUtils.isEmpty(mTextInputPrice.getText()))
                 {
-                        return mEtPrice.getText().toString();
+                        return mTextInputPrice.getText().toString();
                 }
                 else
                 {
@@ -154,7 +162,7 @@ public class PriceField implements View.OnFocusChangeListener
 
         public boolean isEmpty()
         {
-                return TextUtils.isEmpty(mEtPrice.getText());
+                return TextUtils.isEmpty(mTextInputPrice.getText());
         }
 
         /**
@@ -164,13 +172,24 @@ public class PriceField implements View.OnFocusChangeListener
          */
         public void clear()
         {
-                mEtPrice.setText(null);
+                mTextInputPrice.setText(null);
         }
 
-        public boolean isItemLocalPriced(String currencyCode)
+        public void setOnTouchListener(View.OnTouchListener onTouchListener)
         {
-                String homeCurrencyCode = FormatHelper.getCurrencyCode(mHomeCountryCode);
-                return currencyCode.equalsIgnoreCase(homeCurrencyCode);
+                mTextInputPrice.setOnTouchListener(onTouchListener);
         }
 
+        class Action implements TextView.OnEditorActionListener
+        {
+                @Override
+                public boolean onEditorAction(TextView v, int actionId, KeyEvent event)
+                {
+                        if (actionId == EditorInfo.IME_ACTION_DONE)
+                        {
+                                mItemControl.onOk();
+                        }
+                        return false;
+                }
+        }
 }

@@ -21,6 +21,7 @@ import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.design.widget.BaseTransientBottomBar;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -56,6 +57,7 @@ import java.util.Map;
 
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_PICTURE_LOADER_ID;
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_PRICE_LOADER_ID;
+import static com.mirzairwan.shopping.R.id.et_bundle_price;
 import static com.mirzairwan.shopping.ShoppingActivity.EXCHANGE_RATE;
 
 /**
@@ -91,7 +93,7 @@ import static com.mirzairwan.shopping.ShoppingActivity.EXCHANGE_RATE;
  * <p>
  * price_editing.xml
  */
-public abstract class ItemActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>
+public abstract class ItemActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>, ItemContext
 {
         public static final String ITEM_IS_IN_SHOPPING_LIST = "ITEM_IS_IN_SHOPPING_LIST";
         protected static final String ITEM_URI = "ITEM_URI";
@@ -99,7 +101,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         private static final String LOG_TAG = ItemActivity.class.getSimpleName();
         private static final int REQUEST_PICK_PHOTO = 16;
         private static final String PICTURE_MANAGER = "picture_mgr";
-        protected EditText etName;
         protected EditText etBrand;
         protected EditText etDescription;
         protected EditText etCountryOrigin;
@@ -118,12 +119,15 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected String mDbMsg;
         protected View mContainer;
         protected Menu mMenu;
+        protected ItemEditFieldControl mItemNameFieldControl;
         private ImageView mImgItemPic;
         private long itemId;
         private ExchangeRateInput mExchangeRateInput;
+
         /*During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance
             and restore when device orientates to landscape. */
         private ExchangeRate mExchangeRate;
+
         private String mWebApiBase;
 
         @Override
@@ -228,14 +232,18 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         }
                 };
 
-                etName = (EditText) findViewById(R.id.et_item_name);
+                TextInputLayout itemNameWrap = (TextInputLayout) findViewById(R.id.item_name_layout);
+                mItemNameFieldControl = new ItemEditFieldControl(this, itemNameWrap, R.id.et_item_name, this);
+                mItemNameFieldControl.setOnTouchListener(mOnTouchListener);
+                mItemControl.setItemNameFieldControl(mItemNameFieldControl);
+                //etName = (EditText) findViewById(R.id.et_item_name);
                 etBrand = (EditText) findViewById(R.id.et_item_brand);
                 etDescription = (EditText) findViewById(R.id.et_item_description);
                 etCountryOrigin = (EditText) findViewById(R.id.et_item_country_origin);
                 mItemEditorExpander = new ItemEditorExpander(this);
                 mImgItemPic = (ImageView) findViewById(R.id.img_item);
 
-                etName.setOnTouchListener(mOnTouchListener);
+                //etName.setOnTouchListener(mOnTouchListener);
                 etBrand.setOnTouchListener(mOnTouchListener);
                 etDescription.setOnTouchListener(mOnTouchListener);
                 etCountryOrigin.setOnTouchListener(mOnTouchListener);
@@ -244,13 +252,13 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
                 etCurrencyCode.setText(FormatHelper.getCurrencyCode(mSettingsCountryCode));
 
-                EditText etUnitPrice = (EditText) findViewById(R.id.et_unit_price);
-                etUnitPrice.setOnTouchListener(mOnTouchListener);
-                mUnitPriceEditField = new PriceField(etUnitPrice, mSettingsCountryCode, getString(R.string.unit_price_txt));
+                TextInputLayout etUnitPrice = (TextInputLayout) findViewById(R.id.unit_price_layout);
+                mUnitPriceEditField = new PriceField(etUnitPrice, getString(R.string.unit_price_txt), R.id.et_unit_price, mItemControl);
+                mUnitPriceEditField.setOnTouchListener(mOnTouchListener);
 
-                EditText etBundlePrice = (EditText) findViewById(R.id.et_bundle_price);
-                etBundlePrice.setOnTouchListener(mOnTouchListener);
-                mBundlePriceEditField = new PriceField(etBundlePrice, mSettingsCountryCode, getString(R.string.bundle_price_txt));
+                TextInputLayout etBundlePrice = (TextInputLayout) findViewById(R.id.bundle_price_layout);
+                mBundlePriceEditField = new PriceField(etBundlePrice, getString(R.string.bundle_price_txt), et_bundle_price, mItemControl);
+                mBundlePriceEditField.setOnTouchListener(mOnTouchListener);
 
                 OnCurrencyCodeChange onCurrencyCodeChange = new OnCurrencyCodeChange(etCurrencyCode, mUnitPriceEditField, mBundlePriceEditField, mItemControl);
                 MyTextUtils.setAllCapsInputFilter(etCurrencyCode);
@@ -729,11 +737,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         public boolean areFieldsValid()
         {
                 boolean result = true;
-                if (TextUtils.isEmpty(etName.getText()))
-                {
-                        etName.setError(getString(R.string.mandatory_name));
-                        result = false;
-                }
 
                 Editable currencyCodeEditable = etCurrencyCode.getText();
                 boolean isCurrencyCodeValid = !TextUtils.isEmpty(currencyCodeEditable) && FormatHelper.isValidCurrencyCode(currencyCodeEditable.toString());
@@ -757,7 +760,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
          */
         protected void populateItemFromInputFields(Item item)
         {
-                String itemName = etName.getText().toString();
+                //String itemName = etName.getText().toString();
+                String itemName = mItemNameFieldControl.getText();
                 String itemBrand = etBrand.getText().toString();
                 String countryOrigin = etCountryOrigin.getText().toString();
                 String itemDescription = etDescription.getText().toString();
@@ -781,7 +785,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
         public void populateItemInputFields(Item item)
         {
-                etName.setText(item != null ? item.getName() : "");
+                mItemNameFieldControl.setText(item != null ? item.getName() : "");
                 etBrand.setText(item != null ? item.getBrand() : "");
                 etCountryOrigin.setText(item != null ? item.getCountryOrigin() : "");
                 etDescription.setText(item != null ? item.getDescription() : "");
@@ -800,12 +804,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 etBundleQty.setText(String.valueOf(priceMgr.getBundlePrice().getBundleQuantity()));
                 mUnitPriceEditField.setCurrencySymbolInPriceHint(currencyCode);
                 mBundlePriceEditField.setCurrencySymbolInPriceHint(currencyCode);
-        }
-
-        private boolean isItemLocalPriced(String currencyCode)
-        {
-                String homeCurrencyCode = FormatHelper.getCurrencyCode(mSettingsCountryCode);
-                return currencyCode.equalsIgnoreCase(homeCurrencyCode);
         }
 
         protected void clearPriceInputFields()
@@ -1005,14 +1003,10 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         {
                                 String sourceCurrencyCode = etCurrencyCode.getText().toString();
                                 mExchangeRate = exchangeRates.get(sourceCurrencyCode);
-                                //                                mUnitPriceEditField.setTranslatedPrice(mExchangeRate);
-                                //                                mBundlePriceEditField.setTranslatedPrice(mExchangeRate);
                         }
                         else
                         {
                                 Log.d(LOG_TAG, ">>> Exchange rates is null");
-                                //                                mUnitPriceEditField.setTranslatedPrice(null);
-                                //                                mBundlePriceEditField.setTranslatedPrice(null);
                         }
                 }
 

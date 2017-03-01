@@ -7,19 +7,17 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.TextInputLayout;
 import android.util.Log;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 
 import com.mirzairwan.shopping.data.Contract;
-import com.mirzairwan.shopping.domain.ItemInShoppingList;
 import com.mirzairwan.shopping.domain.Price;
 
 import java.text.ParseException;
 
 import static com.mirzairwan.shopping.LoaderHelper.PURCHASE_ITEM_LOADER_ID;
-import static com.mirzairwan.shopping.R.id.rb_unit_price;
-import static com.mirzairwan.shopping.domain.Price.Type.BUNDLE_PRICE;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
 /**
@@ -47,12 +45,15 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
 
         private Uri mUriItem;
         private ShoppingItemControl mShoppingItemControl;
+        private ItemBuyQtyControl mItemBuyQtyControl;
+        private PriceEditControl mPriceEditControl;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
         {
                 mShoppingItemControl = new ShoppingItemControl(this);
                 mItemControl = mShoppingItemControl;
+
 
                 super.onCreate(savedInstanceState);
 
@@ -61,6 +62,8 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                 mContainer = findViewById(R.id.shopping_list_editor_container);
                 etQtyToBuy = (EditText) findViewById(R.id.et_item_quantity);
                 etQtyToBuy.setOnTouchListener(mOnTouchListener);
+                TextInputLayout qtyToBuyWrapper = (TextInputLayout)findViewById(R.id.item_quantity_layout);
+
 
                 /* Set default quantity to 1. If I set this in xml layout , it will jumble up the number and hint. This did not happen at SDK v24 */
                 etQtyToBuy.setText("1");
@@ -68,6 +71,14 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                 /* set touchListener for Radio Group */
                 rgPriceTypeChoice = (RadioGroup) findViewById(R.id.price_type_choice);
                 rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);
+                mItemBuyQtyControl = new ItemBuyQtyControl(this, qtyToBuyWrapper, rgPriceTypeChoice);
+
+                TextInputLayout bundleQtyWrapper  = (TextInputLayout)findViewById(R.id.bundle_qty_layout);
+                mPriceEditControl = new PriceEditControl(this, bundleQtyWrapper);
+                mItemBuyQtyControl.setPriceEditControl(mPriceEditControl);
+                mShoppingItemControl.setItemBuyQtyFieldControl(mItemBuyQtyControl);
+                mShoppingItemControl.setPriceEditControl(mPriceEditControl);
+
                 findViewById(R.id.rb_unit_price).setOnTouchListener(mOnTouchListener);
                 findViewById(R.id.rb_bundle_price).setOnTouchListener(mOnTouchListener);
 
@@ -87,6 +98,8 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                 {
                         PurchaseManager mPurchaseManager = new PurchaseManager();
                         mShoppingItemControl.onNewItem(mPurchaseManager);
+                        mItemBuyQtyControl.setPurchaseManager(mPurchaseManager);
+                        mItemBuyQtyControl.selectPriceType(R.id.rb_unit_price);
                 }
                 else
                 {
@@ -167,6 +180,9 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
 
                                 mShoppingItemControl.onLoadItemFinished(mPurchaseManager);
 
+                                mItemBuyQtyControl.setPurchaseManager(mPurchaseManager);
+                                mItemBuyQtyControl.onLoadFinished();
+
                                 mPictureMgr.setItemId(mPurchaseManager.getitem().getId());
                                 break;
 
@@ -182,61 +198,10 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                 clearPurchaseInputFields();
         }
 
-        public void populatePurchaseInputFields(ItemInShoppingList toBuyItem)
-        {
-                etQtyToBuy.setText(String.valueOf(toBuyItem.getQuantity()));
-                rgPriceTypeChoice.check(toBuyItem.getSelectedPriceType() == BUNDLE_PRICE ? R.id.rb_bundle_price : rb_unit_price);
-        }
-
         private void clearPurchaseInputFields()
         {
                 etQtyToBuy.setText("");
                 rgPriceTypeChoice.clearCheck();
-        }
-
-        @Override
-        public boolean areFieldsValid()
-        {
-                return false;
-        }
-
-        @Override
-        public boolean areFieldsValid(PurchaseManager purchaseManager)
-        {
-                boolean areFieldsValid = super.areFieldsValid();
-                if (!areFieldsValid)
-                {
-                        return areFieldsValid;
-                }
-                String qtyToBuy = etQtyToBuy.getText().toString();
-                if (purchaseManager.isQuantityToBuyZero(qtyToBuy))
-                {
-                        etQtyToBuy.setError(getString(R.string.mandatory_quantity));
-                        areFieldsValid = false;
-                }
-
-                if (getSelectedPriceType() == Price.Type.BUNDLE_PRICE)
-                {
-                        String bundleQty = etBundleQty.getText().toString();
-
-                        if (purchaseManager.isBundleQuantityOne(qtyToBuy))
-                        {
-                                etQtyToBuy.setError(getString(R.string.invalid_bundle_buy_quantity_one));
-                                areFieldsValid = false;
-                        }
-                        else if (purchaseManager.isBundleQuantityOne(bundleQty))
-                        {
-                                etBundleQty.setError(getString(R.string.invalid_bundle_quantity_one));
-                                mPriceEditorExpander.expandMore();
-                                areFieldsValid = false;
-                        }
-                        else if (!purchaseManager.isBundleQuantityToBuyValid(qtyToBuy, etBundleQty.getText().toString()))
-                        {
-                                etQtyToBuy.setError(getString(R.string.invalid_bundle_buy_quantity) + " " + bundleQty);
-                                areFieldsValid = false;
-                        }
-                }
-                return areFieldsValid;
         }
 
         /**

@@ -1,14 +1,11 @@
 package com.mirzairwan.shopping;
 
 import android.database.Cursor;
-import android.text.TextUtils;
 
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.ItemInShoppingList;
 import com.mirzairwan.shopping.domain.Price;
-
-import static java.lang.Integer.parseInt;
 
 /**
  * Created by Mirza Irwan on 13/1/17.
@@ -116,18 +113,6 @@ public class PurchaseManager
 
         }
 
-        public boolean isQuantityToBuyZero(String quantityToBuy)
-        {
-                if (TextUtils.isEmpty(quantityToBuy) || parseInt(quantityToBuy) < 1)
-                {
-                        return true;
-                }
-                else
-                {
-                        return false;
-                }
-        }
-
         public Item getitem()
         {
                 return mItem;
@@ -148,6 +133,12 @@ public class PurchaseManager
                 mSelectedPrice = defaultPrice;
         }
 
+        /**
+         * Only more than one may be valid
+         * @param bundleQtyToBuy
+         * @param bundleQty
+         * @return
+         */
         public boolean isBundleQuantityToBuyValid(String bundleQtyToBuy, String bundleQty)
         {
                 int nBundleQty = Integer.parseInt(bundleQty);
@@ -168,12 +159,4 @@ public class PurchaseManager
                 }
         }
 
-        public boolean isBundleQuantityOne(String bundleQtyToBuy)
-        {
-                int nBundleQtyToBuy = Integer.parseInt(bundleQtyToBuy);
-                if(nBundleQtyToBuy <= 1)
-                        return true;
-                else
-                        return false;
-        }
 }

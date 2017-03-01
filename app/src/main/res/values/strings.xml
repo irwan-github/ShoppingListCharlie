@@ -2,7 +2,7 @@
         <string name="app_name">Go shopping</string>
         <string name="buy_list">Shopping List</string>
         <string name="catalogue">History</string>
-        <string name="item_name">Name</string>
+        <string name="item_name">Name (required)</string>
         <string name="brand_label">Brand</string>
         <string name="use_price_type">Which price to use in shopping list?</string>
         <string name="unit_price_txt">Unit price</string>
@@ -110,10 +110,12 @@
         <string name="remove_picture_item">Remove picture</string>
         <string name="insert_picture">Pick a picture</string>
         <string name="use_camera">Use a camera</string>
-        <string name="invalid_bundle_buy_quantity">Invalid bundle quantity. Must be multiple(s) of</string>
+        <string name="invalid_multiple_buy_quantity_bundle">Must be multiple(s) of bundle quantity</string>
         <string name="invalid_bundle_quantity">Bundle quantity must be more than 1.</string>
         <string name="invalid_bundle_buy_quantity_one">Quantity must be more than 1.</string>
         <string name="invalid_bundle_quantity_one">Bundle quatity must be more than 1.</string>
         <string name="add_item_button_text">Add item ....</string>
         <string name="database_delete_success">deleted: OK</string>
+        <string name="mandatory">Required</string>
+        <string name="invalid_buy_quantity_zero">Must be 1 or more</string>
 </resources>

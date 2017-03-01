@@ -27,10 +27,10 @@ public class Item
 
         public Item(long id, String itemName, String brand, String country, String description, Date lastUpdatedOn)
         {
-                if (itemName == null || itemName.trim().equals(""))
-                {
-                        throw new IllegalArgumentException("Item name cannot empty");
-                }
+//                if (itemName == null || itemName.trim().equals(""))
+//                {
+//                        throw new IllegalArgumentException("Item name cannot empty");
+//                }
                 _id = id;
                 mItemName = itemName;
                 mBrand = brand;

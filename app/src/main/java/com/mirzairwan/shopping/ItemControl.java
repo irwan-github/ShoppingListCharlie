@@ -28,4 +28,6 @@ public interface ItemControl
         void onLoadPriceFinished(PriceMgr priceMgr);
 
         void onExistingItem();
+
+        void setItemNameFieldControl(ItemEditFieldControl itemNameFieldControl);
 }
