@@ -119,10 +119,11 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected String mDbMsg;
         protected View mContainer;
         protected Menu mMenu;
-        protected ItemEditFieldControl mItemNameFieldControl;
+        protected ItemEditFieldControl mItemEditFieldControl;
         private ImageView mImgItemPic;
         private long itemId;
         private ExchangeRateInput mExchangeRateInput;
+        protected PriceEditFieldControl mPriceEditFieldControl;
 
         /*During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance
             and restore when device orientates to landscape. */
@@ -200,7 +201,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 {
                         mExchangeRateInput.addSourceCurrency(mExchangeRate.getSourceCurrencyCode());
                 }
-
+                mPriceEditFieldControl = new PriceEditFieldControl(this);
+                mPriceEditFieldControl.setPriceMgr(mPriceMgr);
                 setupViews();
 
                 if (savedInstanceState == null)
@@ -233,9 +235,10 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 };
 
                 TextInputLayout itemNameWrap = (TextInputLayout) findViewById(R.id.item_name_layout);
-                mItemNameFieldControl = new ItemEditFieldControl(this, itemNameWrap, R.id.et_item_name, this);
-                mItemNameFieldControl.setOnTouchListener(mOnTouchListener);
-                mItemControl.setItemNameFieldControl(mItemNameFieldControl);
+                //mItemNameFieldControl = new ItemEditFieldControl(this, itemNameWrap, R.id.et_item_name, this);
+                mItemEditFieldControl = new ItemEditFieldControl(this);
+                mItemEditFieldControl.setOnTouchListener(mOnTouchListener);
+                mItemControl.setItemNameFieldControl(mItemEditFieldControl);
                 //etName = (EditText) findViewById(R.id.et_item_name);
                 etBrand = (EditText) findViewById(R.id.et_item_brand);
                 etDescription = (EditText) findViewById(R.id.et_item_description);
@@ -255,10 +258,12 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 TextInputLayout etUnitPrice = (TextInputLayout) findViewById(R.id.unit_price_layout);
                 mUnitPriceEditField = new PriceField(etUnitPrice, getString(R.string.unit_price_txt), R.id.et_unit_price, mItemControl);
                 mUnitPriceEditField.setOnTouchListener(mOnTouchListener);
+                mPriceEditFieldControl.setUnitPrice(mUnitPriceEditField);
 
                 TextInputLayout etBundlePrice = (TextInputLayout) findViewById(R.id.bundle_price_layout);
                 mBundlePriceEditField = new PriceField(etBundlePrice, getString(R.string.bundle_price_txt), et_bundle_price, mItemControl);
                 mBundlePriceEditField.setOnTouchListener(mOnTouchListener);
+                mPriceEditFieldControl.setBundlePrice(mBundlePriceEditField);
 
                 OnCurrencyCodeChange onCurrencyCodeChange = new OnCurrencyCodeChange(etCurrencyCode, mUnitPriceEditField, mBundlePriceEditField, mItemControl);
                 MyTextUtils.setAllCapsInputFilter(etCurrencyCode);
@@ -761,7 +766,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected void populateItemFromInputFields(Item item)
         {
                 //String itemName = etName.getText().toString();
-                String itemName = mItemNameFieldControl.getText();
+                String itemName = mItemEditFieldControl.getText();
                 String itemBrand = etBrand.getText().toString();
                 String countryOrigin = etCountryOrigin.getText().toString();
                 String itemDescription = etDescription.getText().toString();
@@ -781,14 +786,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         bundleQty = etBundleQty.getText().toString();
                 }
                 return bundleQty;
-        }
-
-        public void populateItemInputFields(Item item)
-        {
-                mItemNameFieldControl.setText(item != null ? item.getName() : "");
-                etBrand.setText(item != null ? item.getBrand() : "");
-                etCountryOrigin.setText(item != null ? item.getCountryOrigin() : "");
-                etDescription.setText(item != null ? item.getDescription() : "");
         }
 
         /**
@@ -884,6 +881,9 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                 mPriceMgr = new PriceMgr(mSettingsCountryCode);
                                 mPriceMgr.createPrices(cursor);
                                 mItemControl.onLoadPriceFinished(mPriceMgr);
+
+                                mPriceEditFieldControl.setPriceMgr(mPriceMgr);
+                                mPriceEditFieldControl.onLoadFinished();
 
                                 /*
                                 Important to move cursor back before the first record because when device switches to landscape, it gives back the same cursor with

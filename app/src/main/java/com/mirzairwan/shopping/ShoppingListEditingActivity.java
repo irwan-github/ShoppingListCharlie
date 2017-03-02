@@ -15,8 +15,6 @@ import android.widget.RadioGroup;
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.domain.Price;
 
-import java.text.ParseException;
-
 import static com.mirzairwan.shopping.LoaderHelper.PURCHASE_ITEM_LOADER_ID;
 import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
@@ -46,14 +44,13 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
         private Uri mUriItem;
         private ShoppingItemControl mShoppingItemControl;
         private ItemBuyQtyControl mItemBuyQtyControl;
-        private PriceEditControl mPriceEditControl;
+        //private PriceEditFieldControl mPriceEditFieldControl;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
         {
                 mShoppingItemControl = new ShoppingItemControl(this);
                 mItemControl = mShoppingItemControl;
-
 
                 super.onCreate(savedInstanceState);
 
@@ -62,7 +59,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                 mContainer = findViewById(R.id.shopping_list_editor_container);
                 etQtyToBuy = (EditText) findViewById(R.id.et_item_quantity);
                 etQtyToBuy.setOnTouchListener(mOnTouchListener);
-                TextInputLayout qtyToBuyWrapper = (TextInputLayout)findViewById(R.id.item_quantity_layout);
+                TextInputLayout qtyToBuyWrapper = (TextInputLayout) findViewById(R.id.item_quantity_layout);
 
 
                 /* Set default quantity to 1. If I set this in xml layout , it will jumble up the number and hint. This did not happen at SDK v24 */
@@ -73,11 +70,10 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                 rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);
                 mItemBuyQtyControl = new ItemBuyQtyControl(this, qtyToBuyWrapper, rgPriceTypeChoice);
 
-                TextInputLayout bundleQtyWrapper  = (TextInputLayout)findViewById(R.id.bundle_qty_layout);
-                mPriceEditControl = new PriceEditControl(this, bundleQtyWrapper);
-                mItemBuyQtyControl.setPriceEditControl(mPriceEditControl);
+
+                mItemBuyQtyControl.setPriceEditFieldControl(mPriceEditFieldControl);
                 mShoppingItemControl.setItemBuyQtyFieldControl(mItemBuyQtyControl);
-                mShoppingItemControl.setPriceEditControl(mPriceEditControl);
+                mShoppingItemControl.setPriceEditFieldControl(mPriceEditFieldControl);
 
                 findViewById(R.id.rb_unit_price).setOnTouchListener(mOnTouchListener);
                 findViewById(R.id.rb_bundle_price).setOnTouchListener(mOnTouchListener);
@@ -96,10 +92,13 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
 
                 if (mUriItem == null)
                 {
-                        PurchaseManager mPurchaseManager = new PurchaseManager();
-                        mShoppingItemControl.onNewItem(mPurchaseManager);
-                        mItemBuyQtyControl.setPurchaseManager(mPurchaseManager);
-                        mItemBuyQtyControl.selectPriceType(R.id.rb_unit_price);
+                        PurchaseManager purchaseManager = new PurchaseManager();
+                        mShoppingItemControl.onNewItem();
+                        mShoppingItemControl.setPurchaseManager(purchaseManager);
+                        mItemBuyQtyControl.setPurchaseManager(purchaseManager);
+
+                        /* Set unit price selection as default*/
+                        mItemBuyQtyControl.selectPriceType(Price.Type.UNIT_PRICE);
                 }
                 else
                 {
@@ -178,7 +177,9 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                                  */
                                 PurchaseManager mPurchaseManager = new PurchaseManager(cursor);
 
-                                mShoppingItemControl.onLoadItemFinished(mPurchaseManager);
+                                mShoppingItemControl.setPurchaseManager(mPurchaseManager);
+
+                                mItemEditFieldControl.onLoadItemFinished(mPurchaseManager.getitem());
 
                                 mItemBuyQtyControl.setPurchaseManager(mPurchaseManager);
                                 mItemBuyQtyControl.onLoadFinished();
@@ -225,26 +226,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
 
         protected void prepareForDbOperation(PurchaseManager purchaseManager)
         {
-                populateItemFromInputFields(purchaseManager.getitem());
-
-                String itemQuantity = etQtyToBuy.getText().toString();
-                purchaseManager.getItemInShoppingList().setQuantity(Integer.parseInt(itemQuantity));
-
-                String currencyCode = etCurrencyCode.getText().toString();
-                mPriceMgr.setCurrencyCode(currencyCode);
-
-                try
-                {
-                        mPriceMgr.setItemPricesForSaving(mUnitPriceEditField.getPrice(), mBundlePriceEditField.getPrice(), getBundleQtyFromInputField());
-                }
-                catch(ParseException e)
-                {
-                        e.printStackTrace();
-                        alertRequiredField(R.string.message_title, R.string.invalid_price);
-                        return;
-                }
-
-                //Get selected price
+                /* Get selected price */
                 Price.Type selectedPriceType = getSelectedPriceType();
                 Price selectedPrice = mPriceMgr.getSelectedPrice(selectedPriceType);
                 purchaseManager.getItemInShoppingList().setSelectedPrice(selectedPrice);

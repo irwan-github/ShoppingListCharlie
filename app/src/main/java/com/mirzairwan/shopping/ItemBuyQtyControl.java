@@ -31,7 +31,7 @@ public class ItemBuyQtyControl
         private TextInputLayout mQtyToBuyWrapper;
         private TextInputEditText etQtyToBuy;
         private PurchaseManager mPurchaseManager;
-        private PriceEditControl mPriceEditControl;
+        private PriceEditFieldControl mPriceEditFieldControl;
         private RadioGroup mRgPriceTypeChoice;
         private State mState = NEUTRAL;
 
@@ -51,9 +51,9 @@ public class ItemBuyQtyControl
                 rbBundlePrice.setOnCheckedChangeListener(listener);
         }
 
-        public void setPriceEditControl(PriceEditControl priceEditControl)
+        public void setPriceEditFieldControl(PriceEditFieldControl priceEditFieldControl)
         {
-                mPriceEditControl = priceEditControl;
+                mPriceEditFieldControl = priceEditFieldControl;
         }
 
         public void setPurchaseManager(PurchaseManager purchaseManager)
@@ -112,7 +112,7 @@ public class ItemBuyQtyControl
 
         private void validateBundleBuyQty()
         {
-                mPriceEditControl.onValidateBundleQty();
+                mPriceEditFieldControl.onValidateBundleQty();
 
                 if (isBuyQtyOneOrLess() || !isBuyQuantityValidMultiples())
                 {
@@ -132,7 +132,7 @@ public class ItemBuyQtyControl
                         mState = mState.transition(ON_SELECT_UNIT_PRICE, this);
 
                         /* Bundle quantity is not needed in unit price calculation. Set the  bundle qty error state to neutral state in order ro proceed */
-                        mPriceEditControl.onNeutral();
+                        mPriceEditFieldControl.onNeutral();
 
                         validateUnitBuyQty();
 
@@ -167,10 +167,24 @@ public class ItemBuyQtyControl
                 }
         }
 
-        void selectPriceType(int choiceId)
+        private void selectPriceType(int choiceId)
         {
                 Log.d("onCheckedChanged", "selectPriceType: " + String.valueOf(choiceId));
                 mRgPriceTypeChoice.check(choiceId);
+        }
+
+        public void selectPriceType(Price.Type priceType)
+        {
+                Log.d("onCheckedChanged", "selectPriceType: " + priceType);
+                if (priceType == Price.Type.UNIT_PRICE)
+                {
+                        mRgPriceTypeChoice.check(R.id.rb_unit_price);
+                }
+
+                if (priceType == Price.Type.BUNDLE_PRICE)
+                {
+                        mRgPriceTypeChoice.check(R.id.rb_bundle_price);
+                }
         }
 
         private void setErrorQuantity(int stringResId)
@@ -180,7 +194,7 @@ public class ItemBuyQtyControl
 
         private void clearBundleQtyError()
         {
-                mPriceEditControl.clearBundleQtyError();
+                mPriceEditFieldControl.clearBundleQtyError();
         }
 
         private void clearBuyQtyError()
@@ -190,12 +204,12 @@ public class ItemBuyQtyControl
 
         private boolean isBuyQuantityValidMultiples()
         {
-                if (TextUtils.isEmpty(etQtyToBuy.getText()) || TextUtils.isEmpty(mPriceEditControl.getBundleQuantity()))
+                if (TextUtils.isEmpty(etQtyToBuy.getText()) || TextUtils.isEmpty(mPriceEditFieldControl.getBundleQuantity()))
                 {
                         return false;
                 }
                 String buyQty = etQtyToBuy.getText().toString();
-                String bundleQty = mPriceEditControl.getBundleQuantity();
+                String bundleQty = mPriceEditFieldControl.getBundleQuantity();
 
                 return mPurchaseManager.isBundleQuantityToBuyValid(buyQty, bundleQty);
         }
@@ -218,6 +232,11 @@ public class ItemBuyQtyControl
                                 validateBundleBuyQty();
                                 break;
                 }
+        }
+
+        public String getQuantity()
+        {
+                return etQtyToBuy.getText().toString();
         }
 
 

@@ -5,7 +5,6 @@ import android.database.Cursor;
 import com.mirzairwan.shopping.FormatHelper;
 import com.mirzairwan.shopping.data.Contract;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -107,13 +106,30 @@ public class PriceMgr
                 return FormatHelper.formatToTwoDecimalPlaces(mBundlePrice.getBundlePrice());
         }
 
-        public void setItemPricesForSaving(String unitPriceFromInputField, String bundlePriceFromInputField, String bundleQtyFromInputField) throws ParseException
+        public void setItemPricesForSaving(String unitPriceFromInputField, String bundlePriceFromInputField, String bundleQtyFromInputField)
         {
-                double unitPrice = FormatHelper.parseTwoDecimalPlaces(unitPriceFromInputField);
-                mUnitPrice.setUnitPrice(unitPrice);
-                double bundlePrice = FormatHelper.parseTwoDecimalPlaces(bundlePriceFromInputField);
-                int bundleQuantity = Integer.parseInt(bundleQtyFromInputField);
-                mBundlePrice.setBundlePrice(bundlePrice, bundleQuantity);
+
+                int bundleQuantity = 0;
+                try
+                {
+                        double unitPrice = FormatHelper.parseTwoDecimalPlaces(unitPriceFromInputField);
+                        mUnitPrice.setUnitPrice(unitPrice);
+                }
+                catch(Exception ex)
+                {
+                        mUnitPrice.setUnitPrice(0);
+                }
+
+                try
+                {
+                        double bundlePrice = FormatHelper.parseTwoDecimalPlaces(bundlePriceFromInputField);
+                        bundleQuantity = Integer.parseInt(bundleQtyFromInputField);
+                        mBundlePrice.setBundlePrice(bundlePrice, bundleQuantity);
+                }
+                catch(Exception ex)
+                {
+                        mBundlePrice.setBundlePrice(0, bundleQuantity);
+                }
         }
 
         public Price getUnitPrice()

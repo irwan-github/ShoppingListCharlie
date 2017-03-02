@@ -6,7 +6,6 @@ package com.mirzairwan.shopping;
 
 import android.util.Log;
 
-import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.PriceMgr;
 
 import static com.mirzairwan.shopping.ItemEditorControl.Event.ON_BACK;
@@ -47,7 +46,9 @@ public class ItemEditorControl implements ItemControl
         private State mCurrentState = START;
         private PriceMgr mPriceMgr;
         private ItemManager mItemManager;
+        private ItemEditFieldControl mItemEditFieldControl;
         private String LOG_TAG = ItemEditorControl.class.getSimpleName();
+        private PriceEditFieldControl mPriceEditFieldControl;
 
         public ItemEditorControl(ItemEditorContext context)
         {
@@ -116,12 +117,6 @@ public class ItemEditorControl implements ItemControl
 
         }
 
-        private void populateItemInputFields()
-        {
-                Item item = mItemManager.getItem();
-                mContext.populateItemInputFields(item);
-        }
-
         private void finishItemEditing()
         {
                 mContext.finishItemEditing();
@@ -139,6 +134,9 @@ public class ItemEditorControl implements ItemControl
 
         private void update()
         {
+                mItemEditFieldControl.populateItemFromInputFields();
+                mPriceEditFieldControl.populatePriceMgr();
+
                 mContext.update(mItemManager);
         }
 
@@ -188,6 +186,16 @@ public class ItemEditorControl implements ItemControl
                         return true;
         }
 
+        public void setItemEditFieldControl(ItemEditFieldControl itemEditFieldControl)
+        {
+                mItemEditFieldControl = itemEditFieldControl;
+        }
+
+        public void setPriceEditFieldControl(PriceEditFieldControl priceEditFieldControl)
+        {
+                mPriceEditFieldControl = priceEditFieldControl;
+        }
+
         enum Event
         {
                 ON_EXIST, ON_DELETE, ON_UP, ON_BACK, ON_CHANGE, ON_UPDATE, ON_LEAVE, ON_LOAD_ITEM, ON_LOAD_PRICE, ON_STAY, ON_DB_RESULT,
@@ -222,10 +230,6 @@ public class ItemEditorControl implements ItemControl
                                         switch (event)
                                         {
                                                 case ON_CREATE_OPTIONS_MENU:
-                                                        state = UNCHANGE;
-                                                        break;
-                                                case ON_LOAD_ITEM:
-                                                        context.populateItemInputFields();
                                                         state = UNCHANGE;
                                                         break;
                                                 case ON_LOAD_PRICE:

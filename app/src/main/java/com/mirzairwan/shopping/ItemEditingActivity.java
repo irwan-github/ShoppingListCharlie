@@ -9,8 +9,6 @@ import android.os.Bundle;
 
 import com.mirzairwan.shopping.data.Contract;
 
-import java.text.ParseException;
-
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
 
 /**
@@ -30,7 +28,10 @@ public class ItemEditingActivity extends ItemActivity implements ItemEditorContr
         {
                 mItemEditorControl = new ItemEditorControl(this);
                 mItemControl = mItemEditorControl;
+
                 super.onCreate(savedInstanceState);
+                mItemEditorControl.setItemEditFieldControl(mItemEditFieldControl);
+                mItemEditorControl.setPriceEditFieldControl(mPriceEditFieldControl);
 
                 mContainer = findViewById(R.id.item_editing_container);
 
@@ -71,25 +72,6 @@ public class ItemEditingActivity extends ItemActivity implements ItemEditorContr
                 mDbMsg = daoManager.delete(itemId, mPictureMgr);
         }
 
-        protected void prepareForDbOperation(ItemManager mItemManager)
-        {
-                populateItemFromInputFields(mItemManager.getItem());
-
-                String bundleQtyFromInputField = getBundleQtyFromInputField();
-
-                try
-                {
-                        mPriceMgr.setCurrencyCode(etCurrencyCode.getText().toString());
-                        String unitPrice = mUnitPriceEditField.getPrice();
-                        mPriceMgr.setItemPricesForSaving(unitPrice, mBundlePriceEditField.getPrice(), bundleQtyFromInputField);
-                }
-                catch(ParseException e)
-                {
-                        e.printStackTrace();
-                        alertRequiredField(R.string.dialog_invalid_title, R.string.invalid_price);
-                }
-        }
-
         @Override
         public Loader<Cursor> onCreateLoader(int loaderId, Bundle args)
         {
@@ -124,6 +106,7 @@ public class ItemEditingActivity extends ItemActivity implements ItemEditorContr
                         case ITEM_LOADER_ID:
                                 ItemManager mItemManager = new ItemManager(cursor, getIntent().getBooleanExtra(ITEM_IS_IN_SHOPPING_LIST, false));
                                 mItemEditorControl.onLoadItemFinished(mItemManager);
+                                mItemEditFieldControl.onLoadItemFinished(mItemManager.getItem());
                                 mPictureMgr.setItemId(mItemManager.getItem().getId());
                                 break;
 
@@ -141,7 +124,6 @@ public class ItemEditingActivity extends ItemActivity implements ItemEditorContr
 
         public void update(ItemManager mItemManager)
         {
-                prepareForDbOperation(mItemManager);
                 mDbMsg = daoManager.update(mItemManager.getItem(), mPriceMgr.getPrices(), mPictureMgr);
                 mDbMsg = mItemManager.getItem().getName() + " " + mDbMsg;
         }

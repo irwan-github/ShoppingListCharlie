@@ -1,6 +1,7 @@
 package com.mirzairwan.shopping;
 
-import com.mirzairwan.shopping.domain.Item;
+import android.view.View;
+
 import com.mirzairwan.shopping.domain.PriceMgr;
 
 /**
@@ -21,9 +22,11 @@ public interface ItemContext
 
         void setTitle(int resourceId);
 
-        void populateItemInputFields(Item item);
-
         void populatePricesInputFields(PriceMgr mPriceMgr);
 
         void showTransientDbMessage();
+
+        View findViewById(int resId);
+
+        String getString(int resId);
 }

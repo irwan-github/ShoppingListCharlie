@@ -30,4 +30,5 @@ public interface ItemControl
         void onExistingItem();
 
         void setItemNameFieldControl(ItemEditFieldControl itemNameFieldControl);
+
 }
