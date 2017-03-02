@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import com.mirzairwan.shopping.domain.Item;
 
+import static com.mirzairwan.shopping.ItemEditFieldControl.Event.ON_LOAD_ITEM;
 import static com.mirzairwan.shopping.ItemEditFieldControl.Event.ON_MISSING_VALUE;
 import static com.mirzairwan.shopping.ItemEditFieldControl.Event.ON_VALUE_FILLED;
 import static com.mirzairwan.shopping.ItemEditFieldControl.State.NEUTRAL;
@@ -20,12 +21,14 @@ import static com.mirzairwan.shopping.ItemEditFieldControl.State.NEUTRAL;
 
 public class ItemEditFieldControl
 {
+        private TextInputLayout mItemNameWrap;
+        private TextInputEditText mEtItemName;
         private TextInputEditText mEtDescription;
         private TextInputEditText mEtCountry;
         private TextInputEditText mEtBrand;
+
         private ItemContext mItemContext;
-        private TextInputEditText mEtItemName;
-        private TextInputLayout mItemNameWrap;
+
         private State mState = NEUTRAL;
         private Item mItem;
 
@@ -105,6 +108,9 @@ public class ItemEditFieldControl
         public void setOnTouchListener(View.OnTouchListener onTouchListener)
         {
                 mEtItemName.setOnTouchListener(onTouchListener);
+                mEtBrand.setOnTouchListener(onTouchListener);
+                mEtDescription.setOnTouchListener(onTouchListener);
+                mEtCountry.setOnTouchListener(onTouchListener);
         }
 
         public String getText()
@@ -122,18 +128,28 @@ public class ItemEditFieldControl
                 return mState;
         }
 
+        private void populateItemInputFields()
+        {
+                mEtItemName.setText(mItem.getName());
+                mEtBrand.setText(mItem.getBrand());
+                mEtCountry.setText(mItem.getCountryOrigin());
+                mEtDescription.setText(mItem.getDescription());
+        }
+
+        private void invalidateOptionsMenu()
+        {
+                mItemContext.invalidateOptionsMenu();
+        }
+
         public void onLoadItemFinished(Item item)
         {
                 mItem = item;
-                mEtItemName.setText(item.getName());
-                mEtBrand.setText(item.getBrand());
-                mEtCountry.setText(item.getDescription());
-                mEtDescription.setText(item.getDescription());
+                mState = mState.transition(ON_LOAD_ITEM, this);
         }
 
         enum Event
         {
-                ON_MISSING_VALUE, ON_VALUE_FILLED
+                ON_MISSING_VALUE, ON_VALUE_FILLED, ON_LOAD_ITEM
         }
 
         enum State
@@ -144,9 +160,16 @@ public class ItemEditFieldControl
                                 State transition(Event event, ItemEditFieldControl control)
                                 {
                                         State state = this;
-                                        if (event == ON_MISSING_VALUE)
+                                        switch(event)
                                         {
-                                                state = ERROR_EMPTY_NAME;
+                                                case ON_MISSING_VALUE:
+                                                        state = ERROR_EMPTY_NAME;
+                                                        break;
+
+                                                case ON_LOAD_ITEM:
+                                                        state = this;
+                                                        break;
+
                                         }
                                         state.setUiOutput(event, control);
                                         return state;
@@ -155,6 +178,13 @@ public class ItemEditFieldControl
                                 @Override
                                 void setUiOutput(Event event, ItemEditFieldControl control)
                                 {
+                                        switch (event)
+                                        {
+                                                case ON_LOAD_ITEM:
+                                                        control.populateItemInputFields();
+                                                        control.invalidateOptionsMenu();
+                                                        break;
+                                        }
                                         control.hideError();
                                 }
                         },
@@ -187,6 +217,11 @@ public class ItemEditFieldControl
 
                 abstract State transition(Event event, ItemEditFieldControl control);
 
+        }
+
+        private void setMenuVisible(int menuId, boolean isVisible)
+        {
+                mItemContext.setMenuVisible(menuId, isVisible);
         }
 
         private class ActionListener implements TextView.OnEditorActionListener

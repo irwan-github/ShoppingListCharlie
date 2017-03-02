@@ -29,4 +29,6 @@ public interface ItemContext
         View findViewById(int resId);
 
         String getString(int resId);
+
+        void invalidateOptionsMenu();
 }

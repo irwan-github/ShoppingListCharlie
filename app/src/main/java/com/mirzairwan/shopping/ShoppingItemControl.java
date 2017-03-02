@@ -5,8 +5,7 @@ import android.util.Log;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.PriceMgr;
 
-import static com.mirzairwan.shopping.ItemBuyQtyControl.State.BUNDLE_BUY_QUANTITY_ERROR;
-import static com.mirzairwan.shopping.ItemBuyQtyControl.State.UNIT_BUY_QUANTITY_ERROR;
+import static com.mirzairwan.shopping.ItemBuyQtyControl.State.BUY_ERROR;
 import static com.mirzairwan.shopping.ItemEditFieldControl.State.ERROR_EMPTY_NAME;
 import static com.mirzairwan.shopping.PriceEditFieldControl.State.BUNDLE_QTY_ERROR;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_BACK;
@@ -125,8 +124,18 @@ public class ShoppingItemControl implements ItemControl
                 }
 
                 mItemBuyQtyControl.onValidate();
-                if (mPriceEditFieldControl.getState() == BUNDLE_QTY_ERROR || mItemBuyQtyControl.getState() == UNIT_BUY_QUANTITY_ERROR
-                        || mItemBuyQtyControl.getState() == BUNDLE_BUY_QUANTITY_ERROR)
+//                if (mPriceEditFieldControl.getState() == BUNDLE_QTY_ERROR || mItemBuyQtyControl.getState() == UNIT_BUY_QUANTITY_ERROR
+//                        || mItemBuyQtyControl.getState() == BUNDLE_BUY_QUANTITY_ERROR)
+//                {
+//                        return;
+//                }
+
+                if (mPriceEditFieldControl.getState() == BUNDLE_QTY_ERROR )
+                {
+                        return;
+                }
+
+                if(mItemBuyQtyControl.getState().getParentState() == BUY_ERROR)
                 {
                         return;
                 }
@@ -173,10 +182,9 @@ public class ShoppingItemControl implements ItemControl
                 Item item = mItemEditFieldControl.populateItemFromInputFields();
                 mPurchaseManager.setItem(item);
 
-                String itemQuantity = mItemBuyQtyControl.getQuantity();
-                mPurchaseManager.getItemInShoppingList().setQuantity(Integer.parseInt(itemQuantity));
-
                 mPriceEditFieldControl.populatePriceMgr();
+
+                mItemBuyQtyControl.populatePurchaseMgr();
 
                 mContext.insert(mPurchaseManager);
         }
@@ -186,10 +194,9 @@ public class ShoppingItemControl implements ItemControl
                 Item item = mItemEditFieldControl.populateItemFromInputFields();
                 mPurchaseManager.setItem(item);
 
-                String itemQuantity = mItemBuyQtyControl.getQuantity();
-                mPurchaseManager.getItemInShoppingList().setQuantity(Integer.parseInt(itemQuantity));
-
                 mPriceEditFieldControl.populatePriceMgr();
+
+                mItemBuyQtyControl.populatePurchaseMgr();
 
                 mContext.update(mPurchaseManager);
         }

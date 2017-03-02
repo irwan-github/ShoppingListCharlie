@@ -1,18 +1,20 @@
 package com.mirzairwan.shopping;
 
-import android.content.Context;
 import android.support.design.widget.TextInputEditText;
 import android.support.design.widget.TextInputLayout;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
 import com.mirzairwan.shopping.domain.ItemInShoppingList;
 import com.mirzairwan.shopping.domain.Price;
+import com.mirzairwan.shopping.domain.PriceMgr;
 
 import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_BUY_QTY_ZERO;
+import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_INITIALIZE;
 import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_INVALID_MULTIPLES;
 import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_SELECT_BUNDLE_PRICE;
 import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_SELECT_UNIT_PRICE;
@@ -27,20 +29,21 @@ import static java.lang.Integer.parseInt;
 
 public class ItemBuyQtyControl
 {
-        private Context mContext;
+        private ItemContext mItemContext;
         private TextInputLayout mQtyToBuyWrapper;
-        private TextInputEditText etQtyToBuy;
+        private TextInputEditText mEtQtyToBuy;
         private PurchaseManager mPurchaseManager;
         private PriceEditFieldControl mPriceEditFieldControl;
         private RadioGroup mRgPriceTypeChoice;
         private State mState = NEUTRAL;
+        private PriceMgr mPriceMgr;
 
-        public ItemBuyQtyControl(Context context, TextInputLayout qtyToBuyWrapper, RadioGroup rgPriceTypeChoice)
+        public ItemBuyQtyControl(ItemContext itemContext)
         {
-                mContext = context;
-                mQtyToBuyWrapper = qtyToBuyWrapper;
-                etQtyToBuy = (TextInputEditText) mQtyToBuyWrapper.findViewById(R.id.et_item_quantity);
-                mRgPriceTypeChoice = rgPriceTypeChoice;
+                mItemContext = itemContext;
+                mQtyToBuyWrapper = (TextInputLayout) itemContext.findViewById(R.id.item_quantity_layout);
+                mEtQtyToBuy = (TextInputEditText) mQtyToBuyWrapper.findViewById(R.id.et_item_quantity);
+                mRgPriceTypeChoice = (RadioGroup) itemContext.findViewById(R.id.price_type_choice);
 
                 OnSelectedPriceChangeListener listener = new OnSelectedPriceChangeListener();
 
@@ -49,6 +52,22 @@ public class ItemBuyQtyControl
 
                 RadioButton rbBundlePrice = (RadioButton) mRgPriceTypeChoice.findViewById(R.id.rb_bundle_price);
                 rbBundlePrice.setOnCheckedChangeListener(listener);
+
+                mState = mState.transition(ON_INITIALIZE, this);
+        }
+
+        private void initializeUi()
+        {
+                /* Set default quantity to 1. If I set this in xml layout , it will jumble up the number and hint. This did not happen at SDK v24 */
+                mEtQtyToBuy.setText("1");
+        }
+
+
+        public void setOnTouchListener(View.OnTouchListener onTouchListener)
+        {
+                mEtQtyToBuy.setOnTouchListener(onTouchListener);
+                mItemContext.findViewById(R.id.rb_unit_price).setOnTouchListener(onTouchListener);
+                mItemContext.findViewById(R.id.rb_bundle_price).setOnTouchListener(onTouchListener);
         }
 
         public void setPriceEditFieldControl(PriceEditFieldControl priceEditFieldControl)
@@ -81,12 +100,12 @@ public class ItemBuyQtyControl
         private void populateBuyQuantityField()
         {
                 ItemInShoppingList itemInShoppingList = mPurchaseManager.getItemInShoppingList();
-                etQtyToBuy.setText(String.valueOf(itemInShoppingList.getQuantity()));
+                mEtQtyToBuy.setText(String.valueOf(itemInShoppingList.getQuantity()));
         }
 
         private boolean isQuantityToBuyZero()
         {
-                String quantityToBuy = etQtyToBuy.getText().toString();
+                String quantityToBuy = mEtQtyToBuy.getText().toString();
 
                 if (TextUtils.isEmpty(quantityToBuy) || parseInt(quantityToBuy) < 1)
                 {
@@ -96,6 +115,11 @@ public class ItemBuyQtyControl
                 {
                         return false;
                 }
+        }
+
+        public void setPriceMgr(PriceMgr priceMgr)
+        {
+                mPriceMgr = priceMgr;
         }
 
         private void validateUnitBuyQty()
@@ -134,6 +158,7 @@ public class ItemBuyQtyControl
                         /* Bundle quantity is not needed in unit price calculation. Set the  bundle qty error state to neutral state in order ro proceed */
                         mPriceEditFieldControl.onNeutral();
 
+
                         validateUnitBuyQty();
 
                         return;
@@ -150,7 +175,7 @@ public class ItemBuyQtyControl
 
         private boolean isBuyQtyOneOrLess()
         {
-                String bundleQtyToBuy = etQtyToBuy.getText().toString();
+                String bundleQtyToBuy = mEtQtyToBuy.getText().toString();
                 if (TextUtils.isEmpty(bundleQtyToBuy))
                 {
                         return true;
@@ -173,7 +198,7 @@ public class ItemBuyQtyControl
                 mRgPriceTypeChoice.check(choiceId);
         }
 
-        public void selectPriceType(Price.Type priceType)
+        void selectPriceType(Price.Type priceType)
         {
                 Log.d("onCheckedChanged", "selectPriceType: " + priceType);
                 if (priceType == Price.Type.UNIT_PRICE)
@@ -189,26 +214,29 @@ public class ItemBuyQtyControl
 
         private void setErrorQuantity(int stringResId)
         {
-                etQtyToBuy.setError(mContext.getString(stringResId));
+                mEtQtyToBuy.setError(mItemContext.getString(stringResId));
         }
 
         private void clearBundleQtyError()
         {
-                mPriceEditFieldControl.clearBundleQtyError();
+                if (mPriceEditFieldControl != null)
+                {
+                        mPriceEditFieldControl.clearBundleQtyError();
+                }
         }
 
         private void clearBuyQtyError()
         {
-                etQtyToBuy.setError(null);
+                mEtQtyToBuy.setError(null);
         }
 
         private boolean isBuyQuantityValidMultiples()
         {
-                if (TextUtils.isEmpty(etQtyToBuy.getText()) || TextUtils.isEmpty(mPriceEditFieldControl.getBundleQuantity()))
+                if (TextUtils.isEmpty(mEtQtyToBuy.getText()) || TextUtils.isEmpty(mPriceEditFieldControl.getBundleQuantity()))
                 {
                         return false;
                 }
-                String buyQty = etQtyToBuy.getText().toString();
+                String buyQty = mEtQtyToBuy.getText().toString();
                 String bundleQty = mPriceEditFieldControl.getBundleQuantity();
 
                 return mPurchaseManager.isBundleQuantityToBuyValid(buyQty, bundleQty);
@@ -224,30 +252,60 @@ public class ItemBuyQtyControl
                 switch (mState)
                 {
                         case UNIT_PRICE:
-                        case UNIT_BUY_QUANTITY_ERROR:
+                        case UNIT_BUY_QTY_ERROR:
                                 validateUnitBuyQty();
                                 break;
                         case BUNDLE_PRICE:
-                        case BUNDLE_BUY_QUANTITY_ERROR:
+                        case BUNDLE_BUY_QTY_ERROR:
                                 validateBundleBuyQty();
                                 break;
                 }
         }
 
-        public String getQuantity()
+        public void populatePurchaseMgr()
         {
-                return etQtyToBuy.getText().toString();
+                String itemQuantity = mEtQtyToBuy.getText().toString();
+                mPurchaseManager.getItemInShoppingList().setQuantity(Integer.parseInt(itemQuantity));
+
+                Price.Type selectedPriceType;
+                int optionId = mRgPriceTypeChoice.getCheckedRadioButtonId();
+
+                switch (optionId)
+                {
+                        case R.id.rb_unit_price:
+                                selectedPriceType = Price.Type.UNIT_PRICE;
+                                break;
+                        case R.id.rb_bundle_price:
+                                selectedPriceType = Price.Type.BUNDLE_PRICE;
+                                break;
+                        default:
+                                selectedPriceType = Price.Type.UNIT_PRICE;
+                }
+
+                Price selectedPrice = mPriceMgr.getSelectedPrice(selectedPriceType);
+                mPurchaseManager.getItemInShoppingList().setSelectedPrice(selectedPrice);
+        }
+
+        public void onLoaderReset()
+        {
+                clearPurchaseInputFields();
+        }
+
+        private void clearPurchaseInputFields()
+        {
+                mEtQtyToBuy.setText("");
+                mRgPriceTypeChoice.clearCheck();
         }
 
 
         enum Event
         {
-                ON_BUY_QTY_ZERO, ON_SELECT_UNIT_PRICE, ON_SELECT_BUNDLE_PRICE, ON_INVALID_MULTIPLES, ON_VALID_BUY_QTY;
+                ON_BUY_QTY_ZERO, ON_SELECT_UNIT_PRICE, ON_SELECT_BUNDLE_PRICE, ON_INVALID_MULTIPLES, ON_VALID_BUY_QTY, ON_INITIALIZE;
         }
 
         enum State
         {
-                NEUTRAL
+                NEUTRAL(null)
                         {
                                 @Override
                                 State transition(Event event, ItemBuyQtyControl control)
@@ -255,6 +313,9 @@ public class ItemBuyQtyControl
                                         State state = this;
                                         switch (event)
                                         {
+                                                case ON_INITIALIZE:
+                                                        state = this;
+                                                        break;
                                                 case ON_SELECT_UNIT_PRICE:
                                                         state = UNIT_PRICE;
                                                         break;
@@ -267,9 +328,15 @@ public class ItemBuyQtyControl
                                         state.setUiOutput(event, control);
                                         return state;
                                 }
+
+                                @Override
+                                void setUiOutput(Event event, ItemBuyQtyControl control)
+                                {
+                                        control.initializeUi();
+                                }
                         },
 
-                UNIT_PRICE
+                UNIT_PRICE(null)
                         {
                                 @Override
                                 State transition(Event event, ItemBuyQtyControl control)
@@ -278,7 +345,7 @@ public class ItemBuyQtyControl
                                         switch (event)
                                         {
                                                 case ON_BUY_QTY_ZERO:
-                                                        state = UNIT_BUY_QUANTITY_ERROR;
+                                                        state = UNIT_BUY_QTY_ERROR;
                                                         break;
 
                                                 case ON_SELECT_BUNDLE_PRICE:
@@ -302,7 +369,16 @@ public class ItemBuyQtyControl
                                 }
                         },
 
-                UNIT_BUY_QUANTITY_ERROR
+                BUY_ERROR(null)
+                        {
+                                @Override
+                                State transition(Event event, ItemBuyQtyControl control)
+                                {
+                                        return null;
+                                }
+                        },
+
+                UNIT_BUY_QTY_ERROR(BUY_ERROR)
                         {
                                 @Override
                                 State transition(Event event, ItemBuyQtyControl control)
@@ -334,7 +410,7 @@ public class ItemBuyQtyControl
                                 }
                         },
 
-                BUNDLE_PRICE
+                BUNDLE_PRICE(null)
                         {
                                 @Override
                                 State transition(Event event, ItemBuyQtyControl control)
@@ -347,7 +423,7 @@ public class ItemBuyQtyControl
                                                         break;
 
                                                 case ON_INVALID_MULTIPLES:
-                                                        state = BUNDLE_BUY_QUANTITY_ERROR;
+                                                        state = BUNDLE_BUY_QTY_ERROR;
                                                         break;
                                         }
                                         state.setUiOutput(event, control);
@@ -367,7 +443,7 @@ public class ItemBuyQtyControl
                                 }
                         },
 
-                BUNDLE_BUY_QUANTITY_ERROR
+                BUNDLE_BUY_QTY_ERROR(BUY_ERROR)
                         {
                                 State state;
 
@@ -405,6 +481,18 @@ public class ItemBuyQtyControl
 
                                 }
                         };
+
+                private State mParentState;
+
+                State(State parentState)
+                {
+                        mParentState = parentState;
+                }
+
+                public State getParentState()
+                {
+                        return mParentState;
+                }
 
                 void setUiOutput(Event event, ItemBuyQtyControl control)
                 {

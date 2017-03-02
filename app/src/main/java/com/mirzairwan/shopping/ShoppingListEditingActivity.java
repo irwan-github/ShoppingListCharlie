@@ -7,16 +7,12 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.design.widget.TextInputLayout;
 import android.util.Log;
-import android.widget.EditText;
-import android.widget.RadioGroup;
 
 import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.domain.Price;
 
 import static com.mirzairwan.shopping.LoaderHelper.PURCHASE_ITEM_LOADER_ID;
-import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 
 /**
  * Created by Mirza Irwan on 13/1/17.
@@ -36,15 +32,9 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
 {
         private static final String LOG_TAG = ShoppingListEditingActivity.class.getSimpleName();
         private static final String URI_ITEM = "uri"; /* Used for saving instant mItemType */
-
-        private EditText etQtyToBuy;
-        private RadioGroup rgPriceTypeChoice;
-        private long defaultShopId = 1;
-
         private Uri mUriItem;
         private ShoppingItemControl mShoppingItemControl;
         private ItemBuyQtyControl mItemBuyQtyControl;
-        //private PriceEditFieldControl mPriceEditFieldControl;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -53,34 +43,21 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                 mItemControl = mShoppingItemControl;
 
                 super.onCreate(savedInstanceState);
+                mItemBuyQtyControl = new ItemBuyQtyControl(this);
+                mItemBuyQtyControl.setOnTouchListener(mOnTouchListener);
 
                 Log.d(LOG_TAG, ">>>savedInstantState is " + (savedInstanceState == null ? "NULL" : "NOT " + "NULL"));
 
                 mContainer = findViewById(R.id.shopping_list_editor_container);
-                etQtyToBuy = (EditText) findViewById(R.id.et_item_quantity);
-                etQtyToBuy.setOnTouchListener(mOnTouchListener);
-                TextInputLayout qtyToBuyWrapper = (TextInputLayout) findViewById(R.id.item_quantity_layout);
 
-
-                /* Set default quantity to 1. If I set this in xml layout , it will jumble up the number and hint. This did not happen at SDK v24 */
-                etQtyToBuy.setText("1");
-
-                /* set touchListener for Radio Group */
-                rgPriceTypeChoice = (RadioGroup) findViewById(R.id.price_type_choice);
-                rgPriceTypeChoice.setOnTouchListener(mOnTouchListener);
-                mItemBuyQtyControl = new ItemBuyQtyControl(this, qtyToBuyWrapper, rgPriceTypeChoice);
-
-
+                mItemBuyQtyControl.setPriceMgr(mPriceMgr);
                 mItemBuyQtyControl.setPriceEditFieldControl(mPriceEditFieldControl);
                 mShoppingItemControl.setItemBuyQtyFieldControl(mItemBuyQtyControl);
                 mShoppingItemControl.setPriceEditFieldControl(mPriceEditFieldControl);
 
-                findViewById(R.id.rb_unit_price).setOnTouchListener(mOnTouchListener);
-                findViewById(R.id.rb_bundle_price).setOnTouchListener(mOnTouchListener);
-
                 PurchaseEditorExpander purchaseEditorExpander = new PurchaseEditorExpander(this);
 
-                if (savedInstanceState != null) //Restore from previous activity
+                if (savedInstanceState != null) /* Restore from previous activity */
                 {
                         mUriItem = savedInstanceState.getParcelable(URI_ITEM);
                 }
@@ -182,6 +159,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                                 mItemEditFieldControl.onLoadItemFinished(mPurchaseManager.getitem());
 
                                 mItemBuyQtyControl.setPurchaseManager(mPurchaseManager);
+
                                 mItemBuyQtyControl.onLoadFinished();
 
                                 mPictureMgr.setItemId(mPurchaseManager.getitem().getId());
@@ -195,26 +173,15 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
         @Override
         public void onLoaderReset(Loader<Cursor> loader)
         {
-                super.onLoaderReset(loader);
-                clearPurchaseInputFields();
-        }
-
-        private void clearPurchaseInputFields()
-        {
-                etQtyToBuy.setText("");
-                rgPriceTypeChoice.clearCheck();
-        }
-
-        /**
-         * Query whether unit price or bundle price is selected
-         *
-         * @return unit price or bundle price
-         */
-        protected Price.Type getSelectedPriceType()
-        {
-                int idSelected = rgPriceTypeChoice.getCheckedRadioButtonId();
-                Price.Type selectedPriceType = (idSelected == R.id.rb_bundle_price) ? Price.Type.BUNDLE_PRICE : UNIT_PRICE;
-                return selectedPriceType;
+                int loaderId = loader.getId();
+                switch (loaderId)
+                {
+                        case PURCHASE_ITEM_LOADER_ID:
+                                mItemBuyQtyControl.onLoaderReset();
+                                break;
+                        default:
+                                super.onLoaderReset(loader);
+                }
         }
 
         @Override
@@ -222,14 +189,6 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
         {
                 super.onSaveInstanceState(outState);
                 outState.putParcelable(URI_ITEM, mUriItem);
-        }
-
-        protected void prepareForDbOperation(PurchaseManager purchaseManager)
-        {
-                /* Get selected price */
-                Price.Type selectedPriceType = getSelectedPriceType();
-                Price selectedPrice = mPriceMgr.getSelectedPrice(selectedPriceType);
-                purchaseManager.getItemInShoppingList().setSelectedPrice(selectedPrice);
         }
 
         @Override
@@ -243,13 +202,11 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
         @Override
         public void update(PurchaseManager purchaseManager)
         {
-                prepareForDbOperation(purchaseManager);
                 mDbMsg = daoManager.update(purchaseManager.getItemInShoppingList(), purchaseManager.getitem(), mPriceMgr.getPrices(), mPictureMgr);
         }
 
         public void insert(PurchaseManager purchaseManager)
         {
-                prepareForDbOperation(purchaseManager);
                 mDbMsg = daoManager.insert(purchaseManager.getItemInShoppingList(), purchaseManager.getitem(), mPriceMgr.getPrices(), mPictureMgr);
         }
 

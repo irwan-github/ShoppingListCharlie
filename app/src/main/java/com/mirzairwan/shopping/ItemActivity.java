@@ -43,7 +43,6 @@ import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.DaoManager;
 import com.mirzairwan.shopping.domain.ExchangeRate;
-import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.domain.PriceMgr;
@@ -101,9 +100,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         private static final String LOG_TAG = ItemActivity.class.getSimpleName();
         private static final int REQUEST_PICK_PHOTO = 16;
         private static final String PICTURE_MANAGER = "picture_mgr";
-        protected EditText etBrand;
-        protected EditText etDescription;
-        protected EditText etCountryOrigin;
         protected EditText etBundleQty;
         protected View.OnTouchListener mOnTouchListener;
         protected DaoManager daoManager;
@@ -188,7 +184,9 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
                 SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
                 mSettingsCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
+
                 mPriceMgr = new PriceMgr(mSettingsCountryCode);
+                mPriceEditFieldControl = new PriceEditFieldControl(this, sharedPrefs);
 
                 String webApiKeyPref = getString(R.string.key_forex_web_api_1);
                 mWebApiBase = sharedPrefs.getString(webApiKeyPref, null);
@@ -201,7 +199,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 {
                         mExchangeRateInput.addSourceCurrency(mExchangeRate.getSourceCurrencyCode());
                 }
-                mPriceEditFieldControl = new PriceEditFieldControl(this);
+
                 mPriceEditFieldControl.setPriceMgr(mPriceMgr);
                 setupViews();
 
@@ -234,45 +232,32 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         }
                 };
 
-                TextInputLayout itemNameWrap = (TextInputLayout) findViewById(R.id.item_name_layout);
-                //mItemNameFieldControl = new ItemEditFieldControl(this, itemNameWrap, R.id.et_item_name, this);
                 mItemEditFieldControl = new ItemEditFieldControl(this);
                 mItemEditFieldControl.setOnTouchListener(mOnTouchListener);
+
                 mItemControl.setItemNameFieldControl(mItemEditFieldControl);
-                //etName = (EditText) findViewById(R.id.et_item_name);
-                etBrand = (EditText) findViewById(R.id.et_item_brand);
-                etDescription = (EditText) findViewById(R.id.et_item_description);
-                etCountryOrigin = (EditText) findViewById(R.id.et_item_country_origin);
+
                 mItemEditorExpander = new ItemEditorExpander(this);
                 mImgItemPic = (ImageView) findViewById(R.id.img_item);
 
-                //etName.setOnTouchListener(mOnTouchListener);
-                etBrand.setOnTouchListener(mOnTouchListener);
-                etDescription.setOnTouchListener(mOnTouchListener);
-                etCountryOrigin.setOnTouchListener(mOnTouchListener);
-
-                //Set default currency code
-                etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
-                etCurrencyCode.setText(FormatHelper.getCurrencyCode(mSettingsCountryCode));
 
                 TextInputLayout etUnitPrice = (TextInputLayout) findViewById(R.id.unit_price_layout);
                 mUnitPriceEditField = new PriceField(etUnitPrice, getString(R.string.unit_price_txt), R.id.et_unit_price, mItemControl);
-                mUnitPriceEditField.setOnTouchListener(mOnTouchListener);
                 mPriceEditFieldControl.setUnitPrice(mUnitPriceEditField);
 
                 TextInputLayout etBundlePrice = (TextInputLayout) findViewById(R.id.bundle_price_layout);
                 mBundlePriceEditField = new PriceField(etBundlePrice, getString(R.string.bundle_price_txt), et_bundle_price, mItemControl);
-                mBundlePriceEditField.setOnTouchListener(mOnTouchListener);
+
                 mPriceEditFieldControl.setBundlePrice(mBundlePriceEditField);
 
+                mPriceEditFieldControl.setOnTouchListener(mOnTouchListener);
+
+                etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
                 OnCurrencyCodeChange onCurrencyCodeChange = new OnCurrencyCodeChange(etCurrencyCode, mUnitPriceEditField, mBundlePriceEditField, mItemControl);
                 MyTextUtils.setAllCapsInputFilter(etCurrencyCode);
                 etCurrencyCode.setOnFocusChangeListener(onCurrencyCodeChange);
                 ItemExchangeRateLoaderCallback pxExLoaderCb = new ItemExchangeRateLoaderCallback(this);
                 getLoaderManager().initLoader(78, null, pxExLoaderCb);
-
-                etBundleQty = (EditText) findViewById(R.id.et_bundle_qty);
-                etBundleQty.setOnTouchListener(mOnTouchListener);
 
                 mPriceEditorExpander = new PriceEditorExpander(this);
         }
@@ -757,38 +742,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         }
 
         /**
-         * Call fieldsValidated method before calling this method
-         * <p>
-         * Update an existing member item or if creation, create a new item
-         *
-         * @return
-         */
-        protected void populateItemFromInputFields(Item item)
-        {
-                //String itemName = etName.getText().toString();
-                String itemName = mItemEditFieldControl.getText();
-                String itemBrand = etBrand.getText().toString();
-                String countryOrigin = etCountryOrigin.getText().toString();
-                String itemDescription = etDescription.getText().toString();
-
-                item.setName(itemName);
-                item.setBrand(itemBrand);
-                item.setCountryOrigin(countryOrigin);
-                item.setDescription(itemDescription);
-        }
-
-        protected String getBundleQtyFromInputField()
-        {
-                String bundleQty;
-                bundleQty = "0";
-                if (etBundleQty != null && !TextUtils.isEmpty(etBundleQty.getText()))
-                {
-                        bundleQty = etBundleQty.getText().toString();
-                }
-                return bundleQty;
-        }
-
-        /**
          * When displaying existing item in shopping list, set currency symbol to the saved currency
          * code irregardless of current country code preference
          */
@@ -801,13 +754,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 etBundleQty.setText(String.valueOf(priceMgr.getBundlePrice().getBundleQuantity()));
                 mUnitPriceEditField.setCurrencySymbolInPriceHint(currencyCode);
                 mBundlePriceEditField.setCurrencySymbolInPriceHint(currencyCode);
-        }
-
-        protected void clearPriceInputFields()
-        {
-                mUnitPriceEditField.clear();
-                mBundlePriceEditField.clear();
-                etBundleQty.setText("");
         }
 
         /**
@@ -878,9 +824,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 switch (loaderId)
                 {
                         case ITEM_PRICE_LOADER_ID:
-                                mPriceMgr = new PriceMgr(mSettingsCountryCode);
                                 mPriceMgr.createPrices(cursor);
-                                mItemControl.onLoadPriceFinished(mPriceMgr);
+                                //mItemControl.onLoadPriceFinished(mPriceMgr);
 
                                 mPriceEditFieldControl.setPriceMgr(mPriceMgr);
                                 mPriceEditFieldControl.onLoadFinished();
@@ -925,7 +870,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         public void onLoaderReset(Loader<Cursor> loader)
         {
                 // If the loader is invalidated, clear out all the data from the input fields.
-                clearPriceInputFields();
+                mPriceEditFieldControl.onLoaderReset();
                 clearPictureField();
         }
 

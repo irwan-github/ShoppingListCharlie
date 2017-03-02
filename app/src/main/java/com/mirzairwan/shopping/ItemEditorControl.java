@@ -156,11 +156,6 @@ public class ItemEditorControl implements ItemControl
                 mContext.showTransientDbMessage();
         }
 
-        private void populatePricesInputFields()
-        {
-                mContext.populatePricesInputFields(mPriceMgr);
-        }
-
         private void setExitTransition()
         {
                 mContext.setExitTransition();
@@ -232,10 +227,6 @@ public class ItemEditorControl implements ItemControl
                                                 case ON_CREATE_OPTIONS_MENU:
                                                         state = UNCHANGE;
                                                         break;
-                                                case ON_LOAD_PRICE:
-                                                        context.populatePricesInputFields();
-                                                        state = UNCHANGE;
-                                                        break;
                                                 case ON_CHANGE:
                                                         state = CHANGE;
                                                         break;
@@ -264,8 +255,7 @@ public class ItemEditorControl implements ItemControl
                                                         control.setTitle(R.string.view_buy_item_details);
                                                         break;
                                                 case ON_CREATE_OPTIONS_MENU:
-                                                case ON_LOAD_ITEM:
-                                                        control.setMenuVisible(R.id.menu_remove_item_from_list, !control.isItemInShoppingList());
+                                                        control.setMenuVisible(R.id.menu_remove_item_from_list, true);
                                                         break;
                                         }
                                 }

@@ -1,16 +1,14 @@
 package com.mirzairwan.shopping;
 
-import android.content.Context;
+import android.content.SharedPreferences;
 import android.support.design.widget.TextInputEditText;
-import android.support.design.widget.TextInputLayout;
 import android.text.TextUtils;
+import android.view.View;
 
 import com.mirzairwan.shopping.domain.PriceMgr;
 
-import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_BUNDLE_PRICE_ERROR;
 import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_BUNDLE_QTY_ONE_OR_LESS;
 import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_NEUTRAL;
-import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_UNIT_PRICE_ERROR;
 import static com.mirzairwan.shopping.PriceEditFieldControl.State.NEUTRAL;
 
 /**
@@ -21,28 +19,20 @@ public class PriceEditFieldControl
 {
         private TextInputEditText mEtCurrencyCode;
         private ItemContext mItemContext;
-        private Context mContext;
         private TextInputEditText mEtBundleQty;
-        private TextInputLayout mBundleQtyWrapper;
-
         private State mState = NEUTRAL;
         private PriceField mUnitPrice;
         private PriceField mBundlePrice;
         private PriceMgr mPriceMgr;
 
-        public PriceEditFieldControl(Context context, TextInputLayout bundleQtyWrapper)
-        {
-                mContext = context;
-                mBundleQtyWrapper = bundleQtyWrapper;
-                mEtBundleQty = (TextInputEditText) bundleQtyWrapper.findViewById(R.id.et_bundle_qty);
-        }
-
-        public PriceEditFieldControl(ItemContext itemContext)
+        public PriceEditFieldControl(ItemContext itemContext, SharedPreferences sharedPrefs)
         {
                 mItemContext = itemContext;
-                mBundleQtyWrapper = (TextInputLayout) itemContext.findViewById(R.id.bundle_qty_layout);
                 mEtBundleQty = (TextInputEditText) itemContext.findViewById(R.id.et_bundle_qty);
                 mEtCurrencyCode = (TextInputEditText) itemContext.findViewById(R.id.et_currency_code);
+
+                String mSettingsCountryCode = sharedPrefs.getString(mItemContext.getString(R.string.user_country_pref), null);
+                mEtCurrencyCode.setText(FormatHelper.getCurrencyCode(mSettingsCountryCode));
         }
 
         public void setUnitPrice(PriceField unitPrice)
@@ -76,7 +66,7 @@ public class PriceEditFieldControl
 
         private void showBundleQtyError(int stringResId)
         {
-                mEtBundleQty.setError(mContext.getString(stringResId));
+                mEtBundleQty.setError(mItemContext.getString(stringResId));
         }
 
         public void clearBundleQtyError()
@@ -128,19 +118,6 @@ public class PriceEditFieldControl
                 mBundlePrice.setCurrencySymbolInPriceHint(currencyCode);
         }
 
-        public void onValidate()
-        {
-                if (mUnitPrice.isEmpty())
-                {
-                        mState.transition(ON_UNIT_PRICE_ERROR, this);
-                }
-
-                if (mBundlePrice.isEmpty())
-                {
-                        mState.transition(ON_BUNDLE_PRICE_ERROR, this);
-                }
-        }
-
         protected String getBundleQtyFromInputField()
         {
                 String bundleQty;
@@ -156,20 +133,33 @@ public class PriceEditFieldControl
         {
                 mPriceMgr.setCurrencyCode(mEtCurrencyCode.getText().toString());
 
-                mPriceMgr.setItemPricesForSaving(mUnitPrice.getPrice(), mBundlePrice.getPrice(), getBundleQtyFromInputField());
+                String unitPrice = mUnitPrice.getPrice();
+                String bundlePrice = mBundlePrice.getPrice();
+                String bundleQtyFromInputField = getBundleQtyFromInputField();
+                mPriceMgr.setItemPricesForSaving(unitPrice, bundlePrice, bundleQtyFromInputField);
 
                 return mPriceMgr;
         }
 
-//        private void setUnitPriceError()
-//        {
-//                mUnitPrice.setError(mContext.getString(R.string.invalid_price));
-//        }
-//
-//        private void setBundlePriceError()
-//        {
-//                mUnitPrice.setError(mContext.getString(R.string.invalid_price));
-//        }
+        public void setOnTouchListener(View.OnTouchListener onTouchListener)
+        {
+                mEtCurrencyCode.setOnTouchListener(onTouchListener);
+                mUnitPrice.setOnTouchListener(onTouchListener);
+                mBundlePrice.setOnTouchListener(onTouchListener);
+                mEtBundleQty.setOnTouchListener(onTouchListener);
+        }
+
+        public void onLoaderReset()
+        {
+                clearPriceInputFields();
+        }
+
+        private void clearPriceInputFields()
+        {
+                mUnitPrice.clear();
+                mBundlePrice.clear();
+                mEtBundleQty.setText("");
+        }
 
         enum Event
         {
