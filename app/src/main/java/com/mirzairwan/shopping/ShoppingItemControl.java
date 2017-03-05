@@ -7,7 +7,7 @@ import com.mirzairwan.shopping.domain.PriceMgr;
 
 import static com.mirzairwan.shopping.ItemBuyQtyControl.State.BUY_ERROR;
 import static com.mirzairwan.shopping.ItemEditFieldControl.State.ERROR_EMPTY_NAME;
-import static com.mirzairwan.shopping.PriceEditFieldControl.State.BUNDLE_QTY_ERROR;
+import static com.mirzairwan.shopping.PriceEditFieldControl.State.PRICE_ERROR;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_BACK;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_CHANGE;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_CREATE_OPTIONS_MENU;
@@ -16,7 +16,6 @@ import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_DELETE;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_EDIT;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_INSERT;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_LEAVE;
-import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_LOAD_PRICE;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_NEW;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_STAY;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_UP;
@@ -58,6 +57,8 @@ public class ShoppingItemControl implements ItemControl
         {
                 mItemType = NEW_ITEM;
                 mCurrentState = mCurrentState.transition(ON_NEW, this);
+                mItemBuyQtyControl.onNewItem();
+                mPriceEditFieldControl.onNewItem();
         }
 
         public void setPurchaseManager(PurchaseManager purchaseManager)
@@ -108,34 +109,23 @@ public class ShoppingItemControl implements ItemControl
                 mCurrentState = mCurrentState.transition(ON_STAY, this);
         }
 
-        @Override
-        public void onLoadPriceFinished(PriceMgr priceMgr)
-        {
-                mPriceMgr = priceMgr;
-                mCurrentState = mCurrentState.transition(ON_LOAD_PRICE, this);
-        }
-
         public void onOk()
         {
                 mItemEditFieldControl.onValidate();
+
                 if (mItemEditFieldControl.getState() == ERROR_EMPTY_NAME)
                 {
                         return;
                 }
 
                 mItemBuyQtyControl.onValidate();
-//                if (mPriceEditFieldControl.getState() == BUNDLE_QTY_ERROR || mItemBuyQtyControl.getState() == UNIT_BUY_QUANTITY_ERROR
-//                        || mItemBuyQtyControl.getState() == BUNDLE_BUY_QUANTITY_ERROR)
-//                {
-//                        return;
-//                }
 
-                if (mPriceEditFieldControl.getState() == BUNDLE_QTY_ERROR )
+                if (mPriceEditFieldControl.getErrorState() == PRICE_ERROR )
                 {
                         return;
                 }
 
-                if(mItemBuyQtyControl.getState().getParentState() == BUY_ERROR)
+                if(mItemBuyQtyControl.getErrorState() == BUY_ERROR)
                 {
                         return;
                 }
@@ -155,21 +145,9 @@ public class ShoppingItemControl implements ItemControl
                 }
         }
 
-        @Override
-        public void setItemNameFieldControl(ItemEditFieldControl itemEditFieldControl)
+        public void setItemEditFieldControl(ItemEditFieldControl itemEditFieldControl)
         {
                 mItemEditFieldControl = itemEditFieldControl;
-        }
-
-        private void populateItemInputFields()
-        {
-                //Item item = mPurchaseManager.getitem();
-                //mContext.populateItemInputFields(item);
-        }
-
-        private void populatePricesInputFields()
-        {
-                mContext.populatePricesInputFields(mPriceMgr);
         }
 
         private void delete()
@@ -180,6 +158,7 @@ public class ShoppingItemControl implements ItemControl
         private void insert()
         {
                 Item item = mItemEditFieldControl.populateItemFromInputFields();
+
                 mPurchaseManager.setItem(item);
 
                 mPriceEditFieldControl.populatePriceMgr();
@@ -192,6 +171,7 @@ public class ShoppingItemControl implements ItemControl
         private void update()
         {
                 Item item = mItemEditFieldControl.populateItemFromInputFields();
+
                 mPurchaseManager.setItem(item);
 
                 mPriceEditFieldControl.populatePriceMgr();
@@ -314,6 +294,7 @@ public class ShoppingItemControl implements ItemControl
                                         if (control.itemType() == EXISTING_ITEM)
                                         {
                                                 control.setTitle(R.string.view_buy_item_details);
+                                                control.setMenuVisible(R.id.menu_remove_item_from_list, true);
                                         }
                                         control.setMenuVisible(R.id.save_item_details, false);
                                 }
@@ -428,7 +409,6 @@ public class ShoppingItemControl implements ItemControl
 
         public interface ShoppingItemContext extends ItemContext
         {
-
                 void delete(long id);
 
                 void update(PurchaseManager mPurchaseManager);

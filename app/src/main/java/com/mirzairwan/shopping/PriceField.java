@@ -17,8 +17,8 @@ import java.text.ParseException;
  * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
  * Contact owner at mirza.irwan.osman@gmail.com
  * <p>
- * Manages the item's base price field and translated price field.
- * The currency the item is priced in is ignored. Caller of this class must supply an exchange rate in order for this class to display the conversion in the translated price field.
+ * Manages the item's price field
+ *
  * <p>
  * When user change the currency code of the item, the following are affected:
  * Translated price field.
@@ -178,6 +178,11 @@ public class PriceField implements View.OnFocusChangeListener
         public void setOnTouchListener(View.OnTouchListener onTouchListener)
         {
                 mTextInputPrice.setOnTouchListener(onTouchListener);
+        }
+
+        public void setEnabled(boolean isEnabled)
+        {
+                mTextInputPrice.setEnabled(isEnabled);
         }
 
         class Action implements TextView.OnEditorActionListener

@@ -598,13 +598,15 @@ public class DaoContentProv implements DaoManager
                 if (price.getPriceType() == Price.Type.UNIT_PRICE)
                 {
                         double priceValTemp = price.getUnitPrice();
-                        long priceVal = Math.round(priceValTemp * 100);
-                        priceValues.put(PricesEntry.COLUMN_PRICE, priceVal);
+                        long unitPriceVal = Math.round(priceValTemp * 100);
+                        priceValues.put(PricesEntry.COLUMN_PRICE, unitPriceVal);
                         priceValues.put(PricesEntry.COLUMN_PRICE_TYPE_ID, Price.Type.UNIT_PRICE.getType());
                 }
                 else
                 {
-                        priceValues.put(PricesEntry.COLUMN_PRICE, (long) (price.getBundlePrice() * 100));
+                        double bundlePriceTemp = price.getBundlePrice();
+                        long bundlePriceVal = Math.round(bundlePriceTemp * 100);
+                        priceValues.put(PricesEntry.COLUMN_PRICE, bundlePriceVal);
                         priceValues.put(PricesEntry.COLUMN_BUNDLE_QTY, price.getBundleQuantity() );
                         priceValues.put(PricesEntry.COLUMN_PRICE_TYPE_ID, Price.Type.BUNDLE_PRICE.getType());
                 }

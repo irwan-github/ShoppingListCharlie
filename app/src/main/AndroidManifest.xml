@@ -50,7 +50,7 @@
                                 android:value=".ShoppingActivity"/>
                 </activity>
                 <activity
-                        android:name=".ItemEditingActivity"
+                        android:name=".HistoryEditingActivity"
                         android:launchMode="singleTop"
                         android:parentActivityName=".ShoppingActivity"
                         android:theme="@style/AppTheme.Details"

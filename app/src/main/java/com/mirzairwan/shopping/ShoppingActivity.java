@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
-import static com.mirzairwan.shopping.ItemEditingActivity.ITEM_IS_IN_SHOPPING_LIST;
+import static com.mirzairwan.shopping.HistoryEditingActivity.ITEM_IS_IN_SHOPPING_LIST;
 import static com.mirzairwan.shopping.LoaderHelper.EXCHANGE_RATES_SHOPPING_LIST_LOADER_ID;
 import static com.mirzairwan.shopping.R.id.menu_database_shopping_list;
 
@@ -321,7 +321,7 @@ public class ShoppingActivity extends AppCompatActivity implements ShoppingListF
         public void onViewItemDetails(long itemId, String currencyCode, boolean isInShoppingList)
         {
                 Intent intentToViewItem = new Intent();
-                intentToViewItem.setClass(this, ItemEditingActivity.class);
+                intentToViewItem.setClass(this, HistoryEditingActivity.class);
                 intentToViewItem.putExtra(ITEM_IS_IN_SHOPPING_LIST, isInShoppingList);
                 Uri uri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, itemId);
                 intentToViewItem.setData(uri);

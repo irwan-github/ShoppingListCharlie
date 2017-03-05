@@ -27,6 +27,8 @@ public class OnCurrencyCodeChange implements View.OnFocusChangeListener
                 mUnitPrice = unitPrice;
                 mBundlePrice = bundlePrice;
                 mItemControl = itemControl;
+                MyTextUtils.setAllCapsInputFilter(etCurrencyCode);
+                etCurrencyCode.setOnFocusChangeListener(this);
         }
 
         @Override

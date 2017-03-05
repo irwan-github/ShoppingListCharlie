@@ -7,32 +7,53 @@ import android.view.View;
 
 import com.mirzairwan.shopping.domain.PriceMgr;
 
-import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_BUNDLE_QTY_ONE_OR_LESS;
+import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_ITEM_IS_IN_SHOPPUNG_LIST;
 import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_NEUTRAL;
+import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_VALIDATE_BUNDLE_QTY;
+import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_VALIDATE_CURRENCY_CODE;
 import static com.mirzairwan.shopping.PriceEditFieldControl.State.NEUTRAL;
 
 /**
  * Created by Mirza Irwan on 28/2/17.
  */
 
-public class PriceEditFieldControl
+public class PriceEditFieldControl extends DetailExpander
 {
         private TextInputEditText mEtCurrencyCode;
         private ItemContext mItemContext;
         private TextInputEditText mEtBundleQty;
-        private State mState = NEUTRAL;
+
         private PriceField mUnitPrice;
         private PriceField mBundlePrice;
         private PriceMgr mPriceMgr;
 
+        /* State for bundle quantity field */
+        private State mBundleQtyState = NEUTRAL;
+
+        /* State forcurrency code field */
+        private State mCurrencyCodeState = NEUTRAL;
+
         public PriceEditFieldControl(ItemContext itemContext, SharedPreferences sharedPrefs)
         {
+                super(itemContext);
                 mItemContext = itemContext;
                 mEtBundleQty = (TextInputEditText) itemContext.findViewById(R.id.et_bundle_qty);
                 mEtCurrencyCode = (TextInputEditText) itemContext.findViewById(R.id.et_currency_code);
 
                 String mSettingsCountryCode = sharedPrefs.getString(mItemContext.getString(R.string.user_country_pref), null);
                 mEtCurrencyCode.setText(FormatHelper.getCurrencyCode(mSettingsCountryCode));
+        }
+
+        @Override
+        protected int getViewGroupId()
+        {
+                return R.id.price_details_more;
+        }
+
+        @Override
+        protected int getToggleButtonId()
+        {
+                return R.id.btn_toggle_price;
         }
 
         public void setUnitPrice(PriceField unitPrice)
@@ -79,27 +100,43 @@ public class PriceEditFieldControl
                 return mEtBundleQty.getText().toString();
         }
 
-        public State getState()
+        public State getBundleQtyState()
         {
-                return mState;
+                return mBundleQtyState;
         }
 
-        public void onValidateBundleQty()
+        public State getErrorState()
         {
-                if (isBundleQuantityOneOrLess())
+                if (mBundleQtyState.getParentState() != null)
                 {
-                        mState = mState.transition(ON_BUNDLE_QTY_ONE_OR_LESS, this);
-                }
-                else
-                {
-                        mState = mState.transition(ON_NEUTRAL, this);
+                        return mBundleQtyState.getParentState();
                 }
 
+                if (mCurrencyCodeState.getParentState() != null)
+                {
+                        return mCurrencyCodeState.getParentState();
+                }
+
+                return null;
+        }
+
+        /**
+         * Validate bundle quantity field.
+         */
+        public void onValidateBundleSet()
+        {
+                mBundleQtyState = mBundleQtyState.transition(ON_VALIDATE_BUNDLE_QTY, this);
+                mCurrencyCodeState = mCurrencyCodeState.transition(ON_VALIDATE_CURRENCY_CODE, this);
+        }
+
+        public void onValidateUnitSet()
+        {
+                mCurrencyCodeState = mCurrencyCodeState.transition(ON_VALIDATE_CURRENCY_CODE, this);
         }
 
         public void onNeutral()
         {
-                mState = mState.transition(ON_NEUTRAL, this);
+                mBundleQtyState = mBundleQtyState.transition(ON_NEUTRAL, this);
         }
 
         public void setPriceMgr(PriceMgr priceMgr)
@@ -161,14 +198,64 @@ public class PriceEditFieldControl
                 mEtBundleQty.setText("");
         }
 
+        private boolean isCurrencyCodeEmpty()
+        {
+                return TextUtils.isEmpty(mEtCurrencyCode.getText());
+        }
+
+        private boolean isCurrencyCodeValid()
+        {
+                String newCurrencyCode = mEtCurrencyCode.getText().toString();
+
+                boolean isNotEmpty = !TextUtils.isEmpty(newCurrencyCode);
+
+                return isNotEmpty && FormatHelper.isValidCurrencyCode(newCurrencyCode);
+        }
+
+        private void setBundleQuantityEnabled(boolean enabled)
+        {
+                mEtBundleQty.setEnabled(enabled);
+        }
+
+        public void onItemIsInShoppingList()
+        {
+                mBundleQtyState = mBundleQtyState.transition(ON_ITEM_IS_IN_SHOPPUNG_LIST, this);
+        }
+
+        private void setCurrencyCodeError(int stringResId)
+        {
+                mEtCurrencyCode.setError(mItemContext.getString(stringResId));
+        }
+
+        private void setCurrencyCodeEnabled(boolean isEnabled)
+        {
+                mEtCurrencyCode.setEnabled(isEnabled);
+        }
+
+        private void setPriceFieldsEnabled(boolean isEnabled)
+        {
+                mUnitPrice.setEnabled(isEnabled);
+                mBundlePrice.setEnabled(isEnabled);
+        }
+
+        private void clearCurrencyCodeError()
+        {
+                mEtCurrencyCode.setError(null);
+        }
+
+        public void onNewItem()
+        {
+
+        }
+
         enum Event
         {
-                ON_BUNDLE_QTY_ONE_OR_LESS, ON_NEUTRAL, ON_BUNDLE_PRICE_ERROR, ON_UNIT_PRICE_ERROR
+                ON_NEUTRAL, ON_ITEM_IS_IN_SHOPPUNG_LIST, ON_VALIDATE_CURRENCY_CODE, ON_VALIDATE_BUNDLE_QTY
         }
 
         enum State
         {
-                NEUTRAL
+                NEUTRAL(null)
                         {
                                 @Override
                                 State transition(Event event, PriceEditFieldControl control)
@@ -176,11 +263,29 @@ public class PriceEditFieldControl
                                         State state = this;
                                         switch (event)
                                         {
-                                                case ON_BUNDLE_QTY_ONE_OR_LESS:
-                                                        state = BUNDLE_QTY_ERROR;
+                                                case ON_ITEM_IS_IN_SHOPPUNG_LIST:
+                                                        state = ITEM_IN_SHOPPING_LIST;
+                                                        break;
+                                                case ON_VALIDATE_BUNDLE_QTY:
+                                                        if (control.isBundleQuantityOneOrLess())
+                                                        {
+                                                                state = BUNDLE_QTY_ERROR;
+                                                        }
+                                                        break;
+                                                case ON_VALIDATE_CURRENCY_CODE:
+                                                        if (control.isCurrencyCodeEmpty())
+                                                        {
+                                                                state = CURRENCY_CODE_EMPTY;
+                                                        }
+                                                        else if (!control.isCurrencyCodeValid())
+                                                        {
+                                                                state = CURRENCY_CODE_INVALID;
+                                                        }
                                                         break;
                                         }
+
                                         state.setUiOutput(event, control);
+
                                         return state;
                                 }
 
@@ -191,34 +296,40 @@ public class PriceEditFieldControl
                                         {
                                                 case ON_NEUTRAL:
                                                         control.clearBundleQtyError();
+                                                        control.clearCurrencyCodeError();
                                                         break;
                                         }
                                 }
                         },
 
-//                PRICE_ERROR
-//                        {
-//                                @Override
-//                                State transition(Event event, PriceEditFieldControl control)
-//                                {
-//                                        return this;
-//                                }
-//
-//                                @Override
-//                                void setUiOutput(Event event, PriceEditFieldControl control)
-//                                {
-//                                        switch (event)
-//                                        {
-//                                                case ON_UNIT_PRICE_ERROR:
-//                                                        control.setUnitPriceError();
-//                                                        break;
-//                                                case ON_BUNDLE_PRICE_ERROR:
-//                                                        control.setBundlePriceError();
-//                                        }
-//                                }
-//                        },
+                ITEM_IN_SHOPPING_LIST(null)
+                        {
+                                @Override
+                                State transition(Event event, PriceEditFieldControl control)
+                                {
+                                        State state = this;
+                                        return state;
+                                }
 
-                BUNDLE_QTY_ERROR
+                                @Override
+                                void setUiOutput(Event event, PriceEditFieldControl control)
+                                {
+                                        control.setBundleQuantityEnabled(false);
+                                        control.setCurrencyCodeEnabled(false);
+                                        control.setPriceFieldsEnabled(false);
+                                }
+                        },
+
+                PRICE_ERROR(null)
+                        {
+                                @Override
+                                State transition(Event event, PriceEditFieldControl control)
+                                {
+                                        return this;
+                                }
+                        },
+
+                BUNDLE_QTY_ERROR(PRICE_ERROR)
                         {
                                 @Override
                                 State transition(Event event, PriceEditFieldControl control)
@@ -229,6 +340,12 @@ public class PriceEditFieldControl
                                                 case ON_NEUTRAL:
                                                         state = NEUTRAL;
                                                         break;
+                                                case ON_VALIDATE_BUNDLE_QTY:
+                                                        if (!control.isBundleQuantityOneOrLess())
+                                                        {
+                                                                state = NEUTRAL;
+                                                        }
+                                                        break;
                                         }
                                         state.setUiOutput(event, control);
                                         return state;
@@ -237,15 +354,93 @@ public class PriceEditFieldControl
                                 @Override
                                 void setUiOutput(Event event, PriceEditFieldControl control)
                                 {
+                                        control.showBundleQtyError(R.string.invalid_bundle_quantity_one);
+                                }
+                        },
+
+                CURRENCY_CODE_EMPTY(PRICE_ERROR)
+                        {
+                                @Override
+                                State transition(Event event, PriceEditFieldControl control)
+                                {
+                                        State state = this;
                                         switch (event)
                                         {
-                                                case ON_BUNDLE_QTY_ONE_OR_LESS:
-                                                        control.showBundleQtyError(R.string.invalid_bundle_quantity_one);
+                                                case ON_VALIDATE_BUNDLE_QTY:
+                                                        if (control.isBundleQuantityOneOrLess())
+                                                        {
+                                                                state = BUNDLE_QTY_ERROR;
+                                                        }
+                                                        break;
+                                                case ON_VALIDATE_CURRENCY_CODE:
+                                                        if (control.isCurrencyCodeEmpty())
+                                                        {
+                                                                state = CURRENCY_CODE_EMPTY;
+                                                        }
+                                                        else if (!control.isCurrencyCodeValid())
+                                                        {
+                                                                state = CURRENCY_CODE_INVALID;
+                                                        }
+                                                        else
+                                                        {
+                                                                state = NEUTRAL;
+                                                        }
                                                         break;
                                         }
+
+                                        state.setUiOutput(event, control);
+
+                                        return state;
                                 }
+
+                                @Override
+                                void setUiOutput(Event event, PriceEditFieldControl control)
+                                {
+                                        control.setCurrencyCodeError(R.string.empty_currency_code_msg);
+                                }
+                        },
+                CURRENCY_CODE_INVALID(PRICE_ERROR)
+                        {
+                                @Override
+                                State transition(Event event, PriceEditFieldControl control)
+                                {
+                                        State state = this;
+                                        switch (event)
+                                        {
+                                                case ON_VALIDATE_CURRENCY_CODE:
+                                                        if (control.isCurrencyCodeEmpty())
+                                                        {
+                                                                state = CURRENCY_CODE_EMPTY;
+                                                        }
+                                                        else if (!control.isCurrencyCodeValid())
+                                                        {
+                                                                state = CURRENCY_CODE_INVALID;
+                                                        }
+                                                        else
+                                                        {
+                                                                state = NEUTRAL;
+                                                        }
+                                                        break;
+                                        }
+
+                                        state.setUiOutput(event, control);
+                                        return state;
+                                }
+
+                                @Override
+                                void setUiOutput(Event event, PriceEditFieldControl control)
+                                {
+                                        control.setCurrencyCodeError(R.string.invalid_currency_code_msg);
+                                }
+
                         };
 
+                private State parentState;
+
+                State(State parentState)
+                {
+                        this.parentState = parentState;
+                }
 
                 abstract State transition(Event event, PriceEditFieldControl control);
 
@@ -254,9 +449,12 @@ public class PriceEditFieldControl
 
                 }
 
+                State getParentState()
+                {
+                        return parentState;
+                }
+
         }
-
-
 
 
 }

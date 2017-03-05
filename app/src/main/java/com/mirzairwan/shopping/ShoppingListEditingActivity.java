@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.mirzairwan.shopping.data.Contract;
-import com.mirzairwan.shopping.domain.Price;
 
 import static com.mirzairwan.shopping.LoaderHelper.PURCHASE_ITEM_LOADER_ID;
 
@@ -43,8 +42,10 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                 mItemControl = mShoppingItemControl;
 
                 super.onCreate(savedInstanceState);
+
                 mItemBuyQtyControl = new ItemBuyQtyControl(this);
                 mItemBuyQtyControl.setOnTouchListener(mOnTouchListener);
+                mShoppingItemControl.setItemEditFieldControl(mItemEditFieldControl);
 
                 Log.d(LOG_TAG, ">>>savedInstantState is " + (savedInstanceState == null ? "NULL" : "NOT " + "NULL"));
 
@@ -75,7 +76,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                         mItemBuyQtyControl.setPurchaseManager(purchaseManager);
 
                         /* Set unit price selection as default*/
-                        mItemBuyQtyControl.selectPriceType(Price.Type.UNIT_PRICE);
+                        //mItemBuyQtyControl.selectPriceType(Price.Type.UNIT_PRICE);
                 }
                 else
                 {
@@ -83,6 +84,8 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                         initLoaders(mUriItem);
                 }
         }
+
+
 
         @Override
         protected void onStart()

@@ -17,16 +17,16 @@ import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
  * Contact owner at mirza.irwan.osman@gmail.com
  */
 
-public class ItemEditingActivity extends ItemActivity implements ItemEditorControl.ItemEditorContext
+public class HistoryEditingActivity extends ItemActivity implements HistoryItemEditorControl.ItemEditorContext
 {
         private static final String URI_ITEM = "uri"; /* Used for saving instance state */
         private Uri mUriItem;
-        private ItemEditorControl mItemEditorControl;
+        private HistoryItemEditorControl mItemEditorControl;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
         {
-                mItemEditorControl = new ItemEditorControl(this);
+                mItemEditorControl = new HistoryItemEditorControl(this);
                 mItemControl = mItemEditorControl;
 
                 super.onCreate(savedInstanceState);

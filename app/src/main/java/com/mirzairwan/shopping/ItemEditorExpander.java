@@ -1,16 +1,19 @@
 package com.mirzairwan.shopping;
 
-import android.app.Activity;
-
 /**
  * Created by Mirza Irwan on 14/2/17.
  */
 
 public class ItemEditorExpander extends DetailExpander
 {
-        public ItemEditorExpander(Activity activity)
+//        public ItemEditorExpander(Activity activity)
+//        {
+//                super(activity);
+//        }
+
+        public ItemEditorExpander(ItemContext itemContext)
         {
-                super(activity);
+                super(itemContext);
         }
 
         // Get the root view to create a transition

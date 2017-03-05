@@ -54,7 +54,7 @@ public class FormatHelper
                         {
                                 // Fallback to whatever NumberFormat want to do!
                                 currencyFormatter = NumberFormat.getInstance();
-                                currencyFormatter.setCurrency(Currency.getInstance(currencyCode));
+                                currencyFormatter.setCurrency(Currency.getInstance("USD"));
                         }
                 }
 
@@ -167,7 +167,16 @@ public class FormatHelper
         public static String getCurrencySymbol(String currencyCode)
         {
                 //Extract 2-letter country-code
-                String countryCode = currencyCode.substring(0, 2);
+                String countryCode;
+                if (currencyCode.length() < 3)
+                {
+                        countryCode = "US";
+                        currencyCode = "USD";
+                }
+                else
+                {
+                        countryCode = currencyCode.substring(0, 2);
+                }
                 Locale userLocale = new Locale(Locale.getDefault().getLanguage(), countryCode);
                 return Currency.getInstance(currencyCode).getSymbol(userLocale);
         }

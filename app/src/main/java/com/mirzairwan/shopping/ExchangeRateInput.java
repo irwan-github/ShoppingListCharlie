@@ -9,7 +9,7 @@ import java.util.Set;
  * Copyright 2017, Mirza Irwan Bin Osman , All rights reserved.
  * Contact owner at mirza.irwan.osman@gmail.com
  *
- * This object is observed by ExchangeRateAwareLoader for changes. ShoppingActivity and ItemEditingActivity will use this
+ * This object is observed by ExchangeRateAwareLoader for changes. ShoppingActivity and HistoryEditingActivity will use this
  * class to make changes to exchange rate inputs as necessary.
  * <p>
  */

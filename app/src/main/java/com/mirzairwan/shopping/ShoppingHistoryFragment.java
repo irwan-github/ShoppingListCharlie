@@ -233,7 +233,7 @@ public class ShoppingHistoryFragment extends Fragment implements OnToggleCatalog
         public interface OnFragmentInteractionListener
         {
                 /**
-                 * Launches a ItemEditingActivity
+                 * Launches a HistoryEditingActivity
                  *
                  * @param itemId           Row id of item in table
                  * @param currencyCode     3-letter currency code

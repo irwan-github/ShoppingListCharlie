@@ -14,12 +14,13 @@ import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.PriceMgr;
 
 import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_BUY_QTY_ZERO;
-import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_INITIALIZE;
+import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_NEW;
 import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_INVALID_MULTIPLES;
 import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_SELECT_BUNDLE_PRICE;
 import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_SELECT_UNIT_PRICE;
 import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_VALID_BUY_QTY;
 import static com.mirzairwan.shopping.ItemBuyQtyControl.State.NEUTRAL;
+import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
 import static java.lang.Integer.parseInt;
 
 
@@ -52,8 +53,6 @@ public class ItemBuyQtyControl
 
                 RadioButton rbBundlePrice = (RadioButton) mRgPriceTypeChoice.findViewById(R.id.rb_bundle_price);
                 rbBundlePrice.setOnCheckedChangeListener(listener);
-
-                mState = mState.transition(ON_INITIALIZE, this);
         }
 
         private void initializeUi()
@@ -83,18 +82,8 @@ public class ItemBuyQtyControl
         public void onLoadFinished()
         {
                 populateBuyQuantityField();
-
                 Price.Type priceType = mPurchaseManager.getItemInShoppingList().getSelectedPriceType();
-                if (priceType == Price.Type.UNIT_PRICE)
-                {
-                        selectPriceType(R.id.rb_unit_price);
-                        return;
-                }
-
-                if (priceType == Price.Type.BUNDLE_PRICE)
-                {
-                        selectPriceType(R.id.rb_bundle_price);
-                }
+                selectPriceType(priceType);
         }
 
         private void populateBuyQuantityField()
@@ -122,8 +111,12 @@ public class ItemBuyQtyControl
                 mPriceMgr = priceMgr;
         }
 
+        /**
+         * Check for zero buy quantity
+         */
         private void validateUnitBuyQty()
         {
+                //mPriceEditFieldControl.onValidateUnitSet();
                 if (isQuantityToBuyZero())
                 {
                         mState = mState.transition(ON_BUY_QTY_ZERO, this);
@@ -134,10 +127,11 @@ public class ItemBuyQtyControl
                 }
         }
 
+        /**
+         * Check for valid multiples in buy quantity field for bundle pricing
+         */
         private void validateBundleBuyQty()
         {
-                mPriceEditFieldControl.onValidateBundleQty();
-
                 if (isBuyQtyOneOrLess() || !isBuyQuantityValidMultiples())
                 {
                         mState = mState.transition(ON_INVALID_MULTIPLES, this);
@@ -157,7 +151,6 @@ public class ItemBuyQtyControl
 
                         /* Bundle quantity is not needed in unit price calculation. Set the  bundle qty error state to neutral state in order ro proceed */
                         mPriceEditFieldControl.onNeutral();
-
 
                         validateUnitBuyQty();
 
@@ -192,23 +185,19 @@ public class ItemBuyQtyControl
                 }
         }
 
-        private void selectPriceType(int choiceId)
-        {
-                Log.d("onCheckedChanged", "selectPriceType: " + String.valueOf(choiceId));
-                mRgPriceTypeChoice.check(choiceId);
-        }
-
         void selectPriceType(Price.Type priceType)
         {
                 Log.d("onCheckedChanged", "selectPriceType: " + priceType);
-                if (priceType == Price.Type.UNIT_PRICE)
+                switch(priceType)
                 {
-                        mRgPriceTypeChoice.check(R.id.rb_unit_price);
-                }
-
-                if (priceType == Price.Type.BUNDLE_PRICE)
-                {
-                        mRgPriceTypeChoice.check(R.id.rb_bundle_price);
+                        case UNIT_PRICE:
+                                mRgPriceTypeChoice.check(R.id.rb_unit_price);
+                                break;
+                        case  BUNDLE_PRICE:
+                                mRgPriceTypeChoice.check(R.id.rb_bundle_price);
+                                break;
+                        default:
+                                mRgPriceTypeChoice.check(R.id.rb_unit_price);
                 }
         }
 
@@ -242,13 +231,26 @@ public class ItemBuyQtyControl
                 return mPurchaseManager.isBundleQuantityToBuyValid(buyQty, bundleQty);
         }
 
-        public State getState()
+        public State getErrorState()
         {
-                return mState;
+                return mState.getParentState();
         }
 
         public void onValidate()
         {
+
+                int priceTypeChoice = mRgPriceTypeChoice.getCheckedRadioButtonId();
+
+                switch (priceTypeChoice)
+                {
+                        case R.id.rb_unit_price:
+                                mPriceEditFieldControl.onValidateUnitSet();
+                                break;
+                        case R.id.rb_bundle_price:
+                                mPriceEditFieldControl.onValidateBundleSet();
+                                break;
+                }
+
                 switch (mState)
                 {
                         case UNIT_PRICE:
@@ -273,13 +275,13 @@ public class ItemBuyQtyControl
                 switch (optionId)
                 {
                         case R.id.rb_unit_price:
-                                selectedPriceType = Price.Type.UNIT_PRICE;
+                                selectedPriceType = UNIT_PRICE;
                                 break;
                         case R.id.rb_bundle_price:
                                 selectedPriceType = Price.Type.BUNDLE_PRICE;
                                 break;
                         default:
-                                selectedPriceType = Price.Type.UNIT_PRICE;
+                                selectedPriceType = UNIT_PRICE;
                 }
 
                 Price selectedPrice = mPriceMgr.getSelectedPrice(selectedPriceType);
@@ -297,10 +299,16 @@ public class ItemBuyQtyControl
                 mRgPriceTypeChoice.clearCheck();
         }
 
+        public void onNewItem()
+        {
+                mState = mState.transition(ON_NEW, this);
+                selectPriceType(UNIT_PRICE);
+        }
+
 
         enum Event
         {
-                ON_BUY_QTY_ZERO, ON_SELECT_UNIT_PRICE, ON_SELECT_BUNDLE_PRICE, ON_INVALID_MULTIPLES, ON_VALID_BUY_QTY, ON_INITIALIZE;
+                ON_BUY_QTY_ZERO, ON_SELECT_UNIT_PRICE, ON_SELECT_BUNDLE_PRICE, ON_INVALID_MULTIPLES, ON_VALID_BUY_QTY, ON_NEW;
         }
 
         enum State
@@ -313,7 +321,7 @@ public class ItemBuyQtyControl
                                         State state = this;
                                         switch (event)
                                         {
-                                                case ON_INITIALIZE:
+                                                case ON_NEW:
                                                         state = this;
                                                         break;
                                                 case ON_SELECT_UNIT_PRICE:
@@ -332,7 +340,10 @@ public class ItemBuyQtyControl
                                 @Override
                                 void setUiOutput(Event event, ItemBuyQtyControl control)
                                 {
-                                        control.initializeUi();
+                                        if (event == ON_NEW)
+                                        {
+                                                control.initializeUi();
+                                        }
                                 }
                         },
 

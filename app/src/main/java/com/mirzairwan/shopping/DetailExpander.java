@@ -5,7 +5,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.os.Build;
 import android.transition.Transition;
-import android.transition.TransitionInflater;
 import android.transition.TransitionManager;
 import android.view.View;
 import android.view.ViewAnimationUtils;
@@ -13,23 +12,41 @@ import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.ToggleButton;
 
+import static com.mirzairwan.shopping.DetailExpander.Event.BUTTON_CLICK;
+import static com.mirzairwan.shopping.DetailExpander.State.CONTRACT;
+
 /**
  * Created by Mirza Irwan on 14/2/17.
  */
 
-public abstract class DetailExpander
+public abstract class DetailExpander implements CompoundButton.OnCheckedChangeListener
 {
+        private ItemContext mItemContext;
         private ViewGroup mRootView;
         private ToggleButton mToggleButton;
         private Activity mActivity;
+        private State mState;
 
         public DetailExpander(Activity activity)
         {
+                mState = CONTRACT;
                 mActivity = activity;
-                mToggleButton = (ToggleButton)mActivity.findViewById(getToggleButtonId());
+                mToggleButton = (ToggleButton) mActivity.findViewById(getToggleButtonId());
 
                 // Get the root view to create a transition
-                mRootView = (ViewGroup)mActivity.findViewById(getViewGroupId());
+                mRootView = (ViewGroup) mActivity.findViewById(getViewGroupId());
+                setupButton();
+        }
+
+        public DetailExpander(ItemContext itemContext)
+        {
+                mState = CONTRACT;
+                //mActivity = activity;
+                mItemContext = itemContext;
+                mToggleButton = (ToggleButton) itemContext.findViewById(getToggleButtonId());
+
+                // Get the root view to create a transition
+                mRootView = (ViewGroup) itemContext.findViewById(getViewGroupId());
                 setupButton();
         }
 
@@ -39,41 +56,50 @@ public abstract class DetailExpander
 
         private void setupButton()
         {
-                mToggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
-                {
-                        @Override
-                        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
-                        {
-                                if (isChecked)
-                                {
-                                        showMore();
-                                }
-                                else
-                                {
-                                        showLess();
-                                }
-                        }
-                });
+                mToggleButton.setOnCheckedChangeListener(this);
         }
 
-        protected void expandLess()
+        /* User events delegated to state machine */
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
         {
-                Transition transition = TransitionInflater.from(mActivity).inflateTransition(R.transition.item_expand_less);
+                buttonClick();
+        }
+
+        private void buttonClick()
+        {
+                mState = mState.transition(BUTTON_CLICK, this);
+        }
+
+        /**
+         * Ui Action methods for version Kitkat and below
+         */
+        private void expandLess()
+        {
+                //Transition transition = TransitionInflater.from(mActivity).inflateTransition(R.transition.item_expand_less);
+                Transition transition = mItemContext.inflateTransition(R.transition.item_expand_less);
 
                 // Start recording changes to the view hierarchy
                 TransitionManager.beginDelayedTransition(mRootView, transition);
                 mRootView.setVisibility(View.GONE);
         }
 
-        protected void expandMore()
+        /**
+         * Ui Action methods for version Kitkat and below
+         */
+        private void expandMore()
         {
-                Transition transition = TransitionInflater.from(mActivity).inflateTransition(R.transition.item_expand_more);
+                //Transition transition = TransitionInflater.from(mActivity).inflateTransition(R.transition.item_expand_more);
+                Transition transition = mItemContext.inflateTransition(R.transition.item_expand_more);
 
                 // Start recording changes to the view hierarchy
                 TransitionManager.beginDelayedTransition(mRootView, transition);
                 mRootView.setVisibility(View.VISIBLE);
         }
 
+        /**
+         *  Ui Action methods
+         */
         public void showMore()
         {
                 mRootView.setVisibility(View.INVISIBLE);
@@ -109,6 +135,9 @@ public abstract class DetailExpander
 
         }
 
+        /**
+         *  Ui Action methods
+         */
         private void showLess()
         {
                 // previously visible view
@@ -145,5 +174,67 @@ public abstract class DetailExpander
                 }
         }
 
+        enum Event
+        {
+                BUTTON_CLICK
+        }
 
+        enum State
+        {
+                CONTRACT
+                        {
+                                @Override
+                                State transition(Event event, DetailExpander control)
+                                {
+                                        State state = this;
+                                        switch (event)
+                                        {
+                                                case BUTTON_CLICK:
+                                                        state = EXPAND;
+                                                        break;
+                                        }
+
+                                        state.showUiOuput(event, control);
+                                        return state;
+                                }
+
+                                @Override
+                                void showUiOuput(Event event, DetailExpander control)
+                                {
+                                        control.showLess();
+                                }
+                        },
+
+                EXPAND
+                        {
+                                @Override
+                                State transition(Event event, DetailExpander control)
+                                {
+                                        State state = this;
+                                        switch (event)
+                                        {
+                                                case BUTTON_CLICK:
+                                                        state = CONTRACT;
+                                                        break;
+                                        }
+                                        state.showUiOuput(event, control);
+                                        return state;
+                                }
+
+                                @Override
+                                void showUiOuput(Event event, DetailExpander control)
+                                {
+                                        control.showMore();
+
+                                }
+                        };
+
+                abstract State transition(Event event, DetailExpander control);
+
+                void showUiOuput(Event event, DetailExpander control)
+                {
+
+                }
+
+        }
 }

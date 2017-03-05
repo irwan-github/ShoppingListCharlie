@@ -118,4 +118,5 @@
         <string name="database_delete_success">deleted: OK</string>
         <string name="mandatory">Required</string>
         <string name="invalid_buy_quantity_zero">Must be 1 or more</string>
+        <string name="empty_currency_code_msg">Cannot be empty.</string>
 </resources>

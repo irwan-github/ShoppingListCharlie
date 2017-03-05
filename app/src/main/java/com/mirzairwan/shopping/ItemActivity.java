@@ -100,7 +100,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         private static final String LOG_TAG = ItemActivity.class.getSimpleName();
         private static final int REQUEST_PICK_PHOTO = 16;
         private static final String PICTURE_MANAGER = "picture_mgr";
-        protected EditText etBundleQty;
         protected View.OnTouchListener mOnTouchListener;
         protected DaoManager daoManager;
         protected PictureMgr mPictureMgr;
@@ -109,8 +108,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected EditText etCurrencyCode;
         protected PriceField mUnitPriceEditField;
         protected PriceField mBundlePriceEditField;
-        protected ItemEditorExpander mItemEditorExpander;
-        protected PriceEditorExpander mPriceEditorExpander;
         protected ItemControl mItemControl;
         protected String mDbMsg;
         protected View mContainer;
@@ -160,11 +157,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         {
                 Log.d(LOG_TAG, "onRestoreInstanceState");
                 super.onRestoreInstanceState(savedInstanceState);
-
-                //Any translated price will be invisible when device orientates. So show it again
-                mExchangeRate = savedInstanceState.getParcelable(EXCHANGE_RATE);
-                mUnitPriceEditField.setCurrencySymbolInPriceHint(mExchangeRate);
-                mBundlePriceEditField.setCurrencySymbolInPriceHint(mExchangeRate);
         }
 
         @Override
@@ -235,38 +227,35 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 mItemEditFieldControl = new ItemEditFieldControl(this);
                 mItemEditFieldControl.setOnTouchListener(mOnTouchListener);
 
-                mItemControl.setItemNameFieldControl(mItemEditFieldControl);
-
-                mItemEditorExpander = new ItemEditorExpander(this);
                 mImgItemPic = (ImageView) findViewById(R.id.img_item);
-
 
                 TextInputLayout etUnitPrice = (TextInputLayout) findViewById(R.id.unit_price_layout);
                 mUnitPriceEditField = new PriceField(etUnitPrice, getString(R.string.unit_price_txt), R.id.et_unit_price, mItemControl);
-                mPriceEditFieldControl.setUnitPrice(mUnitPriceEditField);
 
                 TextInputLayout etBundlePrice = (TextInputLayout) findViewById(R.id.bundle_price_layout);
                 mBundlePriceEditField = new PriceField(etBundlePrice, getString(R.string.bundle_price_txt), et_bundle_price, mItemControl);
 
+                mPriceEditFieldControl.setUnitPrice(mUnitPriceEditField);
                 mPriceEditFieldControl.setBundlePrice(mBundlePriceEditField);
-
                 mPriceEditFieldControl.setOnTouchListener(mOnTouchListener);
 
-                etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
-                OnCurrencyCodeChange onCurrencyCodeChange = new OnCurrencyCodeChange(etCurrencyCode, mUnitPriceEditField, mBundlePriceEditField, mItemControl);
-                MyTextUtils.setAllCapsInputFilter(etCurrencyCode);
-                etCurrencyCode.setOnFocusChangeListener(onCurrencyCodeChange);
+//                etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
+//                OnCurrencyCodeChange onCurrencyCodeChange = new OnCurrencyCodeChange(etCurrencyCode, mUnitPriceEditField, mBundlePriceEditField, mItemControl);
+
                 ItemExchangeRateLoaderCallback pxExLoaderCb = new ItemExchangeRateLoaderCallback(this);
                 getLoaderManager().initLoader(78, null, pxExLoaderCb);
+        }
 
-                mPriceEditorExpander = new PriceEditorExpander(this);
+        @Override
+        public Transition inflateTransition(int trasitionResId)
+        {
+                return TransitionInflater.from(this).inflateTransition(trasitionResId);
         }
 
         protected abstract int getLayoutXml();
 
         protected void setupPictureToolbar()
         {
-
                 Toolbar toolbarPicture = (Toolbar) findViewById(R.id.picture_toolbar);
 
                 // Inflate a menu to be displayed in the toolbar
@@ -421,7 +410,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
         public void showTransientDbMessage()
         {
-                Snackbar.make(mContainer, mDbMsg, 3000).addCallback(new BaseTransientBottomBar.BaseCallback<Snackbar>()
+                Snackbar.make(mContainer, mDbMsg, 500).addCallback(new BaseTransientBottomBar.BaseCallback<Snackbar>()
                 {
                         @Override
                         public void onDismissed(Snackbar transientBottomBar, int event)
@@ -685,23 +674,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 builder.show();
         }
 
-        protected void alertRequiredField(int titleId, int messageId)
-        {
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle(titleId);
-                builder.setMessage(messageId);
-                builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
-                {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which)
-                        {
-                                dialog.dismiss();
-                        }
-                });
-                AlertDialog alertDialog = builder.create();
-                alertDialog.show();
-        }
-
         protected void alertItemInShoppingList(int messageId)
         {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -739,21 +711,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 }
 
                 return result;
-        }
-
-        /**
-         * When displaying existing item in shopping list, set currency symbol to the saved currency
-         * code irregardless of current country code preference
-         */
-        public void populatePricesInputFields(PriceMgr priceMgr)
-        {
-                String currencyCode = priceMgr.getUnitPrice().getCurrencyCode();
-                etCurrencyCode.setText(currencyCode);
-                mUnitPriceEditField.setPrice(currencyCode, priceMgr.getUnitPriceForDisplay());
-                mBundlePriceEditField.setPrice(currencyCode, priceMgr.getBundlePriceForDisplay());
-                etBundleQty.setText(String.valueOf(priceMgr.getBundlePrice().getBundleQuantity()));
-                mUnitPriceEditField.setCurrencySymbolInPriceHint(currencyCode);
-                mBundlePriceEditField.setCurrencySymbolInPriceHint(currencyCode);
         }
 
         /**
@@ -826,7 +783,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         case ITEM_PRICE_LOADER_ID:
                                 mPriceMgr.createPrices(cursor);
                                 //mItemControl.onLoadPriceFinished(mPriceMgr);
-
                                 mPriceEditFieldControl.setPriceMgr(mPriceMgr);
                                 mPriceEditFieldControl.onLoadFinished();
 

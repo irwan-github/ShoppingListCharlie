@@ -8,19 +8,18 @@ import android.util.Log;
 
 import com.mirzairwan.shopping.domain.PriceMgr;
 
-import static com.mirzairwan.shopping.ItemEditorControl.Event.ON_BACK;
-import static com.mirzairwan.shopping.ItemEditorControl.Event.ON_CHANGE;
-import static com.mirzairwan.shopping.ItemEditorControl.Event.ON_CREATE_OPTIONS_MENU;
-import static com.mirzairwan.shopping.ItemEditorControl.Event.ON_DB_RESULT;
-import static com.mirzairwan.shopping.ItemEditorControl.Event.ON_DELETE;
-import static com.mirzairwan.shopping.ItemEditorControl.Event.ON_EXIST;
-import static com.mirzairwan.shopping.ItemEditorControl.Event.ON_LEAVE;
-import static com.mirzairwan.shopping.ItemEditorControl.Event.ON_LOAD_ITEM;
-import static com.mirzairwan.shopping.ItemEditorControl.Event.ON_LOAD_PRICE;
-import static com.mirzairwan.shopping.ItemEditorControl.Event.ON_STAY;
-import static com.mirzairwan.shopping.ItemEditorControl.Event.ON_UP;
-import static com.mirzairwan.shopping.ItemEditorControl.Event.ON_UPDATE;
-import static com.mirzairwan.shopping.ItemEditorControl.State.START;
+import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_BACK;
+import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_CHANGE;
+import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_CREATE_OPTIONS_MENU;
+import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_DB_RESULT;
+import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_DELETE;
+import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_EXIST;
+import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_LEAVE;
+import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_STAY;
+import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_UP;
+import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_UPDATE;
+import static com.mirzairwan.shopping.HistoryItemEditorControl.State.START;
+import static com.mirzairwan.shopping.ItemEditFieldControl.State.ERROR_EMPTY_NAME;
 
 /**
  * It is possible to add actions to a state which are executed on entry to that state. This may
@@ -39,7 +38,7 @@ import static com.mirzairwan.shopping.ItemEditorControl.State.START;
  * Actions should be associated with events. Example:
  * Insert record into database
  */
-public class ItemEditorControl implements ItemControl
+public class HistoryItemEditorControl implements ItemControl
 {
         private ItemEditorContext mContext;
 
@@ -47,10 +46,10 @@ public class ItemEditorControl implements ItemControl
         private PriceMgr mPriceMgr;
         private ItemManager mItemManager;
         private ItemEditFieldControl mItemEditFieldControl;
-        private String LOG_TAG = ItemEditorControl.class.getSimpleName();
+        private String LOG_TAG = HistoryItemEditorControl.class.getSimpleName();
         private PriceEditFieldControl mPriceEditFieldControl;
 
-        public ItemEditorControl(ItemEditorContext context)
+        public HistoryItemEditorControl(ItemEditorContext context)
         {
                 mContext = context;
         }
@@ -78,6 +77,13 @@ public class ItemEditorControl implements ItemControl
 
         public void onOk()
         {
+                mItemEditFieldControl.onValidate();
+
+                if (mItemEditFieldControl.getState() == ERROR_EMPTY_NAME)
+                {
+                        return;
+                }
+
                 mCurrentState = mCurrentState.transition(ON_UPDATE, this);
                 mCurrentState = mCurrentState.transition(ON_DB_RESULT, this);
         }
@@ -108,13 +114,10 @@ public class ItemEditorControl implements ItemControl
         {
                 Log.d(LOG_TAG, mCurrentState + ":  onLoadItemFinished");
                 mItemManager = itemManager;
-                mCurrentState = mCurrentState.transition(ON_LOAD_ITEM, this);
-        }
-
-        @Override
-        public void setItemNameFieldControl(ItemEditFieldControl itemNameFieldControl)
-        {
-
+                if (mItemManager.getItem().isInBuyList())
+                {
+                        mPriceEditFieldControl.onItemIsInShoppingList();
+                }
         }
 
         private void finishItemEditing()
@@ -136,19 +139,7 @@ public class ItemEditorControl implements ItemControl
         {
                 mItemEditFieldControl.populateItemFromInputFields();
                 mPriceEditFieldControl.populatePriceMgr();
-
                 mContext.update(mItemManager);
-        }
-
-        private boolean areFieldsValid()
-        {
-                return mContext.areFieldsValid();
-        }
-
-        public void onLoadPriceFinished(PriceMgr priceMgr)
-        {
-                mPriceMgr = priceMgr;
-                mCurrentState = mCurrentState.transition(ON_LOAD_PRICE, this);
         }
 
         private void postDbProcess()
@@ -171,16 +162,6 @@ public class ItemEditorControl implements ItemControl
                 mContext.setMenuVisible(menuResId, b);
         }
 
-        private boolean isItemInShoppingList()
-        {
-                if (mItemManager != null)
-                {
-                        return mItemManager.getItem().isInBuyList();
-                }
-                else
-                        return true;
-        }
-
         public void setItemEditFieldControl(ItemEditFieldControl itemEditFieldControl)
         {
                 mItemEditFieldControl = itemEditFieldControl;
@@ -193,7 +174,7 @@ public class ItemEditorControl implements ItemControl
 
         enum Event
         {
-                ON_EXIST, ON_DELETE, ON_UP, ON_BACK, ON_CHANGE, ON_UPDATE, ON_LEAVE, ON_LOAD_ITEM, ON_LOAD_PRICE, ON_STAY, ON_DB_RESULT,
+                ON_EXIST, ON_DELETE, ON_UP, ON_BACK, ON_CHANGE, ON_UPDATE, ON_LEAVE, ON_STAY, ON_DB_RESULT,
                 ON_CREATE_OPTIONS_MENU
         }
 
@@ -201,7 +182,7 @@ public class ItemEditorControl implements ItemControl
         {
                 START
                         {
-                                public State transition(Event event, ItemEditorControl context)
+                                public State transition(Event event, HistoryItemEditorControl context)
                                 {
                                         State state;
                                         switch (event)
@@ -219,7 +200,7 @@ public class ItemEditorControl implements ItemControl
 
                 UNCHANGE
                         {
-                                public State transition(Event event, ItemEditorControl context)
+                                public State transition(Event event, HistoryItemEditorControl context)
                                 {
                                         State state;
                                         switch (event)
@@ -247,7 +228,7 @@ public class ItemEditorControl implements ItemControl
                                         return state;
                                 }
 
-                                public void setAttributes(Event event, ItemEditorControl control)
+                                public void setAttributes(Event event, HistoryItemEditorControl control)
                                 {
                                         switch (event)
                                         {
@@ -263,21 +244,14 @@ public class ItemEditorControl implements ItemControl
 
                 CHANGE
                         {
-                                public State transition(Event event, ItemEditorControl context)
+                                public State transition(Event event, HistoryItemEditorControl context)
                                 {
                                         State state;
                                         switch (event)
                                         {
                                                 case ON_UPDATE:
-                                                        if (context.areFieldsValid())
-                                                        {
-                                                                context.update();
-                                                                state = POST_DB_OP;
-                                                        }
-                                                        else
-                                                        {
-                                                                state = this;
-                                                        }
+                                                        context.update();
+                                                        state = POST_DB_OP;
                                                         break;
                                                 case ON_DELETE:
                                                         context.delete();
@@ -300,7 +274,7 @@ public class ItemEditorControl implements ItemControl
                                         return state;
                                 }
 
-                                public void setAttributes(Event event, ItemEditorControl control)
+                                public void setAttributes(Event event, HistoryItemEditorControl control)
                                 {
                                         control.setMenuVisible(R.id.save_item_details, true);
                                 }
@@ -308,7 +282,7 @@ public class ItemEditorControl implements ItemControl
 
                 WARN
                         {
-                                public State transition(Event event, ItemEditorControl context)
+                                public State transition(Event event, HistoryItemEditorControl context)
                                 {
                                         State state;
                                         switch (event)
@@ -332,7 +306,7 @@ public class ItemEditorControl implements ItemControl
                 POST_DB_OP
                         {
                                 @Override
-                                public State transition(Event event, ItemEditorControl context)
+                                public State transition(Event event, HistoryItemEditorControl context)
                                 {
                                         Log.d(this.toString(), "Event:" + event);
                                         State state;
@@ -355,7 +329,7 @@ public class ItemEditorControl implements ItemControl
                                 }
 
                                 @Override
-                                public void setAttributes(Event event, ItemEditorControl context)
+                                public void setAttributes(Event event, HistoryItemEditorControl context)
                                 {
                                         if (event == ON_DELETE)
                                         {
@@ -364,9 +338,9 @@ public class ItemEditorControl implements ItemControl
                                 }
                         };;
 
-                public abstract State transition(Event event, ItemEditorControl itemContext);
+                abstract State transition(Event event, HistoryItemEditorControl itemContext);
 
-                public void setAttributes(Event event, ItemEditorControl itemEditorControl)
+                public void setAttributes(Event event, HistoryItemEditorControl itemEditorControl)
                 {
                 }
         }

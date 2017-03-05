@@ -19,21 +19,20 @@ import static com.mirzairwan.shopping.ItemEditFieldControl.State.NEUTRAL;
  * Created by Mirza Irwan on 27/2/17.
  */
 
-public class ItemEditFieldControl
+public class ItemEditFieldControl extends DetailExpander
 {
         private TextInputLayout mItemNameWrap;
         private TextInputEditText mEtItemName;
         private TextInputEditText mEtDescription;
         private TextInputEditText mEtCountry;
         private TextInputEditText mEtBrand;
-
         private ItemContext mItemContext;
-
         private State mState = NEUTRAL;
         private Item mItem;
 
         public ItemEditFieldControl(ItemContext itemContext)
         {
+                super(itemContext);
                 mItem = new Item();
                 mItemNameWrap = (TextInputLayout)itemContext.findViewById(R.id.item_name_layout);
                 mEtItemName = (TextInputEditText) itemContext.findViewById(R.id.et_item_name);
@@ -44,6 +43,19 @@ public class ItemEditFieldControl
                 mEtCountry = (TextInputEditText)itemContext.findViewById(R.id.et_item_country_origin);
                 mEtDescription = (TextInputEditText)itemContext.findViewById(R.id.et_item_description);
                 mItemContext = itemContext;
+        }
+
+        // Get the root view to create a transition
+        @Override
+        protected int getViewGroupId()
+        {
+                return R.id.item_details_more;
+        }
+
+        @Override
+        protected int getToggleButtonId()
+        {
+                return R.id.btn_toggle_item;
         }
 
         protected Item populateItemFromInputFields()

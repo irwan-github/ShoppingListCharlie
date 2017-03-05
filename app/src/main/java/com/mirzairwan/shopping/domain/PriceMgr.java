@@ -162,4 +162,5 @@ public class PriceMgr
                 mUnitPrice.setCurrencyCode(currencyCode);
                 mBundlePrice.setCurrencyCode(currencyCode);
         }
+
 }
