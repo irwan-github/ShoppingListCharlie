@@ -33,28 +33,35 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
         private static final String URI_ITEM = "uri"; /* Used for saving instant mItemType */
         private Uri mUriItem;
         private ShoppingItemControl mShoppingItemControl;
-        private ItemBuyQtyControl mItemBuyQtyControl;
+        private ItemBuyFieldControl mItemBuyFieldControl;
+
+        @Override
+        protected ItemControl getItemControl()
+        {
+                mShoppingItemControl = new ShoppingItemControl(this);
+                return mShoppingItemControl;
+        }
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
         {
-                mShoppingItemControl = new ShoppingItemControl(this);
-                mItemControl = mShoppingItemControl;
-
                 super.onCreate(savedInstanceState);
 
-                mItemBuyQtyControl = new ItemBuyQtyControl(this);
-                mItemBuyQtyControl.setOnTouchListener(mOnTouchListener);
+                mItemEditFieldControl = new ItemEditFieldControl(this);
+                mItemEditFieldControl.setOnTouchListener(mOnTouchListener);
+
+                mItemBuyFieldControl = new ItemBuyFieldControl(this);
+                mItemBuyFieldControl.setOnTouchListener(mOnTouchListener);
+                mItemBuyFieldControl.setPriceMgr(mPriceMgr);
+                mItemBuyFieldControl.setPriceEditFieldControl(mPriceEditFieldControl);
+
                 mShoppingItemControl.setItemEditFieldControl(mItemEditFieldControl);
+                mShoppingItemControl.setItemBuyQtyFieldControl(mItemBuyFieldControl);
+                mShoppingItemControl.setPriceEditFieldControl(mPriceEditFieldControl);
 
                 Log.d(LOG_TAG, ">>>savedInstantState is " + (savedInstanceState == null ? "NULL" : "NOT " + "NULL"));
 
                 mContainer = findViewById(R.id.shopping_list_editor_container);
-
-                mItemBuyQtyControl.setPriceMgr(mPriceMgr);
-                mItemBuyQtyControl.setPriceEditFieldControl(mPriceEditFieldControl);
-                mShoppingItemControl.setItemBuyQtyFieldControl(mItemBuyQtyControl);
-                mShoppingItemControl.setPriceEditFieldControl(mPriceEditFieldControl);
 
                 PurchaseEditorExpander purchaseEditorExpander = new PurchaseEditorExpander(this);
 
@@ -73,10 +80,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                         PurchaseManager purchaseManager = new PurchaseManager();
                         mShoppingItemControl.onNewItem();
                         mShoppingItemControl.setPurchaseManager(purchaseManager);
-                        mItemBuyQtyControl.setPurchaseManager(purchaseManager);
-
-                        /* Set unit price selection as default*/
-                        //mItemBuyQtyControl.selectPriceType(Price.Type.UNIT_PRICE);
+                        mItemBuyFieldControl.setPurchaseManager(purchaseManager);
                 }
                 else
                 {
@@ -161,9 +165,9 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
 
                                 mItemEditFieldControl.onLoadItemFinished(mPurchaseManager.getitem());
 
-                                mItemBuyQtyControl.setPurchaseManager(mPurchaseManager);
+                                mItemBuyFieldControl.setPurchaseManager(mPurchaseManager);
 
-                                mItemBuyQtyControl.onLoadFinished();
+                                mItemBuyFieldControl.onLoadFinished();
 
                                 mPictureMgr.setItemId(mPurchaseManager.getitem().getId());
                                 break;
@@ -180,7 +184,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                 switch (loaderId)
                 {
                         case PURCHASE_ITEM_LOADER_ID:
-                                mItemBuyQtyControl.onLoaderReset();
+                                mItemBuyFieldControl.onLoaderReset();
                                 break;
                         default:
                                 super.onLoaderReset(loader);

@@ -10,7 +10,7 @@ public class PurchaseEditorExpander extends DetailExpander
 {
         public PurchaseEditorExpander(Activity activity)
         {
-                super(activity);
+                super(activity, Event.ON_INITIALIZE_EXPAND);
         }
 
         @Override

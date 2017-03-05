@@ -15,7 +15,7 @@ public interface ItemContext
 
         void setExitTransition();
 
-        boolean areFieldsValid();
+        //boolean areFieldsValid();
 
         void setMenuVisible(int id, boolean isVisible);
 

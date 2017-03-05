@@ -1,7 +1,7 @@
 package com.mirzairwan.shopping;
 
-import android.content.SharedPreferences;
 import android.support.design.widget.TextInputEditText;
+import android.support.design.widget.TextInputLayout;
 import android.text.TextUtils;
 import android.view.View;
 
@@ -12,6 +12,7 @@ import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_NEUTRAL;
 import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_VALIDATE_BUNDLE_QTY;
 import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_VALIDATE_CURRENCY_CODE;
 import static com.mirzairwan.shopping.PriceEditFieldControl.State.NEUTRAL;
+import static com.mirzairwan.shopping.R.id.et_bundle_price;
 
 /**
  * Created by Mirza Irwan on 28/2/17.
@@ -33,15 +34,20 @@ public class PriceEditFieldControl extends DetailExpander
         /* State forcurrency code field */
         private State mCurrencyCodeState = NEUTRAL;
 
-        public PriceEditFieldControl(ItemContext itemContext, SharedPreferences sharedPrefs)
+        public PriceEditFieldControl(ItemContext itemContext, String settingsCountryCode)
         {
                 super(itemContext);
                 mItemContext = itemContext;
                 mEtBundleQty = (TextInputEditText) itemContext.findViewById(R.id.et_bundle_qty);
                 mEtCurrencyCode = (TextInputEditText) itemContext.findViewById(R.id.et_currency_code);
 
-                String mSettingsCountryCode = sharedPrefs.getString(mItemContext.getString(R.string.user_country_pref), null);
-                mEtCurrencyCode.setText(FormatHelper.getCurrencyCode(mSettingsCountryCode));
+                TextInputLayout etUnitPrice = (TextInputLayout) itemContext.findViewById(R.id.unit_price_layout);
+                mUnitPrice = new PriceField(etUnitPrice, itemContext.getString(R.string.unit_price_txt), R.id.et_unit_price);
+
+                TextInputLayout etBundlePrice = (TextInputLayout) itemContext.findViewById(R.id.bundle_price_layout);
+                mBundlePrice = new PriceField(etBundlePrice, itemContext.getString(R.string.bundle_price_txt), et_bundle_price);
+
+                mEtCurrencyCode.setText(FormatHelper.getCurrencyCode(settingsCountryCode));
         }
 
         @Override
@@ -54,16 +60,6 @@ public class PriceEditFieldControl extends DetailExpander
         protected int getToggleButtonId()
         {
                 return R.id.btn_toggle_price;
-        }
-
-        public void setUnitPrice(PriceField unitPrice)
-        {
-                mUnitPrice = unitPrice;
-        }
-
-        public void setBundlePrice(PriceField bundlePrice)
-        {
-                mBundlePrice = bundlePrice;
         }
 
         private boolean isBundleQuantityOneOrLess()
@@ -98,11 +94,6 @@ public class PriceEditFieldControl extends DetailExpander
         public String getBundleQuantity()
         {
                 return mEtBundleQty.getText().toString();
-        }
-
-        public State getBundleQtyState()
-        {
-                return mBundleQtyState;
         }
 
         public State getErrorState()
@@ -144,8 +135,9 @@ public class PriceEditFieldControl extends DetailExpander
                 mPriceMgr = priceMgr;
         }
 
-        public void onLoadFinished()
+        public void onLoadFinished(PriceMgr priceMgr)
         {
+                mPriceMgr = priceMgr;
                 String currencyCode = mPriceMgr.getUnitPrice().getCurrencyCode();
                 mEtCurrencyCode.setText(currencyCode);
                 mUnitPrice.setPrice(currencyCode, mPriceMgr.getUnitPriceForDisplay());
@@ -246,6 +238,11 @@ public class PriceEditFieldControl extends DetailExpander
         public void onNewItem()
         {
 
+        }
+
+        public String getCurrencyCode()
+        {
+                return mEtCurrencyCode.getText().toString();
         }
 
         enum Event
@@ -399,6 +396,7 @@ public class PriceEditFieldControl extends DetailExpander
                                         control.setCurrencyCodeError(R.string.empty_currency_code_msg);
                                 }
                         },
+
                 CURRENCY_CODE_INVALID(PRICE_ERROR)
                         {
                                 @Override

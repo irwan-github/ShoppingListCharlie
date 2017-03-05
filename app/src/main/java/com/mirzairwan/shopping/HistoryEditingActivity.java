@@ -24,12 +24,20 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryItemE
         private HistoryItemEditorControl mItemEditorControl;
 
         @Override
-        protected void onCreate(Bundle savedInstanceState)
+        protected ItemControl getItemControl()
         {
                 mItemEditorControl = new HistoryItemEditorControl(this);
-                mItemControl = mItemEditorControl;
+                return mItemEditorControl;
+        }
 
+        @Override
+        protected void onCreate(Bundle savedInstanceState)
+        {
                 super.onCreate(savedInstanceState);
+
+                mItemEditFieldControl = new ItemEditFieldControl(this);
+                mItemEditFieldControl.setOnTouchListener(mOnTouchListener);
+
                 mItemEditorControl.setItemEditFieldControl(mItemEditFieldControl);
                 mItemEditorControl.setPriceEditFieldControl(mPriceEditFieldControl);
 

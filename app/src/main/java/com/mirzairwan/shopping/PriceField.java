@@ -3,9 +3,7 @@ package com.mirzairwan.shopping;
 import android.support.design.widget.TextInputEditText;
 import android.support.design.widget.TextInputLayout;
 import android.text.TextUtils;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
 import android.widget.TextView;
 
 import com.mirzairwan.shopping.domain.ExchangeRate;
@@ -32,19 +30,16 @@ import java.text.ParseException;
 public class PriceField implements View.OnFocusChangeListener
 {
         private double mCurrentPrice = 0.00;
-        private ItemControl mItemControl;
         private TextInputEditText mTextInputPrice;
         private TextInputLayout mEtPriceWrapper;
         private String mTextHint;
         private ExchangeRate mExchangeRate;
 
-        public PriceField(TextInputLayout priceWrapper, String textHint, int textInputId, ItemControl itemControl)
+        public PriceField(TextInputLayout priceWrapper, String textHint, int textInputId)
         {
                 mEtPriceWrapper = priceWrapper;
                 mTextInputPrice = (TextInputEditText) mEtPriceWrapper.findViewById(textInputId);
                 mTextInputPrice.setOnFocusChangeListener(this);
-                mTextInputPrice.setOnEditorActionListener(new Action());
-                mItemControl = itemControl;
                 mTextHint = textHint;
                 try
                 {
@@ -58,6 +53,11 @@ public class PriceField implements View.OnFocusChangeListener
                 {
                         e.printStackTrace();
                 }
+        }
+
+        public void setOnEditorActionListener(TextView.OnEditorActionListener action)
+        {
+                mTextInputPrice.setOnEditorActionListener(action);
         }
 
         @Override
@@ -185,16 +185,16 @@ public class PriceField implements View.OnFocusChangeListener
                 mTextInputPrice.setEnabled(isEnabled);
         }
 
-        class Action implements TextView.OnEditorActionListener
-        {
-                @Override
-                public boolean onEditorAction(TextView v, int actionId, KeyEvent event)
-                {
-                        if (actionId == EditorInfo.IME_ACTION_DONE)
-                        {
-                                mItemControl.onOk();
-                        }
-                        return false;
-                }
-        }
+//        class Action implements TextView.OnEditorActionListener
+//        {
+//                @Override
+//                public boolean onEditorAction(TextView v, int actionId, KeyEvent event)
+//                {
+//                        if (actionId == EditorInfo.IME_ACTION_DONE)
+//                        {
+//                                mItemControl.onOk();
+//                        }
+//                        return false;
+//                }
+//        }
 }

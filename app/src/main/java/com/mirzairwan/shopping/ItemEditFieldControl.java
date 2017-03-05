@@ -231,11 +231,6 @@ public class ItemEditFieldControl extends DetailExpander
 
         }
 
-        private void setMenuVisible(int menuId, boolean isVisible)
-        {
-                mItemContext.setMenuVisible(menuId, isVisible);
-        }
-
         private class ActionListener implements TextView.OnEditorActionListener
         {
                 @Override

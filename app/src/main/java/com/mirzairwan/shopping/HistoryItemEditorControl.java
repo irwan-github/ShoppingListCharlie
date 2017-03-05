@@ -6,8 +6,6 @@ package com.mirzairwan.shopping;
 
 import android.util.Log;
 
-import com.mirzairwan.shopping.domain.PriceMgr;
-
 import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_BACK;
 import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_CHANGE;
 import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_CREATE_OPTIONS_MENU;
@@ -40,13 +38,11 @@ import static com.mirzairwan.shopping.ItemEditFieldControl.State.ERROR_EMPTY_NAM
  */
 public class HistoryItemEditorControl implements ItemControl
 {
+        private String LOG_TAG = HistoryItemEditorControl.class.getSimpleName();
         private ItemEditorContext mContext;
-
         private State mCurrentState = START;
-        private PriceMgr mPriceMgr;
         private ItemManager mItemManager;
         private ItemEditFieldControl mItemEditFieldControl;
-        private String LOG_TAG = HistoryItemEditorControl.class.getSimpleName();
         private PriceEditFieldControl mPriceEditFieldControl;
 
         public HistoryItemEditorControl(ItemEditorContext context)

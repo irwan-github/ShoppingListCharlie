@@ -13,7 +13,9 @@ import android.widget.CompoundButton;
 import android.widget.ToggleButton;
 
 import static com.mirzairwan.shopping.DetailExpander.Event.BUTTON_CLICK;
+import static com.mirzairwan.shopping.DetailExpander.Event.ON_INITIALIZE_CONTRACT;
 import static com.mirzairwan.shopping.DetailExpander.State.CONTRACT;
+import static com.mirzairwan.shopping.DetailExpander.State.NEUTRAL;
 
 /**
  * Created by Mirza Irwan on 14/2/17.
@@ -25,23 +27,33 @@ public abstract class DetailExpander implements CompoundButton.OnCheckedChangeLi
         private ViewGroup mRootView;
         private ToggleButton mToggleButton;
         private Activity mActivity;
-        private State mState;
+        private State mState = NEUTRAL;
 
-        public DetailExpander(Activity activity)
+        public DetailExpander(Activity activity, Event initialEvent)
         {
-                mState = CONTRACT;
                 mActivity = activity;
                 mToggleButton = (ToggleButton) mActivity.findViewById(getToggleButtonId());
 
                 // Get the root view to create a transition
                 mRootView = (ViewGroup) mActivity.findViewById(getViewGroupId());
                 setupButton();
+                mState = mState.transition(initialEvent, this);
+        }
+
+        public DetailExpander(Activity activity)
+        {
+                mActivity = activity;
+                mToggleButton = (ToggleButton) mActivity.findViewById(getToggleButtonId());
+
+                // Get the root view to create a transition
+                mRootView = (ViewGroup) mActivity.findViewById(getViewGroupId());
+                setupButton();
+                mState = mState.transition(ON_INITIALIZE_CONTRACT, this);
         }
 
         public DetailExpander(ItemContext itemContext)
         {
                 mState = CONTRACT;
-                //mActivity = activity;
                 mItemContext = itemContext;
                 mToggleButton = (ToggleButton) itemContext.findViewById(getToggleButtonId());
 
@@ -71,6 +83,11 @@ public abstract class DetailExpander implements CompoundButton.OnCheckedChangeLi
                 mState = mState.transition(BUTTON_CLICK, this);
         }
 
+        private void showVisible(boolean isVisible)
+        {
+                mRootView.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+        }
+
         /**
          * Ui Action methods for version Kitkat and below
          */
@@ -89,7 +106,6 @@ public abstract class DetailExpander implements CompoundButton.OnCheckedChangeLi
          */
         private void expandMore()
         {
-                //Transition transition = TransitionInflater.from(mActivity).inflateTransition(R.transition.item_expand_more);
                 Transition transition = mItemContext.inflateTransition(R.transition.item_expand_more);
 
                 // Start recording changes to the view hierarchy
@@ -98,11 +114,11 @@ public abstract class DetailExpander implements CompoundButton.OnCheckedChangeLi
         }
 
         /**
-         *  Ui Action methods
+         * Ui Action methods
          */
         public void showMore()
         {
-                mRootView.setVisibility(View.INVISIBLE);
+                //mRootView.setVisibility(View.INVISIBLE);
                 // get the center for the clipping circle
                 int cx = mRootView.getWidth() / 2;
                 int cy = mRootView.getHeight() / 2;
@@ -136,7 +152,7 @@ public abstract class DetailExpander implements CompoundButton.OnCheckedChangeLi
         }
 
         /**
-         *  Ui Action methods
+         * Ui Action methods
          */
         private void showLess()
         {
@@ -176,11 +192,43 @@ public abstract class DetailExpander implements CompoundButton.OnCheckedChangeLi
 
         enum Event
         {
-                BUTTON_CLICK
+                ON_INITIALIZE_EXPAND, ON_INITIALIZE_CONTRACT, BUTTON_CLICK
         }
 
         enum State
         {
+                NEUTRAL
+                        {
+                                @Override
+                                State transition(Event event, DetailExpander control)
+                                {
+                                        State state = this;
+                                        switch (event)
+                                        {
+                                                case ON_INITIALIZE_EXPAND:
+                                                        state = EXPAND;
+                                                        break;
+                                                default:
+                                                        state = CONTRACT;
+                                        }
+                                        state.showUiOuput(event, control);
+                                        return state;
+                                }
+
+                                @Override
+                                void showUiOuput(Event event, DetailExpander control)
+                                {
+                                        switch (event)
+                                        {
+                                                case ON_INITIALIZE_EXPAND:
+                                                        control.showVisible(true);
+                                                        break;
+                                                default:
+                                                        control.showVisible(false);
+                                        }
+                                }
+                        },
+
                 CONTRACT
                         {
                                 @Override
@@ -201,7 +249,14 @@ public abstract class DetailExpander implements CompoundButton.OnCheckedChangeLi
                                 @Override
                                 void showUiOuput(Event event, DetailExpander control)
                                 {
-                                        control.showLess();
+                                        switch (event)
+                                        {
+                                                case ON_INITIALIZE_CONTRACT:
+                                                        control.showVisible(false);
+                                                        break;
+                                                default:
+                                                        control.showLess();
+                                        }
                                 }
                         },
 
@@ -224,7 +279,14 @@ public abstract class DetailExpander implements CompoundButton.OnCheckedChangeLi
                                 @Override
                                 void showUiOuput(Event event, DetailExpander control)
                                 {
-                                        control.showMore();
+                                        switch (event)
+                                        {
+                                                case ON_INITIALIZE_EXPAND:
+                                                        control.showVisible(true);
+                                                        break;
+                                                default:
+                                                        control.showMore();
+                                        }
 
                                 }
                         };
@@ -237,4 +299,6 @@ public abstract class DetailExpander implements CompoundButton.OnCheckedChangeLi
                 }
 
         }
+
+
 }

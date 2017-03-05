@@ -21,13 +21,10 @@ import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.design.widget.BaseTransientBottomBar;
 import android.support.design.widget.Snackbar;
-import android.support.design.widget.TextInputLayout;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.Editable;
-import android.text.TextUtils;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
 import android.util.Log;
@@ -35,7 +32,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -56,7 +52,6 @@ import java.util.Map;
 
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_PICTURE_LOADER_ID;
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_PRICE_LOADER_ID;
-import static com.mirzairwan.shopping.R.id.et_bundle_price;
 import static com.mirzairwan.shopping.ShoppingActivity.EXCHANGE_RATE;
 
 /**
@@ -105,18 +100,15 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected PictureMgr mPictureMgr;
         protected PriceMgr mPriceMgr;
         protected String mSettingsCountryCode;
-        protected EditText etCurrencyCode;
-        protected PriceField mUnitPriceEditField;
-        protected PriceField mBundlePriceEditField;
-        protected ItemControl mItemControl;
+        private ItemControl mItemControl;
         protected String mDbMsg;
         protected View mContainer;
         protected Menu mMenu;
-        protected ItemEditFieldControl mItemEditFieldControl;
         private ImageView mImgItemPic;
         private long itemId;
         private ExchangeRateInput mExchangeRateInput;
         protected PriceEditFieldControl mPriceEditFieldControl;
+        protected ItemEditFieldControl mItemEditFieldControl;
 
         /*During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance
             and restore when device orientates to landscape. */
@@ -163,6 +155,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected void onCreate(Bundle savedInstanceState)
         {
                 super.onCreate(savedInstanceState);
+                mItemControl = getItemControl();
                 PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
                 setContentView(getLayoutXml());
 
@@ -178,7 +171,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 mSettingsCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
 
                 mPriceMgr = new PriceMgr(mSettingsCountryCode);
-                mPriceEditFieldControl = new PriceEditFieldControl(this, sharedPrefs);
 
                 String webApiKeyPref = getString(R.string.key_forex_web_api_1);
                 mWebApiBase = sharedPrefs.getString(webApiKeyPref, null);
@@ -192,7 +184,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         mExchangeRateInput.addSourceCurrency(mExchangeRate.getSourceCurrencyCode());
                 }
 
-                mPriceEditFieldControl.setPriceMgr(mPriceMgr);
                 setupViews();
 
                 if (savedInstanceState == null)
@@ -206,6 +197,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         mPictureMgr = savedInstanceState.getParcelable(PICTURE_MANAGER);
                 }
         }
+
+        protected abstract ItemControl getItemControl();
 
         protected void setupViews()
         {
@@ -224,20 +217,14 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         }
                 };
 
+                mPriceEditFieldControl = new PriceEditFieldControl(this, mSettingsCountryCode);
+                mPriceEditFieldControl.setPriceMgr(mPriceMgr);
+                mPriceEditFieldControl.setOnTouchListener(mOnTouchListener);
+
                 mItemEditFieldControl = new ItemEditFieldControl(this);
                 mItemEditFieldControl.setOnTouchListener(mOnTouchListener);
 
                 mImgItemPic = (ImageView) findViewById(R.id.img_item);
-
-                TextInputLayout etUnitPrice = (TextInputLayout) findViewById(R.id.unit_price_layout);
-                mUnitPriceEditField = new PriceField(etUnitPrice, getString(R.string.unit_price_txt), R.id.et_unit_price, mItemControl);
-
-                TextInputLayout etBundlePrice = (TextInputLayout) findViewById(R.id.bundle_price_layout);
-                mBundlePriceEditField = new PriceField(etBundlePrice, getString(R.string.bundle_price_txt), et_bundle_price, mItemControl);
-
-                mPriceEditFieldControl.setUnitPrice(mUnitPriceEditField);
-                mPriceEditFieldControl.setBundlePrice(mBundlePriceEditField);
-                mPriceEditFieldControl.setOnTouchListener(mOnTouchListener);
 
 //                etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
 //                OnCurrencyCodeChange onCurrencyCodeChange = new OnCurrencyCodeChange(etCurrencyCode, mUnitPriceEditField, mBundlePriceEditField, mItemControl);
@@ -690,28 +677,28 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 alertDialog.show();
         }
 
-        /**
-         * Validate item details. Invoked when user clicks on save button.
-         * Show error messages.
-         *
-         * @return true if input fields are valid
-         */
-        public boolean areFieldsValid()
-        {
-                boolean result = true;
-
-                Editable currencyCodeEditable = etCurrencyCode.getText();
-                boolean isCurrencyCodeValid = !TextUtils.isEmpty(currencyCodeEditable) && FormatHelper.isValidCurrencyCode(currencyCodeEditable.toString());
-
-                if (!isCurrencyCodeValid)
-                {
-                        etCurrencyCode.clearFocus();
-                        etCurrencyCode.setError(getString(R.string.valid_country_code_msg));
-                        result = false;
-                }
-
-                return result;
-        }
+//        /**
+//         * Validate item details. Invoked when user clicks on save button.
+//         * Show error messages.
+//         *
+//         * @return true if input fields are valid
+//         */
+//        public boolean areFieldsValid()
+//        {
+//                boolean result = true;
+//
+//                Editable currencyCodeEditable = etCurrencyCode.getText();
+//                boolean isCurrencyCodeValid = !TextUtils.isEmpty(currencyCodeEditable) && FormatHelper.isValidCurrencyCode(currencyCodeEditable.toString());
+//
+//                if (!isCurrencyCodeValid)
+//                {
+//                        etCurrencyCode.clearFocus();
+//                        etCurrencyCode.setError(getString(R.string.valid_country_code_msg));
+//                        result = false;
+//                }
+//
+//                return result;
+//        }
 
         /**
          * Select following child records of  item:
@@ -782,9 +769,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 {
                         case ITEM_PRICE_LOADER_ID:
                                 mPriceMgr.createPrices(cursor);
-                                //mItemControl.onLoadPriceFinished(mPriceMgr);
-                                mPriceEditFieldControl.setPriceMgr(mPriceMgr);
-                                mPriceEditFieldControl.onLoadFinished();
+                                mPriceEditFieldControl.onLoadFinished(mPriceMgr);
 
                                 /*
                                 Important to move cursor back before the first record because when device switches to landscape, it gives back the same cursor with
@@ -902,7 +887,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         Log.d("CurrencyCode", "onLoadFinished");
                         if (exchangeRates != null)
                         {
-                                String sourceCurrencyCode = etCurrencyCode.getText().toString();
+                                String sourceCurrencyCode = mPriceEditFieldControl.getCurrencyCode();
                                 mExchangeRate = exchangeRates.get(sourceCurrencyCode);
                         }
                         else

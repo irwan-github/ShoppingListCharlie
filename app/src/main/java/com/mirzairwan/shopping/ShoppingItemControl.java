@@ -3,9 +3,8 @@ package com.mirzairwan.shopping;
 import android.util.Log;
 
 import com.mirzairwan.shopping.domain.Item;
-import com.mirzairwan.shopping.domain.PriceMgr;
 
-import static com.mirzairwan.shopping.ItemBuyQtyControl.State.BUY_ERROR;
+import static com.mirzairwan.shopping.ItemBuyFieldControl.State.BUY_ERROR;
 import static com.mirzairwan.shopping.ItemEditFieldControl.State.ERROR_EMPTY_NAME;
 import static com.mirzairwan.shopping.PriceEditFieldControl.State.PRICE_ERROR;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_BACK;
@@ -31,14 +30,13 @@ import static com.mirzairwan.shopping.ShoppingItemControl.State.START;
 
 public class ShoppingItemControl implements ItemControl
 {
+        private String LOG_TAG = ShoppingItemControl.class.getCanonicalName();
         protected State mCurrentState = START;
         protected ItemType mItemType;
-        protected PriceMgr mPriceMgr;
-        private ItemEditFieldControl mItemEditFieldControl;
         private ShoppingItemContext mContext;
         private PurchaseManager mPurchaseManager;
-        private String LOG_TAG = ShoppingItemControl.class.getCanonicalName();
-        private ItemBuyQtyControl mItemBuyQtyControl;
+        private ItemEditFieldControl mItemEditFieldControl;
+        private ItemBuyFieldControl mItemBuyFieldControl;
         private PriceEditFieldControl mPriceEditFieldControl;
 
         public ShoppingItemControl(ShoppingItemContext context)
@@ -57,7 +55,7 @@ public class ShoppingItemControl implements ItemControl
         {
                 mItemType = NEW_ITEM;
                 mCurrentState = mCurrentState.transition(ON_NEW, this);
-                mItemBuyQtyControl.onNewItem();
+                mItemBuyFieldControl.onNewItem();
                 mPriceEditFieldControl.onNewItem();
         }
 
@@ -118,14 +116,14 @@ public class ShoppingItemControl implements ItemControl
                         return;
                 }
 
-                mItemBuyQtyControl.onValidate();
+                mItemBuyFieldControl.onValidate();
 
                 if (mPriceEditFieldControl.getErrorState() == PRICE_ERROR )
                 {
                         return;
                 }
 
-                if(mItemBuyQtyControl.getErrorState() == BUY_ERROR)
+                if(mItemBuyFieldControl.getErrorState() == BUY_ERROR)
                 {
                         return;
                 }
@@ -163,7 +161,7 @@ public class ShoppingItemControl implements ItemControl
 
                 mPriceEditFieldControl.populatePriceMgr();
 
-                mItemBuyQtyControl.populatePurchaseMgr();
+                mItemBuyFieldControl.populatePurchaseMgr();
 
                 mContext.insert(mPurchaseManager);
         }
@@ -176,7 +174,7 @@ public class ShoppingItemControl implements ItemControl
 
                 mPriceEditFieldControl.populatePriceMgr();
 
-                mItemBuyQtyControl.populatePurchaseMgr();
+                mItemBuyFieldControl.populatePurchaseMgr();
 
                 mContext.update(mPurchaseManager);
         }
@@ -216,9 +214,9 @@ public class ShoppingItemControl implements ItemControl
                 mContext.setExitTransition();
         }
 
-        public void setItemBuyQtyFieldControl(ItemBuyQtyControl itemBuyQtyControl)
+        public void setItemBuyQtyFieldControl(ItemBuyFieldControl itemBuyFieldControl)
         {
-                mItemBuyQtyControl = itemBuyQtyControl;
+                mItemBuyFieldControl = itemBuyFieldControl;
         }
 
         public void setPriceEditFieldControl(PriceEditFieldControl priceEditFieldControl)

@@ -48,6 +48,7 @@
                         android:layout_height="48dp"
                         android:layout_gravity="top"
                         android:layout_marginLeft="8dp"
+                        android:button="@drawable/toggle_expand_details"
                         />
 
         </LinearLayout>

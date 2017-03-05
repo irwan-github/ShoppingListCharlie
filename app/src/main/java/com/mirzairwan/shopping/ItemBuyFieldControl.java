@@ -1,7 +1,6 @@
 package com.mirzairwan.shopping;
 
 import android.support.design.widget.TextInputEditText;
-import android.support.design.widget.TextInputLayout;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -13,14 +12,16 @@ import com.mirzairwan.shopping.domain.ItemInShoppingList;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.PriceMgr;
 
-import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_BUY_QTY_ZERO;
-import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_NEW;
-import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_INVALID_MULTIPLES;
-import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_SELECT_BUNDLE_PRICE;
-import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_SELECT_UNIT_PRICE;
-import static com.mirzairwan.shopping.ItemBuyQtyControl.Event.ON_VALID_BUY_QTY;
-import static com.mirzairwan.shopping.ItemBuyQtyControl.State.NEUTRAL;
-import static com.mirzairwan.shopping.domain.Price.Type.UNIT_PRICE;
+import static com.mirzairwan.shopping.ItemBuyFieldControl.Event.ON_BUY_QTY_ZERO;
+import static com.mirzairwan.shopping.ItemBuyFieldControl.Event.ON_INVALID_MULTIPLES;
+import static com.mirzairwan.shopping.ItemBuyFieldControl.Event.ON_LOAD_BUNDLE_PX;
+import static com.mirzairwan.shopping.ItemBuyFieldControl.Event.ON_LOAD_UNIT_PX;
+import static com.mirzairwan.shopping.ItemBuyFieldControl.Event.ON_NEW;
+import static com.mirzairwan.shopping.ItemBuyFieldControl.Event.ON_SELECT_BUNDLE_PRICE;
+import static com.mirzairwan.shopping.ItemBuyFieldControl.Event.ON_SELECT_UNIT_PRICE;
+import static com.mirzairwan.shopping.ItemBuyFieldControl.Event.ON_VALIDATE;
+import static com.mirzairwan.shopping.ItemBuyFieldControl.Event.ON_VALID_BUY_QTY;
+import static com.mirzairwan.shopping.ItemBuyFieldControl.State.NEUTRAL;
 import static java.lang.Integer.parseInt;
 
 
@@ -28,10 +29,12 @@ import static java.lang.Integer.parseInt;
  * Created by Mirza Irwan on 28/2/17.
  */
 
-public class ItemBuyQtyControl
+public class ItemBuyFieldControl
 {
+        private RadioButton mRbBundlePrice;
+        private RadioButton mRbUnitPrice;
+        private OnSelectedPriceChangeListener mOnSelectedPriceChangeListener;
         private ItemContext mItemContext;
-        private TextInputLayout mQtyToBuyWrapper;
         private TextInputEditText mEtQtyToBuy;
         private PurchaseManager mPurchaseManager;
         private PriceEditFieldControl mPriceEditFieldControl;
@@ -39,26 +42,17 @@ public class ItemBuyQtyControl
         private State mState = NEUTRAL;
         private PriceMgr mPriceMgr;
 
-        public ItemBuyQtyControl(ItemContext itemContext)
+        public ItemBuyFieldControl(ItemContext itemContext)
         {
                 mItemContext = itemContext;
-                mQtyToBuyWrapper = (TextInputLayout) itemContext.findViewById(R.id.item_quantity_layout);
-                mEtQtyToBuy = (TextInputEditText) mQtyToBuyWrapper.findViewById(R.id.et_item_quantity);
+                mEtQtyToBuy = (TextInputEditText) itemContext.findViewById(R.id.et_item_quantity);
                 mRgPriceTypeChoice = (RadioGroup) itemContext.findViewById(R.id.price_type_choice);
 
-                OnSelectedPriceChangeListener listener = new OnSelectedPriceChangeListener();
+                mOnSelectedPriceChangeListener = new OnSelectedPriceChangeListener();
 
-                RadioButton rbUnitPrice = (RadioButton) mRgPriceTypeChoice.findViewById(R.id.rb_unit_price);
-                rbUnitPrice.setOnCheckedChangeListener(listener);
+                mRbUnitPrice = (RadioButton) mRgPriceTypeChoice.findViewById(R.id.rb_unit_price);
+                mRbBundlePrice = (RadioButton) mRgPriceTypeChoice.findViewById(R.id.rb_bundle_price);
 
-                RadioButton rbBundlePrice = (RadioButton) mRgPriceTypeChoice.findViewById(R.id.rb_bundle_price);
-                rbBundlePrice.setOnCheckedChangeListener(listener);
-        }
-
-        private void initializeUi()
-        {
-                /* Set default quantity to 1. If I set this in xml layout , it will jumble up the number and hint. This did not happen at SDK v24 */
-                mEtQtyToBuy.setText("1");
         }
 
 
@@ -81,15 +75,36 @@ public class ItemBuyQtyControl
 
         public void onLoadFinished()
         {
-                populateBuyQuantityField();
                 Price.Type priceType = mPurchaseManager.getItemInShoppingList().getSelectedPriceType();
-                selectPriceType(priceType);
+                switch (priceType)
+                {
+                        case UNIT_PRICE:
+                                mState = mState.transition(ON_LOAD_UNIT_PX, this);
+                                break;
+                        case BUNDLE_PRICE:
+                                mState = mState.transition(ON_LOAD_BUNDLE_PX, this);
+                                break;
+                }
         }
 
-        private void populateBuyQuantityField()
+        private void setDefaultBuyQuantityFields()
+        {
+                /* Set default quantity to 1. If I set this in xml layout , it will jumble up the number and hint. This did not happen at SDK v24 */
+                mEtQtyToBuy.setText("1");
+                selectPriceType(Price.Type.UNIT_PRICE);
+                mRbUnitPrice.setOnCheckedChangeListener(mOnSelectedPriceChangeListener);
+                mRbBundlePrice.setOnCheckedChangeListener(mOnSelectedPriceChangeListener);
+        }
+
+        private void populateBuyQuantityFields()
         {
                 ItemInShoppingList itemInShoppingList = mPurchaseManager.getItemInShoppingList();
                 mEtQtyToBuy.setText(String.valueOf(itemInShoppingList.getQuantity()));
+
+                Price.Type priceType = mPurchaseManager.getItemInShoppingList().getSelectedPriceType();
+                selectPriceType(priceType);
+                mRbUnitPrice.setOnCheckedChangeListener(mOnSelectedPriceChangeListener);
+                mRbBundlePrice.setOnCheckedChangeListener(mOnSelectedPriceChangeListener);
         }
 
         private boolean isQuantityToBuyZero()
@@ -116,7 +131,6 @@ public class ItemBuyQtyControl
          */
         private void validateUnitBuyQty()
         {
-                //mPriceEditFieldControl.onValidateUnitSet();
                 if (isQuantityToBuyZero())
                 {
                         mState = mState.transition(ON_BUY_QTY_ZERO, this);
@@ -145,24 +159,33 @@ public class ItemBuyQtyControl
         private void onSelectPriceType(int choiceId)
         {
                 Log.d("onCheckedChanged", "onSelectPriceType: " + String.valueOf(choiceId));
-                if (choiceId == R.id.rb_unit_price)
+
+                switch (choiceId)
                 {
-                        mState = mState.transition(ON_SELECT_UNIT_PRICE, this);
+                        case R.id.rb_unit_price:
+                        {
+                                mState = mState.transition(ON_SELECT_UNIT_PRICE, this);
 
                         /* Bundle quantity is not needed in unit price calculation. Set the  bundle qty error state to neutral state in order ro proceed */
-                        mPriceEditFieldControl.onNeutral();
+                                mPriceEditFieldControl.onNeutral();
 
-                        validateUnitBuyQty();
+                                validateUnitBuyQty();
 
-                        return;
-                }
+                                break;
+                        }
 
-                if (choiceId == R.id.rb_bundle_price)
-                {
-                        mState = mState.transition(ON_SELECT_BUNDLE_PRICE, this);
+                        case R.id.rb_bundle_price:
+                        {
+                                mState = mState.transition(ON_SELECT_BUNDLE_PRICE, this);
 
-                        validateBundleBuyQty();
+                                /* Validate bundle quantity */
+                                mPriceEditFieldControl.onValidateBundleSet();
 
+                                //validateBundleBuyQty();
+
+                                break;
+
+                        }
                 }
         }
 
@@ -188,12 +211,12 @@ public class ItemBuyQtyControl
         void selectPriceType(Price.Type priceType)
         {
                 Log.d("onCheckedChanged", "selectPriceType: " + priceType);
-                switch(priceType)
+                switch (priceType)
                 {
                         case UNIT_PRICE:
                                 mRgPriceTypeChoice.check(R.id.rb_unit_price);
                                 break;
-                        case  BUNDLE_PRICE:
+                        case BUNDLE_PRICE:
                                 mRgPriceTypeChoice.check(R.id.rb_bundle_price);
                                 break;
                         default:
@@ -251,17 +274,7 @@ public class ItemBuyQtyControl
                                 break;
                 }
 
-                switch (mState)
-                {
-                        case UNIT_PRICE:
-                        case UNIT_BUY_QTY_ERROR:
-                                validateUnitBuyQty();
-                                break;
-                        case BUNDLE_PRICE:
-                        case BUNDLE_BUY_QTY_ERROR:
-                                validateBundleBuyQty();
-                                break;
-                }
+                mState = mState.transition(ON_VALIDATE, this);
         }
 
         public void populatePurchaseMgr()
@@ -275,13 +288,13 @@ public class ItemBuyQtyControl
                 switch (optionId)
                 {
                         case R.id.rb_unit_price:
-                                selectedPriceType = UNIT_PRICE;
+                                selectedPriceType = Price.Type.UNIT_PRICE;
                                 break;
                         case R.id.rb_bundle_price:
                                 selectedPriceType = Price.Type.BUNDLE_PRICE;
                                 break;
                         default:
-                                selectedPriceType = UNIT_PRICE;
+                                selectedPriceType = Price.Type.UNIT_PRICE;
                 }
 
                 Price selectedPrice = mPriceMgr.getSelectedPrice(selectedPriceType);
@@ -302,13 +315,12 @@ public class ItemBuyQtyControl
         public void onNewItem()
         {
                 mState = mState.transition(ON_NEW, this);
-                selectPriceType(UNIT_PRICE);
         }
 
 
         enum Event
         {
-                ON_BUY_QTY_ZERO, ON_SELECT_UNIT_PRICE, ON_SELECT_BUNDLE_PRICE, ON_INVALID_MULTIPLES, ON_VALID_BUY_QTY, ON_NEW;
+                ON_BUY_QTY_ZERO, ON_SELECT_UNIT_PRICE, ON_SELECT_BUNDLE_PRICE, ON_INVALID_MULTIPLES, ON_VALID_BUY_QTY, ON_NEW, ON_VALIDATE, ON_LOAD_UNIT_PX, ON_LOAD_BUNDLE_PX;
         }
 
         enum State
@@ -316,19 +328,18 @@ public class ItemBuyQtyControl
                 NEUTRAL(null)
                         {
                                 @Override
-                                State transition(Event event, ItemBuyQtyControl control)
+                                State transition(Event event, ItemBuyFieldControl control)
                                 {
                                         State state = this;
                                         switch (event)
                                         {
                                                 case ON_NEW:
-                                                        state = this;
-                                                        break;
-                                                case ON_SELECT_UNIT_PRICE:
                                                         state = UNIT_PRICE;
                                                         break;
-
-                                                case ON_SELECT_BUNDLE_PRICE:
+                                                case ON_LOAD_UNIT_PX:
+                                                        state = UNIT_PRICE;
+                                                        break;
+                                                case ON_LOAD_BUNDLE_PX:
                                                         state = BUNDLE_PRICE;
                                                         break;
                                         }
@@ -336,21 +347,12 @@ public class ItemBuyQtyControl
                                         state.setUiOutput(event, control);
                                         return state;
                                 }
-
-                                @Override
-                                void setUiOutput(Event event, ItemBuyQtyControl control)
-                                {
-                                        if (event == ON_NEW)
-                                        {
-                                                control.initializeUi();
-                                        }
-                                }
                         },
 
                 UNIT_PRICE(null)
                         {
                                 @Override
-                                State transition(Event event, ItemBuyQtyControl control)
+                                State transition(Event event, ItemBuyFieldControl control)
                                 {
                                         State state = this;
                                         switch (event)
@@ -359,8 +361,22 @@ public class ItemBuyQtyControl
                                                         state = UNIT_BUY_QTY_ERROR;
                                                         break;
 
+                                                case ON_VALIDATE:
+                                                        if (control.isQuantityToBuyZero())
+                                                        {
+                                                                state = UNIT_BUY_QTY_ERROR;
+                                                        }
+                                                        break;
+
                                                 case ON_SELECT_BUNDLE_PRICE:
-                                                        state = BUNDLE_PRICE;
+                                                        if (control.isBuyQtyOneOrLess() || !control.isBuyQuantityValidMultiples())
+                                                        {
+                                                                state = BUNDLE_BUY_QTY_ERROR;
+                                                        }
+                                                        else
+                                                        {
+                                                                state = BUNDLE_PRICE;
+                                                        }
                                                         break;
                                         }
                                         state.setUiOutput(event, control);
@@ -368,11 +384,17 @@ public class ItemBuyQtyControl
                                 }
 
                                 @Override
-                                void setUiOutput(Event event, ItemBuyQtyControl control)
+                                void setUiOutput(Event event, ItemBuyFieldControl control)
                                 {
                                         switch (event)
                                         {
-                                                case ON_SELECT_UNIT_PRICE:
+                                                case ON_NEW:
+                                                        control.setDefaultBuyQuantityFields();
+                                                        break;
+                                                case ON_LOAD_UNIT_PX:
+                                                        control.populateBuyQuantityFields();
+                                                        break;
+                                                default:
                                                         control.clearBuyQtyError();
                                                         control.clearBundleQtyError();
                                                         break;
@@ -383,7 +405,7 @@ public class ItemBuyQtyControl
                 BUY_ERROR(null)
                         {
                                 @Override
-                                State transition(Event event, ItemBuyQtyControl control)
+                                State transition(Event event, ItemBuyFieldControl control)
                                 {
                                         return null;
                                 }
@@ -392,7 +414,7 @@ public class ItemBuyQtyControl
                 UNIT_BUY_QTY_ERROR(BUY_ERROR)
                         {
                                 @Override
-                                State transition(Event event, ItemBuyQtyControl control)
+                                State transition(Event event, ItemBuyFieldControl control)
                                 {
                                         State state = this;
                                         switch (event)
@@ -401,8 +423,21 @@ public class ItemBuyQtyControl
                                                         state = UNIT_PRICE;
                                                         break;
 
+                                                case ON_VALIDATE:
+                                                        if (!control.isQuantityToBuyZero())
+                                                        {
+                                                                state = UNIT_PRICE;
+                                                        }
+                                                        break;
                                                 case ON_SELECT_BUNDLE_PRICE:
-                                                        state = BUNDLE_PRICE;
+                                                        if (control.isBuyQtyOneOrLess() || !control.isBuyQuantityValidMultiples())
+                                                        {
+                                                                state = BUNDLE_BUY_QTY_ERROR;
+                                                        }
+                                                        else
+                                                        {
+                                                                state = BUNDLE_PRICE;
+                                                        }
                                                         break;
                                         }
                                         state.setUiOutput(event, control);
@@ -410,31 +445,40 @@ public class ItemBuyQtyControl
                                 }
 
                                 @Override
-                                void setUiOutput(Event event, ItemBuyQtyControl control)
+                                void setUiOutput(Event event, ItemBuyFieldControl control)
                                 {
-                                        switch (event)
-                                        {
-                                                case ON_BUY_QTY_ZERO:
-                                                        control.setErrorQuantity(R.string.invalid_buy_quantity_zero);
-                                                        break;
-                                        }
+                                        control.setErrorQuantity(R.string.invalid_buy_quantity_zero);
                                 }
                         },
 
                 BUNDLE_PRICE(null)
                         {
                                 @Override
-                                State transition(Event event, ItemBuyQtyControl control)
+                                State transition(Event event, ItemBuyFieldControl control)
                                 {
                                         State state = this;
                                         switch (event)
                                         {
                                                 case ON_SELECT_UNIT_PRICE:
-                                                        state = UNIT_PRICE;
+                                                        if (control.isQuantityToBuyZero())
+                                                        {
+                                                                state = UNIT_BUY_QTY_ERROR;
+                                                        }
+                                                        else
+                                                        {
+                                                                state = UNIT_PRICE;
+                                                        }
                                                         break;
 
-                                                case ON_INVALID_MULTIPLES:
-                                                        state = BUNDLE_BUY_QTY_ERROR;
+                                                case ON_VALIDATE:
+                                                        if (control.isBuyQtyOneOrLess() || !control.isBuyQuantityValidMultiples())
+                                                        {
+                                                                state = BUNDLE_BUY_QTY_ERROR;
+                                                        }
+                                                        else
+                                                        {
+                                                                state = BUNDLE_PRICE;
+                                                        }
                                                         break;
                                         }
                                         state.setUiOutput(event, control);
@@ -442,10 +486,13 @@ public class ItemBuyQtyControl
                                 }
 
                                 @Override
-                                void setUiOutput(Event event, ItemBuyQtyControl control)
+                                void setUiOutput(Event event, ItemBuyFieldControl control)
                                 {
                                         switch (event)
                                         {
+                                                case ON_LOAD_BUNDLE_PX:
+                                                        control.populateBuyQuantityFields();
+                                                        break;
                                                 case ON_VALID_BUY_QTY:
                                                         control.clearBuyQtyError();
                                                         break;
@@ -459,20 +506,30 @@ public class ItemBuyQtyControl
                                 State state;
 
                                 @Override
-                                State transition(Event event, ItemBuyQtyControl control)
+                                State transition(Event event, ItemBuyFieldControl control)
                                 {
                                         switch (event)
                                         {
-                                                case ON_INVALID_MULTIPLES:
-                                                        state = this;
-                                                        break;
-
-                                                case ON_VALID_BUY_QTY:
-                                                        state = BUNDLE_PRICE;
+                                                case ON_VALIDATE:
+                                                        if (control.isBuyQtyOneOrLess() || !control.isBuyQuantityValidMultiples())
+                                                        {
+                                                                state = BUNDLE_BUY_QTY_ERROR;
+                                                        }
+                                                        else
+                                                        {
+                                                                state = BUNDLE_PRICE;
+                                                        }
                                                         break;
 
                                                 case ON_SELECT_UNIT_PRICE:
-                                                        state = UNIT_PRICE;
+                                                        if (control.isQuantityToBuyZero())
+                                                        {
+                                                                state = UNIT_BUY_QTY_ERROR;
+                                                        }
+                                                        else
+                                                        {
+                                                                state = UNIT_PRICE;
+                                                        }
                                                         break;
                                         }
 
@@ -481,15 +538,9 @@ public class ItemBuyQtyControl
                                 }
 
                                 @Override
-                                void setUiOutput(Event event, ItemBuyQtyControl control)
+                                void setUiOutput(Event event, ItemBuyFieldControl control)
                                 {
-                                        switch (event)
-                                        {
-                                                case ON_INVALID_MULTIPLES:
-                                                        control.setErrorQuantity(R.string.invalid_multiple_buy_quantity_bundle);
-                                                        break;
-                                        }
-
+                                        control.setErrorQuantity(R.string.invalid_multiple_buy_quantity_bundle);
                                 }
                         };
 
@@ -505,12 +556,12 @@ public class ItemBuyQtyControl
                         return mParentState;
                 }
 
-                void setUiOutput(Event event, ItemBuyQtyControl control)
+                void setUiOutput(Event event, ItemBuyFieldControl control)
                 {
 
                 }
 
-                abstract State transition(Event event, ItemBuyQtyControl control);
+                abstract State transition(Event event, ItemBuyFieldControl control);
         }
 
         class OnSelectedPriceChangeListener implements CompoundButton.OnCheckedChangeListener

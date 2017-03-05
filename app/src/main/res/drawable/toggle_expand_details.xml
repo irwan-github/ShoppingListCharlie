@@ -6,13 +6,13 @@
         <item
                 android:state_checked="true"
                 >
-                <bitmap android:src="@drawable/ic_expand_less" android:gravity="center" />
+                <bitmap android:src="@drawable/ic_expand_more" android:gravity="center" />
         </item>
 
         <item
                 android:state_checked="false"
                 >
-                <bitmap android:src="@drawable/ic_expand_more" android:gravity="center" />
+                <bitmap android:src="@drawable/ic_expand_less" android:gravity="center" />
         </item>
 
 </selector>
