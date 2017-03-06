@@ -6,6 +6,9 @@ import com.mirzairwan.shopping.data.Contract;
 import com.mirzairwan.shopping.domain.Item;
 import com.mirzairwan.shopping.domain.ItemInShoppingList;
 import com.mirzairwan.shopping.domain.Price;
+import com.mirzairwan.shopping.domain.PriceMgr;
+
+import java.util.List;
 
 /**
  * Created by Mirza Irwan on 13/1/17.
@@ -21,6 +24,7 @@ public class PurchaseManager
         private Item mItem;
         private ItemInShoppingList mItemInShoppingList;
         private Price mSelectedPrice;
+        private PriceMgr mPriceMgr;
 
         public PurchaseManager()
         {
@@ -33,6 +37,11 @@ public class PurchaseManager
                 mCursor = cursor;
                 createExistingItem();
                 addExistingItemInShoppingList();
+        }
+
+        public void setPriceMgr(PriceMgr priceMgr)
+        {
+                mPriceMgr = priceMgr;
         }
 
         /**
@@ -159,4 +168,8 @@ public class PurchaseManager
                 }
         }
 
+        public List<Price> getPrices()
+        {
+                return mPriceMgr.getPrices();
+        }
 }

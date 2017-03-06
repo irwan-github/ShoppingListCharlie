@@ -6,7 +6,6 @@ import com.mirzairwan.shopping.domain.Item;
 
 import static com.mirzairwan.shopping.ItemBuyFieldControl.State.BUY_ERROR;
 import static com.mirzairwan.shopping.ItemEditFieldControl.State.ERROR_EMPTY_NAME;
-import static com.mirzairwan.shopping.PriceEditFieldControl.State.PRICE_ERROR;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_BACK;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_CHANGE;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_CREATE_OPTIONS_MENU;
@@ -37,7 +36,6 @@ public class ShoppingItemControl implements ItemControl
         private PurchaseManager mPurchaseManager;
         private ItemEditFieldControl mItemEditFieldControl;
         private ItemBuyFieldControl mItemBuyFieldControl;
-        private PriceEditFieldControl mPriceEditFieldControl;
 
         public ShoppingItemControl(ShoppingItemContext context)
         {
@@ -56,7 +54,6 @@ public class ShoppingItemControl implements ItemControl
                 mItemType = NEW_ITEM;
                 mCurrentState = mCurrentState.transition(ON_NEW, this);
                 mItemBuyFieldControl.onNewItem();
-                mPriceEditFieldControl.onNewItem();
         }
 
         public void setPurchaseManager(PurchaseManager purchaseManager)
@@ -118,11 +115,6 @@ public class ShoppingItemControl implements ItemControl
 
                 mItemBuyFieldControl.onValidate();
 
-                if (mPriceEditFieldControl.getErrorState() == PRICE_ERROR )
-                {
-                        return;
-                }
-
                 if(mItemBuyFieldControl.getErrorState() == BUY_ERROR)
                 {
                         return;
@@ -159,7 +151,7 @@ public class ShoppingItemControl implements ItemControl
 
                 mPurchaseManager.setItem(item);
 
-                mPriceEditFieldControl.populatePriceMgr();
+                //mPriceEditFieldControl.populatePriceMgr();
 
                 mItemBuyFieldControl.populatePurchaseMgr();
 
@@ -171,8 +163,6 @@ public class ShoppingItemControl implements ItemControl
                 Item item = mItemEditFieldControl.populateItemFromInputFields();
 
                 mPurchaseManager.setItem(item);
-
-                mPriceEditFieldControl.populatePriceMgr();
 
                 mItemBuyFieldControl.populatePurchaseMgr();
 
@@ -219,10 +209,10 @@ public class ShoppingItemControl implements ItemControl
                 mItemBuyFieldControl = itemBuyFieldControl;
         }
 
-        public void setPriceEditFieldControl(PriceEditFieldControl priceEditFieldControl)
-        {
-                mPriceEditFieldControl = priceEditFieldControl;
-        }
+//        public void setPriceEditFieldControl(PriceEditFieldControl priceEditFieldControl)
+//        {
+//                //mPriceEditFieldControl = priceEditFieldControl;
+//        }
 
         enum Event
         {

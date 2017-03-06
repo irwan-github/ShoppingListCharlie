@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.mirzairwan.shopping.data.Contract;
+import com.mirzairwan.shopping.domain.PriceMgr;
 
 import static com.mirzairwan.shopping.LoaderHelper.PURCHASE_ITEM_LOADER_ID;
 
@@ -43,27 +44,36 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
         }
 
         @Override
+        protected void onLoadPriceFinished(PriceMgr priceMgr)
+        {
+                mItemBuyFieldControl.onLoadPriceFinished(priceMgr);
+        }
+
+        @Override
+        protected String getCurrencyCode()
+        {
+                return mItemBuyFieldControl.getCurrencyCode();
+        }
+
+        @Override
         protected void onCreate(Bundle savedInstanceState)
         {
                 super.onCreate(savedInstanceState);
-
+                String defaultCurrencyCode = FormatHelper.getCurrencyCode(mSettingsCountryCode);
                 mItemEditFieldControl = new ItemEditFieldControl(this);
                 mItemEditFieldControl.setOnTouchListener(mOnTouchListener);
 
-                mItemBuyFieldControl = new ItemBuyFieldControl(this);
+                mItemBuyFieldControl = new ItemBuyFieldControl(this, defaultCurrencyCode);
                 mItemBuyFieldControl.setOnTouchListener(mOnTouchListener);
-                mItemBuyFieldControl.setPriceMgr(mPriceMgr);
-                mItemBuyFieldControl.setPriceEditFieldControl(mPriceEditFieldControl);
 
                 mShoppingItemControl.setItemEditFieldControl(mItemEditFieldControl);
                 mShoppingItemControl.setItemBuyQtyFieldControl(mItemBuyFieldControl);
-                mShoppingItemControl.setPriceEditFieldControl(mPriceEditFieldControl);
 
                 Log.d(LOG_TAG, ">>>savedInstantState is " + (savedInstanceState == null ? "NULL" : "NOT " + "NULL"));
 
                 mContainer = findViewById(R.id.shopping_list_editor_container);
 
-                PurchaseEditorExpander purchaseEditorExpander = new PurchaseEditorExpander(this);
+                //PurchaseEditorExpander purchaseEditorExpander = new PurchaseEditorExpander(this);
 
                 if (savedInstanceState != null) /* Restore from previous activity */
                 {
@@ -79,6 +89,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                 {
                         PurchaseManager purchaseManager = new PurchaseManager();
                         mShoppingItemControl.onNewItem();
+                        mItemBuyFieldControl.setPriceMgr(mPriceMgr);
                         mShoppingItemControl.setPurchaseManager(purchaseManager);
                         mItemBuyFieldControl.setPurchaseManager(purchaseManager);
                 }
@@ -130,8 +141,12 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                 {
                         case PURCHASE_ITEM_LOADER_ID:
                                 projection = new String[]{
-                                        Contract.ToBuyItemsEntry._ID, Contract.ToBuyItemsEntry.COLUMN_ITEM_ID, Contract.ToBuyItemsEntry.COLUMN_QUANTITY, Contract.ToBuyItemsEntry.COLUMN_IS_CHECKED, Contract.ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID, Contract.ItemsEntry.COLUMN_NAME, Contract.ItemsEntry.COLUMN_BRAND, Contract.ItemsEntry
-                                        .COLUMN_COUNTRY_ORIGIN, Contract.ItemsEntry.COLUMN_DESCRIPTION, Contract.PricesEntry.ALIAS_ID, Contract.PricesEntry.COLUMN_PRICE_TYPE_ID, Contract.PricesEntry.COLUMN_PRICE, Contract.PricesEntry.COLUMN_BUNDLE_QTY, Contract.PricesEntry.COLUMN_CURRENCY_CODE, Contract.PricesEntry.COLUMN_SHOP_ID};
+                                        Contract.ToBuyItemsEntry._ID, Contract.ToBuyItemsEntry.COLUMN_ITEM_ID,
+                                        Contract.ToBuyItemsEntry.COLUMN_QUANTITY, Contract.ToBuyItemsEntry.COLUMN_IS_CHECKED,
+                                        Contract.ToBuyItemsEntry.COLUMN_SELECTED_PRICE_ID, Contract.ItemsEntry.COLUMN_NAME, Contract.ItemsEntry.COLUMN_BRAND,
+                                        Contract.ItemsEntry.COLUMN_COUNTRY_ORIGIN, Contract.ItemsEntry.COLUMN_DESCRIPTION, Contract.PricesEntry.ALIAS_ID,
+                                        Contract.PricesEntry.COLUMN_PRICE_TYPE_ID, Contract.PricesEntry.COLUMN_PRICE, Contract.PricesEntry.COLUMN_BUNDLE_QTY,
+                                        Contract.PricesEntry.COLUMN_CURRENCY_CODE, Contract.PricesEntry.COLUMN_SHOP_ID};
                                 uri = args.getParcelable(ITEM_URI);
                                 loader = new CursorLoader(this, uri, projection, null, null, null);
                                 break;
@@ -209,7 +224,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
         @Override
         public void update(PurchaseManager purchaseManager)
         {
-                mDbMsg = daoManager.update(purchaseManager.getItemInShoppingList(), purchaseManager.getitem(), mPriceMgr.getPrices(), mPictureMgr);
+                mDbMsg = daoManager.update(purchaseManager.getItemInShoppingList(), purchaseManager.getitem(), purchaseManager.getPrices(), mPictureMgr);
         }
 
         public void insert(PurchaseManager purchaseManager)

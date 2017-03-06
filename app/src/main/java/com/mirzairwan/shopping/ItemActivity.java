@@ -107,7 +107,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         private ImageView mImgItemPic;
         private long itemId;
         private ExchangeRateInput mExchangeRateInput;
-        protected PriceEditFieldControl mPriceEditFieldControl;
+        //protected PriceEditFieldControl mPriceEditFieldControl;
         protected ItemEditFieldControl mItemEditFieldControl;
 
         /*During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance
@@ -217,9 +217,9 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         }
                 };
 
-                mPriceEditFieldControl = new PriceEditFieldControl(this, mSettingsCountryCode);
-                mPriceEditFieldControl.setPriceMgr(mPriceMgr);
-                mPriceEditFieldControl.setOnTouchListener(mOnTouchListener);
+//                mPriceEditFieldControl = new PriceEditFieldControl(this, mSettingsCountryCode);
+//                mPriceEditFieldControl.setPriceMgr(mPriceMgr);
+//                mPriceEditFieldControl.setOnTouchListener(mOnTouchListener);
 
                 mItemEditFieldControl = new ItemEditFieldControl(this);
                 mItemEditFieldControl.setOnTouchListener(mOnTouchListener);
@@ -769,7 +769,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 {
                         case ITEM_PRICE_LOADER_ID:
                                 mPriceMgr.createPrices(cursor);
-                                mPriceEditFieldControl.onLoadFinished(mPriceMgr);
+                                //mPriceEditFieldControl.onLoadFinished(mPriceMgr);
+                                onLoadPriceFinished(mPriceMgr);
 
                                 /*
                                 Important to move cursor back before the first record because when device switches to landscape, it gives back the same cursor with
@@ -794,6 +795,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 }
         }
 
+        protected abstract void onLoadPriceFinished(PriceMgr priceMgr);
+
         protected Picture createPicture(Cursor cursor)
         {
                 int colRowId = cursor.getColumnIndex(PicturesEntry._ID);
@@ -811,7 +814,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         public void onLoaderReset(Loader<Cursor> loader)
         {
                 // If the loader is invalidated, clear out all the data from the input fields.
-                mPriceEditFieldControl.onLoaderReset();
+                //mPriceEditFieldControl.onLoaderReset();
                 clearPictureField();
         }
 
@@ -887,7 +890,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         Log.d("CurrencyCode", "onLoadFinished");
                         if (exchangeRates != null)
                         {
-                                String sourceCurrencyCode = mPriceEditFieldControl.getCurrencyCode();
+                                //String sourceCurrencyCode = mPriceEditFieldControl.getCurrencyCode();
+                                String sourceCurrencyCode = getCurrencyCode();
                                 mExchangeRate = exchangeRates.get(sourceCurrencyCode);
                         }
                         else
@@ -903,4 +907,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         mExchangeRate = null;
                 }
         }
+
+        protected abstract String getCurrencyCode();
 }

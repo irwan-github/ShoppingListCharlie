@@ -41,10 +41,10 @@
                         <include layout="@layout/item_editing"/>
 
 
-                        <include layout="@layout/purchase_details"/>
+                        <include layout="@layout/sl_purchase_details"/>
 
 
-                        <include layout="@layout/price_editing"/>
+                        <include layout="@layout/sl_price_editing"/>
 
 
                 </LinearLayout>

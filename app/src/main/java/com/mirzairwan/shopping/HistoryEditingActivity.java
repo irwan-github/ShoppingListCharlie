@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import com.mirzairwan.shopping.data.Contract;
+import com.mirzairwan.shopping.domain.PriceMgr;
 
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
 
@@ -21,13 +22,14 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryItemE
 {
         private static final String URI_ITEM = "uri"; /* Used for saving instance state */
         private Uri mUriItem;
-        private HistoryItemEditorControl mItemEditorControl;
+        private PriceEditFieldControl mPriceEditFieldControl;
+        private HistoryItemEditorControl mHistoryItemEditCtlr;
 
         @Override
         protected ItemControl getItemControl()
         {
-                mItemEditorControl = new HistoryItemEditorControl(this);
-                return mItemEditorControl;
+                mHistoryItemEditCtlr = new HistoryItemEditorControl(this);
+                return mHistoryItemEditCtlr;
         }
 
         @Override
@@ -38,8 +40,14 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryItemE
                 mItemEditFieldControl = new ItemEditFieldControl(this);
                 mItemEditFieldControl.setOnTouchListener(mOnTouchListener);
 
-                mItemEditorControl.setItemEditFieldControl(mItemEditFieldControl);
-                mItemEditorControl.setPriceEditFieldControl(mPriceEditFieldControl);
+                mHistoryItemEditCtlr.setItemEditFieldControl(mItemEditFieldControl);
+
+
+                mPriceEditFieldControl = new PriceEditFieldControl(this, mSettingsCountryCode);
+                mPriceEditFieldControl.setPriceMgr(mPriceMgr);
+                mPriceEditFieldControl.setOnTouchListener(mOnTouchListener);
+
+                mHistoryItemEditCtlr.setPriceEditFieldControl(mPriceEditFieldControl);
 
                 mContainer = findViewById(R.id.item_editing_container);
 
@@ -53,7 +61,7 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryItemE
                         mUriItem = intent.getData();
                 }
 
-                mItemEditorControl.onExistingItem();
+                mHistoryItemEditCtlr.onExistingItem();
                 initLoaders(mUriItem);
         }
 
@@ -67,6 +75,18 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryItemE
                         super.initPictureLoader(uri, this);
                         super.initPriceLoader(uri, this);
                 }
+        }
+
+        @Override
+        protected void onLoadPriceFinished(PriceMgr priceMgr)
+        {
+                mPriceEditFieldControl.onLoadFinished(mPriceMgr);
+        }
+
+        @Override
+        protected String getCurrencyCode()
+        {
+                return mPriceEditFieldControl.getCurrencyCode();
         }
 
         @Override
@@ -113,7 +133,7 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryItemE
                 {
                         case ITEM_LOADER_ID:
                                 ItemManager mItemManager = new ItemManager(cursor, getIntent().getBooleanExtra(ITEM_IS_IN_SHOPPING_LIST, false));
-                                mItemEditorControl.onLoadItemFinished(mItemManager);
+                                mHistoryItemEditCtlr.onLoadItemFinished(mItemManager);
                                 mItemEditFieldControl.onLoadItemFinished(mItemManager.getItem());
                                 mPictureMgr.setItemId(mItemManager.getItem().getId());
                                 break;
