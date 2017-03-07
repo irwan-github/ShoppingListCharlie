@@ -1,24 +1,21 @@
 package com.mirzairwan.shopping;
 
-import android.util.Log;
+import android.view.Menu;
 
 import com.mirzairwan.shopping.domain.Item;
 
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_BACK;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_CHANGE;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_CREATE_OPTIONS_MENU;
-import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_DB_RESULT;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_DELETE;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_EDIT;
-import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_INSERT;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_LEAVE;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_NEW;
+import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_OK;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_STAY;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_UP;
-import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_UPDATE;
-import static com.mirzairwan.shopping.ShoppingItemControl.ItemType.EXISTING_ITEM;
-import static com.mirzairwan.shopping.ShoppingItemControl.ItemType.NEW_ITEM;
-import static com.mirzairwan.shopping.ShoppingItemControl.State.START;
+import static com.mirzairwan.shopping.ShoppingItemControl.ItemType.TRANSIENT;
+import static com.mirzairwan.shopping.ShoppingItemControl.State.UNCHANGE;
 
 
 /**
@@ -27,13 +24,14 @@ import static com.mirzairwan.shopping.ShoppingItemControl.State.START;
 
 public class ShoppingItemControl implements ItemControl
 {
+        private ItemType mItemType = TRANSIENT;
+        private State mCurrentState = UNCHANGE;
         private String LOG_TAG = ShoppingItemControl.class.getCanonicalName();
-        protected State mCurrentState = START;
-        protected ItemType mItemType;
         private ShoppingItemContext mContext;
         private PurchaseManager mPurchaseManager;
         private ItemDetailsFieldControl mItemDetailsFieldControl;
         private ItemBuyFieldControl mItemBuyFieldControl;
+        private Menu mMenu;
 
         public ShoppingItemControl(ShoppingItemContext context)
         {
@@ -43,13 +41,13 @@ public class ShoppingItemControl implements ItemControl
         @Override
         public void onExistingItem()
         {
-                mItemType = EXISTING_ITEM;
+                mItemType = mItemType.transition(ON_EDIT, this);
                 mCurrentState = mCurrentState.transition(ON_EDIT, this);
         }
 
         public void onNewItem()
         {
-                mItemType = NEW_ITEM;
+                mItemType = mItemType.transition(ON_NEW, this);
                 mCurrentState = mCurrentState.transition(ON_NEW, this);
                 mItemBuyFieldControl.onNewItem();
         }
@@ -66,16 +64,16 @@ public class ShoppingItemControl implements ItemControl
         }
 
         @Override
-        public void onCreateOptionsMenu()
+        public void onCreateOptionsMenu(Menu menu)
         {
-                mCurrentState = mCurrentState.transition(ON_CREATE_OPTIONS_MENU, this);
+                mMenu = menu;
+                mItemType = mItemType.transition(ON_CREATE_OPTIONS_MENU, this);
         }
 
         @Override
         public void onDelete()
         {
-                mCurrentState = mCurrentState.transition(ON_DELETE, this);
-                mCurrentState = mCurrentState.transition(ON_DB_RESULT, this);
+                mItemType = mItemType.transition(ON_DELETE, this);
         }
 
         @Override
@@ -87,7 +85,7 @@ public class ShoppingItemControl implements ItemControl
         @Override
         public void onLeave()
         {
-                mCurrentState = mCurrentState.transition(ON_LEAVE, this);
+                mItemType = mItemType.transition(ON_LEAVE, this);
         }
 
         @Override
@@ -111,24 +109,12 @@ public class ShoppingItemControl implements ItemControl
                 }
 
                 mItemBuyFieldControl.onValidate();
-                if(mItemBuyFieldControl.isInErrorState())
+                if (mItemBuyFieldControl.isInErrorState())
                 {
                         return;
                 }
 
-                if (mItemType == NEW_ITEM)
-                {
-                        mCurrentState = mCurrentState.transition(ON_INSERT, this);
-                        mCurrentState = mCurrentState.transition(ON_DB_RESULT, this);
-                        return;
-                }
-
-                if (mItemType == EXISTING_ITEM)
-                {
-                        mCurrentState = mCurrentState.transition(ON_UPDATE, this);
-                        mCurrentState = mCurrentState.transition(ON_DB_RESULT, this);
-                        return;
-                }
+                mItemType = mItemType.transition(ON_OK, this);
         }
 
         public void setItemDetailsFieldControl(ItemDetailsFieldControl itemDetailsFieldControl)
@@ -173,9 +159,9 @@ public class ShoppingItemControl implements ItemControl
                 mContext.warnChangesMade();
         }
 
-        private void setMenuVisible(int menuResId, boolean b)
+        private void setMenuItemVisibility(int menuId, boolean isVisible)
         {
-                mContext.setMenuVisible(menuResId, b);
+                mMenu.findItem(menuId).setVisible(isVisible);
         }
 
         private void setTitle(int stringResId)
@@ -186,11 +172,6 @@ public class ShoppingItemControl implements ItemControl
         private void showDbMessage()
         {
                 mContext.showTransientDbMessage();
-        }
-
-        private ItemType itemType()
-        {
-                return mItemType;
         }
 
         private void setExitTransition()
@@ -205,33 +186,121 @@ public class ShoppingItemControl implements ItemControl
 
         enum Event
         {
-                ON_NEW, ON_EDIT, ON_DELETE, ON_UP, ON_BACK, ON_CHANGE, ON_INSERT, ON_UPDATE, ON_LEAVE, ON_LOAD_ITEM, ON_LOAD_PRICE, ON_STAY, ON_DB_RESULT,
-                ON_CREATE_OPTIONS_MENU
+                ON_OK, ON_NEW, ON_EDIT, ON_DELETE, ON_UP, ON_BACK, ON_CHANGE, ON_LEAVE, ON_STAY, ON_CREATE_OPTIONS_MENU
         }
 
         enum ItemType
         {
-                NEW_ITEM, EXISTING_ITEM
-        }
-
-        enum State
-        {
-                START
+                TRANSIENT
                         {
-                                public State transition(Event event, ShoppingItemControl control)
+                                @Override
+                                public ItemType transition(Event event, ShoppingItemControl control)
                                 {
-                                        State state;
+                                        ItemType state = this;
+
                                         switch (event)
                                         {
                                                 case ON_NEW:
+                                                        state = NEW_ITEM;
+                                                        break;
                                                 case ON_EDIT:
-                                                default:
-                                                        state = UNCHANGE;
+                                                        state = EXISTING_ITEM;
+                                                        break;
                                         }
+
+                                        state.setUiAttibutes(event, control);
                                         return state;
                                 }
                         },
 
+                NEW_ITEM
+                        {
+                                @Override
+                                public ItemType transition(Event event, ShoppingItemControl control)
+                                {
+                                        ItemType state = this;
+                                        switch(event)
+                                        {
+                                                case ON_CREATE_OPTIONS_MENU:
+                                                        state = this;
+                                                        break;
+                                                case ON_OK:
+                                                        control.insert();
+                                                        control.showDbMessage();
+                                                        break;
+                                                case ON_LEAVE:
+                                                        control.finishItemEditing();
+                                                        state = this;
+                                                        break;
+                                        }
+
+                                        state.setUiAttibutes(event, control);
+                                        return state;
+                                }
+
+                                @Override
+                                public void setUiAttibutes(Event event, ShoppingItemControl control)
+                                {
+                                        control.setTitle(R.string.new_buy_item_title);
+                                }
+                        },
+
+                EXISTING_ITEM
+                        {
+                                @Override
+                                public ItemType transition(Event event, ShoppingItemControl control)
+                                {
+                                        ItemType state = this;
+                                        switch(event)
+                                        {
+                                                case ON_CREATE_OPTIONS_MENU:
+                                                        state = this;
+                                                        break;
+                                                case ON_OK:
+                                                        control.update();
+                                                        control.showDbMessage();
+                                                        break;
+                                                case ON_DELETE:
+                                                        control.delete();
+                                                        control.showDbMessage();
+                                                        break;
+                                                case ON_LEAVE:
+                                                        control.finishItemEditing();
+                                                        state = this;
+                                                        break;
+                                        }
+                                        state.setUiAttibutes(event, control);
+                                        return state;
+                                }
+
+                                @Override
+                                public void setUiAttibutes(Event event, ShoppingItemControl control)
+                                {
+                                        control.setTitle(R.string.view_buy_item_details);
+
+                                        switch(event)
+                                        {
+                                                case ON_DELETE:
+                                                        control.setExitTransition();
+                                                        break;
+
+                                                case ON_CREATE_OPTIONS_MENU:
+                                                        control.setMenuItemVisibility(R.id.menu_remove_item_from_list, true);
+                                                        break;
+                                        }
+                                }
+                        };
+
+                public abstract ItemType transition(Event event, ShoppingItemControl control);
+
+                public void setUiAttibutes(Event event, ShoppingItemControl control)
+                {
+
+                }
+        }
+
+        enum State
+        {
                 UNCHANGE
                         {
                                 public State transition(Event event, ShoppingItemControl control)
@@ -242,38 +311,15 @@ public class ShoppingItemControl implements ItemControl
                                                 case ON_CHANGE:
                                                         state = CHANGE;
                                                         break;
-                                                case ON_DELETE:
-                                                        control.delete();
-                                                        state = POST_DB_OP;
-                                                        break;
-                                                case ON_CREATE_OPTIONS_MENU:
-                                                        state = this;
-                                                        break;
                                                 case ON_BACK:
                                                 case ON_UP:
                                                         control.finishItemEditing();
-                                                        state = this;
                                                 default:
                                                         state = this;
                                         }
 
                                         state.setAttributes(event, control);
                                         return state;
-                                }
-
-                                public void setAttributes(Event event, ShoppingItemControl control)
-                                {
-                                        if (control.itemType() == NEW_ITEM)
-                                        {
-                                                control.setMenuVisible(R.id.menu_remove_item_from_list, false);
-                                                control.setTitle(R.string.new_buy_item_title);
-                                        }
-                                        if (control.itemType() == EXISTING_ITEM)
-                                        {
-                                                control.setTitle(R.string.view_buy_item_details);
-                                                control.setMenuVisible(R.id.menu_remove_item_from_list, true);
-                                        }
-                                        control.setMenuVisible(R.id.save_item_details, false);
                                 }
                         },
 
@@ -284,79 +330,10 @@ public class ShoppingItemControl implements ItemControl
                                         State state;
                                         switch (event)
                                         {
-                                                case ON_INSERT:
-                                                        control.insert();
-                                                        state = POST_DB_OP;
-                                                        break;
-                                                case ON_UPDATE:
-                                                        control.update();
-                                                        state = POST_DB_OP;
-                                                        break;
-                                                case ON_DELETE:
-                                                        control.delete();
-                                                        state = POST_DB_OP;
-                                                        break;
                                                 case ON_BACK:
                                                 case ON_UP:
                                                         control.warnChangesMade();
-                                                        state = WARN;
-                                                        break;
-                                                case ON_LEAVE:
-                                                        control.finishItemEditing();
-                                                default:
-                                                        state = this;
-                                        }
-
-                                        state.setAttributes(event, control);
-                                        return state;
-                                }
-
-                                public void setAttributes(Event event, ShoppingItemControl context)
-                                {
-                                        context.setMenuVisible(R.id.save_item_details, true);
-                                }
-                        },
-
-                WARN
-                        {
-                                public State transition(Event event, ShoppingItemControl control)
-                                {
-                                        State state;
-                                        switch (event)
-                                        {
-                                                case ON_LEAVE:
-                                                        control.finishItemEditing();
-                                                        state = this;
-                                                        break;
                                                 case ON_STAY:
-                                                        state = CHANGE;
-                                                        break;
-                                                default:
-                                                        state = this;
-                                        }
-
-                                        state.setAttributes(event, control);
-                                        return state;
-                                }
-                        },
-
-                POST_DB_OP
-                        {
-                                @Override
-                                public State transition(Event event, ShoppingItemControl control)
-                                {
-                                        Log.d(this.toString(), "Event:" + event);
-                                        State state;
-                                        switch (event)
-                                        {
-                                                case ON_DB_RESULT:
-                                                        control.showDbMessage();
-                                                        state = this;
-                                                        break;
-                                                case ON_LEAVE:
-                                                        control.finishItemEditing();
-                                                        state = this;
-                                                        break;
                                                 default:
                                                         state = this;
                                         }
@@ -365,13 +342,9 @@ public class ShoppingItemControl implements ItemControl
                                         return state;
                                 }
 
-                                @Override
-                                public void setAttributes(Event event, ShoppingItemControl context)
+                                public void setAttributes(Event event, ShoppingItemControl control)
                                 {
-                                        if (event == ON_DELETE)
-                                        {
-                                                context.setExitTransition();
-                                        }
+                                        control.setMenuItemVisibility(R.id.save_item_details, true);
                                 }
                         };
 

@@ -5,18 +5,18 @@ package com.mirzairwan.shopping;
  */
 
 import android.util.Log;
+import android.view.Menu;
 
-import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_BACK;
-import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_CHANGE;
-import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_CREATE_OPTIONS_MENU;
-import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_DB_RESULT;
-import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_DELETE;
-import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_EXIST;
-import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_LEAVE;
-import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_STAY;
-import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_UP;
-import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_UPDATE;
-import static com.mirzairwan.shopping.HistoryEditingControl.State.START;
+import static com.mirzairwan.shopping.HistoryItemControl.Event.ON_BACK;
+import static com.mirzairwan.shopping.HistoryItemControl.Event.ON_CHANGE;
+import static com.mirzairwan.shopping.HistoryItemControl.Event.ON_CREATE_OPTIONS_MENU;
+import static com.mirzairwan.shopping.HistoryItemControl.Event.ON_DELETE;
+import static com.mirzairwan.shopping.HistoryItemControl.Event.ON_EXIST;
+import static com.mirzairwan.shopping.HistoryItemControl.Event.ON_LEAVE;
+import static com.mirzairwan.shopping.HistoryItemControl.Event.ON_STAY;
+import static com.mirzairwan.shopping.HistoryItemControl.Event.ON_UP;
+import static com.mirzairwan.shopping.HistoryItemControl.Event.ON_UPDATE;
+import static com.mirzairwan.shopping.HistoryItemControl.State.UNCHANGE;
 
 /**
  * It is possible to add actions to a state which are executed on entry to that state. This may
@@ -35,16 +35,17 @@ import static com.mirzairwan.shopping.HistoryEditingControl.State.START;
  * Actions should be associated with events. Example:
  * Insert record into database
  */
-public class HistoryEditingControl implements ItemControl
+public class HistoryItemControl implements ItemControl
 {
-        private String LOG_TAG = HistoryEditingControl.class.getSimpleName();
+        private String LOG_TAG = HistoryItemControl.class.getSimpleName();
         private ItemEditorContext mContext;
-        private State mCurrentState = START;
+        private State mCurrentState = UNCHANGE;
         private ItemManager mItemManager;
         private ItemDetailsFieldControl mItemDetailsFieldControl;
         private PriceDetailsFieldControl mPriceDetailsFieldControl;
+        private Menu mMenu;
 
-        public HistoryEditingControl(ItemEditorContext context)
+        public HistoryItemControl(ItemEditorContext context)
         {
                 mContext = context;
         }
@@ -81,18 +82,17 @@ public class HistoryEditingControl implements ItemControl
                 }
 
                 mCurrentState = mCurrentState.transition(ON_UPDATE, this);
-                mCurrentState = mCurrentState.transition(ON_DB_RESULT, this);
         }
 
         public void onDelete()
         {
                 mCurrentState = mCurrentState.transition(ON_DELETE, this);
-                mCurrentState = mCurrentState.transition(ON_DB_RESULT, this);
         }
 
-        public void onCreateOptionsMenu()
+        public void onCreateOptionsMenu(Menu menu)
         {
                 Log.d(LOG_TAG, mCurrentState + ": onCreateOptionsMenu");
+                mMenu = menu;
                 mCurrentState = mCurrentState.transition(ON_CREATE_OPTIONS_MENU, this);
         }
 
@@ -138,7 +138,7 @@ public class HistoryEditingControl implements ItemControl
                 mContext.update(mItemManager);
         }
 
-        private void postDbProcess()
+        private void showDbMessage()
         {
                 mContext.showTransientDbMessage();
         }
@@ -153,9 +153,9 @@ public class HistoryEditingControl implements ItemControl
                 mContext.setTitle(stringResId);
         }
 
-        private void setMenuVisible(int menuResId, boolean b)
+        private void setMenuVisible(int menuResId, boolean isVisible)
         {
-                mContext.setMenuVisible(menuResId, b);
+                mMenu.findItem(menuResId).setVisible(isVisible);
         }
 
         public void setItemDetailsFieldControl(ItemDetailsFieldControl itemDetailsFieldControl)
@@ -170,33 +170,15 @@ public class HistoryEditingControl implements ItemControl
 
         enum Event
         {
-                ON_EXIST, ON_DELETE, ON_UP, ON_BACK, ON_CHANGE, ON_UPDATE, ON_LEAVE, ON_STAY, ON_DB_RESULT,
+                ON_EXIST, ON_DELETE, ON_UP, ON_BACK, ON_CHANGE, ON_UPDATE, ON_LEAVE, ON_STAY,
                 ON_CREATE_OPTIONS_MENU
         }
 
         enum State
         {
-                START
-                        {
-                                public State transition(Event event, HistoryEditingControl context)
-                                {
-                                        State state;
-                                        switch (event)
-                                        {
-                                                case ON_EXIST:
-                                                        state = UNCHANGE;
-                                                        break;
-                                                default:
-                                                        state = this;
-                                        }
-                                        state.setAttributes(event, context);
-                                        return state;
-                                }
-                        },
-
                 UNCHANGE
                         {
-                                public State transition(Event event, HistoryEditingControl context)
+                                public State transition(Event event, HistoryItemControl control)
                                 {
                                         State state;
                                         switch (event)
@@ -208,23 +190,23 @@ public class HistoryEditingControl implements ItemControl
                                                         state = CHANGE;
                                                         break;
                                                 case ON_DELETE:
-                                                        context.delete();
-                                                        state = POST_DB_OP;
+                                                        control.delete();
+                                                        control.showDbMessage();
+                                                        state = this;
                                                         break;
                                                 case ON_BACK:
                                                 case ON_UP:
-                                                        context.finishItemEditing();
-                                                        state = this;
-                                                        break;
+                                                case ON_LEAVE:
+                                                        control.finishItemEditing();
                                                 default:
                                                         state = this;
                                         }
 
-                                        state.setAttributes(event, context);
+                                        state.setAttributes(event, control);
                                         return state;
                                 }
 
-                                public void setAttributes(Event event, HistoryEditingControl control)
+                                public void setAttributes(Event event, HistoryItemControl control)
                                 {
                                         switch (event)
                                         {
@@ -234,109 +216,60 @@ public class HistoryEditingControl implements ItemControl
                                                 case ON_CREATE_OPTIONS_MENU:
                                                         control.setMenuVisible(R.id.menu_remove_item_from_list, true);
                                                         break;
+                                                case  ON_DELETE:
+                                                        control.setExitTransition();
+                                                        break;
                                         }
                                 }
                         },
 
                 CHANGE
                         {
-                                public State transition(Event event, HistoryEditingControl context)
+                                public State transition(Event event, HistoryItemControl control)
                                 {
                                         State state;
                                         switch (event)
                                         {
                                                 case ON_UPDATE:
-                                                        context.update();
-                                                        state = POST_DB_OP;
+                                                        control.update();
+                                                        control.showDbMessage();
+                                                        state = this;
                                                         break;
                                                 case ON_DELETE:
-                                                        context.delete();
-                                                        state = POST_DB_OP;
+                                                        control.delete();
+                                                        control.showDbMessage();
+                                                        state = this;
                                                         break;
                                                 case ON_BACK:
                                                 case ON_UP:
-                                                        context.warnChangesMade();
-                                                        state = WARN;
-                                                        break;
-                                                case ON_LEAVE:
-                                                        context.finishItemEditing();
+                                                        control.warnChangesMade();
                                                         state = this;
                                                         break;
+                                                case ON_LEAVE:
+                                                        control.finishItemEditing();
+                                                case ON_STAY:
                                                 default:
                                                         state = this;
                                         }
 
-                                        state.setAttributes(event, context);
+                                        state.setAttributes(event, control);
                                         return state;
                                 }
 
-                                public void setAttributes(Event event, HistoryEditingControl control)
+                                public void setAttributes(Event event, HistoryItemControl control)
                                 {
                                         control.setMenuVisible(R.id.save_item_details, true);
-                                }
-                        },
 
-                WARN
-                        {
-                                public State transition(Event event, HistoryEditingControl context)
-                                {
-                                        State state;
-                                        switch (event)
-                                        {
-                                                case ON_LEAVE:
-                                                        context.finishItemEditing();
-                                                        state = this;
-                                                        break;
-                                                case ON_STAY:
-                                                        state = CHANGE;
-                                                        break;
-                                                default:
-                                                        state = this;
-                                        }
-
-                                        state.setAttributes(event, context);
-                                        return state;
-                                }
-                        },
-
-                POST_DB_OP
-                        {
-                                @Override
-                                public State transition(Event event, HistoryEditingControl context)
-                                {
-                                        Log.d(this.toString(), "Event:" + event);
-                                        State state;
-                                        switch (event)
-                                        {
-                                                case ON_DB_RESULT:
-                                                        context.postDbProcess();
-                                                        state = this;
-                                                        break;
-                                                case ON_LEAVE:
-                                                        context.finishItemEditing();
-                                                        state = this;
-                                                        break;
-                                                default:
-                                                        state = this;
-                                        }
-
-                                        state.setAttributes(event, context);
-                                        return state;
-                                }
-
-                                @Override
-                                public void setAttributes(Event event, HistoryEditingControl context)
-                                {
                                         if (event == ON_DELETE)
                                         {
-                                                context.setExitTransition();
+                                                control.setExitTransition();
                                         }
                                 }
-                        };;
+                        };
 
-                abstract State transition(Event event, HistoryEditingControl itemContext);
+                abstract State transition(Event event, HistoryItemControl itemContext);
 
-                public void setAttributes(Event event, HistoryEditingControl itemEditorControl)
+                public void setAttributes(Event event, HistoryItemControl itemEditorControl)
                 {
                 }
         }

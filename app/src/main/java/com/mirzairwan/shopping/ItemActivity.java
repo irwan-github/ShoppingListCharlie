@@ -103,7 +103,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         private ItemControl mItemControl;
         protected String mDbMsg;
         protected View mContainer;
-        protected Menu mMenu;
         private ImageView mImgItemPic;
         private long itemId;
         private ExchangeRateInput mExchangeRateInput;
@@ -308,9 +307,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         @Override
         public boolean onCreateOptionsMenu(Menu menu)
         {
-                mMenu = menu;
                 getMenuInflater().inflate(R.menu.item_details, menu);
-                mItemControl.onCreateOptionsMenu();
+                mItemControl.onCreateOptionsMenu(menu);
                 return true;
         }
 
@@ -344,14 +342,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                 mItemControl.onLeave();
                         }
                 });
-        }
-
-        public void setMenuVisible(int id, boolean isVisible)
-        {
-                if (mMenu != null)
-                {
-                        mMenu.findItem(id).setVisible(isVisible);
-                }
         }
 
         public void setExitTransition()
@@ -404,7 +394,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 {
                         mPictureMgr.setViewOriginalPicture();
                         String msg = daoManager.cleanUpDiscardedPictures(mPictureMgr);
-                        //            Toast.makeText(ItemActivity.this, msg, Toast.LENGTH_LONG).show();
                 }
 
         }
@@ -633,7 +622,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         @Override
                         public void onClick(DialogInterface dialog, int which)
                         {
-                                //mItemStateMachine.onStay();
                                 mItemControl.onStay();
                                 dialog.dismiss();
                         }
@@ -769,7 +757,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         @Override
         public void onLoaderReset(Loader<Cursor> loader)
         {
-                // If the loader is invalidated, clear out all the data from the input fields.
                 clearPictureField();
         }
 

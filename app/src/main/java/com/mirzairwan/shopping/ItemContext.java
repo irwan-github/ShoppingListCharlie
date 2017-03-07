@@ -15,8 +15,6 @@ public interface ItemContext
 
         void setExitTransition();
 
-        void setMenuVisible(int id, boolean isVisible);
-
         void setTitle(int resourceId);
 
         void showTransientDbMessage();

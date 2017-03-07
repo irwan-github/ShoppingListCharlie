@@ -18,18 +18,18 @@ import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
  * Contact owner at mirza.irwan.osman@gmail.com
  */
 
-public class HistoryEditingActivity extends ItemActivity implements HistoryEditingControl.ItemEditorContext
+public class HistoryEditingActivity extends ItemActivity implements HistoryItemControl.ItemEditorContext
 {
         private static final String URI_ITEM = "uri"; /* Used for saving instance state */
         private Uri mUriItem;
         private PriceDetailsFieldControl mPriceDetailsFieldControl;
-        private HistoryEditingControl mHistoryItemEditCtlr;
+        private HistoryItemControl mHistoryItemEditCtlr;
         private ItemDetailsFieldControl mItemDetailsFieldControl;
 
         @Override
         protected ItemControl getItemControl()
         {
-                mHistoryItemEditCtlr = new HistoryEditingControl(this);
+                mHistoryItemEditCtlr = new HistoryItemControl(this);
                 return mHistoryItemEditCtlr;
         }
 

@@ -1,5 +1,7 @@
 package com.mirzairwan.shopping;
 
+import android.view.Menu;
+
 /**
  * Created by Mirza Irwan on 26/2/17.
  *
@@ -11,7 +13,7 @@ public interface ItemControl
 
         void onChange();
 
-        void onCreateOptionsMenu();
+        void onCreateOptionsMenu(Menu menu);
 
         void onOk();
 
