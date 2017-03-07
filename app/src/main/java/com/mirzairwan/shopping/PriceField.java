@@ -185,7 +185,13 @@ public class PriceField implements View.OnFocusChangeListener
                 mTextInputPrice.setEnabled(isEnabled);
         }
 
-//        class Action implements TextView.OnEditorActionListener
+        public void setVisibility(int visibility)
+        {
+                mEtPriceWrapper.setVisibility(visibility);
+                mTextInputPrice.setVisibility(visibility);
+        }
+
+        //        class Action implements TextView.OnEditorActionListener
 //        {
 //                @Override
 //                public boolean onEditorAction(TextView v, int actionId, KeyEvent event)

@@ -10,16 +10,17 @@ import android.widget.TextView;
 
 import com.mirzairwan.shopping.domain.Item;
 
-import static com.mirzairwan.shopping.ItemEditFieldControl.Event.ON_LOAD_ITEM;
-import static com.mirzairwan.shopping.ItemEditFieldControl.Event.ON_MISSING_VALUE;
-import static com.mirzairwan.shopping.ItemEditFieldControl.Event.ON_VALUE_FILLED;
-import static com.mirzairwan.shopping.ItemEditFieldControl.State.NEUTRAL;
+import static com.mirzairwan.shopping.ItemDetailsFieldControl.Event.ON_LOAD_ITEM;
+import static com.mirzairwan.shopping.ItemDetailsFieldControl.Event.ON_MISSING_VALUE;
+import static com.mirzairwan.shopping.ItemDetailsFieldControl.Event.ON_VALUE_FILLED;
+import static com.mirzairwan.shopping.ItemDetailsFieldControl.State.ERROR_EMPTY_NAME;
+import static com.mirzairwan.shopping.ItemDetailsFieldControl.State.NEUTRAL;
 
 /**
  * Created by Mirza Irwan on 27/2/17.
  */
 
-public class ItemEditFieldControl extends DetailExpander
+public class ItemDetailsFieldControl extends DetailExpander
 {
         private TextInputLayout mItemNameWrap;
         private TextInputEditText mEtItemName;
@@ -30,7 +31,7 @@ public class ItemEditFieldControl extends DetailExpander
         private State mState = NEUTRAL;
         private Item mItem;
 
-        public ItemEditFieldControl(ItemContext itemContext)
+        public ItemDetailsFieldControl(ItemContext itemContext)
         {
                 super(itemContext);
                 mItem = new Item();
@@ -135,9 +136,9 @@ public class ItemEditFieldControl extends DetailExpander
                 mEtItemName.setText(itemName);
         }
 
-        public State getState()
+        public boolean isInErrorState()
         {
-                return mState;
+                return mState == ERROR_EMPTY_NAME;
         }
 
         private void populateItemInputFields()
@@ -169,7 +170,7 @@ public class ItemEditFieldControl extends DetailExpander
                 NEUTRAL
                         {
                                 @Override
-                                State transition(Event event, ItemEditFieldControl control)
+                                State transition(Event event, ItemDetailsFieldControl control)
                                 {
                                         State state = this;
                                         switch(event)
@@ -188,7 +189,7 @@ public class ItemEditFieldControl extends DetailExpander
                                 }
 
                                 @Override
-                                void setUiOutput(Event event, ItemEditFieldControl control)
+                                void setUiOutput(Event event, ItemDetailsFieldControl control)
                                 {
                                         switch (event)
                                         {
@@ -204,7 +205,7 @@ public class ItemEditFieldControl extends DetailExpander
                 ERROR_EMPTY_NAME
                         {
                                 @Override
-                                State transition(Event event, ItemEditFieldControl control)
+                                State transition(Event event, ItemDetailsFieldControl control)
                                 {
                                         State state = this;
                                         if (event == ON_VALUE_FILLED)
@@ -216,18 +217,18 @@ public class ItemEditFieldControl extends DetailExpander
                                 }
 
                                 @Override
-                                void setUiOutput(Event event, ItemEditFieldControl control)
+                                void setUiOutput(Event event, ItemDetailsFieldControl control)
                                 {
                                         control.showErrorEmptyValue();
                                 }
                         };
 
-                void setUiOutput(Event event, ItemEditFieldControl control)
+                void setUiOutput(Event event, ItemDetailsFieldControl control)
                 {
 
                 }
 
-                abstract State transition(Event event, ItemEditFieldControl control);
+                abstract State transition(Event event, ItemDetailsFieldControl control);
 
         }
 

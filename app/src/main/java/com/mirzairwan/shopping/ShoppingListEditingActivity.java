@@ -35,6 +35,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
         private Uri mUriItem;
         private ShoppingItemControl mShoppingItemControl;
         private ItemBuyFieldControl mItemBuyFieldControl;
+        private ItemDetailsFieldControl mItemDetailsFieldControl;
 
         @Override
         protected ItemControl getItemControl()
@@ -60,13 +61,13 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
         {
                 super.onCreate(savedInstanceState);
                 String defaultCurrencyCode = FormatHelper.getCurrencyCode(mSettingsCountryCode);
-                mItemEditFieldControl = new ItemEditFieldControl(this);
-                mItemEditFieldControl.setOnTouchListener(mOnTouchListener);
+                mItemDetailsFieldControl = new ItemDetailsFieldControl(this);
+                mItemDetailsFieldControl.setOnTouchListener(mOnTouchListener);
 
                 mItemBuyFieldControl = new ItemBuyFieldControl(this, defaultCurrencyCode);
                 mItemBuyFieldControl.setOnTouchListener(mOnTouchListener);
 
-                mShoppingItemControl.setItemEditFieldControl(mItemEditFieldControl);
+                mShoppingItemControl.setItemDetailsFieldControl(mItemDetailsFieldControl);
                 mShoppingItemControl.setItemBuyQtyFieldControl(mItemBuyFieldControl);
 
                 Log.d(LOG_TAG, ">>>savedInstantState is " + (savedInstanceState == null ? "NULL" : "NOT " + "NULL"));
@@ -178,7 +179,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
 
                                 mShoppingItemControl.setPurchaseManager(mPurchaseManager);
 
-                                mItemEditFieldControl.onLoadItemFinished(mPurchaseManager.getitem());
+                                mItemDetailsFieldControl.onLoadItemFinished(mPurchaseManager.getitem());
 
                                 mItemBuyFieldControl.setPurchaseManager(mPurchaseManager);
 

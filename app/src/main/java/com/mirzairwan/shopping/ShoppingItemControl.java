@@ -4,8 +4,6 @@ import android.util.Log;
 
 import com.mirzairwan.shopping.domain.Item;
 
-import static com.mirzairwan.shopping.ItemBuyFieldControl.State.BUY_ERROR;
-import static com.mirzairwan.shopping.ItemEditFieldControl.State.ERROR_EMPTY_NAME;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_BACK;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_CHANGE;
 import static com.mirzairwan.shopping.ShoppingItemControl.Event.ON_CREATE_OPTIONS_MENU;
@@ -34,7 +32,7 @@ public class ShoppingItemControl implements ItemControl
         protected ItemType mItemType;
         private ShoppingItemContext mContext;
         private PurchaseManager mPurchaseManager;
-        private ItemEditFieldControl mItemEditFieldControl;
+        private ItemDetailsFieldControl mItemDetailsFieldControl;
         private ItemBuyFieldControl mItemBuyFieldControl;
 
         public ShoppingItemControl(ShoppingItemContext context)
@@ -106,16 +104,14 @@ public class ShoppingItemControl implements ItemControl
 
         public void onOk()
         {
-                mItemEditFieldControl.onValidate();
-
-                if (mItemEditFieldControl.getState() == ERROR_EMPTY_NAME)
+                mItemDetailsFieldControl.onValidate();
+                if (mItemDetailsFieldControl.isInErrorState())
                 {
                         return;
                 }
 
                 mItemBuyFieldControl.onValidate();
-
-                if(mItemBuyFieldControl.getErrorState() == BUY_ERROR)
+                if(mItemBuyFieldControl.isInErrorState())
                 {
                         return;
                 }
@@ -135,9 +131,9 @@ public class ShoppingItemControl implements ItemControl
                 }
         }
 
-        public void setItemEditFieldControl(ItemEditFieldControl itemEditFieldControl)
+        public void setItemDetailsFieldControl(ItemDetailsFieldControl itemDetailsFieldControl)
         {
-                mItemEditFieldControl = itemEditFieldControl;
+                mItemDetailsFieldControl = itemDetailsFieldControl;
         }
 
         private void delete()
@@ -147,11 +143,9 @@ public class ShoppingItemControl implements ItemControl
 
         private void insert()
         {
-                Item item = mItemEditFieldControl.populateItemFromInputFields();
+                Item item = mItemDetailsFieldControl.populateItemFromInputFields();
 
                 mPurchaseManager.setItem(item);
-
-                //mPriceEditFieldControl.populatePriceMgr();
 
                 mItemBuyFieldControl.populatePurchaseMgr();
 
@@ -160,7 +154,7 @@ public class ShoppingItemControl implements ItemControl
 
         private void update()
         {
-                Item item = mItemEditFieldControl.populateItemFromInputFields();
+                Item item = mItemDetailsFieldControl.populateItemFromInputFields();
 
                 mPurchaseManager.setItem(item);
 
@@ -208,11 +202,6 @@ public class ShoppingItemControl implements ItemControl
         {
                 mItemBuyFieldControl = itemBuyFieldControl;
         }
-
-//        public void setPriceEditFieldControl(PriceEditFieldControl priceEditFieldControl)
-//        {
-//                //mPriceEditFieldControl = priceEditFieldControl;
-//        }
 
         enum Event
         {

@@ -18,17 +18,18 @@ import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
  * Contact owner at mirza.irwan.osman@gmail.com
  */
 
-public class HistoryEditingActivity extends ItemActivity implements HistoryItemEditorControl.ItemEditorContext
+public class HistoryEditingActivity extends ItemActivity implements HistoryEditingControl.ItemEditorContext
 {
         private static final String URI_ITEM = "uri"; /* Used for saving instance state */
         private Uri mUriItem;
-        private PriceEditFieldControl mPriceEditFieldControl;
-        private HistoryItemEditorControl mHistoryItemEditCtlr;
+        private PriceDetailsFieldControl mPriceDetailsFieldControl;
+        private HistoryEditingControl mHistoryItemEditCtlr;
+        private ItemDetailsFieldControl mItemDetailsFieldControl;
 
         @Override
         protected ItemControl getItemControl()
         {
-                mHistoryItemEditCtlr = new HistoryItemEditorControl(this);
+                mHistoryItemEditCtlr = new HistoryEditingControl(this);
                 return mHistoryItemEditCtlr;
         }
 
@@ -37,17 +38,17 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryItemE
         {
                 super.onCreate(savedInstanceState);
 
-                mItemEditFieldControl = new ItemEditFieldControl(this);
-                mItemEditFieldControl.setOnTouchListener(mOnTouchListener);
+                mItemDetailsFieldControl = new ItemDetailsFieldControl(this);
+                mItemDetailsFieldControl.setOnTouchListener(mOnTouchListener);
 
-                mHistoryItemEditCtlr.setItemEditFieldControl(mItemEditFieldControl);
+                mHistoryItemEditCtlr.setItemDetailsFieldControl(mItemDetailsFieldControl);
 
 
-                mPriceEditFieldControl = new PriceEditFieldControl(this, mSettingsCountryCode);
-                mPriceEditFieldControl.setPriceMgr(mPriceMgr);
-                mPriceEditFieldControl.setOnTouchListener(mOnTouchListener);
+                mPriceDetailsFieldControl = new PriceDetailsFieldControl(this, mSettingsCountryCode);
+                mPriceDetailsFieldControl.setPriceMgr(mPriceMgr);
+                mPriceDetailsFieldControl.setOnTouchListener(mOnTouchListener);
 
-                mHistoryItemEditCtlr.setPriceEditFieldControl(mPriceEditFieldControl);
+                mHistoryItemEditCtlr.setPriceDetailsFieldControl(mPriceDetailsFieldControl);
 
                 mContainer = findViewById(R.id.item_editing_container);
 
@@ -80,13 +81,13 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryItemE
         @Override
         protected void onLoadPriceFinished(PriceMgr priceMgr)
         {
-                mPriceEditFieldControl.onLoadFinished(mPriceMgr);
+                mPriceDetailsFieldControl.onLoadFinished(mPriceMgr);
         }
 
         @Override
         protected String getCurrencyCode()
         {
-                return mPriceEditFieldControl.getCurrencyCode();
+                return mPriceDetailsFieldControl.getCurrencyCode();
         }
 
         @Override
@@ -134,7 +135,7 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryItemE
                         case ITEM_LOADER_ID:
                                 ItemManager mItemManager = new ItemManager(cursor, getIntent().getBooleanExtra(ITEM_IS_IN_SHOPPING_LIST, false));
                                 mHistoryItemEditCtlr.onLoadItemFinished(mItemManager);
-                                mItemEditFieldControl.onLoadItemFinished(mItemManager.getItem());
+                                mItemDetailsFieldControl.onLoadItemFinished(mItemManager.getItem());
                                 mPictureMgr.setItemId(mItemManager.getItem().getId());
                                 break;
 

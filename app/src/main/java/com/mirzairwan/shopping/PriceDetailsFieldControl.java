@@ -7,23 +7,23 @@ import android.view.View;
 
 import com.mirzairwan.shopping.domain.PriceMgr;
 
-import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_ITEM_IS_IN_SHOPPUNG_LIST;
-import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_NEUTRAL;
-import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_VALIDATE_BUNDLE_QTY;
-import static com.mirzairwan.shopping.PriceEditFieldControl.Event.ON_VALIDATE_CURRENCY_CODE;
-import static com.mirzairwan.shopping.PriceEditFieldControl.State.NEUTRAL;
+import static com.mirzairwan.shopping.PriceDetailsFieldControl.Event.ON_ITEM_IS_IN_SHOPPUNG_LIST;
+import static com.mirzairwan.shopping.PriceDetailsFieldControl.Event.ON_VALIDATE_BUNDLE_QTY;
+import static com.mirzairwan.shopping.PriceDetailsFieldControl.Event.ON_VALIDATE_CURRENCY_CODE;
+import static com.mirzairwan.shopping.PriceDetailsFieldControl.State.CURRENCY_CODE_ERROR;
+import static com.mirzairwan.shopping.PriceDetailsFieldControl.State.NEUTRAL;
+import static com.mirzairwan.shopping.PriceDetailsFieldControl.State.PRICE_ERROR;
 import static com.mirzairwan.shopping.R.id.et_bundle_price;
 
 /**
  * Created by Mirza Irwan on 28/2/17.
  */
 
-public class PriceEditFieldControl extends DetailExpander
+public class PriceDetailsFieldControl extends DetailExpander
 {
-        private TextInputEditText mEtCurrencyCode;
         private ItemContext mItemContext;
+        private TextInputEditText mEtCurrencyCode;
         private TextInputEditText mEtBundleQty;
-
         private PriceField mUnitPrice;
         private PriceField mBundlePrice;
         private PriceMgr mPriceMgr;
@@ -31,10 +31,10 @@ public class PriceEditFieldControl extends DetailExpander
         /* State for bundle quantity field */
         private State mBundleQtyState = NEUTRAL;
 
-        /* State forcurrency code field */
+        /* State for currency code field */
         private State mCurrencyCodeState = NEUTRAL;
 
-        public PriceEditFieldControl(ItemContext itemContext, String settingsCountryCode)
+        public PriceDetailsFieldControl(ItemContext itemContext, String settingsCountryCode)
         {
                 super(itemContext);
                 mItemContext = itemContext;
@@ -67,7 +67,7 @@ public class PriceEditFieldControl extends DetailExpander
                 String bundleQty = mEtBundleQty.getText().toString();
                 if (TextUtils.isEmpty(mEtBundleQty.getText()))
                 {
-                        return true;
+                        return false;
                 }
 
                 int nBundleQtyToBuy = Integer.parseInt(bundleQty);
@@ -91,43 +91,15 @@ public class PriceEditFieldControl extends DetailExpander
                 mEtBundleQty.setError(null);
         }
 
-        public String getBundleQuantity()
+        public boolean isInErrorState()
         {
-                return mEtBundleQty.getText().toString();
+                return (mCurrencyCodeState.getParentState() == PRICE_ERROR || mBundleQtyState.getParentState() == PRICE_ERROR);
         }
 
-        public State getErrorState()
-        {
-                if (mBundleQtyState.getParentState() != null)
-                {
-                        return mBundleQtyState.getParentState();
-                }
-
-                if (mCurrencyCodeState.getParentState() != null)
-                {
-                        return mCurrencyCodeState.getParentState();
-                }
-
-                return null;
-        }
-
-        /**
-         * Validate bundle quantity field.
-         */
-        public void onValidateBundleSet()
+        public void onValidate()
         {
                 mBundleQtyState = mBundleQtyState.transition(ON_VALIDATE_BUNDLE_QTY, this);
                 mCurrencyCodeState = mCurrencyCodeState.transition(ON_VALIDATE_CURRENCY_CODE, this);
-        }
-
-        public void onValidateUnitSet()
-        {
-                mCurrencyCodeState = mCurrencyCodeState.transition(ON_VALIDATE_CURRENCY_CODE, this);
-        }
-
-        public void onNeutral()
-        {
-                mBundleQtyState = mBundleQtyState.transition(ON_NEUTRAL, this);
         }
 
         public void setPriceMgr(PriceMgr priceMgr)
@@ -142,7 +114,10 @@ public class PriceEditFieldControl extends DetailExpander
                 mEtCurrencyCode.setText(currencyCode);
                 mUnitPrice.setPrice(currencyCode, mPriceMgr.getUnitPriceForDisplay());
                 mBundlePrice.setPrice(currencyCode, mPriceMgr.getBundlePriceForDisplay());
-                mEtBundleQty.setText(String.valueOf(mPriceMgr.getBundlePrice().getBundleQuantity()));
+
+                int bundleQuantity = mPriceMgr.getBundlePrice().getBundleQuantity();
+                mEtBundleQty.setText(bundleQuantity == 0 ? "" : String.valueOf(bundleQuantity));
+
                 mUnitPrice.setCurrencySymbolInPriceHint(currencyCode);
                 mBundlePrice.setCurrencySymbolInPriceHint(currencyCode);
         }
@@ -235,19 +210,35 @@ public class PriceEditFieldControl extends DetailExpander
                 mEtCurrencyCode.setError(null);
         }
 
-        public void onNewItem()
-        {
-
-        }
-
         public String getCurrencyCode()
         {
                 return mEtCurrencyCode.getText().toString();
         }
 
+        public State onValidateCurrencyCode()
+        {
+                State state;
+                if (isCurrencyCodeEmpty())
+                {
+                        setCurrencyCodeError(R.string.empty_currency_code_msg);
+                        state = CURRENCY_CODE_ERROR;
+                }
+                else if (!isCurrencyCodeValid())
+                {
+                        setCurrencyCodeError(R.string.invalid_currency_code_msg);
+                        state = CURRENCY_CODE_ERROR;
+                }
+                else
+                {
+                        clearCurrencyCodeError();
+                        state = NEUTRAL;
+                }
+                return state;
+        }
+
         enum Event
         {
-                ON_NEUTRAL, ON_ITEM_IS_IN_SHOPPUNG_LIST, ON_VALIDATE_CURRENCY_CODE, ON_VALIDATE_BUNDLE_QTY
+                ON_NEUTRAL, ON_ITEM_IS_IN_SHOPPUNG_LIST, ON_VALIDATE_CURRENCY_CODE, ON_VALIDATE_BUNDLE_QTY, ON_VALIDATE;
         }
 
         enum State
@@ -255,7 +246,7 @@ public class PriceEditFieldControl extends DetailExpander
                 NEUTRAL(null)
                         {
                                 @Override
-                                State transition(Event event, PriceEditFieldControl control)
+                                State transition(Event event, PriceDetailsFieldControl control)
                                 {
                                         State state = this;
                                         switch (event)
@@ -270,14 +261,7 @@ public class PriceEditFieldControl extends DetailExpander
                                                         }
                                                         break;
                                                 case ON_VALIDATE_CURRENCY_CODE:
-                                                        if (control.isCurrencyCodeEmpty())
-                                                        {
-                                                                state = CURRENCY_CODE_EMPTY;
-                                                        }
-                                                        else if (!control.isCurrencyCodeValid())
-                                                        {
-                                                                state = CURRENCY_CODE_INVALID;
-                                                        }
+                                                        state = control.onValidateCurrencyCode();
                                                         break;
                                         }
 
@@ -287,7 +271,7 @@ public class PriceEditFieldControl extends DetailExpander
                                 }
 
                                 @Override
-                                void setUiOutput(Event event, PriceEditFieldControl control)
+                                void setUiOutput(Event event, PriceDetailsFieldControl control)
                                 {
                                         switch (event)
                                         {
@@ -302,14 +286,14 @@ public class PriceEditFieldControl extends DetailExpander
                 ITEM_IN_SHOPPING_LIST(null)
                         {
                                 @Override
-                                State transition(Event event, PriceEditFieldControl control)
+                                State transition(Event event, PriceDetailsFieldControl control)
                                 {
                                         State state = this;
                                         return state;
                                 }
 
                                 @Override
-                                void setUiOutput(Event event, PriceEditFieldControl control)
+                                void setUiOutput(Event event, PriceDetailsFieldControl control)
                                 {
                                         control.setBundleQuantityEnabled(false);
                                         control.setCurrencyCodeEnabled(false);
@@ -320,7 +304,7 @@ public class PriceEditFieldControl extends DetailExpander
                 PRICE_ERROR(null)
                         {
                                 @Override
-                                State transition(Event event, PriceEditFieldControl control)
+                                State transition(Event event, PriceDetailsFieldControl control)
                                 {
                                         return this;
                                 }
@@ -329,7 +313,7 @@ public class PriceEditFieldControl extends DetailExpander
                 BUNDLE_QTY_ERROR(PRICE_ERROR)
                         {
                                 @Override
-                                State transition(Event event, PriceEditFieldControl control)
+                                State transition(Event event, PriceDetailsFieldControl control)
                                 {
                                         State state = this;
                                         switch (event)
@@ -349,88 +333,31 @@ public class PriceEditFieldControl extends DetailExpander
                                 }
 
                                 @Override
-                                void setUiOutput(Event event, PriceEditFieldControl control)
+                                void setUiOutput(Event event, PriceDetailsFieldControl control)
                                 {
                                         control.showBundleQtyError(R.string.invalid_bundle_quantity_one);
                                 }
                         },
 
-                CURRENCY_CODE_EMPTY(PRICE_ERROR)
+                CURRENCY_CODE_ERROR(PRICE_ERROR)
                         {
                                 @Override
-                                State transition(Event event, PriceEditFieldControl control)
+                                State transition(Event event, PriceDetailsFieldControl control)
                                 {
-                                        State state = this;
-                                        switch (event)
-                                        {
-                                                case ON_VALIDATE_BUNDLE_QTY:
-                                                        if (control.isBundleQuantityOneOrLess())
-                                                        {
-                                                                state = BUNDLE_QTY_ERROR;
-                                                        }
-                                                        break;
-                                                case ON_VALIDATE_CURRENCY_CODE:
-                                                        if (control.isCurrencyCodeEmpty())
-                                                        {
-                                                                state = CURRENCY_CODE_EMPTY;
-                                                        }
-                                                        else if (!control.isCurrencyCodeValid())
-                                                        {
-                                                                state = CURRENCY_CODE_INVALID;
-                                                        }
-                                                        else
-                                                        {
-                                                                state = NEUTRAL;
-                                                        }
-                                                        break;
-                                        }
-
-                                        state.setUiOutput(event, control);
-
-                                        return state;
-                                }
-
-                                @Override
-                                void setUiOutput(Event event, PriceEditFieldControl control)
-                                {
-                                        control.setCurrencyCodeError(R.string.empty_currency_code_msg);
-                                }
-                        },
-
-                CURRENCY_CODE_INVALID(PRICE_ERROR)
-                        {
-                                @Override
-                                State transition(Event event, PriceEditFieldControl control)
-                                {
-                                        State state = this;
+                                        State state;
                                         switch (event)
                                         {
                                                 case ON_VALIDATE_CURRENCY_CODE:
-                                                        if (control.isCurrencyCodeEmpty())
-                                                        {
-                                                                state = CURRENCY_CODE_EMPTY;
-                                                        }
-                                                        else if (!control.isCurrencyCodeValid())
-                                                        {
-                                                                state = CURRENCY_CODE_INVALID;
-                                                        }
-                                                        else
-                                                        {
-                                                                state = NEUTRAL;
-                                                        }
+                                                        state = control.onValidateCurrencyCode();
                                                         break;
+
+                                                default:
+                                                        state = this;
                                         }
 
                                         state.setUiOutput(event, control);
                                         return state;
                                 }
-
-                                @Override
-                                void setUiOutput(Event event, PriceEditFieldControl control)
-                                {
-                                        control.setCurrencyCodeError(R.string.invalid_currency_code_msg);
-                                }
-
                         };
 
                 private State parentState;
@@ -440,9 +367,9 @@ public class PriceEditFieldControl extends DetailExpander
                         this.parentState = parentState;
                 }
 
-                abstract State transition(Event event, PriceEditFieldControl control);
+                abstract State transition(Event event, PriceDetailsFieldControl control);
 
-                void setUiOutput(Event event, PriceEditFieldControl control)
+                void setUiOutput(Event event, PriceDetailsFieldControl control)
                 {
 
                 }

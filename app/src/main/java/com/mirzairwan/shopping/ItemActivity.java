@@ -107,8 +107,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         private ImageView mImgItemPic;
         private long itemId;
         private ExchangeRateInput mExchangeRateInput;
-        //protected PriceEditFieldControl mPriceEditFieldControl;
-        protected ItemEditFieldControl mItemEditFieldControl;
 
         /*During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance
             and restore when device orientates to landscape. */
@@ -217,17 +215,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         }
                 };
 
-//                mPriceEditFieldControl = new PriceEditFieldControl(this, mSettingsCountryCode);
-//                mPriceEditFieldControl.setPriceMgr(mPriceMgr);
-//                mPriceEditFieldControl.setOnTouchListener(mOnTouchListener);
-
-                mItemEditFieldControl = new ItemEditFieldControl(this);
-                mItemEditFieldControl.setOnTouchListener(mOnTouchListener);
-
                 mImgItemPic = (ImageView) findViewById(R.id.img_item);
-
-//                etCurrencyCode = (EditText) findViewById(R.id.et_currency_code);
-//                OnCurrencyCodeChange onCurrencyCodeChange = new OnCurrencyCodeChange(etCurrencyCode, mUnitPriceEditField, mBundlePriceEditField, mItemControl);
 
                 ItemExchangeRateLoaderCallback pxExLoaderCb = new ItemExchangeRateLoaderCallback(this);
                 getLoaderManager().initLoader(78, null, pxExLoaderCb);
@@ -317,7 +305,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 getLoaderManager().initLoader(ITEM_PICTURE_LOADER_ID, arg, callback);
         }
 
-
         @Override
         public boolean onCreateOptionsMenu(Menu menu)
         {
@@ -344,7 +331,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         default:
                                 return super.onOptionsItemSelected(menuItem);
                 }
-
         }
 
         public void warnChangesMade()
@@ -376,12 +362,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         getWindow().setReturnTransition(slide);
                 }
         }
-
-        public void cleanUp()
-        {
-                removeUnwantedPicturesFromApp();
-        }
-
 
         public void finishItemEditing()
         {
@@ -677,29 +657,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 alertDialog.show();
         }
 
-//        /**
-//         * Validate item details. Invoked when user clicks on save button.
-//         * Show error messages.
-//         *
-//         * @return true if input fields are valid
-//         */
-//        public boolean areFieldsValid()
-//        {
-//                boolean result = true;
-//
-//                Editable currencyCodeEditable = etCurrencyCode.getText();
-//                boolean isCurrencyCodeValid = !TextUtils.isEmpty(currencyCodeEditable) && FormatHelper.isValidCurrencyCode(currencyCodeEditable.toString());
-//
-//                if (!isCurrencyCodeValid)
-//                {
-//                        etCurrencyCode.clearFocus();
-//                        etCurrencyCode.setError(getString(R.string.valid_country_code_msg));
-//                        result = false;
-//                }
-//
-//                return result;
-//        }
-
         /**
          * Select following child records of  item:
          * 1. Prices
@@ -769,7 +726,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 {
                         case ITEM_PRICE_LOADER_ID:
                                 mPriceMgr.createPrices(cursor);
-                                //mPriceEditFieldControl.onLoadFinished(mPriceMgr);
                                 onLoadPriceFinished(mPriceMgr);
 
                                 /*
@@ -814,7 +770,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         public void onLoaderReset(Loader<Cursor> loader)
         {
                 // If the loader is invalidated, clear out all the data from the input fields.
-                //mPriceEditFieldControl.onLoaderReset();
                 clearPictureField();
         }
 

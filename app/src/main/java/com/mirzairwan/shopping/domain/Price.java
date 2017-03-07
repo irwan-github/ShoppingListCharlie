@@ -63,7 +63,6 @@ public class Price
                 mPriceType = BUNDLE_PRICE;
                 mCurrencyCode = currencyCode;
                 mShopId = shopId;
-                ;
                 mLastUpdatedOn = lastUpdatedOn;
         }
 

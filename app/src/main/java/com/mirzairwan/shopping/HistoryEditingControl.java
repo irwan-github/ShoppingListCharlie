@@ -6,18 +6,17 @@ package com.mirzairwan.shopping;
 
 import android.util.Log;
 
-import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_BACK;
-import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_CHANGE;
-import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_CREATE_OPTIONS_MENU;
-import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_DB_RESULT;
-import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_DELETE;
-import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_EXIST;
-import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_LEAVE;
-import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_STAY;
-import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_UP;
-import static com.mirzairwan.shopping.HistoryItemEditorControl.Event.ON_UPDATE;
-import static com.mirzairwan.shopping.HistoryItemEditorControl.State.START;
-import static com.mirzairwan.shopping.ItemEditFieldControl.State.ERROR_EMPTY_NAME;
+import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_BACK;
+import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_CHANGE;
+import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_CREATE_OPTIONS_MENU;
+import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_DB_RESULT;
+import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_DELETE;
+import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_EXIST;
+import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_LEAVE;
+import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_STAY;
+import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_UP;
+import static com.mirzairwan.shopping.HistoryEditingControl.Event.ON_UPDATE;
+import static com.mirzairwan.shopping.HistoryEditingControl.State.START;
 
 /**
  * It is possible to add actions to a state which are executed on entry to that state. This may
@@ -36,16 +35,16 @@ import static com.mirzairwan.shopping.ItemEditFieldControl.State.ERROR_EMPTY_NAM
  * Actions should be associated with events. Example:
  * Insert record into database
  */
-public class HistoryItemEditorControl implements ItemControl
+public class HistoryEditingControl implements ItemControl
 {
-        private String LOG_TAG = HistoryItemEditorControl.class.getSimpleName();
+        private String LOG_TAG = HistoryEditingControl.class.getSimpleName();
         private ItemEditorContext mContext;
         private State mCurrentState = START;
         private ItemManager mItemManager;
-        private ItemEditFieldControl mItemEditFieldControl;
-        private PriceEditFieldControl mPriceEditFieldControl;
+        private ItemDetailsFieldControl mItemDetailsFieldControl;
+        private PriceDetailsFieldControl mPriceDetailsFieldControl;
 
-        public HistoryItemEditorControl(ItemEditorContext context)
+        public HistoryEditingControl(ItemEditorContext context)
         {
                 mContext = context;
         }
@@ -73,9 +72,10 @@ public class HistoryItemEditorControl implements ItemControl
 
         public void onOk()
         {
-                mItemEditFieldControl.onValidate();
+                mItemDetailsFieldControl.onValidate();
+                mPriceDetailsFieldControl.onValidate();
 
-                if (mItemEditFieldControl.getState() == ERROR_EMPTY_NAME)
+                if (mItemDetailsFieldControl.isInErrorState() || mPriceDetailsFieldControl.isInErrorState())
                 {
                         return;
                 }
@@ -112,7 +112,7 @@ public class HistoryItemEditorControl implements ItemControl
                 mItemManager = itemManager;
                 if (mItemManager.getItem().isInBuyList())
                 {
-                        mPriceEditFieldControl.onItemIsInShoppingList();
+                        mPriceDetailsFieldControl.onItemIsInShoppingList();
                 }
         }
 
@@ -133,8 +133,8 @@ public class HistoryItemEditorControl implements ItemControl
 
         private void update()
         {
-                mItemEditFieldControl.populateItemFromInputFields();
-                mPriceEditFieldControl.populatePriceMgr();
+                mItemDetailsFieldControl.populateItemFromInputFields();
+                mPriceDetailsFieldControl.populatePriceMgr();
                 mContext.update(mItemManager);
         }
 
@@ -158,14 +158,14 @@ public class HistoryItemEditorControl implements ItemControl
                 mContext.setMenuVisible(menuResId, b);
         }
 
-        public void setItemEditFieldControl(ItemEditFieldControl itemEditFieldControl)
+        public void setItemDetailsFieldControl(ItemDetailsFieldControl itemDetailsFieldControl)
         {
-                mItemEditFieldControl = itemEditFieldControl;
+                mItemDetailsFieldControl = itemDetailsFieldControl;
         }
 
-        public void setPriceEditFieldControl(PriceEditFieldControl priceEditFieldControl)
+        public void setPriceDetailsFieldControl(PriceDetailsFieldControl priceDetailsFieldControl)
         {
-                mPriceEditFieldControl = priceEditFieldControl;
+                mPriceDetailsFieldControl = priceDetailsFieldControl;
         }
 
         enum Event
@@ -178,7 +178,7 @@ public class HistoryItemEditorControl implements ItemControl
         {
                 START
                         {
-                                public State transition(Event event, HistoryItemEditorControl context)
+                                public State transition(Event event, HistoryEditingControl context)
                                 {
                                         State state;
                                         switch (event)
@@ -196,7 +196,7 @@ public class HistoryItemEditorControl implements ItemControl
 
                 UNCHANGE
                         {
-                                public State transition(Event event, HistoryItemEditorControl context)
+                                public State transition(Event event, HistoryEditingControl context)
                                 {
                                         State state;
                                         switch (event)
@@ -224,7 +224,7 @@ public class HistoryItemEditorControl implements ItemControl
                                         return state;
                                 }
 
-                                public void setAttributes(Event event, HistoryItemEditorControl control)
+                                public void setAttributes(Event event, HistoryEditingControl control)
                                 {
                                         switch (event)
                                         {
@@ -240,7 +240,7 @@ public class HistoryItemEditorControl implements ItemControl
 
                 CHANGE
                         {
-                                public State transition(Event event, HistoryItemEditorControl context)
+                                public State transition(Event event, HistoryEditingControl context)
                                 {
                                         State state;
                                         switch (event)
@@ -270,7 +270,7 @@ public class HistoryItemEditorControl implements ItemControl
                                         return state;
                                 }
 
-                                public void setAttributes(Event event, HistoryItemEditorControl control)
+                                public void setAttributes(Event event, HistoryEditingControl control)
                                 {
                                         control.setMenuVisible(R.id.save_item_details, true);
                                 }
@@ -278,7 +278,7 @@ public class HistoryItemEditorControl implements ItemControl
 
                 WARN
                         {
-                                public State transition(Event event, HistoryItemEditorControl context)
+                                public State transition(Event event, HistoryEditingControl context)
                                 {
                                         State state;
                                         switch (event)
@@ -302,7 +302,7 @@ public class HistoryItemEditorControl implements ItemControl
                 POST_DB_OP
                         {
                                 @Override
-                                public State transition(Event event, HistoryItemEditorControl context)
+                                public State transition(Event event, HistoryEditingControl context)
                                 {
                                         Log.d(this.toString(), "Event:" + event);
                                         State state;
@@ -325,7 +325,7 @@ public class HistoryItemEditorControl implements ItemControl
                                 }
 
                                 @Override
-                                public void setAttributes(Event event, HistoryItemEditorControl context)
+                                public void setAttributes(Event event, HistoryEditingControl context)
                                 {
                                         if (event == ON_DELETE)
                                         {
@@ -334,9 +334,9 @@ public class HistoryItemEditorControl implements ItemControl
                                 }
                         };;
 
-                abstract State transition(Event event, HistoryItemEditorControl itemContext);
+                abstract State transition(Event event, HistoryEditingControl itemContext);
 
-                public void setAttributes(Event event, HistoryItemEditorControl itemEditorControl)
+                public void setAttributes(Event event, HistoryEditingControl itemEditorControl)
                 {
                 }
         }
