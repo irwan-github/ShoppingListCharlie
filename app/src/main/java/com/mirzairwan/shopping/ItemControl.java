@@ -5,12 +5,11 @@ import android.view.Menu;
 /**
  * Created by Mirza Irwan on 26/2/17.
  *
- * Control the button and menu of the screen.
+ * User's UI-events generated from the buttons and menu of the screen will invoke this interface.
  */
 
 public interface ItemControl
 {
-
         void onChange();
 
         void onCreateOptionsMenu(Menu menu);
@@ -26,7 +25,4 @@ public interface ItemControl
         void onBackPressed();
 
         void onStay();
-
-        void onExistingItem();
-
 }

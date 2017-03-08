@@ -35,7 +35,9 @@ import static java.lang.Integer.parseInt;
 
 public class ItemBuyFieldControl
 {
-        private final String mDefaultCurrencyCode;
+        private String mDefaultCurrencyCode;
+        private TextInputLayout mEtCurrencyCodeWrap;
+        private TextInputLayout mEtBundleQtyWrap;
         private ItemContext mItemContext;
         private RadioButton mRbBundlePrice;
         private RadioButton mRbUnitPrice;
@@ -76,8 +78,11 @@ public class ItemBuyFieldControl
                 TextInputLayout etBundlePrice = (TextInputLayout) itemContext.findViewById(R.id.sl_bundle_price_layout);
                 mBundlePrice = new PriceField(etBundlePrice, itemContext.getString(R.string.bundle_price_txt), R.id.sl_et_bundle_price);
 
-                mEtBundleQty = (TextInputEditText) itemContext.findViewById(R.id.sl_et_bundle_qty);
-                mEtCurrencyCode = (TextInputEditText) itemContext.findViewById(R.id.et_currency_code);
+                mEtBundleQtyWrap = (TextInputLayout) itemContext.findViewById(R.id.sl_bundle_qty_layout);
+                mEtBundleQty = (TextInputEditText)mEtBundleQtyWrap.findViewById(R.id.sl_et_bundle_qty);
+
+                mEtCurrencyCodeWrap = (TextInputLayout) itemContext.findViewById(R.id.sl_currency_code_layout);
+                mEtCurrencyCode = (TextInputEditText) mEtCurrencyCodeWrap.findViewById(R.id.et_currency_code);
         }
 
         public void setOnTouchListener(View.OnTouchListener onTouchListener)
@@ -451,6 +456,7 @@ public class ItemBuyFieldControl
 
         private void setCurrencyCodeVisibility(int visible)
         {
+                mEtCurrencyCodeWrap.setVisibility(visible);
                 mEtCurrencyCode.setVisibility(visible);
         }
 
@@ -466,6 +472,7 @@ public class ItemBuyFieldControl
 
         private void setBundleQtyVisibility(int visibility)
         {
+                mEtBundleQtyWrap.setVisibility(visibility);
                 mEtBundleQty.setVisibility(visibility);
         }
 

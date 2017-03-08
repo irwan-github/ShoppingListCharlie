@@ -15,15 +15,15 @@ public interface ItemContext
 
         void setExitTransition();
 
-        void setTitle(int resourceId);
+        void setTitle(int stringResId);
 
         void showTransientDbMessage();
 
         View findViewById(int resId);
 
-        String getString(int resId);
+        String getString(int stringResId);
 
         void invalidateOptionsMenu();
 
-        Transition inflateTransition(int isExpand);
+        Transition inflateTransition(int transitionResId);
 }

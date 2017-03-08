@@ -221,9 +221,9 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         }
 
         @Override
-        public Transition inflateTransition(int trasitionResId)
+        public Transition inflateTransition(int transitionResId)
         {
-                return TransitionInflater.from(this).inflateTransition(trasitionResId);
+                return TransitionInflater.from(this).inflateTransition(transitionResId);
         }
 
         protected abstract int getLayoutXml();

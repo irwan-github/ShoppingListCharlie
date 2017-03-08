@@ -20,7 +20,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingTop="@dimen/edit_text_padding_top"
-                app:errorEnabled="false"
+                android:paddingBottom="@dimen/edit_text_padding_bottom"
+                android:visibility="gone"
                 >
 
                 <android.support.design.widget.TextInputEditText
@@ -32,6 +33,7 @@
                         android:inputType="numberDecimal"
                         android:minWidth="@dimen/edit_text_price_min_width"
                         android:textAppearance="?android:textAppearanceMedium"
+
                         android:visibility="gone"
                         />
 
@@ -43,6 +45,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingTop="@dimen/edit_text_padding_top"
+                android:paddingBottom="@dimen/edit_text_padding_bottom"
+                android:visibility="gone"
                 >
 
                 <android.support.design.widget.TextInputEditText
@@ -54,16 +58,19 @@
                         android:inputType="numberDecimal"
                         android:minWidth="@dimen/edit_text_price_min_width"
                         android:textAppearance="?android:textAppearanceMedium"
+
                         android:visibility="gone"
                         />
         </android.support.design.widget.TextInputLayout>
 
         <!-- Bundle quantity -->
         <android.support.design.widget.TextInputLayout
-                android:id="@+id/bundle_qty_layout"
+                android:id="@+id/sl_bundle_qty_layout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingTop="@dimen/edit_text_padding_top"
+                android:paddingBottom="@dimen/edit_text_padding_bottom"
+                android:visibility="gone"
                 >
 
                 <android.support.design.widget.TextInputEditText
@@ -75,6 +82,7 @@
                         android:inputType="number"
                         android:minWidth="@dimen/edit_text_bundle_qty_min_width"
                         android:textAppearance="?android:textAppearanceMedium"
+
                         android:visibility="gone"
                         />
 
@@ -82,10 +90,12 @@
 
         <!-- -Currency code -->
         <android.support.design.widget.TextInputLayout
-                android:id="@+id/currency_code_layout"
+                android:id="@+id/sl_currency_code_layout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingTop="@dimen/edit_text_padding_top"
+                android:paddingBottom="@dimen/edit_text_padding_bottom"
+                android:visibility="gone"
                 >
 
                 <android.support.design.widget.TextInputEditText
@@ -99,8 +109,9 @@
                         android:minWidth="160dp"
                         android:selectAllOnFocus="true"
                         android:textAppearance="?android:textAppearanceMedium"
+
                         android:visibility="gone"
-                        tools:text="GBP"/>
+                        />
 
         </android.support.design.widget.TextInputLayout>
 

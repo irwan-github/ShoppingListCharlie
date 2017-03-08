@@ -74,10 +74,15 @@ public class ItemDetailsFieldControl extends DetailExpander
                 return mItem;
         }
 
-
-        private void showErrorEmptyValue()
+        private void setErrorItemNameField(int stringResId)
         {
-                mItemNameWrap.setError(mItemContext.getString(R.string.mandatory));
+                mItemNameWrap.setError(mItemContext.getString(stringResId));
+
+        }
+
+        private void setErrorItemNameFieldEnabled(boolean isEnabled)
+        {
+                mItemNameWrap.setErrorEnabled(isEnabled);
         }
 
         private void hideError()
@@ -176,10 +181,13 @@ public class ItemDetailsFieldControl extends DetailExpander
                                         switch(event)
                                         {
                                                 case ON_MISSING_VALUE:
+                                                        control.setErrorItemNameField(R.string.mandatory);
                                                         state = ERROR_EMPTY_NAME;
                                                         break;
 
                                                 case ON_LOAD_ITEM:
+                                                        control.populateItemInputFields();
+                                                        control.invalidateOptionsMenu();
                                                         state = this;
                                                         break;
 
@@ -191,14 +199,7 @@ public class ItemDetailsFieldControl extends DetailExpander
                                 @Override
                                 void setUiOutput(Event event, ItemDetailsFieldControl control)
                                 {
-                                        switch (event)
-                                        {
-                                                case ON_LOAD_ITEM:
-                                                        control.populateItemInputFields();
-                                                        control.invalidateOptionsMenu();
-                                                        break;
-                                        }
-                                        control.hideError();
+                                        control.setErrorItemNameFieldEnabled(false);
                                 }
                         },
 
@@ -210,6 +211,7 @@ public class ItemDetailsFieldControl extends DetailExpander
                                         State state = this;
                                         if (event == ON_VALUE_FILLED)
                                         {
+                                                control.hideError();
                                                 state = NEUTRAL;
                                         }
                                         state.setUiOutput(event, control);
@@ -219,7 +221,7 @@ public class ItemDetailsFieldControl extends DetailExpander
                                 @Override
                                 void setUiOutput(Event event, ItemDetailsFieldControl control)
                                 {
-                                        control.showErrorEmptyValue();
+                                        control.setErrorItemNameFieldEnabled(true);
                                 }
                         };
 
