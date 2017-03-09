@@ -28,53 +28,41 @@ import static com.mirzairwan.shopping.LoaderHelper.PURCHASE_ITEM_LOADER_ID;
  * onButtoDeleteClick
  */
 
-public class ShoppingListEditingActivity extends ItemActivity implements ShoppingItemControl.ShoppingItemContext
+public class ShoppingListEditingActivity extends ItemActivity implements ShoppingListEditingControl.ShoppingItemContext
 {
         private static final String LOG_TAG = ShoppingListEditingActivity.class.getSimpleName();
         private static final String URI_ITEM = "uri"; /* Used for saving instant mItemType */
         private Uri mUriItem;
-        private ShoppingItemControl mShoppingItemControl;
-        private ItemBuyFieldControl mItemBuyFieldControl;
-        private ItemDetailsFieldControl mItemDetailsFieldControl;
+        private ShoppingListEditingControl mShoppingListEditingControl;
 
         @Override
         protected ItemControl getItemControl()
         {
-                mShoppingItemControl = new ShoppingItemControl(this);
-                return mShoppingItemControl;
+                mShoppingListEditingControl = new ShoppingListEditingControl(this);
+                return mShoppingListEditingControl;
         }
 
         @Override
         protected void onLoadPriceFinished(PriceMgr priceMgr)
         {
-                mItemBuyFieldControl.onLoadPriceFinished(priceMgr);
+                mShoppingListEditingControl.onLoadPriceFinished(priceMgr);
         }
 
         @Override
         protected String getCurrencyCode()
         {
-                return mItemBuyFieldControl.getCurrencyCode();
+                return mShoppingListEditingControl.getCurrencyCode();
         }
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
         {
                 super.onCreate(savedInstanceState);
-                String defaultCurrencyCode = FormatHelper.getCurrencyCode(mSettingsCountryCode);
-                mItemDetailsFieldControl = new ItemDetailsFieldControl(this);
-                mItemDetailsFieldControl.setOnTouchListener(mOnTouchListener);
-
-                mItemBuyFieldControl = new ItemBuyFieldControl(this, defaultCurrencyCode);
-                mItemBuyFieldControl.setOnTouchListener(mOnTouchListener);
-
-                mShoppingItemControl.setItemDetailsFieldControl(mItemDetailsFieldControl);
-                mShoppingItemControl.setItemBuyQtyFieldControl(mItemBuyFieldControl);
+                mShoppingListEditingControl.setOnTouchListener(mOnTouchListener);
 
                 Log.d(LOG_TAG, ">>>savedInstantState is " + (savedInstanceState == null ? "NULL" : "NOT " + "NULL"));
 
                 mContainer = findViewById(R.id.shopping_list_editor_container);
-
-                //PurchaseEditorExpander purchaseEditorExpander = new PurchaseEditorExpander(this);
 
                 if (savedInstanceState != null) /* Restore from previous activity */
                 {
@@ -89,14 +77,13 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                 if (mUriItem == null)
                 {
                         PurchaseManager purchaseManager = new PurchaseManager();
-                        mShoppingItemControl.onNewItem();
-                        mItemBuyFieldControl.setPriceMgr(mPriceMgr);
-                        mShoppingItemControl.setPurchaseManager(purchaseManager);
-                        mItemBuyFieldControl.setPurchaseManager(purchaseManager);
+                        mShoppingListEditingControl.onNewItem();
+                        mShoppingListEditingControl.setPriceMgr(mPriceMgr);
+                        mShoppingListEditingControl.setPurchaseManager(purchaseManager);
                 }
                 else
                 {
-                        mShoppingItemControl.onExistingItem();
+                        mShoppingListEditingControl.onExistingItem();
                         initLoaders(mUriItem);
                 }
         }
@@ -176,15 +163,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                                      reading data from it. This should be the only purchase  row in the cursor.
                                  */
                                 PurchaseManager mPurchaseManager = new PurchaseManager(cursor);
-
-                                mShoppingItemControl.setPurchaseManager(mPurchaseManager);
-
-                                mItemDetailsFieldControl.onLoadItemFinished(mPurchaseManager.getitem());
-
-                                mItemBuyFieldControl.setPurchaseManager(mPurchaseManager);
-
-                                mItemBuyFieldControl.onLoadFinished();
-
+                                mShoppingListEditingControl.onLoadFinished(mPurchaseManager);
                                 mPictureMgr.setItemId(mPurchaseManager.getitem().getId());
                                 break;
 
@@ -200,7 +179,7 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                 switch (loaderId)
                 {
                         case PURCHASE_ITEM_LOADER_ID:
-                                mItemBuyFieldControl.onLoaderReset();
+                                mShoppingListEditingControl.onLoaderReset();
                                 break;
                         default:
                                 super.onLoaderReset(loader);

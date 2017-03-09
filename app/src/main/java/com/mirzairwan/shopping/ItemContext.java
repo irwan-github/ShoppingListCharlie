@@ -26,4 +26,6 @@ public interface ItemContext
         void invalidateOptionsMenu();
 
         Transition inflateTransition(int transitionResId);
+
+        String getDefaultCountryCode();
 }

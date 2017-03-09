@@ -119,4 +119,6 @@
         <string name="mandatory">Required</string>
         <string name="invalid_buy_quantity_zero">Must be 1 or more</string>
         <string name="empty_currency_code_msg">Cannot be empty.</string>
+        <string name="decrease_qty">Reduce</string>
+        <string name="increase_qty">Increase</string>
 </resources>

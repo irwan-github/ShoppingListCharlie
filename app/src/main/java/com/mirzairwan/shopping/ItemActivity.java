@@ -149,13 +149,20 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         }
 
         @Override
+        public String getDefaultCountryCode()
+        {
+                return mSettingsCountryCode;
+        }
+
+        @Override
         protected void onCreate(Bundle savedInstanceState)
         {
                 super.onCreate(savedInstanceState);
-                mItemControl = getItemControl();
-                PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
                 setContentView(getLayoutXml());
-
+                PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
+                SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+                mSettingsCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
+                mItemControl = getItemControl();
                 Toolbar mainToolbar = (Toolbar) findViewById(R.id.toolbar);
                 setSupportActionBar(mainToolbar);
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -164,8 +171,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
                 daoManager = Builder.getDaoManager(this);
 
-                SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-                mSettingsCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
+
 
                 mPriceMgr = new PriceMgr(mSettingsCountryCode);
 
