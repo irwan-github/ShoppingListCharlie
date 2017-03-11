@@ -18,18 +18,16 @@ import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
  * Contact owner at mirza.irwan.osman@gmail.com
  */
 
-public class HistoryEditingActivity extends ItemActivity implements HistoryItemControl.ItemEditorContext
+public class HistoryEditingActivity extends ItemActivity implements HistoryEditingControl.ItemEditorContext
 {
         private static final String URI_ITEM = "uri"; /* Used for saving instance state */
         private Uri mUriItem;
-        private PriceDetailsFieldControl mPriceDetailsFieldControl;
-        private HistoryItemControl mHistoryItemEditCtlr;
-        private ItemDetailsFieldControl mItemDetailsFieldControl;
+        private HistoryEditingControl mHistoryItemEditCtlr;
 
         @Override
         protected ItemControl getItemControl()
         {
-                mHistoryItemEditCtlr = new HistoryItemControl(this);
+                mHistoryItemEditCtlr = new HistoryEditingControl(this);
                 return mHistoryItemEditCtlr;
         }
 
@@ -37,18 +35,8 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryItemC
         protected void onCreate(Bundle savedInstanceState)
         {
                 super.onCreate(savedInstanceState);
-
-                mItemDetailsFieldControl = new ItemDetailsFieldControl(this);
-                mItemDetailsFieldControl.setOnTouchListener(mOnTouchListener);
-
-                mHistoryItemEditCtlr.setItemDetailsFieldControl(mItemDetailsFieldControl);
-
-
-                mPriceDetailsFieldControl = new PriceDetailsFieldControl(this, mSettingsCountryCode);
-                mPriceDetailsFieldControl.setPriceMgr(mPriceMgr);
-                mPriceDetailsFieldControl.setOnTouchListener(mOnTouchListener);
-
-                mHistoryItemEditCtlr.setPriceDetailsFieldControl(mPriceDetailsFieldControl);
+                mHistoryItemEditCtlr.setPriceMgr(mPriceMgr);
+                mHistoryItemEditCtlr.setOnTouchListener(mOnTouchListener);
 
                 mContainer = findViewById(R.id.item_editing_container);
 
@@ -62,7 +50,7 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryItemC
                         mUriItem = intent.getData();
                 }
 
-                mHistoryItemEditCtlr.onExistingItem();
+                //mHistoryItemEditCtlr.onExistingItem();
                 initLoaders(mUriItem);
         }
 
@@ -81,19 +69,19 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryItemC
         @Override
         protected void onLoadPriceFinished(PriceMgr priceMgr)
         {
-                mPriceDetailsFieldControl.onLoadFinished(mPriceMgr);
+                mHistoryItemEditCtlr.onLoadPriceFinished(mPriceMgr);
         }
 
         @Override
         protected String getCurrencyCode()
         {
-                return mPriceDetailsFieldControl.getCurrencyCode();
+                return mHistoryItemEditCtlr.getCurrencyCode();
         }
 
         @Override
         protected int getLayoutXml()
         {
-                return R.layout.activity_item_editing;
+                return R.layout.activity_edit_history;
         }
 
         public void delete(long itemId)
@@ -135,7 +123,6 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryItemC
                         case ITEM_LOADER_ID:
                                 ItemManager mItemManager = new ItemManager(cursor, getIntent().getBooleanExtra(ITEM_IS_IN_SHOPPING_LIST, false));
                                 mHistoryItemEditCtlr.onLoadItemFinished(mItemManager);
-                                mItemDetailsFieldControl.onLoadItemFinished(mItemManager.getItem());
                                 mPictureMgr.setItemId(mItemManager.getItem().getId());
                                 break;
 

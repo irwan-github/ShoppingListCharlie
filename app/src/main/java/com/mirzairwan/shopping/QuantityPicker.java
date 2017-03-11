@@ -15,20 +15,26 @@ public class QuantityPicker
         private View.OnClickListener mDefaultUpListener;
         private TextView mTvHint;
         private TextView mTvError;
-        private int mQuantity = 1;
-        private TextView mTvBuyQty;
+        private int mQuantity;
+        private TextView mTvQty;
         private ImageButton mBtnUpCounter;
         private ImageButton mBtnDownCounter;
 
         public QuantityPicker(View view)
         {
+                this(view, 1);
+        }
+
+        public QuantityPicker(View view, int initialQuantity)
+        {
                 mParentView = view;
                 mBtnDownCounter = (ImageButton) view.findViewById(R.id.down_counter);
                 mBtnUpCounter = (ImageButton) view.findViewById(R.id.up_counter);
-                mTvBuyQty = (TextView) view.findViewById(R.id.picker_item_quantity);
+                mTvQty = (TextView) view.findViewById(R.id.picker_item_quantity);
                 mTvHint = (TextView) view.findViewById(R.id.hint_qty_picker);
                 mTvError = (TextView) view.findViewById(R.id.error_qty_picker);
-
+                mQuantity = initialQuantity;
+                mTvQty.setText(String.valueOf(mQuantity));
                 mDefaultUpListener = new View.OnClickListener()
                 {
                         @Override
@@ -72,7 +78,7 @@ public class QuantityPicker
         public void setQuantity(int quantity)
         {
                 mQuantity = quantity;
-                mTvBuyQty.setText(String.valueOf(quantity));
+                mTvQty.setText(String.valueOf(quantity));
         }
 
         public String getText()
@@ -82,7 +88,6 @@ public class QuantityPicker
 
         public void setError(String errorMsg)
         {
-                mTvError.setVisibility(View.VISIBLE);
                 mTvError.setText(errorMsg);
         }
 
@@ -95,10 +100,9 @@ public class QuantityPicker
         public void setVisibility(int visibility)
         {
                 mParentView.setVisibility(visibility);
-                mTvBuyQty.setVisibility(visibility);
+                mTvQty.setVisibility(visibility);
                 mBtnDownCounter.setVisibility(visibility);
                 mBtnUpCounter.setVisibility(visibility);
-                mTvError.setVisibility(visibility);
                 mTvHint.setVisibility(visibility);
         }
 

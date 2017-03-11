@@ -13,21 +13,39 @@ import com.mirzairwan.shopping.domain.ItemInShoppingList;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.PriceMgr;
 
-import static com.mirzairwan.shopping.ItemPurchaseControl.Event.ON_INVALID_MULTIPLES;
 import static com.mirzairwan.shopping.ItemPurchaseControl.Event.ON_LOAD_BUNDLE_PX;
 import static com.mirzairwan.shopping.ItemPurchaseControl.Event.ON_LOAD_PX_FINISHED;
 import static com.mirzairwan.shopping.ItemPurchaseControl.Event.ON_LOAD_UNIT_PX;
 import static com.mirzairwan.shopping.ItemPurchaseControl.Event.ON_NEW;
 import static com.mirzairwan.shopping.ItemPurchaseControl.Event.ON_SELECT_BUNDLE_PRICE;
 import static com.mirzairwan.shopping.ItemPurchaseControl.Event.ON_SELECT_UNIT_PRICE;
-import static com.mirzairwan.shopping.ItemPurchaseControl.Event.ON_VALID_BUY_QTY;
+import static com.mirzairwan.shopping.ItemPurchaseControl.Event.ON_VALIDATE;
 import static com.mirzairwan.shopping.ItemPurchaseControl.State.BUY_ERROR;
 import static com.mirzairwan.shopping.ItemPurchaseControl.State.NEUTRAL;
+import static com.mirzairwan.shopping.ItemPurchaseControl.State.NEUTRAL_BUY_QTY;
 import static com.mirzairwan.shopping.ItemPurchaseControl.State.NEUTRAL_CURRENCY_CODE;
 
 
 /**
  * Created by Mirza Irwan on 28/2/17.
+ *
+ * Respond to the following UI-events:
+ * 1. Ok button-click
+ * 2. Select options button.
+ * 3. Add/Reduce buy quantity button-clicks.
+ * 4. Add/Reduce bundle quantity button-clicks
+ *
+ * When a user supplies any of the above events to a user interface object, the event handler is made to call a corresponding method in this control object.
+ * The method uses the current state to determine which state transition should occur and thus which action(s) should be executed.
+ *
+ * For instance, when a user clicks on the  Add/Reduce buy quantity button, the activity can be in one of 2 states:
+ * 1. Unit Price
+ * 2. Bundle Price
+ *
+ *  The  concurrent states will be defined by the following state variables:
+ * 1. mPriceSelectState
+ * 2. mBuyQtyValidState
+ * 3. mCurrencyCodeState
  */
 
 public class ItemPurchaseControl
@@ -52,8 +70,14 @@ public class ItemPurchaseControl
         private TextInputEditText mEtCurrencyCode;
         private QuantityPicker mQpBundleQty;
 
+        /* Controls which price is selected for the item. Based on the price type, the appropriate UI widgets will be displayed. Certain events will cause the
+              the fields to be auto populated from the database. */
         private State mPriceSelectState = NEUTRAL;
-        private State mBuyQtyState = NEUTRAL;
+
+        /* Controls whether the buy quantity field is in an error state or valid state. */
+        private State mBuyQtyValidState = NEUTRAL_BUY_QTY;
+
+        /* Controls whether the currency code field is in an error state or valid state. */
         private State mCurrencyCodeState = NEUTRAL_CURRENCY_CODE;
 
         public ItemPurchaseControl(ItemContext itemContext)
@@ -75,8 +99,9 @@ public class ItemPurchaseControl
                 TextInputLayout etBundlePrice = (TextInputLayout) itemContext.findViewById(R.id.sl_bundle_price_layout);
                 mBundlePrice = new PriceField(etBundlePrice, itemContext.getString(R.string.bundle_price_txt), R.id.sl_et_bundle_price);
 
-                mQpBundleQty = new QuantityPicker(itemContext.findViewById(R.id.sl_bundle_qty));
+                mQpBundleQty = new QuantityPicker(itemContext.findViewById(R.id.sl_bundle_qty), 2);
                 mQpBundleQty.setHint(itemContext.getString(R.string.bundle_quantity_txt));
+                setBundleQtyListeners();
 
                 mEtCurrencyCodeWrap = (TextInputLayout) itemContext.findViewById(R.id.sl_currency_code_layout);
                 mEtCurrencyCode = (TextInputEditText) mEtCurrencyCodeWrap.findViewById(R.id.et_currency_code);
@@ -102,6 +127,10 @@ public class ItemPurchaseControl
                 mPurchaseManager = purchaseManager;
         }
 
+        /**
+         * This event is triggered by a retrieval of records from the database. This event will be called before onLoadPriceFinished.
+         * @param purchaseManager
+         */
         public void onLoadFinished(PurchaseManager purchaseManager)
         {
                 mPurchaseManager = purchaseManager;
@@ -115,6 +144,16 @@ public class ItemPurchaseControl
                                 mPriceSelectState = mPriceSelectState.transition(ON_LOAD_BUNDLE_PX, this);
                                 break;
                 }
+        }
+
+        /**
+         * This event is triggered by a retrieval of records from the database. This event will be called before onLoadPriceFinished.
+         * @param priceMgr
+         */
+        public void onLoadPriceFinished(PriceMgr priceMgr)
+        {
+                mPriceMgr = priceMgr;
+                mPriceSelectState = mPriceSelectState.transition(ON_LOAD_PX_FINISHED, this);
         }
 
         private void setDefaultBuyQuantityFields()
@@ -183,7 +222,9 @@ public class ItemPurchaseControl
                                 double bundlePrice = bundlePriceObj.getBundlePrice();
                                 String formattedBundlePx = FormatHelper.formatToTwoDecimalPlaces(bundlePrice);
                                 mBundlePrice.setPrice(bundlePriceObj.getCurrencyCode(), formattedBundlePx);
-                                mQpBundleQty.setQuantity(bundlePriceObj.getBundleQuantity());
+
+                                int bundleQuantity = bundlePriceObj.getBundleQuantity();
+                                mQpBundleQty.setQuantity(bundleQuantity <= 1? 2 : bundleQuantity);
                                 break;
                 }
         }
@@ -258,11 +299,6 @@ public class ItemPurchaseControl
                 mQpBuyQty.setError(null);
         }
 
-        private void clearBundleQtyError()
-        {
-                mQpBundleQty.setError(null);
-        }
-
         private boolean isBuyQuantityValidMultiples()
         {
                 if (TextUtils.isEmpty(mQpBuyQty.getText()) || TextUtils.isEmpty(mQpBuyQty.getText()))
@@ -277,9 +313,9 @@ public class ItemPurchaseControl
 
         private State getErrorState()
         {
-                if (mBuyQtyState.getParentState() == BUY_ERROR)
+                if (mBuyQtyValidState.getParentState() == BUY_ERROR)
                 {
-                        return mBuyQtyState.getParentState();
+                        return mBuyQtyValidState.getParentState();
                 }
                 else if (mCurrencyCodeState.getParentState() == BUY_ERROR)
                 {
@@ -312,8 +348,8 @@ public class ItemPurchaseControl
 
         public void onValidate()
         {
-                mPriceSelectState = mPriceSelectState.transition(Event.ON_VALIDATE, this);
-                mCurrencyCodeState = mCurrencyCodeState.transition(Event.ON_VALIDATE, this);
+                mPriceSelectState = mPriceSelectState.transition(ON_VALIDATE, this);
+                mCurrencyCodeState = mCurrencyCodeState.transition(ON_VALIDATE, this);
         }
 
         public void populatePurchaseMgr()
@@ -369,12 +405,6 @@ public class ItemPurchaseControl
                 return mPurchaseManager.getItemInShoppingList().getSelectedPrice().getCurrencyCode();
         }
 
-        public void onLoadPriceFinished(PriceMgr priceMgr)
-        {
-                mPriceMgr = priceMgr;
-                mPriceSelectState = mPriceSelectState.transition(ON_LOAD_PX_FINISHED, this);
-        }
-
         private void setCurrencyCodeError(int stringResId)
         {
                 mEtCurrencyCode.setError(mItemContext.getString(stringResId));
@@ -385,15 +415,15 @@ public class ItemPurchaseControl
                 mEtCurrencyCode.setError(null);
         }
 
-        private void onValidateBuyQtyMultiples()
+        private boolean isValidBuyQtyMultiples()
         {
                 if (isBuyQtyOneOrLess() || !isBuyQuantityValidMultiples())
                 {
-                        mBuyQtyState = mBuyQtyState.transition(ON_INVALID_MULTIPLES, this);
+                        return false;
                 }
                 else
                 {
-                        mBuyQtyState = mBuyQtyState.transition(ON_VALID_BUY_QTY, this);
+                        return true;
                 }
         }
 
@@ -418,11 +448,6 @@ public class ItemPurchaseControl
                 mQpBundleQty.setVisibility(visibility);
         }
 
-        private void setBundleQtyErrorVisibility(int visibility)
-        {
-                mQpBundleQty.setErrorVisibility(visibility);
-        }
-
         private void setBuyQtyErrorVisibility(int visibility)
         {
                 mQpBuyQty.setErrorVisibility(visibility);
@@ -431,22 +456,6 @@ public class ItemPurchaseControl
         private void setBuyUnitQtyListeners()
         {
                 mQpBuyQty.setDefaultListeners();
-        }
-
-        private void setBundleQtyListener()
-        {
-                mQpBundleQty.setOnClickListenerForDown(new View.OnClickListener()
-                {
-                        @Override
-                        public void onClick(View v)
-                        {
-                                int mQuantity = mQpBundleQty.getQuantity();
-                                if (mQuantity > 2)
-                                {
-                                        mQpBundleQty.setQuantity(--mQuantity);
-                                }
-                        }
-                });
         }
 
         private void setBuyBundleQtyListeners()
@@ -461,7 +470,7 @@ public class ItemPurchaseControl
 
                                 if (buyQty < bundleQty)
                                 {
-                                        /* Do not decrease buy quantity*/
+                                        /* Do not decrease buy quantity */
                                         return;
                                 }
 
@@ -475,9 +484,8 @@ public class ItemPurchaseControl
                                         int quotient = buyQty / bundleQty;
                                         buyQty = bundleQty * (quotient);
                                 }
-                                mQpBuyQty.setError(null);
-                                mQpBuyQty.setErrorVisibility(View.GONE);
                                 mQpBuyQty.setQuantity(buyQty);
+                                mBuyQtyValidState = mBuyQtyValidState.transition(Event.ON_VALIDATE, ItemPurchaseControl.this);
                         }
                 });
 
@@ -502,16 +510,46 @@ public class ItemPurchaseControl
                                         int quotient = buyQty / bundleQty;
                                         buyQty = bundleQty * (quotient + 1);
                                 }
-                                mQpBuyQty.setError(null);
-                                mQpBuyQty.setErrorVisibility(View.GONE);
                                 mQpBuyQty.setQuantity(buyQty);
+                                mBuyQtyValidState = mBuyQtyValidState.transition(Event.ON_VALIDATE, ItemPurchaseControl.this);
                         }
                 });
         }
 
+        private void setBundleQtyListeners()
+        {
+                View.OnClickListener bundleQtyUpListener = new View.OnClickListener()
+                {
+                        @Override
+                        public void onClick(View v)
+                        {
+                                int quantity = mQpBundleQty.getQuantity();
+                                mQpBundleQty.setQuantity(++quantity);
+                                mBuyQtyValidState = mBuyQtyValidState.transition(Event.ON_VALIDATE, ItemPurchaseControl.this);
+                        }
+                };
+
+                View.OnClickListener bundleQtyDownListener = new View.OnClickListener()
+                {
+                        @Override
+                        public void onClick(View v)
+                        {
+                                int quantity = mQpBundleQty.getQuantity();
+                                if (quantity > 2)
+                                {
+                                        mQpBundleQty.setQuantity(--quantity);
+                                        mBuyQtyValidState = mBuyQtyValidState.transition(Event.ON_VALIDATE, ItemPurchaseControl.this);
+                                }
+                        }
+                };
+
+                mQpBundleQty.setOnClickListenerForDown(bundleQtyDownListener);
+                mQpBundleQty.setOnClickListenerForUp(bundleQtyUpListener);
+        }
+
         enum Event
         {
-                ON_SELECT_UNIT_PRICE, ON_SELECT_BUNDLE_PRICE, ON_INVALID_MULTIPLES, ON_VALID_BUY_QTY, ON_NEW, ON_LOAD_UNIT_PX, ON_LOAD_BUNDLE_PX, ON_LOAD_PX_FINISHED, ON_UNIT_BUY_QTY_ERROR, ON_VALIDATE, ON_OK_BUNDLE_QTY;
+                ON_SELECT_UNIT_PRICE, ON_SELECT_BUNDLE_PRICE, ON_NEW, ON_LOAD_UNIT_PX, ON_LOAD_BUNDLE_PX, ON_LOAD_PX_FINISHED, ON_VALIDATE;
         }
 
         enum State
@@ -525,19 +563,20 @@ public class ItemPurchaseControl
                                         switch (event)
                                         {
                                                 case ON_NEW:
+                                                        control.setDefaultBuyQuantityFields();
                                                         state = UNIT_PRICE;
                                                         break;
 
                                                 case ON_LOAD_UNIT_PX:
+                                                        control.populateBuyQuantityFields();
+                                                        control.populateSelectedUnitPriceFields();
                                                         state = UNIT_PRICE;
                                                         break;
 
                                                 case ON_LOAD_BUNDLE_PX:
+                                                        control.populateBuyQuantityFields();
+                                                        control.populateSelectedBundlePriceFields();
                                                         state = BUNDLE_PRICE;
-                                                        break;
-
-                                                case ON_INVALID_MULTIPLES:
-                                                        state = BUY_QTY_ERROR;
                                                         break;
 
                                                 default:
@@ -549,17 +588,41 @@ public class ItemPurchaseControl
                                         return state;
                                 }
 
+                        },
+
+                NEUTRAL_BUY_QTY(null)
+                        {
+                                @Override
+                                State transition(Event event, ItemPurchaseControl control)
+                                {
+                                        State state = this;
+                                        switch(event)
+                                        {
+                                                case ON_VALIDATE:
+                                                case ON_SELECT_BUNDLE_PRICE:
+                                                        if (!control.isValidBuyQtyMultiples())
+                                                                state = BUY_QTY_ERROR;
+                                                        else
+                                                                state = this;
+                                                        break;
+                                        }
+
+                                        state.setUiOutput(event, control);
+                                        return state;
+                                }
+
                                 @Override
                                 void setUiOutput(Event event, ItemPurchaseControl control)
                                 {
                                         switch (event)
                                         {
-                                                case ON_VALID_BUY_QTY:
+                                                case ON_VALIDATE:
                                                         control.clearBuyQtyError();
                                                         control.setBuyQtyErrorVisibility(View.GONE);
                                                         break;
                                         }
                                 }
+
                         },
 
                 NEUTRAL_CURRENCY_CODE(null)
@@ -593,7 +656,7 @@ public class ItemPurchaseControl
                                 }
                         },
 
-                UNIT_PRICE(null)
+                UNIT_PRICE(null) /* Used by mPriceSelectState*/
                         {
                                 @Override
                                 State transition(Event event, ItemPurchaseControl control)
@@ -602,13 +665,13 @@ public class ItemPurchaseControl
                                         switch (event)
                                         {
                                                 case ON_LOAD_PX_FINISHED:
+                                                        control.populateOtherPriceField(Price.Type.BUNDLE_PRICE);
                                                         state = this;
                                                         break;
 
                                                 case ON_SELECT_BUNDLE_PRICE:
+                                                        control.validateBuyQty();
                                                         state = BUNDLE_PRICE;
-                                                        control.onValidateBuyQtyMultiples();
-
                                                         break;
                                         }
                                         state.setUiOutput(event, control);
@@ -624,21 +687,9 @@ public class ItemPurchaseControl
                                         control.setCurrencyCodeVisibility(View.VISIBLE);
                                         control.setBuyUnitQtyListeners();
                                         control.setBuyQtyErrorVisibility(View.GONE);
-                                        control.clearBundleQtyError();
-                                        control.setBundleQtyErrorVisibility(View.GONE);
 
                                         switch (event)
                                         {
-                                                case ON_NEW:
-                                                        control.setDefaultBuyQuantityFields();
-                                                        break;
-                                                case ON_LOAD_UNIT_PX:
-                                                        control.populateBuyQuantityFields();
-                                                        control.populateSelectedUnitPriceFields();
-                                                        break;
-                                                case ON_LOAD_PX_FINISHED:
-                                                        control.populateOtherPriceField(Price.Type.BUNDLE_PRICE);
-                                                        break;
                                                 default:
                                                         break;
                                         }
@@ -690,7 +741,6 @@ public class ItemPurchaseControl
                                 }
                         },
 
-
                 CURRENCY_CODE_INVALID(BUY_ERROR)
                         {
                                 @Override
@@ -725,7 +775,7 @@ public class ItemPurchaseControl
                                 }
                         },
 
-                BUNDLE_PRICE(null)
+                BUNDLE_PRICE(null) /* Used by mPriceSelectState*/
                         {
                                 @Override
                                 State transition(Event event, ItemPurchaseControl control)
@@ -733,17 +783,18 @@ public class ItemPurchaseControl
                                         State state = this;
                                         switch (event)
                                         {
+                                                case ON_VALIDATE:
+                                                        control.validateBuyQty();
+                                                        break;
 
                                                 case ON_SELECT_UNIT_PRICE:
+                                                        control.neutralizeBuyQty();
                                                         state = UNIT_PRICE;
                                                         break;
 
                                                 case ON_LOAD_PX_FINISHED:
+                                                        control.populateOtherPriceField(Price.Type.UNIT_PRICE);
                                                         state = this;
-                                                        break;
-
-                                                case ON_VALIDATE:
-                                                        control.onValidateBuyQtyMultiples();
                                                         break;
                                         }
                                         state.setUiOutput(event, control);
@@ -758,27 +809,10 @@ public class ItemPurchaseControl
                                         control.setBundleQtyVisibility(View.VISIBLE);
                                         control.setCurrencyCodeVisibility(View.VISIBLE);
                                         control.setBuyBundleQtyListeners();
-                                        control.setBundleQtyListener();
-                                        control.setBundleQtyErrorVisibility(View.GONE);
-
-                                        switch (event)
-                                        {
-                                                case ON_LOAD_BUNDLE_PX:
-                                                        control.populateBuyQuantityFields();
-                                                        control.populateSelectedBundlePriceFields();
-                                                        break;
-                                                case ON_LOAD_PX_FINISHED:
-                                                        control.populateOtherPriceField(Price.Type.UNIT_PRICE);
-                                                        break;
-                                                case ON_VALID_BUY_QTY:
-                                                        control.clearBuyQtyError();
-                                                        break;
-                                        }
-
                                 }
                         },
 
-                BUY_QTY_ERROR(BUY_ERROR)
+                BUY_QTY_ERROR(BUY_ERROR)  /* This state is used by mBuyQtyValidState */
                         {
                                 @Override
                                 State transition(Event event, ItemPurchaseControl control)
@@ -786,18 +820,13 @@ public class ItemPurchaseControl
                                         State state = this;
                                         switch (event)
                                         {
-                                                case ON_VALID_BUY_QTY:
-                                                {
-                                                        state = NEUTRAL;
-                                                        break;
-                                                }
-
-                                                case ON_SELECT_BUNDLE_PRICE:
-                                                        control.onValidateBuyQtyMultiples();
+                                                case ON_VALIDATE:
+                                                        if(control.isValidBuyQtyMultiples())
+                                                                state = NEUTRAL_BUY_QTY;
                                                         break;
 
                                                 case ON_SELECT_UNIT_PRICE:
-                                                        state = UNIT_PRICE;
+                                                        state = NEUTRAL_BUY_QTY;
                                                         break;
 
                                         }
@@ -810,7 +839,8 @@ public class ItemPurchaseControl
                                 {
                                         switch (event)
                                         {
-                                                case ON_INVALID_MULTIPLES:
+                                                case ON_VALIDATE:
+                                                case ON_SELECT_BUNDLE_PRICE:
                                                         control.setBuyQtyError(R.string.invalid_multiple_buy_quantity_bundle);
                                                         control.setBuyQtyErrorVisibility(View.VISIBLE);
                                                         break;
@@ -836,6 +866,16 @@ public class ItemPurchaseControl
                 }
 
                 abstract State transition(Event event, ItemPurchaseControl control);
+        }
+
+        private void neutralizeBuyQty()
+        {
+                mBuyQtyValidState = mBuyQtyValidState.transition(ON_SELECT_UNIT_PRICE, this);
+        }
+
+        private void validateBuyQty()
+        {
+                mBuyQtyValidState = mBuyQtyValidState.transition(ON_VALIDATE, this);
         }
 
         class OnSelectedPriceChangeListener implements CompoundButton.OnCheckedChangeListener

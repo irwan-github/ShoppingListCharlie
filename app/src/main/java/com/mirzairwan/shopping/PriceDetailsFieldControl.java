@@ -34,7 +34,7 @@ public class PriceDetailsFieldControl extends DetailExpander
         /* State for currency code field */
         private State mCurrencyCodeState = NEUTRAL;
 
-        public PriceDetailsFieldControl(ItemContext itemContext, String settingsCountryCode)
+        public PriceDetailsFieldControl(ItemContext itemContext)
         {
                 super(itemContext);
                 mItemContext = itemContext;
@@ -47,7 +47,7 @@ public class PriceDetailsFieldControl extends DetailExpander
                 TextInputLayout etBundlePrice = (TextInputLayout) itemContext.findViewById(R.id.bundle_price_layout);
                 mBundlePrice = new PriceField(etBundlePrice, itemContext.getString(R.string.bundle_price_txt), et_bundle_price);
 
-                mEtCurrencyCode.setText(FormatHelper.getCurrencyCode(settingsCountryCode));
+                mEtCurrencyCode.setText(FormatHelper.getCurrencyCode(itemContext.getDefaultCountryCode()));
         }
 
         @Override

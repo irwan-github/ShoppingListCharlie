@@ -87,7 +87,8 @@ import static com.mirzairwan.shopping.ShoppingActivity.EXCHANGE_RATE;
  * <p>
  * price_editing.xml
  */
-public abstract class ItemActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>, ItemContext
+public abstract class ItemActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>,
+                                                                        ItemContext
 {
         public static final String ITEM_IS_IN_SHOPPING_LIST = "ITEM_IS_IN_SHOPPING_LIST";
         protected static final String ITEM_URI = "ITEM_URI";
@@ -100,11 +101,11 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         protected PictureMgr mPictureMgr;
         protected PriceMgr mPriceMgr;
         protected String mSettingsCountryCode;
-        private ItemControl mItemControl;
         protected String mDbMsg;
         protected View mContainer;
+        private ItemControl mItemControl;
         private ImageView mImgItemPic;
-        private long itemId;
+        private long mItemId;
         private ExchangeRateInput mExchangeRateInput;
 
         /*During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance
@@ -167,12 +168,15 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 setSupportActionBar(mainToolbar);
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+                Uri data = getIntent().getData();
+                if (data != null)
+                {
+                        mItemId = ContentUris.parseId(data);
+                }
+
                 setupPictureToolbar();
 
                 daoManager = Builder.getDaoManager(this);
-
-
-
                 mPriceMgr = new PriceMgr(mSettingsCountryCode);
 
                 String webApiKeyPref = getString(R.string.key_forex_web_api_1);
@@ -221,7 +225,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 };
 
                 mImgItemPic = (ImageView) findViewById(R.id.img_item);
-
                 ItemExchangeRateLoaderCallback pxExLoaderCb = new ItemExchangeRateLoaderCallback(this);
                 getLoaderManager().initLoader(78, null, pxExLoaderCb);
         }
@@ -424,7 +427,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 if (discardedPic != null && discardedPic.getId() > 0) // This is the original. Delete
                 // record in database.
                 {
-                        int deleted = daoManager.deletePicture(itemId);
+                        int deleted = daoManager.deletePicture(mItemId);
                 }
                 else //Current picture is not stored in database
                 {
@@ -666,7 +669,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 String[] projection = null;
                 Uri uri = args.getParcelable(ITEM_URI);
                 Loader<Cursor> loader = null;
-                itemId = -1;
+                mItemId = -1;
                 String selection = null;
                 String[] selectionArgs = null;
 
@@ -675,28 +678,28 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         case ITEM_PRICE_LOADER_ID:
                                 projection = new String[]{
                                         PricesEntry._ID, PricesEntry.COLUMN_ITEM_ID, PricesEntry.COLUMN_PRICE_TYPE_ID, PricesEntry.COLUMN_PRICE, PricesEntry.COLUMN_BUNDLE_QTY, PricesEntry.COLUMN_CURRENCY_CODE, PricesEntry.COLUMN_SHOP_ID};
-                                itemId = ContentUris.parseId(uri);
-                                if (itemId == -1)
+                                mItemId = ContentUris.parseId(uri);
+                                if (mItemId == -1)
                                 {
                                         throw new IllegalArgumentException("uri and item id cannot be empty or -1");
                                 }
 
                                 selection = PricesEntry.COLUMN_ITEM_ID + "=?";
-                                selectionArgs = new String[]{String.valueOf(itemId)};
+                                selectionArgs = new String[]{String.valueOf(mItemId)};
                                 loader = new CursorLoader(this, PricesEntry.CONTENT_URI, projection, selection, selectionArgs, null);
                                 break;
 
                         case ITEM_PICTURE_LOADER_ID:
                                 projection = new String[]{
                                         PicturesEntry._ID, PicturesEntry.COLUMN_FILE_PATH, PicturesEntry.COLUMN_ITEM_ID};
-                                itemId = ContentUris.parseId(uri);
-                                if (itemId == -1)
+                                mItemId = ContentUris.parseId(uri);
+                                if (mItemId == -1)
                                 {
                                         throw new IllegalArgumentException("uri and item id cannot be empty or -1");
                                 }
 
                                 selection = PicturesEntry.COLUMN_ITEM_ID + "=?";
-                                selectionArgs = new String[]{String.valueOf(itemId)};
+                                selectionArgs = new String[]{String.valueOf(mItemId)};
                                 loader = new CursorLoader(this, PicturesEntry.CONTENT_URI, projection, selection, selectionArgs, null);
                                 break;
 
@@ -732,8 +735,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         case ITEM_PICTURE_LOADER_ID:
                                 Picture pictureInDb = createPicture(cursor);
                                 colItemId = cursor.getColumnIndex(PicturesEntry.COLUMN_ITEM_ID);
-                                itemId = cursor.getLong(colItemId);
-                                mPictureMgr.setItemId(itemId);
+                                mItemId = cursor.getLong(colItemId);
+                                mPictureMgr.setItemId(mItemId);
                                 mPictureMgr.setOriginalPicture(pictureInDb);
                                 mPictureMgr.setViewOriginalPicture();
                                 setPictureView(mPictureMgr.getPictureForViewing());
@@ -779,6 +782,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 outState.putParcelable(PICTURE_MANAGER, mPictureMgr);
                 outState.putParcelable(EXCHANGE_RATE, mExchangeRate);
         }
+
+        protected abstract String getCurrencyCode();
 
         class ImageFsResizer extends AsyncTask<String, Void, Bitmap>
         {
@@ -855,6 +860,4 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         mExchangeRate = null;
                 }
         }
-
-        protected abstract String getCurrencyCode();
 }

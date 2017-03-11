@@ -17,28 +17,52 @@ import static com.mirzairwan.shopping.ShoppingListEditingControl.Event.ON_OK;
 import static com.mirzairwan.shopping.ShoppingListEditingControl.Event.ON_STAY;
 import static com.mirzairwan.shopping.ShoppingListEditingControl.Event.ON_UP;
 import static com.mirzairwan.shopping.ShoppingListEditingControl.ItemType.TRANSIENT;
-import static com.mirzairwan.shopping.ShoppingListEditingControl.State.UNCHANGE;
+import static com.mirzairwan.shopping.ShoppingListEditingControl.State.UNCHANGED;
 
 
 /**
  * Created by Mirza Irwan on 25/2/17.
+ * <p>
+ * Main control object to respond to the following UI-events:
+ * 1. Ok button-click
+ * 2. Delete button-click
+ * 3. On Touch
+ * 4. On create options menu
  *
- * Matches the UI-events to states.
- * The states will do the corresponding actions and set the properties of the ui
+ * When a user supplies an event to a user interface object, the event handler is made to call a corresponding method in this control object.
+ * The method uses the current state to determine which state transition should occur and thus which action(s) should be executed.
+ * <p>
+ * For instance, when a user clicks on the Up button, the activity can be in one of 2 states:
+ * 1. UNCHANGED - No changes made
+ * 2. CHANGED - Changes made
+ * <p>
+ * The current state will be defined by the following state variables:
+ *
+ * 1. mItemType
+ *  Indicate whether screen is showing a new  or existing item.This is a top level state
+ * The states of this variable will determine whether:
+ * The action will be an database  insert or update operation.
+ * The screen titile will be "NEW ITEM" or "ITEM"
+ *
+ * 2. mChangeState - The states of this variable will control whether OK button will be visible & enabled OR invisible & disabled
+ *
+ * The following 2 other control objects are used to control and coordinate the behaviour of user interface objects:
+ * 1. ItemDetailsFieldControl
+ * 2. ItemPurchaseControl
  */
 
 public class ShoppingListEditingControl implements ItemControl
 {
-        /* Track whether item is new or existing. This is a top level state */
+
         private ItemType mItemType = TRANSIENT;
 
-        /* Track state of item is changed */
-        private State mCurrentState = UNCHANGE;
+        /* Track whether item is changed or unchanged */
+        private State mChangeState = UNCHANGED;
 
-        /* Control the state of item details */
+        /* Control object to control and coordinate the behaviour of user interface objects pertaining to item details */
         private ItemDetailsFieldControl mItemDetailsFieldControl;
 
-        /* Control the state of purchase and pricing details */
+        /* Control object to control and coordinate the behaviour of user interface objects pertaining to  purchase and pricing details */
         private ItemPurchaseControl mItemPurchaseControl;
 
         private String LOG_TAG = ShoppingListEditingControl.class.getCanonicalName();
@@ -57,13 +81,11 @@ public class ShoppingListEditingControl implements ItemControl
         public void onExistingItem()
         {
                 mItemType = mItemType.transition(ON_EDIT, this);
-                mCurrentState = mCurrentState.transition(ON_EDIT, this);
         }
 
         public void onNewItem()
         {
                 mItemType = mItemType.transition(ON_NEW, this);
-                mCurrentState = mCurrentState.transition(ON_NEW, this);
                 mItemPurchaseControl.onNewItem();
         }
 
@@ -76,7 +98,7 @@ public class ShoppingListEditingControl implements ItemControl
         @Override
         public void onChange()
         {
-                mCurrentState = mCurrentState.transition(ON_CHANGE, this);
+                mItemType = mItemType.transition(ON_CHANGE, this);
         }
 
         @Override
@@ -84,7 +106,6 @@ public class ShoppingListEditingControl implements ItemControl
         {
                 mMenu = menu;
                 mItemType = mItemType.transition(ON_CREATE_OPTIONS_MENU, this);
-                mCurrentState = mCurrentState.transition(ON_CREATE_OPTIONS_MENU, this);
         }
 
         public void invalidateOptionsMenu()
@@ -101,7 +122,7 @@ public class ShoppingListEditingControl implements ItemControl
         @Override
         public void onUp()
         {
-                mCurrentState = mCurrentState.transition(ON_UP, this);
+                mChangeState = mChangeState.transition(ON_UP, this);
         }
 
         @Override
@@ -113,18 +134,18 @@ public class ShoppingListEditingControl implements ItemControl
         @Override
         public void onBackPressed()
         {
-                mCurrentState = mCurrentState.transition(ON_BACK, this);
+                mItemType = mItemType.transition(ON_BACK, this);
         }
 
         @Override
         public void onStay()
         {
-                mCurrentState = mCurrentState.transition(ON_STAY, this);
+                mChangeState = mChangeState.transition(ON_STAY, this);
         }
 
         public void onOk()
         {
-                mItemDetailsFieldControl.onValidate();
+                mItemDetailsFieldControl.onOk();
                 if (mItemDetailsFieldControl.isInErrorState())
                 {
                         return;
@@ -138,11 +159,6 @@ public class ShoppingListEditingControl implements ItemControl
 
                 mItemType = mItemType.transition(ON_OK, this);
         }
-
-//        public void setItemDetailsFieldControl(ItemDetailsFieldControl itemDetailsFieldControl)
-//        {
-//                mItemDetailsFieldControl = itemDetailsFieldControl;
-//        }
 
         private void delete()
         {
@@ -176,7 +192,12 @@ public class ShoppingListEditingControl implements ItemControl
                 mContext.finishItemEditing();
         }
 
-        private void warnChangesMade()
+        private void delegate(Event event)
+        {
+                mChangeState = mChangeState.transition(event, this);
+        }
+
+        private void displayWarning()
         {
                 mContext.warnChangesMade();
         }
@@ -260,7 +281,6 @@ public class ShoppingListEditingControl implements ItemControl
                                                         break;
                                                 case ON_EDIT:
                                                         state = EXISTING_ITEM;
-                                                        control.invalidateOptionsMenu();
                                                         break;
                                         }
 
@@ -275,15 +295,28 @@ public class ShoppingListEditingControl implements ItemControl
                                 public ItemType transition(Event event, ShoppingListEditingControl control)
                                 {
                                         ItemType state = this;
-                                        switch(event)
+                                        switch (event)
                                         {
                                                 case ON_OK:
                                                         control.insert();
                                                         control.showDbMessage();
                                                         break;
+                                                case ON_BACK:
+                                                case ON_UP:
+                                                        control.delegate(event);
+                                                        break;
+                                                case ON_CHANGE:
+                                                        control.delegate(event);
+                                                        break;
                                                 case ON_LEAVE:
                                                         control.finishItemEditing();
                                                         state = this;
+                                                        break;
+                                                case ON_STAY:
+                                                        state = this;
+                                                        break;
+                                                case ON_CREATE_OPTIONS_MENU:
+                                                        control.delegate(event);
                                                         break;
                                         }
 
@@ -304,11 +337,8 @@ public class ShoppingListEditingControl implements ItemControl
                                 public ItemType transition(Event event, ShoppingListEditingControl control)
                                 {
                                         ItemType state = this;
-                                        switch(event)
+                                        switch (event)
                                         {
-                                                case ON_CREATE_OPTIONS_MENU:
-                                                        state = this;
-                                                        break;
                                                 case ON_OK:
                                                         control.update();
                                                         control.showDbMessage();
@@ -316,10 +346,24 @@ public class ShoppingListEditingControl implements ItemControl
                                                 case ON_DELETE:
                                                         control.delete();
                                                         control.showDbMessage();
+                                                        control.setExitTransition();
+                                                        break;
+                                                case ON_BACK:
+                                                case ON_UP:
+                                                        control.delegate(event);
                                                         break;
                                                 case ON_LEAVE:
                                                         control.finishItemEditing();
                                                         state = this;
+                                                        break;
+                                                case ON_CHANGE:
+                                                        control.delegate(event);
+                                                        break;
+                                                case ON_STAY:
+                                                        state = this;
+                                                        break;
+                                                case ON_CREATE_OPTIONS_MENU:
+                                                        control.delegate(event);
                                                         break;
                                         }
                                         state.setUiAttibutes(event, control);
@@ -330,12 +374,10 @@ public class ShoppingListEditingControl implements ItemControl
                                 public void setUiAttibutes(Event event, ShoppingListEditingControl control)
                                 {
                                         control.setTitle(R.string.view_buy_item_details);
-
-                                        switch(event)
+                                        switch (event)
                                         {
-
-                                                case ON_DELETE:
-                                                        control.setExitTransition();
+                                                case ON_EDIT:
+                                                        control.invalidateOptionsMenu();
                                                         break;
 
                                                 case ON_CREATE_OPTIONS_MENU:
@@ -355,7 +397,7 @@ public class ShoppingListEditingControl implements ItemControl
 
         enum State
         {
-                UNCHANGE
+                UNCHANGED
                         {
                                 public State transition(Event event, ShoppingListEditingControl control)
                                 {
@@ -363,8 +405,7 @@ public class ShoppingListEditingControl implements ItemControl
                                         switch (event)
                                         {
                                                 case ON_CHANGE:
-                                                        state = CHANGE;
-                                                        control.invalidateOptionsMenu();
+                                                        state = CHANGED;
                                                         break;
                                                 case ON_BACK:
                                                 case ON_UP:
@@ -378,20 +419,16 @@ public class ShoppingListEditingControl implements ItemControl
                                 }
                         },
 
-                CHANGE
+                CHANGED
                         {
                                 public State transition(Event event, ShoppingListEditingControl control)
                                 {
                                         State state;
                                         switch (event)
                                         {
-                                                case ON_CREATE_OPTIONS_MENU:
-                                                        state = this;
-                                                        break;
                                                 case ON_BACK:
                                                 case ON_UP:
-                                                        control.warnChangesMade();
-                                                case ON_STAY:
+                                                        control.displayWarning();
                                                 default:
                                                         state = this;
                                         }
@@ -404,6 +441,9 @@ public class ShoppingListEditingControl implements ItemControl
                                 {
                                         switch (event)
                                         {
+                                                case ON_CHANGE:
+                                                        control.invalidateOptionsMenu();
+                                                        break;
                                                 case ON_CREATE_OPTIONS_MENU:
                                                         control.setMenuItemVisibility(R.id.save_item_details, true);
                                                         break;
@@ -418,7 +458,6 @@ public class ShoppingListEditingControl implements ItemControl
                 }
 
         }
-
 
         public interface ShoppingItemContext extends ItemContext
         {

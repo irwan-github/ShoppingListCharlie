@@ -116,9 +116,10 @@
         <string name="invalid_bundle_quantity_one">Bundle quatity must be more than 1.</string>
         <string name="add_item_button_text">Add item ....</string>
         <string name="database_delete_success">deleted: OK</string>
-        <string name="mandatory">Required</string>
+        <string name="mandatory">Item name cannot be empty!</string>
         <string name="invalid_buy_quantity_zero">Must be 1 or more</string>
         <string name="empty_currency_code_msg">Cannot be empty.</string>
         <string name="decrease_qty">Reduce</string>
         <string name="increase_qty">Increase</string>
+        <string name="history_item_editing_screen">History item</string>
 </resources>

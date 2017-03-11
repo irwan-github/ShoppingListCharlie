@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2017, Mirza Irwan Bin Osman , All rights reserved. -->
+<!-- Contact owner at mirza.irwan.osman@gmail.com -->
+
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/item_editing_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#fff"
+        >
+
+        <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_above="@id/picture_toolbar"
+                android:layout_below="@+id/toolbar"
+                >
+
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:focusableInTouchMode="true"
+                        android:orientation="vertical">
+
+                        <FrameLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="#fff"
+                                >
+
+                                <include layout="@layout/item_image_editor"/>
+                        </FrameLayout>
+
+                        <FrameLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="#fff"
+                                >
+
+                                <include layout="@layout/item_editing"/>
+                        </FrameLayout>
+
+                        <FrameLayout
+                                android:id="@+id/price_container"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="#fff"
+                                >
+
+                                <include layout="@layout/price_editing"/>
+                        </FrameLayout>
+                </LinearLayout>
+
+        </ScrollView>
+
+        <include
+                android:id="@+id/toolbar"
+                layout="@layout/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                />
+
+        <include
+                android:id="@+id/picture_toolbar"
+                layout="@layout/toolbar_picture"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                />
+
+</RelativeLayout>
+
+
