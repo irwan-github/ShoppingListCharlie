@@ -23,7 +23,8 @@ public class PriceDetailsFieldControl extends DetailExpander
 {
         private ItemContext mItemContext;
         private TextInputEditText mEtCurrencyCode;
-        private TextInputEditText mEtBundleQty;
+        //private TextInputEditText mEtBundleQty;
+        private QuantityPicker mEtBundleQty;
         private PriceField mUnitPrice;
         private PriceField mBundlePrice;
         private PriceMgr mPriceMgr;
@@ -38,7 +39,12 @@ public class PriceDetailsFieldControl extends DetailExpander
         {
                 super(itemContext);
                 mItemContext = itemContext;
-                mEtBundleQty = (TextInputEditText) itemContext.findViewById(R.id.et_bundle_qty);
+
+                View viewBundleQty = itemContext.findViewById(R.id.qp_bundle_qty);
+                mEtBundleQty = new QuantityPicker(viewBundleQty, 2);
+
+                mEtBundleQty.setVisibility(View.VISIBLE);
+                mEtBundleQty.setHint(mItemContext.getString(R.string.bundle_quantity_txt));
                 mEtCurrencyCode = (TextInputEditText) itemContext.findViewById(R.id.et_currency_code);
 
                 TextInputLayout etUnitPrice = (TextInputLayout) itemContext.findViewById(R.id.unit_price_layout);
@@ -116,7 +122,7 @@ public class PriceDetailsFieldControl extends DetailExpander
                 mBundlePrice.setPrice(currencyCode, mPriceMgr.getBundlePriceForDisplay());
 
                 int bundleQuantity = mPriceMgr.getBundlePrice().getBundleQuantity();
-                mEtBundleQty.setText(bundleQuantity == 0 ? "" : String.valueOf(bundleQuantity));
+                mEtBundleQty.setQuantity(bundleQuantity <= 1 ? 2 : bundleQuantity);
 
                 mUnitPrice.setCurrencySymbolInPriceHint(currencyCode);
                 mBundlePrice.setCurrencySymbolInPriceHint(currencyCode);
@@ -162,7 +168,7 @@ public class PriceDetailsFieldControl extends DetailExpander
         {
                 mUnitPrice.clear();
                 mBundlePrice.clear();
-                mEtBundleQty.setText("");
+                mEtBundleQty.setQuantity(2);
         }
 
         private boolean isCurrencyCodeEmpty()

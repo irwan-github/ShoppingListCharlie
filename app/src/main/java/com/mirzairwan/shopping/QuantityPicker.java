@@ -4,6 +4,8 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import static android.R.attr.visibility;
+
 /**
  * Created by Mirza Irwan on 8/3/17.
  */
@@ -119,5 +121,12 @@ public class QuantityPicker
         public void setErrorVisibility(int visibility)
         {
                 mTvError.setVisibility(visibility);
+        }
+
+        public void setEnabled(boolean enabled)
+        {
+                mTvQty.setEnabled(enabled);
+                mBtnDownCounter.setEnabled(enabled);
+                mBtnUpCounter.setEnabled(enabled);
         }
 }

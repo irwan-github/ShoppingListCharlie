@@ -13,7 +13,7 @@
         <ScrollView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_above="@id/picture_toolbar"
+                android:layout_above="@+id/picture_toolbar"
                 android:layout_below="@+id/toolbar"
                 >
 
@@ -21,37 +21,15 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:focusableInTouchMode="true"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        >
 
-                        <FrameLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="#fff"
-                                >
+                        <include layout="@layout/item_image_editor"/>
 
-                                <include layout="@layout/item_image_editor"/>
-                        </FrameLayout>
+                        <include layout="@layout/item_editing"/>
 
-                        <FrameLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="#fff"
-                                >
-
-                                <include layout="@layout/item_editing"/>
-                        </FrameLayout>
-
-                        <FrameLayout
-                                android:id="@+id/price_container"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="#fff"
-                                >
-
-                                <include layout="@layout/price_editing"/>
-                        </FrameLayout>
+                        <include layout="@layout/price_editing"/>
                 </LinearLayout>
-
         </ScrollView>
 
         <include
