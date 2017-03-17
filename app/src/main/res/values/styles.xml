@@ -51,8 +51,8 @@
                 <item name="android:button">@drawable/toggle_item_details</item>
         </style>
 
-
-
-
+        <style name="MyTextAppearanceAsLabel" parent="TextAppearance.AppCompat.Caption">
+                <item name="android:textColor">@color/my_hint</item>
+        </style>
 
 </resources>

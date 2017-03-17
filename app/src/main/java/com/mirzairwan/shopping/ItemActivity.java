@@ -16,7 +16,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.design.widget.BaseTransientBottomBar;
@@ -32,6 +31,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -44,7 +44,6 @@ import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.domain.PriceMgr;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,8 +91,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 {
         public static final String ITEM_IS_IN_SHOPPING_LIST = "ITEM_IS_IN_SHOPPING_LIST";
         protected static final String ITEM_URI = "ITEM_URI";
-        private static final int REQUEST_SNAP_PICTURE = 15;
         private static final String LOG_TAG = ItemActivity.class.getSimpleName();
+        private static final int REQUEST_SNAP_PICTURE = 15;
         private static final int REQUEST_PICK_PHOTO = 16;
         private static final String PICTURE_MANAGER = "picture_mgr";
         protected View.OnTouchListener mOnTouchListener;
@@ -108,11 +107,12 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         private long mItemId;
         private ExchangeRateInput mExchangeRateInput;
 
-        /*During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance
+        /* During orientation, the exchange rate fields are not populated by the exchange rate loader. So need to save its instance
             and restore when device orientates to landscape. */
         private ExchangeRate mExchangeRate;
 
         private String mWebApiBase;
+        private Toolbar mToolbarPicture;
 
         @Override
         protected void onPause()
@@ -160,6 +160,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         {
                 super.onCreate(savedInstanceState);
                 setContentView(getLayoutXml());
+                setupEnterAnimationTransition();
                 PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
                 SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
                 mSettingsCountryCode = sharedPrefs.getString(getString(R.string.user_country_pref), null);
@@ -196,7 +197,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 if (savedInstanceState == null)
                 {
                         Log.d(LOG_TAG, "OnCreate with NULL savedInstanceState");
-                        mPictureMgr = new PictureMgr();
+                        mPictureMgr = new PictureMgr(daoManager);
                 }
                 else
                 {
@@ -239,46 +240,49 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
         protected void setupPictureToolbar()
         {
-                Toolbar toolbarPicture = (Toolbar) findViewById(R.id.picture_toolbar);
+                mToolbarPicture = (Toolbar) findViewById(R.id.picture_toolbar);
 
-                // Inflate a menu to be displayed in the toolbar
-                toolbarPicture.inflateMenu(R.menu.picture_item_toolbar);
+                /* Inflate a menu to be displayed in the toolbar */
+                mToolbarPicture.inflateMenu(R.menu.picture_item_toolbar);
 
-                //check for the availability of the camera at runtime. If unavailable, disable the affected action item
+                /* Check for the availability of the camera at runtime. If unavailable, disable the affected action item */
                 PackageManager pMgr = getPackageManager();
                 if (!pMgr.hasSystemFeature(PackageManager.FEATURE_CAMERA))
                 {
-                        MenuItem itemCamera = toolbarPicture.getMenu().findItem(R.id.menu_camera);
+                        MenuItem itemCamera = mToolbarPicture.getMenu().findItem(R.id.menu_camera);
                         itemCamera.setEnabled(false);
                 }
 
-                //Add handler to handle menu item clicks
-                toolbarPicture.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener()
+                /* Add handler to handle menu item clicks */
+                mToolbarPicture.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener()
                 {
                         @Override
                         public boolean onMenuItemClick(MenuItem item)
                         {
-
                                 switch (item.getItemId())
                                 {
                                         case R.id.menu_camera:
-                                                startSnapShotActivity();
+                                                mItemControl.onCameraAction();
                                                 return true;
 
                                         case R.id.choose_picture:
                                                 boolean hasReadStoragePermission = PermissionHelper.hasReadStoragePermission(ItemActivity.this);
                                                 if (hasReadStoragePermission)
                                                 {
-                                                        startPickPictureActivity();
+                                                        mItemControl.onPickPictureAction();
+                                                        //startPickPictureActivity();
                                                 }
                                                 else
                                                 {
                                                         PermissionHelper.setupStorageReadPermission(ItemActivity.this);
                                                 }
                                                 return true;
+
                                         case R.id.remove_picture:
-                                                deletePictureInView();
+                                                mItemControl.onChange();
+                                                mItemControl.onDeletePictureInView();
                                                 return true;
+
                                         default:
                                                 return false;
                                 }
@@ -287,6 +291,18 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 });
 
                 PermissionHelper.setupStorageReadPermission(this);
+        }
+
+        @Override
+        public void setPictureMenuItemEnabled(int menuId, boolean enabled)
+        {
+                mToolbarPicture.getMenu().findItem(menuId).setEnabled(enabled);
+        }
+
+        @Override
+        public void setPictureMenuItemVisible(int menuId, boolean visible)
+        {
+                mToolbarPicture.getMenu().findItem(menuId).setVisible(visible);
         }
 
         protected void initPriceLoader(Uri uri, LoaderManager.LoaderCallbacks<Cursor> callback)
@@ -362,6 +378,47 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 }
         }
 
+        public void setupEnterAnimationTransition()
+        {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                {
+
+                        getWindow().getEnterTransition().addListener(new Transition.TransitionListener()
+                        {
+                                @Override
+                                public void onTransitionStart(Transition transition)
+                                {
+
+                                }
+
+                                @Override
+                                public void onTransitionEnd(Transition transition)
+                                {
+                                        mItemControl.onEnterTransitionEnd();
+                                }
+
+                                @Override
+                                public void onTransitionCancel(Transition transition)
+                                {
+
+                                }
+
+                                @Override
+                                public void onTransitionPause(Transition transition)
+                                {
+
+                                }
+
+                                @Override
+                                public void onTransitionResume(Transition transition)
+                                {
+
+                                }
+                        });
+
+                }
+        }
+
         public void finishItemEditing()
         {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
@@ -376,126 +433,56 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
         public void showTransientDbMessage()
         {
-                Snackbar.make(mContainer, mDbMsg, 500).addCallback(new BaseTransientBottomBar.BaseCallback<Snackbar>()
+                Snackbar.make(mContainer, mDbMsg, 300).addCallback(new BaseTransientBottomBar.BaseCallback<Snackbar>()
                 {
                         @Override
                         public void onDismissed(Snackbar transientBottomBar, int event)
                         {
-                                mItemControl.onLeave();
+                                finishItemEditing();
                         }
                 }).show();
         }
-
 
         /**
          * Invoked when user click system back or navigate up with no intention of saving any pictures.
          * Does not delete original picture because it is not the intention of the user
          */
-        protected void removeUnwantedPicturesFromApp()
+        public void removeUnsavedPicturesFromApp()
         {
-                if (mPictureMgr.getOriginalPicture() == null && mPictureMgr.getPictureForViewing() != null)
+                Picture newPicture = mPictureMgr.getNewPicture();
+                if (newPicture != null)
                 {
-                        //Does not delete original picture because it is not the intention of the user
-                        mPictureMgr.discardCurrentPictureInView();
-                }
+                        long picId = newPicture.getId();
 
-                if (mPictureMgr.getDiscardedPictures().size() > 0)
-                {
-                        mPictureMgr.setViewOriginalPicture();
-                        String msg = daoManager.cleanUpDiscardedPictures(mPictureMgr);
+                        /* If id  < 0, then this picture does not exist in database*/
+                        if (picId == -1 && !PictureMgr.isExternalFile(newPicture))
+                        {
+                                int deletedFromFs = daoManager.deleteFileFromFilesystem(newPicture.getFile());
+                        }
                 }
-
         }
 
-
-        /**
-         * Invoked when user clicks on delete button in picture toolbar
-         * Delete record if any that associates picture to the item in the database.
-         * If the item is written to storage memory by this app, the image file is deleted.
-         * If the currently view picture is not the original picture, the original picture will be used
-         * for viewing if exist.
-         */
-        private void deletePictureInView()
-        {
-                if (mPictureMgr.getPictureForViewing() == null)
-                {
-                        return;
-                }
-
-                Picture discardedPic = mPictureMgr.discardCurrentPictureInView();
-
-                if (discardedPic != null && discardedPic.getId() > 0) // This is the original. Delete
-                // record in database.
-                {
-                        int deleted = daoManager.deletePicture(mItemId);
-                }
-                else //Current picture is not stored in database
-                {
-                        //PictureMgr replace viewed picture with original picture
-                        mPictureMgr.setViewOriginalPicture();
-                }
-                setPictureView(mPictureMgr.getPictureForViewing());
-                String msg = daoManager.cleanUpDiscardedPictures(mPictureMgr);
-                Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
-        }
-
-        /**
-         * Current implemetation supports only 1 picture. Therefore when user make subsequent snapshots,
-         * the previous photos MUST be put in discarded pile.
-         */
-        protected void startSnapShotActivity()
+        public void startSnapShotActivity(File itemPicFile)
         {
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
-                /**
-                 * Performing this check is important because if you call startActivityForResult() using an intent that no app can handle, your app will crash.
+                /*
+                  Performing this check is important because if you call startActivityForResult() using an intent that no app can handle, your app will crash.
                  */
                 if (cameraIntent.resolveActivity(getPackageManager()) != null)
                 {
-                        File itemPicFile = null;
+                        /*
+                          Returns a content:// URI. For more recent apps targeting Android 7.0 (API level 24) and higher, passing a file:// URI across a package boundary causes a
+                         FileUriExposedException. Therefore, we now use a more generic way of storing images using a FileProvider.
+                         We need to configure the FileProvider. In app's manifest, add a provider to your application
 
-                        /**
-                         * This method returns a standard location for saving pictures and videos which are associated with your application.
-                         * If your application is uninstalled, any files saved in this location are removed.
-                         * Security is not enforced for files in this location and other applications may read, change and delete them.
-                         * However, DAC also states that beginning with Android 4.4, the permission is no longer required because the directory is not accessible by other apps ....
-                         * On Nexus 5, the storage directory returned is "/storage/emulated/0/Android/data/com.mirzairwan.shopping/files/Pictures"
+                         content://com.mirzairwan.shopping.fileprovider/item_images/Item__30012017_190919_-283901926.jpg
                          */
-                        File externalFilesDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+                        String appPackage = getApplicationContext().getPackageName();
+                        Uri itemPicUri = FileProvider.getUriForFile(this, appPackage + ".fileprovider", itemPicFile);
 
-                        try
-                        {
-                                /*
-                                File for use with ACTION_VIEW intents.
-                                 File path is /storage/emulated/0/Android/data/com.mirzairwan.shopping/files/Pictures/Item__***_***_-***.jpg
-                                */
-                                itemPicFile = PictureMgr.createFileHandle(externalFilesDir);
-                        }
-                        catch(IOException e)
-                        {
-                                e.printStackTrace();
-                                Toast.makeText(this, "Photo file cannot be created. Aborting camera operation", Toast.LENGTH_SHORT).show();
-                                return;
-                        }
-
-                        if (itemPicFile != null)
-                        {
-                                mPictureMgr.setPictureForViewing(itemPicFile);
-
-                                /**
-                                 * Returns a content:// URI. For more recent apps targeting Android 7.0 (API level 24) and higher, passing a file:// URI across a package boundary causes a
-                                 * FileUriExposedException. Therefore, we now use a more generic way of storing images using a FileProvider.
-                                 * We need to configure the FileProvider. In app's manifest, add a provider to your application
-                                 *
-                                 * content://com.mirzairwan.shopping.fileprovider/item_images/Item__30012017_190919_-283901926.jpg
-                                 */
-                                String appPackage = getApplicationContext().getPackageName();
-                                Uri itemPicUri = FileProvider.getUriForFile(this, appPackage + ".fileprovider", itemPicFile);
-
-                                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, itemPicUri);
-                                startActivityForResult(cameraIntent, REQUEST_SNAP_PICTURE);
-                        }
-
+                        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, itemPicUri);
+                        startActivityForResult(cameraIntent, REQUEST_SNAP_PICTURE);
                 }
                 else
                 {
@@ -508,7 +495,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
          * filename for the picture as it was created outside this app. This method query the filepath
          * of the picture using ContentResolver.
          */
-        protected void startPickPictureActivity()
+        public void startPickPictureActivity()
         {
                 Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
                 photoPickerIntent.setType("image/*");
@@ -525,33 +512,24 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                 switch (requestCode)
                                 {
                                         case REQUEST_SNAP_PICTURE:
-                                                //Delete existing file except original picture.
-                                                daoManager.cleanUpDiscardedPictures(mPictureMgr);
-                                                String picturePath = mPictureMgr.getPictureForViewing().getPicturePath();
-                                                ImageFsResizer imageFsResizer = new ImageFsResizer(mImgItemPic);
-                                                imageFsResizer.execute(picturePath);
+                                                mItemControl.onCameraResult();
                                                 break;
                                         case REQUEST_PICK_PHOTO:
-                                                setPictureView(data);
+                                                Picture picture = getPictureFromGallery(data);
+                                                mItemControl.onPickPictureResult(picture);
                                                 break;
                                 }
                                 break;
 
-                        default: //Assume the worst. No picture from camera. Delete the useless file.
-                                mPictureMgr.setViewOriginalPicture();
+                        default: /* Assume the worst. No picture from camera. Delete the useless file. */
+                                mPictureMgr.deleteNewPicture();
+                                setPictureView(mPictureMgr.getPictureInDb());
                 }
 
                 super.onActivityResult(requestCode, resultCode, data);
         }
 
-        /**
-         * Invoked when picking picture from media gallery. I do not need to create a
-         * filename for the picture as it was created outside this app. This method query the filepath
-         * of the picture using ContentResolver.
-         *
-         * @param data
-         */
-        protected void setPictureView(Intent data)
+        private Picture getPictureFromGallery(Intent data)
         {
                 Uri photoUri = data.getData();
                 String[] filePathColumn = {MediaStore.Images.Media.DATA};
@@ -566,13 +544,13 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
 
                 if (filePath == null)
                 {
-                        return;
+                        return null;
                 }
-                Picture externalPicture = new Picture(filePath);
-                mPictureMgr.setPictureForViewing(externalPicture); //Update PictureMgr on the target picture
-                daoManager.cleanUpDiscardedPictures(mPictureMgr); //delete previous picture. But original
-                // picture will not be deleted
-                setPictureView(externalPicture);
+                else
+                {
+                        return new Picture(filePath);
+                }
+
         }
 
         /**
@@ -581,7 +559,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
          *
          * @param picture
          */
-        protected void setPictureView(Picture picture)
+        public void setPictureView(Picture picture)
         {
                 if (picture == null)
                 {
@@ -589,14 +567,17 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         return;
                 }
 
-                // Get the dimensions of the desired scale dimension
+                /* Get the dimensions of the desired scale dimension */
                 int targetW = getResources().getDimensionPixelSize(R.dimen.picture_item_detail_width);
                 int targetH = getResources().getDimensionPixelSize(R.dimen.picture_item_detail_height);
 
-                //If picture is an external file, make sure read storage permission is granted
+                /* If picture is an external file, make sure read storage permission is granted */
                 if (!PictureMgr.isExternalFile(picture) | PermissionHelper.hasReadStoragePermission(this))
                 {
-                        //Spin a background thread to display picture
+                        String path = picture.getFile().getPath();
+                        mImgItemPic.setTag(path);
+
+                        /* Spin a background thread to display picture */
                         ImageResizer imageResizer = new ImageResizer(this, targetW, targetH);
                         imageResizer.loadImage(picture.getFile(), mImgItemPic);
                 }
@@ -611,7 +592,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         @Override
         public void onBackPressed()
         {
-                //mItemStateMachine.onBackPressed();
                 mItemControl.onBackPressed();
         }
 
@@ -654,6 +634,14 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                 alertDialog.show();
         }
 
+        public void showSoftKeyboard(View view)
+        {
+                if(view.requestFocus())
+                {
+                        InputMethodManager inputMtdMgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                        inputMtdMgr.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+                }
+        }
         /**
          * Select following child records of  item:
          * 1. Prices
@@ -737,9 +725,8 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                                 colItemId = cursor.getColumnIndex(PicturesEntry.COLUMN_ITEM_ID);
                                 mItemId = cursor.getLong(colItemId);
                                 mPictureMgr.setItemId(mItemId);
-                                mPictureMgr.setOriginalPicture(pictureInDb);
-                                mPictureMgr.setViewOriginalPicture();
-                                setPictureView(mPictureMgr.getPictureForViewing());
+                                mPictureMgr.setDbPicture(pictureInDb);
+                                mItemControl.onLoadPictureFinished(mPictureMgr);
 
                                 /* Important to move cursor back before the first record because when device switches to landscape, it gives back the same cursor with
                                  the pre-exisiting index */
@@ -779,7 +766,7 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
         {
                 Log.d(LOG_TAG, "onSaveInstanceState");
                 super.onSaveInstanceState(outState);
-                outState.putParcelable(PICTURE_MANAGER, mPictureMgr);
+                //outState.putParcelable(PICTURE_MANAGER, mPictureMgr);
                 outState.putParcelable(EXCHANGE_RATE, mExchangeRate);
         }
 
@@ -801,12 +788,12 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         int height = getResources().getDimensionPixelSize(R.dimen.picture_item_detail_height);
                         Bitmap resizedBitmap = PictureUtil.decodeSampledBitmapFile(picturePath[0], width, height);
                         String appPackage = getApplicationContext().getPackageName();
-                        Uri itemPicUri = FileProvider.getUriForFile(ItemActivity.this, appPackage + ".fileprovider", mPictureMgr.getPictureForViewing().getFile());
+                        Uri itemPicUri = FileProvider.getUriForFile(ItemActivity.this, appPackage + ".fileprovider", mPictureMgr.getNewPicture().getFile());
 
-                        //Delete the big picture file
+                        /* Delete the big picture file */
                         int deleted = getContentResolver().delete(itemPicUri, null, null);
 
-                        //Save the resized image
+                        /* Save the resized image */
                         PictureUtil.savePictureInFilesystem(resizedBitmap, picturePath[0]);
                         return resizedBitmap;
                 }
@@ -843,7 +830,6 @@ public abstract class ItemActivity extends AppCompatActivity implements LoaderMa
                         Log.d("CurrencyCode", "onLoadFinished");
                         if (exchangeRates != null)
                         {
-                                //String sourceCurrencyCode = mPriceEditFieldControl.getCurrencyCode();
                                 String sourceCurrencyCode = getCurrencyCode();
                                 mExchangeRate = exchangeRates.get(sourceCurrencyCode);
                         }

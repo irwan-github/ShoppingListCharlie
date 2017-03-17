@@ -20,6 +20,8 @@
         <!-- Color used for item checked in shopping list -->
         <color name="checked">#1b5e20</color>
 
+        <color name="my_hint">#65000000</color>
+
         <drawable name="checked_remote">#e0e0e0</drawable>
 </resources>
 

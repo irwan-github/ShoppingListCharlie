@@ -7,44 +7,49 @@ import android.view.View;
 
 import com.mirzairwan.shopping.domain.PriceMgr;
 
-import static com.mirzairwan.shopping.PriceDetailsFieldControl.Event.ON_ITEM_IS_IN_SHOPPUNG_LIST;
-import static com.mirzairwan.shopping.PriceDetailsFieldControl.Event.ON_VALIDATE_BUNDLE_QTY;
-import static com.mirzairwan.shopping.PriceDetailsFieldControl.Event.ON_VALIDATE_CURRENCY_CODE;
-import static com.mirzairwan.shopping.PriceDetailsFieldControl.State.CURRENCY_CODE_ERROR;
-import static com.mirzairwan.shopping.PriceDetailsFieldControl.State.NEUTRAL;
-import static com.mirzairwan.shopping.PriceDetailsFieldControl.State.PRICE_ERROR;
+import static com.mirzairwan.shopping.PriceDetailsControl.Event.ON_ITEM_IS_IN_SHOPPUNG_LIST;
+import static com.mirzairwan.shopping.PriceDetailsControl.Event.ON_ITEM_NOT_IN_SHOPPUNG_LIST;
+import static com.mirzairwan.shopping.PriceDetailsControl.Event.ON_LOAD_FINISHED;
+import static com.mirzairwan.shopping.PriceDetailsControl.Event.ON_VALIDATE_BUNDLE_QTY;
+import static com.mirzairwan.shopping.PriceDetailsControl.Event.ON_VALIDATE_CURRENCY_CODE;
+import static com.mirzairwan.shopping.PriceDetailsControl.State.CURRENCY_CODE_ERROR;
+import static com.mirzairwan.shopping.PriceDetailsControl.State.ITEM_IN_SHOPPING_LIST;
+import static com.mirzairwan.shopping.PriceDetailsControl.State.NEUTRAL;
+import static com.mirzairwan.shopping.PriceDetailsControl.State.PRICE_ERROR;
 import static com.mirzairwan.shopping.R.id.et_bundle_price;
 
 /**
  * Created by Mirza Irwan on 28/2/17.
  */
 
-public class PriceDetailsFieldControl extends DetailExpander
+public class PriceDetailsControl extends DetailExpander
 {
         private ItemContext mItemContext;
         private TextInputEditText mEtCurrencyCode;
-        //private TextInputEditText mEtBundleQty;
-        private QuantityPicker mEtBundleQty;
+        private QuantityPicker mQpBundleQty;
         private PriceField mUnitPrice;
         private PriceField mBundlePrice;
         private PriceMgr mPriceMgr;
 
-        /* State for bundle quantity field */
+        /* Tracks whether item is in shopping list */
+        private State mShoppingListState = ITEM_IN_SHOPPING_LIST;
+
+        /* State for validity of bundle quantity field */
         private State mBundleQtyState = NEUTRAL;
 
-        /* State for currency code field */
+        /* State for validity currency code field */
         private State mCurrencyCodeState = NEUTRAL;
 
-        public PriceDetailsFieldControl(ItemContext itemContext)
+        public PriceDetailsControl(ItemContext itemContext)
         {
                 super(itemContext);
                 mItemContext = itemContext;
 
                 View viewBundleQty = itemContext.findViewById(R.id.qp_bundle_qty);
-                mEtBundleQty = new QuantityPicker(viewBundleQty, 2);
+                mQpBundleQty = new QuantityPicker(viewBundleQty, 2);
 
-                mEtBundleQty.setVisibility(View.VISIBLE);
-                mEtBundleQty.setHint(mItemContext.getString(R.string.bundle_quantity_txt));
+                mQpBundleQty.setVisibility(View.VISIBLE);
+                mQpBundleQty.setHint(mItemContext.getString(R.string.bundle_quantity_txt));
                 mEtCurrencyCode = (TextInputEditText) itemContext.findViewById(R.id.et_currency_code);
 
                 TextInputLayout etUnitPrice = (TextInputLayout) itemContext.findViewById(R.id.unit_price_layout);
@@ -70,8 +75,8 @@ public class PriceDetailsFieldControl extends DetailExpander
 
         private boolean isBundleQuantityOneOrLess()
         {
-                String bundleQty = mEtBundleQty.getText().toString();
-                if (TextUtils.isEmpty(mEtBundleQty.getText()))
+                String bundleQty = mQpBundleQty.getText().toString();
+                if (TextUtils.isEmpty(mQpBundleQty.getText()))
                 {
                         return false;
                 }
@@ -89,12 +94,12 @@ public class PriceDetailsFieldControl extends DetailExpander
 
         private void showBundleQtyError(int stringResId)
         {
-                mEtBundleQty.setError(mItemContext.getString(stringResId));
+                mQpBundleQty.setError(mItemContext.getString(stringResId));
         }
 
         public void clearBundleQtyError()
         {
-                mEtBundleQty.setError(null);
+                mQpBundleQty.setError(null);
         }
 
         public boolean isInErrorState()
@@ -116,27 +121,21 @@ public class PriceDetailsFieldControl extends DetailExpander
         public void onLoadFinished(PriceMgr priceMgr)
         {
                 mPriceMgr = priceMgr;
+                mShoppingListState.transition(ON_LOAD_FINISHED, this);
+        }
+
+        private void populatePriceFields()
+        {
                 String currencyCode = mPriceMgr.getUnitPrice().getCurrencyCode();
                 mEtCurrencyCode.setText(currencyCode);
                 mUnitPrice.setPrice(currencyCode, mPriceMgr.getUnitPriceForDisplay());
                 mBundlePrice.setPrice(currencyCode, mPriceMgr.getBundlePriceForDisplay());
 
                 int bundleQuantity = mPriceMgr.getBundlePrice().getBundleQuantity();
-                mEtBundleQty.setQuantity(bundleQuantity <= 1 ? 2 : bundleQuantity);
+                mQpBundleQty.setQuantity(bundleQuantity <= 1 ? 2 : bundleQuantity);
 
                 mUnitPrice.setCurrencySymbolInPriceHint(currencyCode);
                 mBundlePrice.setCurrencySymbolInPriceHint(currencyCode);
-        }
-
-        protected String getBundleQtyFromInputField()
-        {
-                String bundleQty;
-                bundleQty = "0";
-                if (mEtBundleQty != null && !TextUtils.isEmpty(mEtBundleQty.getText()))
-                {
-                        bundleQty = mEtBundleQty.getText().toString();
-                }
-                return bundleQty;
         }
 
         public PriceMgr populatePriceMgr()
@@ -145,7 +144,7 @@ public class PriceDetailsFieldControl extends DetailExpander
 
                 String unitPrice = mUnitPrice.getPrice();
                 String bundlePrice = mBundlePrice.getPrice();
-                String bundleQtyFromInputField = getBundleQtyFromInputField();
+                String bundleQtyFromInputField = mQpBundleQty.getText();
                 mPriceMgr.setItemPricesForSaving(unitPrice, bundlePrice, bundleQtyFromInputField);
 
                 return mPriceMgr;
@@ -156,7 +155,7 @@ public class PriceDetailsFieldControl extends DetailExpander
                 mEtCurrencyCode.setOnTouchListener(onTouchListener);
                 mUnitPrice.setOnTouchListener(onTouchListener);
                 mBundlePrice.setOnTouchListener(onTouchListener);
-                mEtBundleQty.setOnTouchListener(onTouchListener);
+                mQpBundleQty.setOnTouchListener(onTouchListener);
         }
 
         public void onLoaderReset()
@@ -168,7 +167,7 @@ public class PriceDetailsFieldControl extends DetailExpander
         {
                 mUnitPrice.clear();
                 mBundlePrice.clear();
-                mEtBundleQty.setQuantity(2);
+                mQpBundleQty.setQuantity(2);
         }
 
         private boolean isCurrencyCodeEmpty()
@@ -187,12 +186,17 @@ public class PriceDetailsFieldControl extends DetailExpander
 
         private void setBundleQuantityEnabled(boolean enabled)
         {
-                mEtBundleQty.setEnabled(enabled);
+                mQpBundleQty.setEnabled(enabled);
         }
 
         public void onItemIsInShoppingList()
         {
-                mBundleQtyState = mBundleQtyState.transition(ON_ITEM_IS_IN_SHOPPUNG_LIST, this);
+                mShoppingListState = mShoppingListState.transition(ON_ITEM_IS_IN_SHOPPUNG_LIST, this);
+        }
+
+        public void onItemNotIsInShoppingList()
+        {
+                mShoppingListState = mShoppingListState.transition(ON_ITEM_NOT_IN_SHOPPUNG_LIST, this);
         }
 
         private void setCurrencyCodeError(int stringResId)
@@ -242,9 +246,14 @@ public class PriceDetailsFieldControl extends DetailExpander
                 return state;
         }
 
+        public PriceMgr getPriceMgr()
+        {
+                return mPriceMgr;
+        }
+
         enum Event
         {
-                ON_NEUTRAL, ON_ITEM_IS_IN_SHOPPUNG_LIST, ON_VALIDATE_CURRENCY_CODE, ON_VALIDATE_BUNDLE_QTY, ON_VALIDATE;
+                ON_NEUTRAL, ON_ITEM_IS_IN_SHOPPUNG_LIST, ON_VALIDATE_CURRENCY_CODE, ON_VALIDATE_BUNDLE_QTY, ON_LOAD_FINISHED, ON_ITEM_NOT_IN_SHOPPUNG_LIST;
         }
 
         enum State
@@ -252,14 +261,11 @@ public class PriceDetailsFieldControl extends DetailExpander
                 NEUTRAL(null)
                         {
                                 @Override
-                                State transition(Event event, PriceDetailsFieldControl control)
+                                State transition(Event event, PriceDetailsControl control)
                                 {
                                         State state = this;
                                         switch (event)
                                         {
-                                                case ON_ITEM_IS_IN_SHOPPUNG_LIST:
-                                                        state = ITEM_IN_SHOPPING_LIST;
-                                                        break;
                                                 case ON_VALIDATE_BUNDLE_QTY:
                                                         if (control.isBundleQuantityOneOrLess())
                                                         {
@@ -277,7 +283,7 @@ public class PriceDetailsFieldControl extends DetailExpander
                                 }
 
                                 @Override
-                                void setUiOutput(Event event, PriceDetailsFieldControl control)
+                                void setUiOutput(Event event, PriceDetailsControl control)
                                 {
                                         switch (event)
                                         {
@@ -289,17 +295,55 @@ public class PriceDetailsFieldControl extends DetailExpander
                                 }
                         },
 
-                ITEM_IN_SHOPPING_LIST(null)
+                ITEM_NOT_IN_SHOPPING_LIST(null)
                         {
                                 @Override
-                                State transition(Event event, PriceDetailsFieldControl control)
+                                State transition(Event event, PriceDetailsControl control)
                                 {
                                         State state = this;
+                                        switch (event)
+                                        {
+                                                case ON_LOAD_FINISHED:
+                                                        control.populatePriceFields();
+                                                        break;
+                                        }
+
+                                        state.setUiOutput(event, control);
+
                                         return state;
                                 }
 
                                 @Override
-                                void setUiOutput(Event event, PriceDetailsFieldControl control)
+                                void setUiOutput(Event event, PriceDetailsControl control)
+                                {
+                                        control.setBundleQuantityEnabled(true);
+                                        control.setCurrencyCodeEnabled(true);
+                                        control.setPriceFieldsEnabled(true);
+                                }
+                        },
+
+                ITEM_IN_SHOPPING_LIST(null)
+                        {
+                                @Override
+                                State transition(Event event, PriceDetailsControl control)
+                                {
+                                        State state = this;
+                                        switch (event)
+                                        {
+                                                case ON_ITEM_NOT_IN_SHOPPUNG_LIST:
+                                                        state = ITEM_NOT_IN_SHOPPING_LIST;
+                                                        break;
+                                                case ON_LOAD_FINISHED:
+                                                        control.populatePriceFields();
+                                                        break;
+                                        }
+
+                                        state.setUiOutput(event, control);
+                                        return state;
+                                }
+
+                                @Override
+                                void setUiOutput(Event event, PriceDetailsControl control)
                                 {
                                         control.setBundleQuantityEnabled(false);
                                         control.setCurrencyCodeEnabled(false);
@@ -310,7 +354,7 @@ public class PriceDetailsFieldControl extends DetailExpander
                 PRICE_ERROR(null)
                         {
                                 @Override
-                                State transition(Event event, PriceDetailsFieldControl control)
+                                State transition(Event event, PriceDetailsControl control)
                                 {
                                         return this;
                                 }
@@ -319,7 +363,7 @@ public class PriceDetailsFieldControl extends DetailExpander
                 BUNDLE_QTY_ERROR(PRICE_ERROR)
                         {
                                 @Override
-                                State transition(Event event, PriceDetailsFieldControl control)
+                                State transition(Event event, PriceDetailsControl control)
                                 {
                                         State state = this;
                                         switch (event)
@@ -339,7 +383,7 @@ public class PriceDetailsFieldControl extends DetailExpander
                                 }
 
                                 @Override
-                                void setUiOutput(Event event, PriceDetailsFieldControl control)
+                                void setUiOutput(Event event, PriceDetailsControl control)
                                 {
                                         control.showBundleQtyError(R.string.invalid_bundle_quantity_one);
                                 }
@@ -348,7 +392,7 @@ public class PriceDetailsFieldControl extends DetailExpander
                 CURRENCY_CODE_ERROR(PRICE_ERROR)
                         {
                                 @Override
-                                State transition(Event event, PriceDetailsFieldControl control)
+                                State transition(Event event, PriceDetailsControl control)
                                 {
                                         State state;
                                         switch (event)
@@ -373,9 +417,9 @@ public class PriceDetailsFieldControl extends DetailExpander
                         this.parentState = parentState;
                 }
 
-                abstract State transition(Event event, PriceDetailsFieldControl control);
+                abstract State transition(Event event, PriceDetailsControl control);
 
-                void setUiOutput(Event event, PriceDetailsFieldControl control)
+                void setUiOutput(Event event, PriceDetailsControl control)
                 {
 
                 }

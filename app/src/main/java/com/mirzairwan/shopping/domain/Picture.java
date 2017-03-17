@@ -31,19 +31,6 @@ public class Picture implements Parcelable
         private File mPictureFile;
         private String mPath;
 
-        public Picture(long id, File pictureFile)
-        {
-                _id = id;
-                mPictureFile = pictureFile;
-                mPath = pictureFile.getPath();
-                if (mPath == null)
-                {
-                        throw new IllegalArgumentException("Picture cannot have empth path");
-                }
-
-        }
-
-
         public Picture(long id, String pictureFilePath)
         {
                 _id = id;

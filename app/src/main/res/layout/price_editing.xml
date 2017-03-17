@@ -91,28 +91,6 @@
                         </android.support.design.widget.TextInputLayout>
                 </LinearLayout>
 
-                <!-- Bundle quantity -->
-                <!--<android.support.design.widget.TextInputLayout-->
-                        <!--android:id="@+id/bundle_qty_layout"-->
-                        <!--android:layout_width="wrap_content"-->
-                        <!--android:layout_height="wrap_content"-->
-                        <!--android:paddingBottom="@dimen/edit_text_padding_bottom"-->
-                        <!--android:paddingTop="@dimen/edit_text_padding_top"-->
-                        <!--&gt;-->
-
-                        <!--<android.support.design.widget.TextInputEditText-->
-                                <!--android:id="@+id/et_bundle_qty"-->
-                                <!--android:layout_width="wrap_content"-->
-                                <!--android:layout_height="wrap_content"-->
-                                <!--android:focusableInTouchMode="true"-->
-                                <!--android:hint="@string/bundle_quantity_txt"-->
-                                <!--android:inputType="number"-->
-                                <!--android:minWidth="@dimen/edit_text_bundle_qty_min_width"-->
-                                <!--android:textAppearance="?android:textAppearanceMedium"-->
-                                <!--/>-->
-
-                <!--</android.support.design.widget.TextInputLayout>-->
-
                 <include
                         android:id="@+id/qp_bundle_qty"
                         layout="@layout/quantity_picker"

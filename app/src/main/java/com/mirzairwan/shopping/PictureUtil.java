@@ -8,7 +8,8 @@ import android.media.ExifInterface;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 /**
@@ -20,6 +21,7 @@ import java.io.IOException;
 public class PictureUtil
 {
         public static final String LOG_TAG = PictureUtil.class.getSimpleName();
+        private static final String SHOPPING_LIST_PICS = "Item_";
 
         public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight)
         {
@@ -130,5 +132,22 @@ public class PictureUtil
                 {
 
                 }
+        }
+
+        /**
+         * Create a collision-resistant file name
+         * @param dirPictures
+         * @return
+         * @throws IOException
+         */
+        public static File createFileHandle(File dirPictures) throws IOException
+        {
+                String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
+                String picFilename = SHOPPING_LIST_PICS + "_" + timeStamp + "_";
+
+                //Get file handle
+                File filePicture = File.createTempFile(picFilename, ".jpg", dirPictures);
+
+                return filePicture;
         }
 }

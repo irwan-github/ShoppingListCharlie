@@ -5,6 +5,7 @@ import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.domain.Price;
 import com.mirzairwan.shopping.domain.ItemInShoppingList;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -88,13 +89,18 @@ public interface DaoManager
         /**
          * Delete photos in the filesystem.
          *
-         * @param pictureMgr tracks item's updated and discarded or replaced pictures
+         * @param file item's updated and discarded or replaced pictures
          * @return
          */
-        String cleanUpDiscardedPictures(PictureMgr pictureMgr);
+        int deleteFileFromFilesystem(File file);
 
         String deleteCheckedItems();
 
-        int deletePicture(long itemId);
+        /**
+         * Delete path of picture in database. This method does not delete file in the filesystem.
+         * @param itemId
+         * @return
+         */
+        int deletePictureInDb(long itemId);
 
 }

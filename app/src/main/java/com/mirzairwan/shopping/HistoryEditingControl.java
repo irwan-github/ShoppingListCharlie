@@ -7,6 +7,9 @@ package com.mirzairwan.shopping;
 import android.view.Menu;
 import android.view.View;
 
+import com.mirzairwan.shopping.domain.Item;
+import com.mirzairwan.shopping.domain.Picture;
+import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.domain.PriceMgr;
 
 import static com.mirzairwan.shopping.HistoryEditingControl.ChangeState.UNCHANGE;
@@ -33,10 +36,10 @@ import static com.mirzairwan.shopping.HistoryEditingControl.ShoppingListState.TR
  * are like global variables. They can be very powerful, but they also have the potential to
  * cause many problems.
  * Hint: Use states to control the attributes of user interface items rather than executing
- * actions. All actions should be associated with events.
+ * actions. All actions should be associated with events and origin state.
  * <p>
  * Actions should be associated with events. Example:
- * Insert record into database
+ * Insert record into database with ON_OK event
  */
 public class HistoryEditingControl implements ItemControl
 {
@@ -45,7 +48,8 @@ public class HistoryEditingControl implements ItemControl
 
         private ItemManager mItemManager;
         private ItemDetailsFieldControl mItemDetailsFieldControl;
-        private PriceDetailsFieldControl mPriceDetailsFieldControl;
+        private PriceDetailsControl mPriceDetailsControl;
+        private PictureControl mPictureControl;
         private Menu mMenu;
 
         private ShoppingListState mShoppingListState = TRANSIENT;
@@ -55,13 +59,56 @@ public class HistoryEditingControl implements ItemControl
         {
                 mContext = context;
                 mItemDetailsFieldControl = new ItemDetailsFieldControl(context);
-                mPriceDetailsFieldControl = new PriceDetailsFieldControl(context);
+                mPriceDetailsControl = new PriceDetailsControl(context);
+                mPictureControl = new PictureControl(context);
                 mContext.setTitle(R.string.history_item_editing_screen);
         }
 
         public void onChange()
         {
                 mChangeState = mChangeState.transition(ON_CHANGE, this);
+        }
+
+        @Override
+        public void onCameraAction()
+        {
+                mPictureControl.onCameraAction();
+        }
+
+        @Override
+        public void onCameraResult()
+        {
+                mPictureControl.onCameraResult();
+        }
+
+        @Override
+        public void onPickPictureAction()
+        {
+                mPictureControl.onPickPictureAction();
+        }
+
+        @Override
+        public void onPickPictureResult(Picture picture)
+        {
+                mPictureControl.onPickPictureResult(picture);
+        }
+
+        @Override
+        public void onDeletePictureInView()
+        {
+                mPictureControl.onDeletePictureInView();
+        }
+
+        @Override
+        public void onLoadPictureFinished(PictureMgr pictureMgr)
+        {
+                mPictureControl.onLoadFinished(pictureMgr);
+        }
+
+        @Override
+        public void onEnterTransitionEnd()
+        {
+
         }
 
         public void onUp()
@@ -77,9 +124,9 @@ public class HistoryEditingControl implements ItemControl
         public void onOk()
         {
                 mItemDetailsFieldControl.onOk();
-                mPriceDetailsFieldControl.onValidate();
+                mPriceDetailsControl.onValidate();
 
-                if (mItemDetailsFieldControl.isInErrorState() || mPriceDetailsFieldControl.isInErrorState())
+                if (mItemDetailsFieldControl.isInErrorState() || mPriceDetailsControl.isInErrorState())
                 {
                         return;
                 }
@@ -113,12 +160,18 @@ public class HistoryEditingControl implements ItemControl
         {
                 mItemManager = itemManager;
                 mShoppingListState = mShoppingListState.transition(ON_LOAD_ITEM, this);
-                if (mItemManager.getItem().isInBuyList())
+                Item item = mItemManager.getItem();
+                if (item.isInBuyList())
                 {
-                        mPriceDetailsFieldControl.onItemIsInShoppingList();
+                        mPriceDetailsControl.onItemIsInShoppingList();
+                }
+                else
+                {
+                        mPriceDetailsControl.onItemNotIsInShoppingList();
                 }
 
-                mItemDetailsFieldControl.onLoadItemFinished(mItemManager.getItem());
+                mItemDetailsFieldControl.onLoadItemFinished(item);
+                mPictureControl.getPictureMgr().setItemId(item.getId());
         }
 
         private boolean isItemInShoppingList()
@@ -145,8 +198,8 @@ public class HistoryEditingControl implements ItemControl
         private void update()
         {
                 mItemDetailsFieldControl.populateItemFromInputFields();
-                mPriceDetailsFieldControl.populatePriceMgr();
-                mContext.update(mItemManager);
+                mPriceDetailsControl.populatePriceMgr();
+                mContext.update(mItemManager, mPriceDetailsControl.getPriceMgr(), mPictureControl.getPictureMgr());
         }
 
         private void showDbMessage()
@@ -167,27 +220,37 @@ public class HistoryEditingControl implements ItemControl
         public void setOnTouchListener(View.OnTouchListener onTouchListener)
         {
                 mItemDetailsFieldControl.setOnTouchListener(onTouchListener);
-                mPriceDetailsFieldControl.setOnTouchListener(onTouchListener);
+                mPriceDetailsControl.setOnTouchListener(onTouchListener);
         }
 
         public void setPriceMgr(PriceMgr priceMgr)
         {
-                mPriceDetailsFieldControl.setPriceMgr(priceMgr);
+                mPriceDetailsControl.setPriceMgr(priceMgr);
         }
 
         public void onLoadPriceFinished(PriceMgr priceMgr)
         {
-                mPriceDetailsFieldControl.onLoadFinished(priceMgr);
+                mPriceDetailsControl.onLoadFinished(priceMgr);
         }
 
         public String getCurrencyCode()
         {
-                return mPriceDetailsFieldControl.getCurrencyCode();
+                return mPriceDetailsControl.getCurrencyCode();
         }
 
         private void invalidateOptionsMenu()
         {
                 mContext.invalidateOptionsMenu();
+        }
+
+        private void removeUnsavedPicturesFromApp()
+        {
+                mContext.removeUnsavedPicturesFromApp();
+        }
+
+        public void setPictureMgr(PictureMgr pictureMgr)
+        {
+                mPictureControl.setPictureMgr(pictureMgr);
         }
 
         enum Event
@@ -246,6 +309,7 @@ public class HistoryEditingControl implements ItemControl
                                                         break;
 
                                                 case ON_LEAVE:
+                                                        control.removeUnsavedPicturesFromApp();
                                                         control.finishItemEditing();
 
                                                 default:
@@ -286,6 +350,7 @@ public class HistoryEditingControl implements ItemControl
                                                         break;
 
                                                 case ON_LEAVE:
+                                                        control.removeUnsavedPicturesFromApp();
                                                         control.finishItemEditing();
 
                                                 default:
@@ -363,10 +428,9 @@ public class HistoryEditingControl implements ItemControl
 
         public interface ItemEditorContext extends ItemContext
         {
-                void update(ItemManager mItemManager);
+                void update(ItemManager mItemManager, PriceMgr priceMgr, PictureMgr mPictureMgr);
 
                 void delete(long itemId);
-
         }
 
 }

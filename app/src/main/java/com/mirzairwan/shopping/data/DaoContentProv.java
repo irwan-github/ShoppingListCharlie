@@ -19,15 +19,14 @@ import com.mirzairwan.shopping.data.Contract.PicturesEntry;
 import com.mirzairwan.shopping.data.Contract.PricesEntry;
 import com.mirzairwan.shopping.data.Contract.ToBuyItemsEntry;
 import com.mirzairwan.shopping.domain.Item;
+import com.mirzairwan.shopping.domain.ItemInShoppingList;
 import com.mirzairwan.shopping.domain.Picture;
 import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.domain.Price;
-import com.mirzairwan.shopping.domain.ItemInShoppingList;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -62,6 +61,7 @@ public class DaoContentProv implements DaoManager
         /**
          * Create an item in the shopping list.
          * Pre-condition: Item and prices must already exist in the history.
+         *
          * @param itemId
          * @param priceId
          * @return
@@ -82,7 +82,7 @@ public class DaoContentProv implements DaoManager
         }
 
         /**
-         * Insert the state of the objects  into the database.
+         * Insert a new item into the database.
          * The above changes is an atomic transaction which means all database operations must be committed in same transaction.
          *
          * @param buyItem    item in the shopping list
@@ -110,13 +110,13 @@ public class DaoContentProv implements DaoManager
 
                 ops.add(itemInsertOp);
 
-                //insert picture paths
+                /* insert picture paths */
                 int opSavePictureIdx = -1;
-                for (Picture picture : pictureMgr.getPictureForSaving())
+                if (pictureMgr.getNewPicture() != null)
                 {
                         ContentProviderOperation.Builder insertPicPathBuilder = ContentProviderOperation.newInsert(PicturesEntry.CONTENT_URI);
                         insertPicPathBuilder.withValueBackReference(PicturesEntry.COLUMN_ITEM_ID, 0);
-                        insertPicPathBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, picture.getPicturePath());
+                        insertPicPathBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, pictureMgr.getNewPicture().getPicturePath());
                         insertPicPathBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
                         ops.add(insertPicPathBuilder.build());
                         opSavePictureIdx = ops.size() - 1;
@@ -175,23 +175,6 @@ public class DaoContentProv implements DaoManager
 
                 logDbOperation(results);
 
-                if (opSavePictureIdx > -1 && results != null)
-                {
-                        if (results[opSavePictureIdx].uri != null || results[opSavePictureIdx].count == 1)
-                        {
-                                String deletePicMsg = cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
-                                if (deletePicMsg != null)
-                                {
-                                        msg += "\n" + deletePicMsg;
-                                }
-                        }
-                        else //Original picture failed to be removed
-                        {
-                                pictureMgr.setViewOriginalPicture(); //Set PictureMgr to show original picture
-                                // for viewing
-                        }
-                }
-
                 return msg;
         }
 
@@ -233,7 +216,6 @@ public class DaoContentProv implements DaoManager
                 Uri updateBuyItemUri = ContentUris.withAppendedId(ToBuyItemsEntry.CONTENT_URI, buyItem.getId());
                 ContentProviderOperation.Builder buyItemBuilder = ContentProviderOperation.newUpdate(updateBuyItemUri);
 
-                //
                 ContentValues buyItemValues = new ContentValues();
                 if (item.getId() > 0)
                 {
@@ -246,7 +228,6 @@ public class DaoContentProv implements DaoManager
                 }
                 buyItemValues.put(ToBuyItemsEntry.COLUMN_IS_CHECKED, buyItem.isChecked());
                 buyItemValues.put(ToBuyItemsEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
-                //
 
                 buyItemBuilder = buyItemBuilder.withValues(buyItemValues);
 
@@ -266,31 +247,30 @@ public class DaoContentProv implements DaoManager
 
                 logDbOperation(results);
 
-                if (opSavePictureIdx > -1 && results != null)
+                Picture pictureInDb = pictureMgr.getPictureInDb();
+                Picture newPicture = pictureMgr.getNewPicture();
+
+                /* Delete original picture from filesystem */
+                if (newPicture != null && newPicture != pictureInDb)
                 {
-
-                        String discardFileMsg = cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
-                        if (discardFileMsg != null)
+                        if (pictureInDb != null && !PictureMgr.isExternalFile(pictureInDb))
                         {
-                                msg += "\n" + discardFileMsg;
+                                deleteFileFromFilesystem(pictureInDb.getFile());
                         }
-
                 }
 
                 return msg;
         }
 
-        private int deleteFileFromFilesystem(File file)
+        @Override
+        public int deleteFileFromFilesystem(File file)
         {
                 String authority = mContext.getApplicationInfo().packageName + "." + FILE_PROVIDER;
                 Uri uriFile = FileProvider.getUriForFile(mContext, authority, file);
 
                 Log.d(LOG_TAG, ">>>>> File" + (file.exists() ? " exist" : " NOT exist")); //Sanity check
                 int deletePictureFile = mContext.getContentResolver().delete(uriFile, null, null);
-                Log.d(LOG_TAG, ">>>>> File" + (file.exists() ? " exist" : " NOT exist")); //Sanity check
-
-                Log.d(LOG_TAG, ">>>>> Delete picture " + uriFile.toString() + " : " +
-                        (deletePictureFile > 0 ? "ok" : "failed"));
+                Log.d(LOG_TAG, ">>>>> Delete picture " + uriFile.toString() + " : " + (deletePictureFile > 0 ? "ok" : "failed"));
 
                 return deletePictureFile;
         }
@@ -300,78 +280,6 @@ public class DaoContentProv implements DaoManager
                 String msg = prefix + " : " + (deletedFiles > 0 ? "OK" : "Failed");
                 Log.d(LOG_TAG, msg);
 
-        }
-
-        /**
-         * Delete image files from filesystem of device internal storage
-         *
-         * @param pictureMgr tracks item's updated and discarded or replaced pictures
-         * @return String
-         */
-        @Override
-        public String cleanUpDiscardedPictures(PictureMgr pictureMgr)
-        {
-                String msg = null;
-                int deleteDiscardedFile = 0;
-                int discardPicturesSize = pictureMgr.getDiscardedPictures().size();
-
-                Iterator<Picture> iteratorDiscardPics = pictureMgr.getDiscardedPictures().iterator();
-                int externalFileCount = 0;
-                int internalFileCount = 0;
-                while (iteratorDiscardPics.hasNext())
-                {
-
-                        Picture discardedPicture = iteratorDiscardPics.next();
-
-                        if (!pictureMgr.isExternalFile(discardedPicture) && discardedPicture.getFile() != null)
-                        {
-                                ++internalFileCount;
-                                //Do not delete file NOT owned by app
-                                deleteDiscardedFile += deleteFileFromFilesystem(discardedPicture.getFile());
-                                if (deleteDiscardedFile == 1)
-                                {
-                                        iteratorDiscardPics.remove(); //remove internal picture from discarded list
-                                }
-                        }
-                        else
-                        {
-                                ++externalFileCount; //Keep count of external file to give the correct deletion
-                                // report
-                                iteratorDiscardPics.remove(); //remove external picture from discarded list
-                        }
-
-                        logDeleteDiscardedFileFromFilesystem(deleteDiscardedFile, "Delete discarded file");
-
-                }
-
-                if (discardPicturesSize - externalFileCount > 0) //Do not count external file because
-                // they are not deleted
-                {
-                        msg = (deleteDiscardedFile == discardPicturesSize - externalFileCount ? mContext.getString(R.string.filesystem_delete_discarded_ok) : mContext.getString(R.string.filesystem_delete_discarded_failed));
-                }
-                else if (internalFileCount == 0 && externalFileCount > 0)
-                {
-                        msg = mContext.getString(R.string.filesystem_delete_discarded_ok);
-                }
-                return msg;
-
-        }
-
-        private String cleanUpDiscardedPictures(ContentProviderResult result, PictureMgr pictureMgr)
-        {
-                if (result.uri == null && result.count == 0)
-                {
-                        pictureMgr.setViewOriginalPicture();
-                }
-
-                if (pictureMgr.hasDiscardedInternalPictures())
-                {
-                        return cleanUpDiscardedPictures(pictureMgr);
-                }
-                else
-                {
-                        return null;
-                }
         }
 
         /**
@@ -388,32 +296,48 @@ public class DaoContentProv implements DaoManager
                 int opSavePictureIdx = -1; //Start with picture to make it easier to do FileProvider
                 // operation
 
-                Picture pictureLastViewed = pictureMgr.getPictureForViewing();
-                Picture originalPicture = pictureMgr.getOriginalPicture();
-                if (originalPicture != null && pictureLastViewed != originalPicture)
-                { //Update Item's picture operation
-                        Uri updatePictureUri = ContentUris.withAppendedId(PicturesEntry.CONTENT_URI, originalPicture.getId());
-                        ContentProviderOperation.Builder updatePictureBuilder = ContentProviderOperation.newUpdate(updatePictureUri);
-                        updatePictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, pictureLastViewed.getPicturePath());
-                        updatePictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
-                        ops.add(updatePictureBuilder.build());
-                        opSavePictureIdx = ops.size() - 1;
-                }
-                else if (originalPicture == null && pictureLastViewed != null)
-                { //Insert Item's picture operation
-                        Uri insertPictureUri = PicturesEntry.CONTENT_URI;
-                        ContentProviderOperation.Builder insertPictureBuilder = ContentProviderOperation.newInsert(insertPictureUri);
-                        insertPictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, pictureLastViewed.getPicturePath());
-
-                        if (pictureMgr.getItemId() < 1)
+                Picture newPicture = pictureMgr.getNewPicture();
+                Picture pictureInDb = pictureMgr.getPictureInDb();
+                if (newPicture != null)
+                {
+                        if (pictureInDb != null && newPicture != pictureInDb)
                         {
-                                throw new IllegalArgumentException("Picture with Item id " + pictureMgr.getItemId());
+                                /* Update Item's picture operation */
+                                Uri updatePictureUri = ContentUris.withAppendedId(PicturesEntry.CONTENT_URI, pictureInDb.getId());
+                                ContentProviderOperation.Builder updatePictureBuilder = ContentProviderOperation.newUpdate(updatePictureUri);
+                                updatePictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, newPicture.getPicturePath());
+                                updatePictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
+                                ops.add(updatePictureBuilder.build());
+                                opSavePictureIdx = ops.size() - 1;
                         }
+                        else if (pictureInDb == null)
+                        {
+                                /* Insert Item's picture operation */
+                                Uri insertPictureUri = PicturesEntry.CONTENT_URI;
+                                ContentProviderOperation.Builder insertPictureBuilder = ContentProviderOperation.newInsert(insertPictureUri);
+                                insertPictureBuilder.withValue(PicturesEntry.COLUMN_FILE_PATH, newPicture.getPicturePath());
 
-                        insertPictureBuilder.withValue(PicturesEntry.COLUMN_ITEM_ID, pictureMgr.getItemId());
-                        insertPictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
-                        ops.add(insertPictureBuilder.build());
-                        opSavePictureIdx = ops.size() - 1;
+                                if (pictureMgr.getItemId() < 1)
+                                {
+                                        throw new IllegalArgumentException("Picture with Item id " + pictureMgr.getItemId());
+                                }
+
+                                insertPictureBuilder.withValue(PicturesEntry.COLUMN_ITEM_ID, pictureMgr.getItemId());
+                                insertPictureBuilder.withValue(PicturesEntry.COLUMN_LAST_UPDATED_ON, updateTime.getTime());
+                                ops.add(insertPictureBuilder.build());
+                                opSavePictureIdx = ops.size() - 1;
+                        }
+                }
+                else if (pictureInDb != null) /* No new picture  and picture exist in database*/
+                {
+                        Uri pictureUri = ContentUris.withAppendedId(PicturesEntry.CONTENT_URI, pictureInDb.getId());
+                        ContentProviderOperation.Builder deletePictureBuilder = null;
+                        if (pictureMgr.isPictureInDbToBeDeleted())
+                        {
+                                deletePictureBuilder = ContentProviderOperation.newDelete(pictureUri);
+                                ops.add(deletePictureBuilder.build());
+                                opSavePictureIdx = ops.size() - 1;
+                        }
                 }
 
                 return opSavePictureIdx;
@@ -425,11 +349,9 @@ public class DaoContentProv implements DaoManager
                 String msg;
                 ArrayList<ContentProviderOperation> ops = new ArrayList<>();
                 Date updateTime = new Date();
-                int opSavePictureIdx; //Start with picture to make it easier to do FileProvider
-                // operation
+                int opSavePictureIdx; /* Start with picture to make it easier to do FileProvider operation */
 
                 opSavePictureIdx = preparePictureForItemUpdateOps(pictureMgr, ops, updateTime);
-
                 Uri updateItemUri = ContentUris.withAppendedId(ItemsEntry.CONTENT_URI, item.getId());
                 ContentProviderOperation.Builder updateItemBuilder = ContentProviderOperation.newUpdate(updateItemUri);
                 updateItemBuilder.withValues(getItemContentValues(item, updateTime, null));
@@ -450,15 +372,17 @@ public class DaoContentProv implements DaoManager
 
                         msg = mContext.getString(R.string.database_success);
 
-                        if (opSavePictureIdx > -1)
+                        Picture pictureInDb = pictureMgr.getPictureInDb();
+                        Picture newPicture = pictureMgr.getNewPicture();
+
+                        /* Delete original picture from filesystem */
+                        if (newPicture != null && newPicture != pictureInDb)
                         {
-                                String msgDiscardPics = cleanUpDiscardedPictures(results[opSavePictureIdx], pictureMgr);
-                                if (msgDiscardPics != null)
+                                if (pictureInDb != null && !PictureMgr.isExternalFile(pictureInDb))
                                 {
-                                        msg += "\n" + msgDiscardPics;
+                                        deleteFileFromFilesystem(pictureInDb.getFile());
                                 }
                         }
-
                 }
                 catch(RemoteException | OperationApplicationException e)
                 {
@@ -548,18 +472,18 @@ public class DaoContentProv implements DaoManager
                         e.printStackTrace();
                 }
 
-                pictureMgr.discardOriginalPicture(); // Without this, the original file in the filesystem
-                // will NOT be deleted.
-
-                String msgCleanUp = null;
-                if (contentProviderResults != null)
+                /* Without this, the original file in the filesystem will NOT be deleted. */
+                Picture pictureInDb = pictureMgr.getPictureInDb();
+                if (pictureInDb != null)
                 {
-                        msgCleanUp = cleanUpDiscardedPictures(contentProviderResults[deletePictureOpIndex], pictureMgr);
+                        deleteFileFromFilesystem(pictureInDb.getFile());
                 }
 
-                if (msgCleanUp != null)
+                /* A picture might have been taken before user delete item record*/
+                Picture newUnsavedPicture = pictureMgr.getNewPicture();
+                if (newUnsavedPicture != null && newUnsavedPicture != pictureInDb)
                 {
-                        msg += "\n" + msgCleanUp;
+                        deleteFileFromFilesystem(newUnsavedPicture.getFile());
                 }
 
                 return msg;
@@ -607,7 +531,7 @@ public class DaoContentProv implements DaoManager
                         double bundlePriceTemp = price.getBundlePrice();
                         long bundlePriceVal = Math.round(bundlePriceTemp * 100);
                         priceValues.put(PricesEntry.COLUMN_PRICE, bundlePriceVal);
-                        priceValues.put(PricesEntry.COLUMN_BUNDLE_QTY, price.getBundleQuantity() );
+                        priceValues.put(PricesEntry.COLUMN_BUNDLE_QTY, price.getBundleQuantity());
                         priceValues.put(PricesEntry.COLUMN_PRICE_TYPE_ID, Price.Type.BUNDLE_PRICE.getType());
                 }
 
@@ -639,7 +563,7 @@ public class DaoContentProv implements DaoManager
         }
 
         @Override
-        public int deletePicture(long itemId)
+        public int deletePictureInDb(long itemId)
         {
                 String where = PicturesEntry.COLUMN_ITEM_ID + "= ?";
                 String[] selectionArgs = new String[]{String.valueOf(itemId)};

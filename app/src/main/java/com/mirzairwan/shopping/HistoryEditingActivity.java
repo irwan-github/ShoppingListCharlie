@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import com.mirzairwan.shopping.data.Contract;
+import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.domain.PriceMgr;
 
 import static com.mirzairwan.shopping.LoaderHelper.ITEM_LOADER_ID;
@@ -35,6 +36,7 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryEditi
         protected void onCreate(Bundle savedInstanceState)
         {
                 super.onCreate(savedInstanceState);
+                mHistoryItemEditCtlr.setPictureMgr(mPictureMgr);
                 mHistoryItemEditCtlr.setPriceMgr(mPriceMgr);
                 mHistoryItemEditCtlr.setOnTouchListener(mOnTouchListener);
 
@@ -123,7 +125,6 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryEditi
                         case ITEM_LOADER_ID:
                                 ItemManager mItemManager = new ItemManager(cursor, getIntent().getBooleanExtra(ITEM_IS_IN_SHOPPING_LIST, false));
                                 mHistoryItemEditCtlr.onLoadItemFinished(mItemManager);
-                                mPictureMgr.setItemId(mItemManager.getItem().getId());
                                 break;
 
                         default:
@@ -138,9 +139,9 @@ public class HistoryEditingActivity extends ItemActivity implements HistoryEditi
                 super.onSaveInstanceState(outState);
         }
 
-        public void update(ItemManager mItemManager)
+        public void update(ItemManager mItemManager, PriceMgr priceMgr, PictureMgr pictureMgr)
         {
-                mDbMsg = daoManager.update(mItemManager.getItem(), mPriceMgr.getPrices(), mPictureMgr);
+                mDbMsg = daoManager.update(mItemManager.getItem(), priceMgr.getPrices(), pictureMgr);
                 mDbMsg = mItemManager.getItem().getName() + " " + mDbMsg;
         }
 

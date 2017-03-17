@@ -4,6 +4,8 @@ import android.view.Menu;
 import android.view.View;
 
 import com.mirzairwan.shopping.domain.Item;
+import com.mirzairwan.shopping.domain.Picture;
+import com.mirzairwan.shopping.domain.PictureMgr;
 import com.mirzairwan.shopping.domain.PriceMgr;
 
 import static com.mirzairwan.shopping.ShoppingListEditingControl.Event.ON_BACK;
@@ -11,6 +13,7 @@ import static com.mirzairwan.shopping.ShoppingListEditingControl.Event.ON_CHANGE
 import static com.mirzairwan.shopping.ShoppingListEditingControl.Event.ON_CREATE_OPTIONS_MENU;
 import static com.mirzairwan.shopping.ShoppingListEditingControl.Event.ON_DELETE;
 import static com.mirzairwan.shopping.ShoppingListEditingControl.Event.ON_EDIT;
+import static com.mirzairwan.shopping.ShoppingListEditingControl.Event.ON_ENTER_TRANSITION_END;
 import static com.mirzairwan.shopping.ShoppingListEditingControl.Event.ON_LEAVE;
 import static com.mirzairwan.shopping.ShoppingListEditingControl.Event.ON_NEW;
 import static com.mirzairwan.shopping.ShoppingListEditingControl.Event.ON_OK;
@@ -65,6 +68,8 @@ public class ShoppingListEditingControl implements ItemControl
         /* Control object to control and coordinate the behaviour of user interface objects pertaining to  purchase and pricing details */
         private ItemPurchaseControl mItemPurchaseControl;
 
+        private PictureControl mPictureControl;
+
         private String LOG_TAG = ShoppingListEditingControl.class.getCanonicalName();
         private ShoppingItemContext mContext;
         private PurchaseManager mPurchaseManager;
@@ -76,6 +81,7 @@ public class ShoppingListEditingControl implements ItemControl
                 mContext = context;
                 mItemDetailsFieldControl = new ItemDetailsFieldControl(context);
                 mItemPurchaseControl = new ItemPurchaseControl(context);
+                mPictureControl = new PictureControl(context);
         }
 
         public void onExistingItem()
@@ -122,7 +128,7 @@ public class ShoppingListEditingControl implements ItemControl
         @Override
         public void onUp()
         {
-                mChangeState = mChangeState.transition(ON_UP, this);
+                mItemType = mItemType.transition(ON_UP, this);
         }
 
         @Override
@@ -158,6 +164,48 @@ public class ShoppingListEditingControl implements ItemControl
                 }
 
                 mItemType = mItemType.transition(ON_OK, this);
+        }
+
+        @Override
+        public void onLoadPictureFinished(PictureMgr pictureMgr)
+        {
+                mPictureControl.onLoadFinished(pictureMgr);
+        }
+
+        @Override
+        public void onCameraAction()
+        {
+                mPictureControl.onCameraAction();
+        }
+
+        @Override
+        public void onCameraResult()
+        {
+                mPictureControl.onCameraResult();
+        }
+
+        @Override
+        public void onPickPictureAction()
+        {
+                mPictureControl. onPickPictureAction();
+        }
+
+        @Override
+        public void onPickPictureResult(Picture picture)
+        {
+                mPictureControl.onPickPictureResult(picture);
+        }
+
+        @Override
+        public void onEnterTransitionEnd()
+        {
+                mItemType = mItemType.transition(ON_ENTER_TRANSITION_END, this);
+        }
+
+        @Override
+        public void onDeletePictureInView()
+        {
+                mPictureControl.onDeletePictureInView();
         }
 
         private void delete()
@@ -231,13 +279,16 @@ public class ShoppingListEditingControl implements ItemControl
         {
                 mItemDetailsFieldControl.setOnTouchListener(onTouchListener);
                 mItemPurchaseControl.setOnTouchListener(onTouchListener);
+                mPictureControl.setOnTouchListener(onTouchListener);
         }
 
         public void onLoadFinished(PurchaseManager purchaseManager)
         {
                 mPurchaseManager = purchaseManager;
-                mItemDetailsFieldControl.onLoadItemFinished(mPurchaseManager.getitem());
+                Item item = mPurchaseManager.getitem();
+                mItemDetailsFieldControl.onLoadItemFinished(item);
                 mItemPurchaseControl.onLoadFinished(mPurchaseManager);
+                mPictureControl.getPictureMgr().setItemId(item.getId());
         }
 
         public void onLoadPriceFinished(PriceMgr priceMgr)
@@ -260,9 +311,19 @@ public class ShoppingListEditingControl implements ItemControl
 
         }
 
+        private void requestFocusItemName()
+        {
+                mContext.showSoftKeyboard(mItemDetailsFieldControl.getItemNameField());
+        }
+
+        public void setPictureMgr(PictureMgr pictureMgr)
+        {
+                mPictureControl.setPictureMgr(pictureMgr);
+        }
+
         enum Event
         {
-                ON_OK, ON_NEW, ON_EDIT, ON_DELETE, ON_UP, ON_BACK, ON_CHANGE, ON_LEAVE, ON_STAY, ON_CREATE_OPTIONS_MENU
+                ON_OK, ON_NEW, ON_EDIT, ON_DELETE, ON_UP, ON_BACK, ON_CHANGE, ON_LEAVE, ON_STAY, ON_CREATE_OPTIONS_MENU,ON_ENTER_TRANSITION_END
         }
 
         enum ItemType
@@ -309,6 +370,7 @@ public class ShoppingListEditingControl implements ItemControl
                                                         control.delegate(event);
                                                         break;
                                                 case ON_LEAVE:
+                                                        control.removeUnsavedPicturesFromApp();
                                                         control.finishItemEditing();
                                                         state = this;
                                                         break;
@@ -317,6 +379,9 @@ public class ShoppingListEditingControl implements ItemControl
                                                         break;
                                                 case ON_CREATE_OPTIONS_MENU:
                                                         control.delegate(event);
+                                                        break;
+                                                case ON_ENTER_TRANSITION_END:
+                                                        control.requestFocusItemName();
                                                         break;
                                         }
 
@@ -328,6 +393,9 @@ public class ShoppingListEditingControl implements ItemControl
                                 public void setUiAttibutes(Event event, ShoppingListEditingControl control)
                                 {
                                         control.setTitle(R.string.new_buy_item_title);
+
+                                        /* The following is disabled because it makes the animation juddery */
+                                        //control.requestFocusItemName();
                                 }
                         },
 
@@ -353,6 +421,7 @@ public class ShoppingListEditingControl implements ItemControl
                                                         control.delegate(event);
                                                         break;
                                                 case ON_LEAVE:
+                                                        control.removeUnsavedPicturesFromApp();
                                                         control.finishItemEditing();
                                                         state = this;
                                                         break;
@@ -393,6 +462,11 @@ public class ShoppingListEditingControl implements ItemControl
                 {
 
                 }
+        }
+
+        private void removeUnsavedPicturesFromApp()
+        {
+                mContext.removeUnsavedPicturesFromApp();
         }
 
         enum State

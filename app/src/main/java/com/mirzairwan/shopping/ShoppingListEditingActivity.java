@@ -74,9 +74,12 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                         mUriItem = intent.getData();
                 }
 
+                mShoppingListEditingControl.setPictureMgr(mPictureMgr);
+
                 if (mUriItem == null)
                 {
                         PurchaseManager purchaseManager = new PurchaseManager();
+                        Log.d("Animation", ">>>>> onNewItem");
                         mShoppingListEditingControl.onNewItem();
                         mShoppingListEditingControl.setPriceMgr(mPriceMgr);
                         mShoppingListEditingControl.setPurchaseManager(purchaseManager);
@@ -109,9 +112,6 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
 
                 getLoaderManager().initLoader(PURCHASE_ITEM_LOADER_ID, arg, this);
                 super.initPictureLoader(uri, this);
-
-                /* Use this to get the other pricing information */
-                //super.initPriceLoader(uri, this);
         }
 
         @Override
@@ -166,7 +166,6 @@ public class ShoppingListEditingActivity extends ItemActivity implements Shoppin
                                  */
                                 PurchaseManager mPurchaseManager = new PurchaseManager(cursor);
                                 mShoppingListEditingControl.onLoadFinished(mPurchaseManager);
-                                mPictureMgr.setItemId(mPurchaseManager.getitem().getId());
 
                                 /* Use this to get the other pricing information */
                                 super.initPriceLoader(mUriItem, this);

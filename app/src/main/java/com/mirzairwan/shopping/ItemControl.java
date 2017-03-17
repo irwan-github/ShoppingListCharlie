@@ -2,6 +2,9 @@ package com.mirzairwan.shopping;
 
 import android.view.Menu;
 
+import com.mirzairwan.shopping.domain.Picture;
+import com.mirzairwan.shopping.domain.PictureMgr;
+
 /**
  * Created by Mirza Irwan on 26/2/17.
  *
@@ -25,4 +28,18 @@ public interface ItemControl
         void onBackPressed();
 
         void onStay();
+
+        void onCameraAction();
+
+        void onLoadPictureFinished(PictureMgr picture);
+
+        void onCameraResult();
+
+        void onDeletePictureInView();
+
+        void onPickPictureAction();
+
+        void onPickPictureResult(Picture picture);
+
+        void onEnterTransitionEnd();
 }

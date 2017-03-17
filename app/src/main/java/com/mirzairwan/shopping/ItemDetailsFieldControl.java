@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.mirzairwan.shopping.domain.Item;
@@ -163,6 +164,11 @@ public class ItemDetailsFieldControl extends DetailExpander
         {
                 mItem = item;
                 mState = mState.transition(ON_LOAD_ITEM, this);
+        }
+
+        public EditText getItemNameField()
+        {
+                return mEtItemName;
         }
 
         enum Event
